@@ -11,9 +11,9 @@ namespace TPApp.Web.Helpers
         // IMAGE URL (giữ logic WebForms)
         // ===============================
         public static string CookedImageURL(
-            this IHtmlHelper html,
-            string size,
-            string? imageUrl)
+    this IHtmlHelper html,
+    string size,
+    string? imageUrl)
         {
             var config = html.ViewContext.HttpContext
                 .RequestServices
@@ -33,12 +33,21 @@ namespace TPApp.Web.Helpers
 
             var fileName = Path.GetFileName(imageUrl);
 
+            // ✅ size = org → trả về file gốc, không prefix
+            if (string.Equals(size, "org", StringComparison.OrdinalIgnoreCase))
+            {
+                return imageUrl;
+            }
+
             // Tránh double size
             if (fileName.StartsWith(size + "-", StringComparison.OrdinalIgnoreCase))
+            {
                 return imageUrl;
+            }
 
             return imageUrl.Replace(fileName, $"{size}-{fileName}");
         }
+
 
         // ===============================
         // MAKE URL FRIENDLY (SEO)
