@@ -1,0 +1,26 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@model TPApp.ViewModel.HomeViewModel
+
+@await Html.PartialAsync("_MainBg")
+@await Html.PartialAsync("_TopBigBanner")
+
+
+<div class="container">
+    @await Html.PartialAsync(
+    "_CongNgheMoiCapNhat",
+        Model.CongNgheMoiCapNhatHtml
+        )
+
+</div>
+
+@* VideoCongNghe *@
+@await Html.PartialAsync("_VideoCongNghe", Model.VideoCongNghe)
+
+@* YeuCauCongNghe *@
+@await Html.PartialAsync("_YeuCauCongNghe", Model.YeuCauCongNghe)
+
+@* TinSuKien *@
+@await Html.PartialAsync("_TinSuKien", Model.TinSuKien)

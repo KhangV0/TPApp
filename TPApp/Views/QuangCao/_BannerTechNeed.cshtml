@@ -1,0 +1,132 @@
+﻿
+@section scripts {
+    <script type="text/javascript">
+        $(function () {
+
+            var time = 6020,
+                bar = $('.progress_bar');
+
+            run();
+
+            $('#carousel-example-generic').on('slide.bs.carousel', function () {
+                run();
+            });
+
+            function run() {
+                $(".HeaderText")
+                    .stop(true, true)
+                    .attr("style", "display:none")
+                    .fadeIn(2000);
+
+                $(".BodyText")
+                    .stop(true, true)
+                    .attr("style", "display:none")
+                    .fadeIn(4000);
+
+                bar.stop(true, true)
+                   .css("width", 0)
+                   .animate({ 'width': '+=100%' }, time);
+            }
+        });
+    </script>
+}
+<div class="container containerM">
+    <div id="carousel-example-generic"
+         class="carousel slide carousel-fade"
+         data-bs-ride="carousel"
+         data-bs-interval="6000">
+
+        <!-- Indicators -->
+        <ol class="carousel-indicators">
+            <li data-bs-target="#carousel-example-generic" data-bs-slide-to="0" class="active"></li>
+            <li data-bs-target="#carousel-example-generic" data-bs-slide-to="1"></li>
+            <li data-bs-target="#carousel-example-generic" data-bs-slide-to="2"></li>
+        </ol>
+
+        <!-- Wrapper for slides -->
+        <div class="carousel-inner">
+
+            <!-- Slide 1 -->
+            <div class="carousel-item active">
+                <img src="/FrontEnd/assets/images/b1.png" alt="First slide" />
+
+                <div class="header-text d-none d-md-block">
+                    <div class="col-md-12 text-left HeaderText">
+                        <h2>
+                            <span>Yêu cầu tìm mua</span>
+                        </h2>
+                    </div>
+
+                    <div class="col-md-9 text-left">
+                        <h3>
+                            <span class="BodyText">
+                                Kết nối nhu cầu và nguồn cung công nghệ
+                            </span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="carousel-item">
+                <img src="/FrontEnd/assets/images/b1.png" alt="Second slide" />
+
+                <div class="header-text d-none d-md-block">
+                    <div class="col-md-12 text-left HeaderText">
+                        <h2>
+                            <span>Đăng thông tin nhu cầu về công nghệ</span>
+                        </h2>
+                    </div>
+
+                    <div class="col-md-9 text-left">
+                        <h3>
+                            <span class="BodyText">
+                                Cá nhân, tổ chức, viện, trường
+                            </span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="carousel-item">
+                <img src="/FrontEnd/assets/images/b1.png" alt="Third slide" />
+
+                <div class="header-text d-none d-md-block">
+                    <div class="col-md-12 text-left HeaderText">
+                        <h2>
+                            <span>Tìm kiếm máy móc, công nghệ, dây chuyền sản xuất</span>
+                        </h2>
+                    </div>
+
+                    <div class="col-md-9 text-left">
+                        <h3>
+                            <span class="BodyText">
+                                Vui lòng liên hệ với Techport để được tiếp nhận yêu cầu.
+                            </span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Controls -->
+        <button class="carousel-control-prev"
+                type="button"
+                data-bs-target="#carousel-example-generic"
+                data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+
+        <button class="carousel-control-next"
+                type="button"
+                data-bs-target="#carousel-example-generic"
+                data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+
+    </div>
+
+    <div class="progress_bar"></div>
+</div>

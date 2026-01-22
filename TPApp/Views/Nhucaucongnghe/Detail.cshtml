@@ -1,0 +1,151 @@
+﻿@model TPApp.ViewModel.NhuCauCongNgheDetailViewModel
+
+@section Scripts {
+    <script>
+        const btn = document.getElementById("DangYCCN");
+        const box = document.getElementById("DangYCCNRegion");
+
+        if (btn && box) {
+            btn.addEventListener("click", function (e) {
+                console.log("nut da duoc an");
+                e.preventDefault();
+                box.style.display =
+                    (box.style.display === "none" || box.style.display === "")
+                        ? "block"
+                        : "none";
+            });
+        }
+    </script>
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            <!-- ================= CENTER COLUMN ================= -->
+            <div class="center_column col-xs-12 col-sm-9 yeu-cau-detail" id="center_column">
+
+                <div>
+                    <br />
+                    <a class="product-namelink" href="/yeu-cau-cong-nghe-67.html">
+                        Yêu cầu chuyển giao công nghệ
+                    </a>
+                    <br /><br />
+                </div>
+
+                <!-- ====== PHIẾU YÊU CẦU (PARTIAL) ====== -->
+                @await Html.PartialAsync("_PhieuYeuCauCN", Model.PhieuYeuCau )
+
+
+                <!-- ====== TITLE ====== -->
+                @if (Model.Detail != null)
+                {
+                    <h1 class="page-heading">
+                        <span class="page-heading-title2">
+                            @Model.Detail.Title
+                        </span>
+                    </h1>
+
+                    <div>
+                        <span class="author">
+                            <i class="fa fa-user"></i>
+                            @(Model.Detail.Viewed ?? 0) lượt xem
+                            <i class="fa fa-thumbs-up"></i>
+                            @(Model.Detail.Like ?? 0) lượt thích
+                        </span>
+                    </div>
+
+                    <article class="entry-detail">
+                        <div class="entry-photo">
+                            @Html.Raw(Model.Detail.Description)
+                        </div>
+
+                        <div class="content-text clearfix">
+                            @Html.Raw(Model.Detail.Contents)
+
+                            <div class="content-text clearfix"
+                                 style="text-align:right;font-weight:700;">
+                                @Model.Detail.Author
+                            </div>
+
+                            <!-- ====== IMAGE CAROUSEL ====== -->
+                            @if (Model.Images.Any())
+                            {
+                                <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                                    <div class="carousel-inner" role="listbox">
+                                        @for (int i = 0; i < Model.Images.Count; i++)
+                                        {
+                                            var img = Model.Images[i];
+                                            <div class="item @(i == 0 ? "active" : "")">
+                                                <img src="@img.ImageUrl" alt="@img.Title" />
+                                                <div class="carousel-caption">
+                                                    @img.Title
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+                                        <span class="glyphicon glyphicon-chevron-left"></span>
+                                    </a>
+                                    <a class="right carousel-control" href="#myCarousel" data-slide="next">
+                                        <span class="glyphicon glyphicon-chevron-right"></span>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </article>
+                }
+
+                <!-- ====== CONTACT ====== -->
+                <div class="LienHe">Liên hệ để đáp ứng công nghệ</div>
+
+                <!-- ====== COMMENT ====== -->
+                @* @if (Model.TargetId > 0 && Model.CommentTypeId.HasValue)
+                {
+                    @await Html.PartialAsync(
+                        "_Comment",
+                        new
+                        {
+                            TargetId = Model.TargetId,
+                            CommentTypeId = Model.CommentTypeId.Value
+                        }
+                    )
+                } *@
+
+                <!-- ====== RELATED NEWS ====== -->
+                @if (Model.Relations.Any())
+                {
+                    <div class="single-box">
+                        <h2 class="head-title">TIN KHÁC</h2>
+
+                        <ul class="list-other-news">
+                            @foreach (var item in Model.Relations)
+                            {
+                                <li>
+                                    <a class="title_pro"
+                                       href="@Html.MainDomain()/@item.MenuId/yeu-cau/@item.QueryString-@item.Id.'html'">
+                                        @item.Title
+                                    </a>
+                                    <span>
+                                        @item.PublishedDate?.ToString("dd/MM/yyyy")
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+
+            <!-- ================= RIGHT COLUMN ================= -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                @await Html.PartialAsync("_PortletYeuCauMoi", Model.YeuCauMoi)
+
+                @* Left banner nếu cần *@
+                @* @await Html.PartialAsync("_Left") *@
+
+            </div>
+        </div>
+    </div>
+</div>

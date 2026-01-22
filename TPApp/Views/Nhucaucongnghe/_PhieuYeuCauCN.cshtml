@@ -1,0 +1,143 @@
+﻿@model TPApp.ViewModel.PhieuYeuCauCNViewModel
+
+
+
+@section Scripts {
+    <script type="text/javascript">
+        $(function () {
+            $('#txtCode').realperson();
+
+            $("#btnSave").click(function () {
+                return CheckCap();
+            });
+        });
+
+        function CheckCap() {
+            var elem = $('.hasRealPerson').val();
+            var haselem = $('.realperson-hash').val();
+
+            if (rpHash(elem) == haselem) {
+                return true;
+            }
+            else {
+                var error = "";
+                error += "<li>Vui lòng nhập đúng mã xác thực</li>";
+                $('#lstErrorContent li').remove();
+                $("#lstErrorContent").append(error);
+                return false;
+            }
+        }
+
+        function rpHash(value) {
+            var hash = 5381;
+            for (var i = 0; i < value.length; i++) {
+                hash = ((hash << 5) + hash) + value.charCodeAt(i);
+            }
+            return hash;
+        }
+    </script>
+}
+<style type="text/css">
+    .realperson-challenge {
+        display: block;
+        color: #000;
+        float: right;
+        padding-right: 15px;
+    }
+
+    .realperson-text {
+        font-family: "Courier New", monospace;
+        font-size: 6px;
+        font-weight: bold;
+        letter-spacing: -1px;
+        line-height: 3px;
+        padding: 3px 0px;
+        color: #00abfa;
+    }
+
+    .realperson-regen {
+        padding-top: 4px;
+        font-size: 13px;
+        text-align: left;
+        cursor: pointer;
+        display: none;
+    }
+
+    .realperson-disabled {
+        opacity: 0.5;
+    }
+</style>
+
+<div class="row">
+    <div id="DangYCCNRegion" class="DangYCCNRegion">
+        <div class="head-title">
+            YÊU CẦU CÔNG NGHỆ
+        </div>
+
+        <div class="DivRow" id="lstErrorContent">
+            <i>Vui lòng điền thông tin yêu cầu công nghệ để được tư vấn miễn phí</i>
+        </div>
+
+        <form asp-action="GuiPhieuYeuCau"
+              asp-controller="Nhucaucongnghe"
+              method="post">
+
+            <div class="DivLeft">
+                <input id="txtName"
+                       name="FullName"
+                       class="TextBox"
+                       placeholder="Họ và Tên"
+                       maxlength="150"
+                       style="width:95%"
+                       required />
+            </div>
+
+            <div class="DivRight">
+                <input id="txtEmail"
+                       name="Email"
+                       class="TextBox"
+                       placeholder="Email"
+                       maxlength="150"
+                       style="width:95%"
+                       required />
+            </div>
+
+            <div class="DivLeft">
+                <input id="txtPhone"
+                       name="Phone"
+                       class="TextBox"
+                       placeholder="Điện thoại"
+                       maxlength="150"
+                       style="width:95%"
+                       required />
+            </div>
+
+            <div class="DivRight">
+                <input id="txtCode"
+                       class="TextBox"
+                       placeholder="Mã xác nhận"
+                       maxlength="150"
+                       style="width:55%"
+                       required />
+            </div>
+
+            <div class="DivRow">
+                <textarea id="txtNoiDung"
+                          name="NoiDung"
+                          class="TextArea"
+                          placeholder="Nội dung yêu cầu"
+                          style="width:98%"
+                          required></textarea>
+            </div>
+
+            <div class="DivLeft">
+                <button id="btnSave"
+                        type="submit"
+                        class="btn">
+                    Gửi yêu cầu
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

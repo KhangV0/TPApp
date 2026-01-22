@@ -1,0 +1,178 @@
+﻿@model TPApp.ViewModel.ProductByCateViewModel
+
+@section Scripts {
+    <script>
+        $(function () {
+            $(".current").parent().addClass("active");
+
+            $(".etheme_add_to_cart_button").click(function (e) {
+                e.preventDefault();
+                var url = $(this).closest(".product-container").find(".product-image").attr("href");
+                window.location.href = url;
+            });
+        });
+    </script>
+}
+
+<div class="container" id="columns">
+    <div class="row">
+
+        <!-- ================= CENTER COLUMN ================= -->
+        <div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+            <div id="view-product-list" class="view-product-list">
+
+                <h2 class="brand-showcase-title">
+                    <a>@Model.PageTitle</a>
+                </h2>
+
+                <ul class="display-product-option">
+                    <li class="view-as-grid selected"><span>grid</span></li>
+                    <li class="view-as-list"><span>list</span></li>
+                </ul>
+
+                <!-- ================= PRODUCT LIST ================= -->
+                <ul class="row product-list grid">
+
+                    @foreach (var p in Model.Products)
+                    {
+                        <li class="col-sx-12 col-sm-3 ListProductMobile">
+                            <div class="product-container">
+
+                                <div class="left-block">
+                                    <a class="product-image" href="@p.Url">
+                                        <img src="@p.ImageUrl"
+                                             class="img-responsive ProductListImage"
+                                             alt="@p.Title" />
+                                    </a>
+
+                                    @if (p.IsSC)
+                                    {
+                                        <span class="label_sc"></span>
+                                    }
+                                    @if (p.IsNC)
+                                    {
+                                        <span class="label_nc"></span>
+                                    }
+
+                                    <div class="quick-view"></div>
+
+                                    <div class="add-to-cart">
+                                        <a class="etheme_add_to_cart_button"
+                                           href="@p.Url">
+                                            Chọn sản phẩm
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="right-block">
+                                    <h5 class="product-name">
+                                        <a href="@p.Url">@p.Title</a>
+                                    </h5>
+
+                                    <div class="content_price">
+                                        <span class="price product-price">
+                                            Giá tham khảo : @p.PriceText
+                                        </span>
+                                    </div>
+
+                                    <div id="stars-sp">
+                                        @{
+                                            var star = p.Star;
+
+                                            if (star < 0) star = 0;
+                                            if (star > 5) star = 5;
+
+                                            var stars = new string('★', star) + new string('☆', 5 - star);
+                                        }
+                                        <span style="color: gold; font-size: medium">@stars</span>
+                                    </div>
+
+                                    <div class="info-orther">
+                                        <p>Mã sản phẩm: @p.Code</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </li>
+                    }
+
+                </ul>
+                <!-- ================= END PRODUCT LIST ================= -->
+
+            </div>
+
+            <!-- ================= PAGINATION ================= -->
+            <div class="sortPagiBar">
+                <div class="bottom-pagination">
+                    <nav>
+                        <ul class="pagination">
+
+                            @foreach (var page in Model.Pages)
+                            {
+                                <li class="@(page.IsActive ? "active" : "")">
+                                    <a class="phantrang"
+                                       href="?page=@(page.Page)&pageSize=@Model.PageSize">
+                                        @(page.Page)
+                                    </a>
+                                </li>
+                            }
+
+                        </ul>
+                    </nav>
+                </div>
+
+                <div class="show-product-item">
+                    Sản phẩm / trang:
+                    <select onchange="location.href='?page=1&pageSize=' + this.value">
+                        @foreach (var size in new[] { 12, 24, 36, 48, 60 })
+                        {
+                            <option value="@size" selected="@(size == Model.PageSize)">
+                                @size
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <span class="first">
+                    Tổng: @Model.Total sản phẩm
+                </span>
+            </div>
+
+            <!-- hidden -->
+            <input type="hidden" value="@Model.CurPage" />
+            <input type="hidden" value="@Model.StoreId" />
+            <input type="hidden" value="@Model.CateId" />
+
+            <!-- PORTLET -->
+            @* PortletIONhaTuVan *@
+
+        </div>
+
+        <!-- ================= LEFT COLUMN ================= -->
+        <div class="column col-xs-12 col-sm-3" id="left_column">
+
+            <div class="block left-module">
+                <p class="title_block">@Model.CateTitle</p>
+
+                <div class="block_content">
+                    <div class="layered layered-category">
+                        <div class="layered-content">
+                            <ul class="tree-menu">
+                                @foreach (var cate in Model.Categories)
+                                {
+                                    <li>
+                                        <span></span>
+                                        <a href="@cate.Url">@cate.Title</a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>

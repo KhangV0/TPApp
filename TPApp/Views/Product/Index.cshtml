@@ -1,0 +1,179 @@
+﻿@model TPApp.ViewModel.ProductIndexViewModel
+@* @using Cls_Common *@
+
+
+
+@section Scripts {
+    <script type="text/javascript">
+        function ajaxJquery() {
+            $(function () {
+
+                $.fn.rating = function (method, options) {
+                    method = method || 'create';
+                    var settings = $.extend({
+                        limit: 5,
+                        value: 0,
+                        glyph: "glyphicon-star",
+                        coloroff: "gray",
+                        coloron: "gold",
+                        size: "1.5em",
+                        cursor: "default",
+                        onClick: function () { }
+                    }, options);
+
+                    var style = "font-size:" + settings.size + ";color:" + settings.coloroff + ";cursor:" + settings.cursor + ";";
+
+                    if (method == 'create') {
+                        this.each(function () {
+                            if (!$(this).attr('data-rating')) {
+                                $(this).attr('data-rating', settings.value);
+                            }
+                        });
+
+                        for (var i = 0; i < settings.limit; i++) {
+                            this.append('<span data-value="' + (i + 1) + '" class="ratingicon glyphicon ' + settings.glyph + '" style="' + style + '"></span>');
+                        }
+
+                        this.each(function () { paint($(this)); });
+                    }
+
+                    function paint(div) {
+                        var rating = parseInt(div.attr('data-rating'));
+                        div.find("span.ratingicon").each(function () {
+                            var value = parseInt($(this).attr('data-value'));
+                            $(this).css('color', value > rating ? settings.coloroff : settings.coloron);
+                        });
+                    }
+                };
+
+                $("#stars-sp").rating();
+            });
+        }
+    </script>
+}
+
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            <!-- CENTER COLUMN -->
+            <div class="center_column col-xs-12 col-sm-9 cntb" id="center_column">
+
+                @* === ProductCNMoiCapNhat.ascx === *@
+                @await Html.PartialAsync(
+                "_ProductCNMoiCapNhat",
+                                Model.ProductCNMoiCapNhatHtml
+                                )
+
+                <!-- CATEGORY + PRODUCT -->
+                @foreach (var block in Model.Categories)
+                {
+                    <div class="brand-showcase">
+                        <h2 class="brand-showcase-title">
+                            <a href="@($"{Html.MainDomain()}2-ds-cong-nghe-thiet-bi/{@Html.MakeURLFriendly(block.Category.QueryString)}-{block.Category.CatId}.html")">
+                                @block.Category.Title
+                            </a>
+                        </h2>
+
+                        <div class="brand-showcase-box">
+                            <div class="brand-showcase-content">
+                                <div class="brand-showcase-content-tab active">
+                                    <div class="row">
+                                        <div class="col-md-12 box-pro-list">
+                                            <ul class="row product-list grid">
+
+                                                @foreach (var p in block.Products)
+                                                {
+                                                    string imgUrl;
+                                                    if (string.IsNullOrEmpty(p.QuyTrinhHinhAnh))
+                                                    {
+                                                        imgUrl = p.TypeId switch
+                                                        {
+                                                            2 => @Html.MainDomain() + "images/sangche.png",
+                                                            3 => @Html.MainDomain() + "images/research.jpg",
+                                                            _ => @Html.MainDomain() + "images/research.jpg"
+                                                        };
+                                                    }
+                                                    else
+                                                    {
+                                                        imgUrl = @Html.CookedImageURL("254-170", p.QuyTrinhHinhAnh);
+                                                    }
+
+                                                    <li class="col-sx-12 col-sm-3 ListProductMobile">
+                                                        <div class="product-container">
+                                                            <div class="left-block">
+                                                                <a href="@($"{Html.MainDomain()}2-cong-nghe-thiet-bi/{p.TypeId}/{@Html.MakeURLFriendly(p.Name)}-{p.ID}.html")">
+                                                                    <img src="@imgUrl" class="img-responsive ProductListImage" alt="@p.Name" />
+                                                                </a>
+
+                                                                @if (p.TypeId == 2)
+                                                                {
+                                                                    <div class="label_sc"></div>
+                                                                }
+                                                                else if (p.TypeId == 3)
+                                                                {
+                                                                    <div class="label_nc"></div>
+                                                                }
+                                                            </div>
+
+                                                            <div class="right-block">
+                                                                <h4 class="product-name">
+                                                                    <a href="@($"{Html.MainDomain()}2-cong-nghe-thiet-bi/{p.TypeId}/{@Html.MakeURLFriendly(p.Name)}-{p.ID}.html")">
+                                                                        @p.Name
+                                                                    </a>
+                                                                </h4>
+
+                                                                <div class="content_price">
+                                                                    <span class="price product-price">
+                                                                        Giá tham khảo :
+                                                                        @Html.FormatCurrencyOto(p.OriginalPrice.ToString(), p.Currency)
+                                                                    </span>
+                                                                   
+                                                                </div>
+
+                                                                <div class="rating">
+                                                                    @{
+                                                                        var rating = p.Rating ?? 0;
+                                                                    }
+                                                                    @for (int i = 1; i <= 5; i++)
+                                                                    {
+                                                                        <span style="color:gold">
+                                                                            @(i <= rating ? "★" : "☆")
+                                                                        </span>
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                }
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- RIGHT COLUMN -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+                <div class="adv-banner left-module">
+                    <div class="box-adv">
+                        <a href="@($"{Html.MainDomain()}yeu-cau-cong-nghe-67.html")">
+                            <img src="@($"{Html.MainDomain()}FrontEnd/assets/data/techneed.jpg")" alt="ads-banner" />
+                        </a>
+                    </div>
+                    @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
+                    @await Html.PartialAsync("~/Views/QuangCao/Right.cshtml")
+
+
+                    @* @await Html.PartialAsync("_Left") *@
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

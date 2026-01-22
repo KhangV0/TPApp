@@ -1,0 +1,41 @@
+﻿@model List<TPApp.ViewModel.VideoVm>
+
+<section class="technology-videos py-5">
+    <div class="container">
+        <h3 style="text-align: center; margin-bottom: 30px; font-weight: 700; color: #046dbd;">
+            <a href="@($"{Html.MainDomain()}video")">VIDEO CÔNG NGHỆ</a>
+        </h3>
+        <div class="row justify-content-center">
+            @foreach (var video in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="ratio ratio-16x9">
+                            @if (!string.IsNullOrEmpty(video.VideoUrl))
+                            {
+                                <!-- CASE 1: Có VideoUrl → show iframe -->
+                                <iframe src="@video.VideoUrl"
+                                        title="@video.Title"
+                                        frameborder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowfullscreen>
+                                </iframe>
+                            }
+                            else
+                            {
+                                <a href="@video.Link">
+                                    <img src="@video.ImageUrl" class="card-img-top" alt="@video.Title" />
+                                </a>
+                            }
+                        </div>
+                        <div class="card-body text-center">
+                            <a href="@video.Link" class="text-decoration-none">
+                                <h5 class="card-title fw-bold">@video.Title</h5>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

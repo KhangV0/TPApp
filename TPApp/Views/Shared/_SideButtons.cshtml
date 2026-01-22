@@ -1,0 +1,43 @@
+﻿@{
+    // Có thể lấy từ appsettings, tạm hard-code giống hệ cũ
+    var MainDomain = "https://localhost:7232/";
+}
+
+<div class="sidebar-floating">
+    <!-- Cart -->
+    <a href="@($"{MainDomain}gio-hang.html")" title="Giỏ hàng">
+        <i class="bi bi-cart fs-5"></i>
+    </a>
+
+    <!-- Phone -->
+    <a href="tel:+8402838221635" target="_blank" title="Gọi điện">
+        <i class="bi bi-telephone"></i>
+    </a>
+
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/SanGiaoDichCongNgheTPHCM#"
+       target="_blank"
+       title="Facebook">
+        <i class="bi bi-facebook"></i>
+    </a>
+
+    <!-- Contact -->
+    <a href="@($"{MainDomain}lien-he-74.html")" title="Liên hệ">
+        <i class="bi bi-pencil-square"></i>
+    </a>
+
+    <!-- Back to Top -->
+    <a href="#" id="btnBackToTop" title="Lên đầu trang">
+        <i class="bi bi-chevron-bar-up"></i>
+    </a>
+</div>
+@section Scripts {
+    <script>
+        $(function () {
+            $('#btnBackToTop').on('click', function (e) {
+                e.preventDefault();
+                $('html, body').animate({ scrollTop: 0 }, 200);
+            });
+        });
+    </script>
+}

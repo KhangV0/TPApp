@@ -1,0 +1,127 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    // Giả sử MainDomain được inject hoặc lấy từ appsettings
+    var MainDomain = "https://localhost:7232/";
+
+    // Lấy session userName
+    var userName = HttpContextAccessor.HttpContext.Session.GetString("UserName");
+}
+
+<header class="border-bottom py-2" style="background-color: #ffffff;">
+    <div class="container d-flex align-items-center justify-content-between gap-3">
+
+        <!-- Logo -->
+        <a href="@($"{MainDomain}")" class="d-flex align-items-center text-dark text-decoration-none gap-2">
+            <img class="main-logo" src="@($"{MainDomain}image/logo.png")" alt="">
+        </a>
+
+        <div class="bg-white">
+            <div class="container py-2 d-flex align-items-center gap-3 flex-wrap">
+
+                <!-- MENU DANH MỤC -->
+                <div class="dropdown">
+                    <button class="btn btn-light w-100 d-flex justify-content-between align-items-center"
+                            type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false"
+                            style="border-radius: 20px;">
+                        <span class="d-flex align-items-center">
+                            <i class="bi bi-list me-2"></i>
+                            Danh mục
+                        </span>
+                        <span class="dropdown-toggle dropdown-toggle-split"></span>
+                    </button>
+
+                    <div class="dropdown-menu p-3 megamenu">
+                        <div class="row g-4">
+
+                            <!-- CỘT 1 -->
+                            <div class="col-6 col-lg-6">
+                                <h6 class="mb-2">Công nghệ & Thiết bị</h6>
+                                <div class="list-group list-group-flush small">
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/dien-dien-tu-cong-nghe-thong-tin-4.html")">Điện, điện tử, CNTT</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/vat-lieu-luyen-kim-7.html")">Vật liệu & luyện kim</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/moi-truong-9.html")">Môi trường</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/cong-nghe-nano-11.html")">Công nghệ Nano</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/duoc-hoc-13.html")">Dược học</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/chan-nuoi-15.html")">Chăn nuôi</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/thuy-san-18.html")">Thuỷ sản</a>
+                                </div>
+                            </div>
+
+                            <!-- CỘT 2 -->
+                            <div class="col-6 col-lg-6">
+                                <h6 class="mb-2">&nbsp;</h6>
+                                <div class="list-group list-group-flush small">
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/co-khi-5.html")">Cơ khí</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/y-hoc-8.html")">Y học</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/cong-nghe-sinh-hoc-10.html")">Công nghệ sinh học</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/cong-nghe-thuc-pham-12.html")">Công nghệ thực phẩm</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/trong-trot-14.html")">Trồng trọt</a>
+                                    <a class="list-group-item list-group-item-action"
+                                       href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/lam-nghiep-17.html")">Lâm nghiệp</a>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CATEGORY PILL -->
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="category-pill text-decoration-none" href="@($"{MainDomain}gioi-thieu-chung-3.html")">Giới thiệu</a>
+                    @* <a class="category-pill text-decoration-none" href="@($"{MainDomain}tech-event/")">Tech event</a> *@
+                    <a class="category-pill text-decoration-none" href="https://techport.vn/tech-event/">Tech event</a>
+                    @* <a class="category-pill text-decoration-none" href="@($"{MainDomain}startup-products/")">Sản phẩm khởi nghiệp</a> *@
+                    <a class="category-pill text-decoration-none" href="https://techport.vn/startup-products/" )">Sản phẩm khởi nghiệp</a>
+                    <a class="category-pill text-decoration-none" href="@($"{MainDomain}thao-luan.html")">Thảo luận</a>
+                    <a class="category-pill text-decoration-none" href="@($"{MainDomain}lien-he-74.html")">Liên hệ</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Đăng CNTB / Nhu cầu -->
+        <a href="@((string.IsNullOrEmpty(userName) ? $"{MainDomain}dang-nhap.html" : $"{MainDomain}myAdmin.html"))"
+           class="btn btn-light"
+           title="Đăng công nghệ / Đăng nhu cầu">
+            <i class="bi bi-upload"></i>&nbsp; CNTB / Nhu cầu
+        </a>
+
+        <!-- RIGHT -->
+        <div class="d-flex align-items-center gap-3">
+            <div class="dropdown">
+                <button class="btn btn-link dropdown-toggle text-dark text-decoration-none" type="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    Vi
+                    <img class="langIcon" src="@($"{MainDomain}image/vietnam.png")" alt="vietnamflag">
+                </button>
+                <ul class="dropdown-menu langList">
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            Vi
+                            <img class="langIcon langLink" src="@($"{MainDomain}image/vietnam.png")" alt="vietnamflag">
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="https://techport.vn/en/index.html">
+                            En
+                            <img class="langIcon langLink" src="@($"{MainDomain}image/united-states.png")" alt="en flag">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</header>

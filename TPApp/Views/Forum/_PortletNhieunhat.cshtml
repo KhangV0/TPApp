@@ -1,0 +1,130 @@
+﻿@using TPApp.ViewModel
+@model ForumPortletNhieuNhatVm
+
+<style>
+    /* đảm bảo tab hoạt động dù CSS ngoài có ẩn */
+    .tab-panel {
+        display: none;
+    }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+    .nav-tab li.active a {
+        font-weight: bold;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        var panHoi = document.getElementById("panHoi");
+        var panTraLoi = document.getElementById("panTraloi");
+
+        var tabHoi = document.getElementById("tabHoi");
+        var tabTraLoi = document.getElementById("tabTraloi");
+
+        function showHoi() {
+            panHoi.classList.add("active");
+            panTraLoi.classList.remove("active");
+
+            tabHoi.classList.add("active");
+            tabTraLoi.classList.remove("active");
+        }
+
+        function showTraLoi() {
+            panTraLoi.classList.add("active");
+            panHoi.classList.remove("active");
+
+            tabTraLoi.classList.add("active");
+            tabHoi.classList.remove("active");
+        }
+
+        document.getElementById("btnHoi").onclick = function (e) {
+            e.preventDefault();
+            showHoi();
+        };
+
+        document.getElementById("btnTraLoi").onclick = function (e) {
+            e.preventDefault();
+            showTraLoi();
+        };
+
+        // trạng thái ban đầu
+        @if (Model.ActiveTab == 2)
+        {
+                <text>showTraLoi();</text>
+        }
+        else
+        {
+                <text>showHoi();</text>
+        }
+    });
+</script>
+
+<div class="block left-module">
+    <p class="title_block">Thành viên tích cực</p>
+
+    <div class="block_content">
+        <div class="layered">
+            <div class="product-tab">
+
+                <!-- TAB HEADER -->
+                <ul class="nav-tab">
+                    <li id="panHoi">
+                        <a href="#" id="btnHoi">HỎI</a>
+                    </li>
+                    <li id="panTraloi">
+                        <a href="#" id="btnTraLoi">TRẢ LỜI</a>
+                    </li>
+                </ul>
+
+                <!-- TAB BODY -->
+                <div class="tab-container">
+
+                    <!-- TAB HỎI -->
+                    <div id="tabHoi" class="tab-panel">
+                        @if (Model.HoiNhieu.Any())
+                        {
+                            foreach (var item in Model.HoiNhieu)
+                            {
+                                <p>
+                                    <a href="@($"{ViewBag.MainDomain}chi-tiet-user-{item.FullName}.html")">
+                                        @item.FullName
+                                    </a>
+                                    <span> - Hỏi @item.CountyCTB</span>
+                                </p>
+                            }
+                        }
+                        else
+                        {
+                            <p><i>Không có dữ liệu</i></p>
+                        }
+                    </div>
+
+                    <!-- TAB TRẢ LỜI -->
+                    <div id="tabTraloi" class="tab-panel">
+                        @if (Model.TraLoiNhieu.Any())
+                        {
+                            foreach (var item in Model.TraLoiNhieu)
+                            {
+                                <p>
+                                    <a href="@($"{ViewBag.MainDomain}chi-tiet-user-{item.Name}.html")">
+                                        @item.Name
+                                    </a>
+                                    <span> - Trả lời @item.CountyCTB</span>
+                                </p>
+                            }
+                        }
+                        else
+                        {
+                            <p><i>Không có dữ liệu</i></p>
+                        }
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

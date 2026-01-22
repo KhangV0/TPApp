@@ -1,0 +1,49 @@
+﻿@using TPApp.ViewModel
+@model ForumPortletDangMoVm
+
+<div id="center_column">
+    <div class="title_block">
+        Thảo luận xem nhiều
+        <span class="head-line"></span>
+    </div>
+
+    <ul class="blog-posts">
+        @foreach (var item in Model.Items)
+        {
+            <li class="post-item">
+                <article class="entry">
+                    <div class="row">
+
+                        <!-- IMAGE (hidden giống WebForms) -->
+                        <div class="col-sm-4" style="left: 5px;" hidden>
+                            <div class="entry-thumb image-hover2" >
+                                <a href="@item.Url" border="0" align="left">
+                                    <img src="@item.ImageUrl"
+                                         alt="@item.Title"
+                                         @* title="@item.Tooltip" *@ />
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- CONTENT -->
+                        <div class="col-sm-12" style="left: 5px; right: 5px;" >
+                            <h3 class="entry-title">
+                                <a href="@item.Url">
+                                    @item.Title
+                                </a>
+                            </h3>
+
+                            <div class="entry-meta-data">
+                                <span class="date">
+                                    <i class="fa fa-calendar"></i>
+                                    @item.DateText
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                </article>
+            </li>
+        }
+    </ul>
+</div>

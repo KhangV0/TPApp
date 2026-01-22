@@ -1,0 +1,208 @@
+﻿@using TPApp.ViewModel
+@model ForumIndexVm
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<style>
+    .summary { width: 100% !important; }
+    .narrow .started { width: 99%; float: right; }
+    .btn-add-cart:before { background: none; padding-left: 5px; }
+    .Category {
+        font-weight: normal;
+        font-size: 12px;
+        color: #0b77c8;
+        padding-left: 10px;
+    }
+    .HuongDan { font-weight: bold; text-transform: uppercase; }
+</style>
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            <!-- ================= LEFT COLUMN ================= -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                <!-- Danh mục -->
+                <div class="block left-module">
+                    <p class="title_block">Lĩnh vực thảo luận</p>
+                    <div class="block_content">
+                        <div class="layered layered-category">
+                            <div class="layered-content">
+                                <ul class="tree-menu">
+                                    @foreach (var c in Model.Categories)
+                                    {
+                                        <li class="active">
+                                            <span></span>
+                                            <a href="@Html.MainDomain()thao-luan-@c.CatId-1.html">
+                                                @c.Title
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Portlet -->
+               <div class="block left-module">
+                    @await Html.PartialAsync("~/Views/Forum/_PortletNhieunhat.cshtml", Model.PortletNhieunhat)
+                </div>
+
+                <div class="block left-module">
+                    @await Html.PartialAsync("~/Views/Forum/_PortletDangMo.cshtml", Model.PortletDangMo)
+                </div>
+
+                <div class="block left-module">
+                    @await Html.PartialAsync("~/Views/Forum/_PortletTintuc.cshtml", Model.PortletTinTuc)
+                </div> 
+
+                <div class="block left-module">
+                    @await Html.PartialAsync("_PortletGiaiPhapCongNghe", Model.PortletGiaiPhapCongNghe)
+                </div> 
+
+            </div>
+
+            <!-- ================= CENTER COLUMN ================= -->
+            <div class="center_column col-xs-12 col-sm-9 thao-luan" id="center_column">
+
+                <!-- Header -->
+                <div class="popular-tabs">
+                    <h2 class="page-heading view-product-list ForumHeader">
+                        <span class="page-heading-title text-uppercase">
+                            @Model.Title
+                        </span>
+                    </h2>
+                </div>
+
+                <!-- Description -->
+                <div id="content-wrap">
+                    <div class="services3">
+                        <ul>
+                            <li class="col-xs-6 col-sm-9 col-md-9 services3-item color-2">
+                                <div class="service-wapper" style="height:100px;">
+                                    <div class="row">
+                                        <div class="col-sm-4 image">
+                                            <div class="icon">
+                                                <img src="/FrontEnd/assets/data/icon-service.png"
+                                                     width="90" />
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-8 text"
+                                             style="font-size:14px;font-weight:500;text-align:justify;">
+                                            Chuyên trang Thảo luận được thành lập để các doanh nghiệp,
+                                            chuyên gia và nhà cung ứng trao đổi, chia sẻ, tư vấn
+                                            về các vấn đề công nghệ trong nghiên cứu, sản xuất.
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="row-btn-l" style="right:15px;top:0">
+                    <a class="btn-add-cart"
+                       href="@Url.Action("Create","Forum")">
+                        Tạo thảo luận
+                    </a>
+                </div>
+
+                <!-- ================= LIST ================= -->
+                <div id="product">
+                    <div class="product-tab">
+                        <div class="question-summary narrow">
+                            <div class="summary">
+                                <ul class="blog-list-sidebar clearfix">
+
+                                    @foreach (var item in Model.CNTBItems)
+                                    {
+                                        <li>
+
+                                            <h3 class="question-hyperlink">
+                                                <a href="@item.Url">@item.Title</a>
+
+                                                @foreach (var cat in item.Categories)
+                                                {
+                                                    <a class="Category" href="@cat.Url">
+                                                        @cat.Title
+                                                    </a>
+                                                }
+                                            </h3>
+
+                                            <div class="started">
+                                                @Html.Raw(item.AuthorInfo)
+                                            </div>
+
+                                            <div class="post-controls controls width-narrow">
+                                                <span>
+                                                    <i class="fa fa-eye"></i>
+                                                    <span class="counter">@item.Viewed</span>
+                                                </span>
+                                                <span>
+                                                    <i class="fa fa-comments-o"></i>
+                                                    <span class="counter">@item.Comment</span>
+                                                </span>
+                                                <span>
+                                                    <i class="fa fa-thumbs-up"></i>
+                                                    <span class="counter">@item.Like</span>
+                                                </span>
+                                            </div>
+
+                                        </li>
+                                    }
+
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= PAGINATION ================= -->
+                    <div class="sortPagiBar">
+                        <div class="bottom-pagination">
+                            <nav>
+                                <ul class="pagination">
+                                    @foreach (var p in Model.Pager.Pages)
+                                    {
+                                        <li class="@(p == Model.Pager.CurrentPage ? "active" : "")">
+                                            <a href="@Url.Action("Index", new {
+                                                page = p,
+                                                pageSize = Model.PageSize,
+                                                linhVuc = Model.LinhVuc
+                                            })">
+                                                @p
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </nav>
+                        </div>
+
+                        <div class="show-product-item">
+                            Thảo luận / trang:
+                            <select onchange="location.href='?pageSize='+this.value">
+                                @foreach (var s in new[] { 10,20,30,40,50 })
+                                {
+                                    <option value="@s" selected="@(s==Model.PageSize)">
+                                        @s
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            @Model.TotalText
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>

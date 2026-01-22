@@ -1,0 +1,191 @@
+﻿@model TPApp.ViewModel.CateTechNeedsViewModel
+@section Scripts {
+    <script>
+        const btn = document.getElementById("DangYCCN");
+        const box = document.getElementById("DangYCCNRegion");
+
+        if (btn && box) {
+            btn.addEventListener("click", function (e) {
+                console.log("nut da duoc an");
+                e.preventDefault();
+                box.style.display =
+                    (box.style.display === "none" || box.style.display === "")
+                        ? "block"
+                        : "none";
+            });
+        }
+    </script>
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+            @await Html.PartialAsync("~/Views/QuangCao/_BannerTechNeed.cshtml")
+            <!-- CENTER COLUMN -->
+            <div class="center_column col-xs-12 col-sm-9 yccn"
+                 id="center_column"
+                 style="margin-bottom:200px;">
+
+                <!-- Phiếu yêu cầu công nghệ -->
+                @await Html.PartialAsync("_PhieuYeuCauCN", Model.PhieuYeuCau )
+
+                <!-- ITEM NỔI BẬT (tương đương block đầu trong WebForms) -->
+                @if (Model.FirstItem != null)
+                {
+                    <div class="row yccn-box" style="background:#eaeaea;">
+                        <div class="col-sm-5" style="margin:10px 0;">
+                            <div class="entry-thumb image-hover2">
+                                <a href="@Model.FirstItem.DetailUrl">
+                                    <img src="@Model.FirstItem.Image" />
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-7" style="margin:10px 0 20px;">
+                            <div class="entry-ci">
+                                <div class="row"></div>
+                                <div class="row">&nbsp;</div>
+
+                                <h3 class="entry-title-big"
+                                    style="font-size:20px;font-weight:bold;">
+                                    <a href="@Model.FirstItem.DetailUrl">
+                                        @Model.FirstItem.Title
+                                    </a>
+                                </h3>
+
+                                <br />
+
+                                <div class="entry-excerpt" style="font-size:14px;">
+                                    @Html.Raw(Model.FirstItem.Description)
+                                </div>
+
+                                <br />
+
+                                <div class="entry-more">
+                                    <a href="@Model.FirstItem.DetailUrl">Đọc thêm</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="subContainer">
+
+                    <form method="get">
+                        <select name="SelectedLinhVuc"
+                                class="DropDownList"
+                                onchange="this.form.submit()">
+                            @foreach (var lv in Model.LinhVucs)
+                            {
+                                <option value="@lv.Value"
+                                        selected="@lv.Selected">
+                                    @lv.Text
+                                </option>
+                            }
+                        </select>
+                    </form>
+
+                    <!-- Paging -->
+                    <div style="float:right;margin-top:-20px;">
+                        <div class="sortPagiBar clearfix">
+                            <div class="bottom-pagination" style="margin-top:-15px">
+                                <nav>
+                                    <ul class="pagination">
+
+                                        <!-- First -->
+                                        <li>
+                                            <a class="first"
+                                               href="?page=1&SelectedLinhVuc=@Model.SelectedLinhVuc">
+                                                &lt;
+                                            </a>
+                                        </li>
+
+                                        @foreach (var p in Model.Pages)
+                                        {
+                                            <li class="@(p == Model.CurrentPage ? "active" : "")">
+                                                <a class="phantrang"
+                                                   href="?page=@p&SelectedLinhVuc=@Model.SelectedLinhVuc">
+                                                    @p
+                                                </a>
+                                            </li>
+                                        }
+
+                                        <!-- Last -->
+                                        <li>
+                                            <a class="first"
+                                               href="?page=@Model.TotalPage&SelectedLinhVuc=@Model.SelectedLinhVuc">
+                                                &gt;
+                                            </a>
+                                        </li>
+
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- DANH SÁCH TIN -->
+                <ul class="blog-posts TechNeedBlock row">
+
+                    @foreach (var item in Model.Items)
+                    {
+                        <li class="col-sm-4"
+                            style="border-right:1px solid #eaeaea;
+                                       border-bottom:1px solid #eaeaea">
+
+                            <article class="entry">
+                                <div class="row">
+
+                                    <div class="col-sm-6" style="margin:10px 0 20px;">
+                                        <div class="entry-thumb image-hover2">
+                                            <a href="@item.DetailUrl">
+                                                <img src="@item.Image" />
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-6"
+                                         style="margin:10px 0 20px;
+                                                    padding-left:1px;
+                                                    padding-right:8px;
+                                                    height:150px;
+                                                    overflow:hidden;">
+                                        <div class="entry-ci">
+                                            <h3 class="entry-title">
+                                                <a href="@item.DetailUrl">
+                                                    @item.Title
+                                                </a>
+                                            </h3>
+
+                                            <div class="DescriptionYCCN"
+                                                 style="height:72px;
+                                                            line-height:15px;
+                                                            overflow:hidden;">
+                                                @Html.Raw(item.Description)
+                                            </div>
+
+                                            <div class="entry-more">
+                                                <a href="@item.DetailUrl">Đọc thêm</a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </article>
+                        </li>
+                    }
+
+                </ul>
+
+            </div>
+
+            <!-- LEFT COLUMN -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+                @await Html.PartialAsync("_PortletYeuCauMoi", Model.YeuCauMoi)
+            </div>
+
+        </div>
+    </div>
+</div>

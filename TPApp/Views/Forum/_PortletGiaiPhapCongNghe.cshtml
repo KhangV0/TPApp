@@ -1,0 +1,50 @@
+﻿@using TPApp.ViewModel
+@model ForumPortletGiaiPhapCongNgheVm
+
+<div class="left-giai-phap" id="center_column">
+    <div class="title_block">
+        Giải pháp công nghệ
+        <span class="head-line"></span>
+    </div>
+
+    <ul class="blog-posts">
+        @if (Model?.Items != null && Model.Items.Any())
+        {
+            foreach (var item in Model.Items)
+            {
+                <li class="post-item">
+                    <article class="entry">
+                        <div class="row">
+                            <div class="col-sm-4" style="left: 5px;">
+                                <div class="entry-thumb image-hover2">
+                                    <a href="@item.Url" border="0" align="left">
+                                        <img src="@item.ImageUrl"
+                                             alt="@item.Title"
+                                             title="@item.Tooltip" />
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-8" style="right: 5px;">
+                                <div class="entry-ci">
+                                    <h3 class="entry-title">
+                                        <a href="@item.Url">
+                                            @item.Title
+                                        </a>
+                                    </h3>
+
+                                    <div class="entry-meta-data" style="display:none">
+                                        <span class="date">
+                                            <i class="fa fa-calendar"></i>
+                                            @item.DateText
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </li>
+            }
+        }
+    </ul>
+</div>

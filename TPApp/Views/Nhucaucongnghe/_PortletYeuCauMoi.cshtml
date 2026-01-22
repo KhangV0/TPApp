@@ -1,0 +1,65 @@
+﻿@model TPApp.ViewModel.PortletYeuCauMoiViewModel
+
+@section Scripts {
+    <script>
+        $(function () {
+            $(".ContentYCM").each(function () {
+                $(this).html($(this).text());
+            });
+
+            $('#demo1').scrollbox();
+
+            $('#DangYCCN').click(function () {
+                $('#DangYCCNRegion').slideToggle("slow");
+                $("html, body").animate({ scrollTop: 0 }, "slow");
+                return false;
+            });
+        });
+    </script>
+}
+<div class="box-adv NhuCauCN" style="height:52px;padding:13px 0 0 10px;text-align:center">
+    <a href="#" id="DangYCCN">
+        <span class="TitleNhuCauCN">Đăng yêu cầu công nghệ</span>
+    </a>
+</div>
+
+<div class="adv-banner left-module">
+    <div class="box-adv">
+        <a href="https://techport.vn/video.html">
+            <img src="https://techport.vn/FrontEnd/assets/images/videos.jpg">
+            <span class="TitleQuangCao">LIVESTREAM CÔNG NGHỆ</span>
+        </a>
+    </div>
+
+    <div class="box-adv">
+        <a href="https://techport.vn/en/55-list-tech-equipment/mechanical-1041.html" target="_blank">
+            <img src="https://techport.vn/uploads/2018/5-28/254-170-65.2993417020418Banner-NEW-1024.jpg">
+        </a>
+    </div>
+</div>
+
+<div class="block left-module" style="display:none">
+    <p class="title_block">Yêu cầu mới</p>
+
+    <div class="block_content">
+        <div class="layered layered-category">
+            <div class="layered-content" id="demo1">
+                <ul class="tree-menu">
+
+                    @if (Model?.Items != null && Model.Items.Any())
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <li class="ContentYCM">
+                                <a href="javascript:void(0)">
+                                    @item.NoiDung
+                                </a>
+                            </li>
+                        }
+                    }
+
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

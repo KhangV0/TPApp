@@ -1,0 +1,129 @@
+﻿@model TPApp.ViewModel.VideoIndexViewModel
+
+
+<!-- porlet news -->
+<div class="brand-showcase">
+
+    <!-- porlet news -->
+    <div class="brand-showcase">
+        <h2 class="brand-showcase-title">
+            <a class="TitleHomeLato" href="#">Livestream công nghệ</a>
+        </h2>
+
+        <div class="brand-showcase-box">
+            <div class="brand-showcase-content">
+                <div id="showcase-1" class="brand-showcase-content-tab active">
+                    <div class="row">
+
+                        @* ===== VIDEO NỔI BẬT ===== *@  
+                        @if (Model.Highlight != null)
+                        {
+                            <div class="col-xs-12 col-sm-12 trademark-info">
+                                <div class="col-sm-6" style="position: relative;">
+                                    <a class="VideoHOT"
+                                       href="@($"{Html.MainDomain()}{Model.Highlight.MenuId}/{Model.Highlight.QueryString}-{Model.Highlight.Id}.html")">
+                                        <img src="@Html.CookedImageURL("460-275", Model.Highlight.Image)"
+                                             class="img-responsive" />
+                                        @if (!string.IsNullOrEmpty(Model.Highlight.URL))
+                                        {
+                                            <span class="ClockVideo">
+                                                <i class="fa fa-clock-o"></i>:
+                                                @Model.Highlight.URL
+                                            </span>
+                                        }
+                                    </a>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <a class="BoldVideo"
+                                       href="@($"{Html.MainDomain()}{Model.Highlight.MenuId}/{Model.Highlight.QueryString}-{Model.Highlight.Id}.html")">
+                                        @Model.Highlight.Title
+                                    </a>
+                                    <div class="Description">
+                                        @Html.Raw(Model.Highlight.Description)
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @* ===== DANH SÁCH VIDEO ===== *@
+                        <div class="col-xs-12 col-sm-12 trademark-info" style="padding-top: 10px;">
+                            <div class="col-sm-12" style="padding:5px 0px 0px 15px">
+                                <h2 class="brand-showcase-title">
+                                    <a href="#">Video công nghệ</a>
+                                </h2>
+                            </div>
+
+                            @foreach (var item in Model.Videos)
+                            {
+                                <div class="col-sm-4">
+                                    <div class="outer_video">
+                                        <div class="col-sm-12 inner_video">
+                                            <a class="Video"
+                                               href="@($"{Html.MainDomain()}{item.MenuId}/{item.QueryString}-{item.Id}.html")">
+                                                <img src="@Html.CookedImageURL("460-275", item.Image)"
+                                                     class="img-responsive" />
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-12">
+                                        <i class="fa" style="font-size:13px;color:dodgerblue">&#xf144;</i>
+                                        <a class="Bold"
+                                           href="@($"{Html.MainDomain()}{item.MenuId}/{item.QueryString}-{item.Id}.html")">
+                                            @item.Title
+                                        </a>
+
+                                        <div class="row">
+                                            <div class="Left">
+                                                <i class="fa" style="font-size:13px;color:dodgerblue">&#xf017;</i>:
+                                                13:00
+                                            </div>
+                                            <div class="Right">
+                                                <i class="fa" style="font-size:13px;color:dodgerblue">&#xf06e;</i>:
+                                                @item.Viewed
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @* ===== PAGINATION ===== *@  
+                        @if (Model.TotalPages > 1)
+                        {
+                            <div style="float:right;">
+                                <div class="sortPagiBar clearfix">
+                                    <div class="bottom-pagination" style="margin-top:5px">
+                                        <nav>
+                                            <ul class="pagination">
+
+                                                <li class="@(Model.CurrentPage == 1 ? "disabled" : "")">
+                                                    <a asp-route-page="@(Model.CurrentPage - 1)">Trang trước</a>
+                                                </li>
+
+                                                @foreach (var p in Model.Pages)
+                                                {
+                                                    <li class="@(p == Model.CurrentPage ? "active" : "")">
+                                                        <a asp-route-page="@p">@p</a>
+                                                    </li>
+                                                }
+
+                                                <li class="@(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                                    <a asp-route-page="@(Model.CurrentPage + 1)">Trang sau</a>
+                                                </li>
+
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

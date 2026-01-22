@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+            <div class="center_column col-xs-12 col-sm-9 video-box" id="center_column">
+                @await Html.PartialAsync("Video")
+            </div>
+
+            <div class="column col-xs-12 col-sm-3" id="left-column">
+                <div class="adv-banner left-module">
+                    @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
+                    @await Html.PartialAsync("~/Views/QuangCao/Right.cshtml")
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

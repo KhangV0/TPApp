@@ -1,0 +1,108 @@
+﻿@using TPApp.ViewModel
+@model ProductDetailViewModel
+@{
+    ViewData["Title"] = Model.Product.Name;
+}
+
+<div class="columns-container">
+    <div class="container">
+        <div class="row">
+
+            <!-- MAIN CONTENT -->
+            <div class="col-sm-9">
+
+                <div class="product">
+
+                    <!-- IMAGE -->
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <img class="img-fluid"
+                                 src="@Html.CookedImageURL("400-300", Model.Product.QuyTrinhHinhAnh)" />
+
+                            <ul class="owl-carousel mt-3">
+                                @foreach (var img in Model.Images)
+                                {
+                                    <li>
+                                        <img class="ImageSmall"
+                                             src="@Html.CookedImageURL("68-68", img.ToString())" />
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+
+                        <!-- INFO -->
+                        <div class="col-sm-6">
+                            <h1>@Model.Product.Name</h1>
+
+                            <div class="product-star">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <span style="color:@(i <= Model.Product.Rating ? "gold" : "#ccc")">
+                                        ★
+                                    </span>
+                                }
+                                <span class="ms-2">
+                                    <i class="fa fa-user"></i> @Model.Product.Viewed
+                                </span>
+                            </div>
+
+                            <p>
+                                Giá tham khảo:
+                                <strong>@Model.Product.SellPrice</strong>
+                            </p>
+
+                            <p>@Html.Raw(Model.Product.Name)</p>
+
+                            <a class="btn btn-primary">Chọn sản phẩm</a>
+                        </div>
+                    </div>
+
+                    <!-- TABS -->
+                    <div class="product-tabModify mt-4">
+
+                        <ul class="ui-tabViewNav">
+                            <li class="selected"><a href="tabThongtin">THÔNG TIN</a></li>
+                            <li><a href="tabThongso">THÔNG SỐ</a></li>
+                            <li><a href="tabUudiem">ƯU ĐIỂM</a></li>
+                            <li><a href="tabGiaithuong">GIẢI THƯỞNG</a></li>
+                        </ul>
+
+                        <div id="tabThongtin" class="detailTab">
+                            @Html.Raw(Model.Product.MoTa)
+                        </div>
+
+                        <div id="tabThongso" class="detailTab" style="display:none">
+                            @Html.Raw(Model.Product.ThongSo)
+                        </div>
+
+                        <div id="tabUudiem" class="detailTab" style="display:none">
+                            @Html.Raw(Model.Product.UuDiem)
+                        </div>
+
+                        <div id="tabGiaithuong" class="detailTab" style="display:none">
+                            @Html.Raw(Model.Product.GiaiThuong)
+                        </div>
+                    </div>
+
+                    <!-- TAGS -->
+                   @*  <div class="mt-3">
+                        <strong>Tags:</strong>
+                        @foreach (var tag in Model.Tags)
+                        {
+                            <a class="badge bg-secondary me-1">@tag</a>
+                        }
+                    </div> *@
+
+                </div>
+            </div>
+
+            <!-- SIDEBAR -->
+            <div class="col-sm-3">
+                @* @await Html.PartialAsync("_LeftAds")
+                @await Html.PartialAsync("_LienQuan", Model.Product.ID) *@
+                @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
+            </div>
+
+        </div>
+    </div>
+</div>

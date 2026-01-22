@@ -1,0 +1,57 @@
+﻿@model TPApp.ViewModel.YeuCauCongNgheVm
+
+<div class="container my-4">
+    <div class="technology">
+        <div class="technology-title align-items-center mb-3">
+            <h4 class="fw-bold pb-1">
+                <a href="yeu-cau-cong-nghe-67.html">
+                    @Model.Title
+                </a>
+                    
+                
+            </h4>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- CỘT 1 -->
+            <div class="col-md-6">
+                <div class="p-3 bg-white shadow-sm h-100">
+                    <div class="row g-3">
+                        @foreach (var item in Model.Col1)
+                        {
+                            <div class="col-6 col-md-4">
+                                <a href="@item.Link" class="card">
+                                    <img src="@item.ImageUrl" class="card-img-top" />
+                                    <div class="card-body p-2 text-center">
+                                        <small>@item.Title</small>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT 2 -->
+            <div class="col-md-6">
+                <div class="p-3 bg-white shadow-sm h-100">
+                    <div class="row g-3">
+                        @foreach (var item in Model.Col2)
+                        {
+                            <div class="col-6 col-md-4">
+                                <a href="@item.Link" class="card">
+                                    <img src="@item.ImageUrl" class="card-img-top" />
+                                    <div class="card-body p-2 text-center">
+                                        <small>@item.Title</small>
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

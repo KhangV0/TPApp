@@ -1,0 +1,189 @@
+﻿@model TPApp.ViewModel.FeedbackCreateViewModel
+
+@{
+    Layout = "_Layout";
+}
+
+@section scripts {
+    <script type="text/javascript">
+        $(function () {
+            $('#txtCode').realperson();
+
+            $("#btnSend").click(function () {
+                if (checkValid() === true) {
+                    return CheckCap();
+                } else {
+                    return false;
+                }
+            });
+        });
+
+        function CheckCap() {
+            var elem = $('.hasRealPerson').val();
+            var haselem = $('.realperson-hash').val();
+
+            if (rpHash(elem) == haselem) {
+                return true;
+            }
+            else {
+                var error = "<li>" + $("#hidMaXacThuc").val() + "</li>";
+                $('#lstErrorContent li').remove();
+                $("#lstErrorContent").append(error);
+                $('.hasRealPerson').focus();
+                return false;
+            }
+        }
+
+        function rpHash(value) {
+            var hash = 5381;
+            for (var i = 0; i < value.length; i++) {
+                hash = ((hash << 5) + hash) + value.charCodeAt(i);
+            }
+            return hash;
+        }
+
+        function checkValid() {
+            var error = "";
+            var countbug = 0;
+
+            var _name = $("#txtFullName").val().trim();
+            var _phone = $("#txtPhone").val().trim();
+            var _email = $("#txtEmail").val().trim();
+            var _title = $("#txtTitle").val().trim();
+            var _content = $("#txtYourMessage").val().trim();
+
+            if (_name === "") {
+                error += "<li>" + $("#hidHoTen").val() + "</li>";
+                countbug++;
+            }
+
+            if (!isEmail(_email)) {
+                error += "<li>" + $("#hidEmail").val() + "</li>";
+                countbug++;
+            }
+
+            if (_phone === "") {
+                error += "<li>" + $("#hidDienThoai").val() + "</li>";
+                countbug++;
+            }
+
+            if (_title === "") {
+                error += "<li>" + $("#hidTieuDe").val() + "</li>";
+                countbug++;
+            }
+
+            if (_content === "") {
+                error += "<li>" + $("#hidLoiNhat").val() + "</li>";
+                countbug++;
+            }
+
+            if (countbug >= 1) {
+                $('#lstErrorContent li').remove();
+                $("#lstErrorContent").append(error);
+                $('html, body').animate({ scrollTop: $(".Error-Center").offset().top }, 800);
+                return false;
+            }
+            return true;
+        }
+
+        @Html.Raw(@"
+        function isEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+        }
+        ")
+
+    </script>
+}
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            <div class="center_column col-xs-12 col-sm-9 login-box">
+
+                <h2 class="brand-showcase-title">
+                    <a class="TitleHomeLato">@Model.Title</a>
+                </h2>
+
+
+
+                <form asp-action="Index" method="post" id="contact-form">
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-input">
+
+                        <div>
+                            @Html.Raw(Model.Description)
+                        </div>
+
+                        <div class="title-form">Thông tin cá nhân</div>
+
+                        <div>
+                            <label>Họ tên <span class="bold red">(*)</span></label>
+                            <div>
+                                <input id="txtFullName" name="FullName" value="@Model.FullName" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label>Địa chỉ</label>
+                            <div>
+                                <input id="txtAddress" name="Address" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label>Điện thoại <span class="bold red">(*)</span></label>
+                            <div>
+                                <input id="txtPhone" name="Phone" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label>Email <span class="bold red">(*)</span></label>
+                            <div>
+                                <input id="txtEmail" name="Email" value="@Model.Email" />
+                            </div>
+                        </div>
+
+                        <div class="title-form">Nội dung liên hệ</div>
+
+                        <div>
+                            <label>Tiêu đề <span class="bold red">(*)</span></label>
+                            <div>
+                                <input id="txtTitle" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label>Lời nhắn của bạn <span class="bold red">(*)</span></label>
+                            <div>
+                                <textarea id="txtYourMessage" name="Content" rows="7"></textarea>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label>Mã xác thực</label>
+                            <div>
+                                <input id="txtCode" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <button id="btnSend" type="submit">Gửi</button>
+                        </div>
+
+                    </div>
+
+                    <!-- Hidden validate messages -->
+                    <input type="hidden" id="hidMaXacThuc" value="Vui lòng nhập đúng mã xác thực" />
+                    <input type="hidden" id="hidHoTen" value="Vui lòng nhập họ tên" />
+                    <input type="hidden" id="hidDienThoai" value="Vui lòng nhập điện thoại" />
+                    <input type="hidden" id="hidEmail" value="Vui lòng nhập đúng Email" />
+                    <input type="hidden" id="hidTieuDe" value="Vui lòng nhập tiêu đề" />
+                    <input type="hidden" id="hidLoiNhat" value="Vui lòng nhập lời nhắn" />
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

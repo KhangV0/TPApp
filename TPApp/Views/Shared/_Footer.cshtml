@@ -1,0 +1,79 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    // MainDomain có thể lấy từ appsettings hoặc cứng
+    var MainDomain = "https://localhost:7232/";
+}
+
+<footer class="py-4 mt-4 border-top" style="background: #046dbd; color: #ffffff;">
+    <div class="container">
+        <div class="row align-items-center">
+
+            <!-- Cột 1 -->
+            <div class="col-md-5 mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <a href="@($"{MainDomain}")">
+                        <img src="@($"{MainDomain}image/footer-logo.png")"
+                             alt="Techport Logo" style="height:50px;" class="me-2">
+                    </a>
+
+                    <div>
+                        <h6 class="fw-bold mb-0">BẢN QUYỀN CỦA TRUNG TÂM THÔNG TIN THỐNG KÊ VÀ ỨNG DỤNG TIẾN BỘ KH&CN THÀNH PHỐ HỒ CHÍ MINH</h6>
+                        <small>CƠ QUAN CHỦ QUẢN: SỞ KHOA HỌC VÀ CÔNG NGHỆ TP.HCM</small>
+                    </div>
+                </div>
+
+                <p class="mb-1 small"><strong>Địa chỉ:</strong> 79 Trương Định, Phường Bến Thành, TP. Hồ Chí Minh</p>
+                <p class="mb-1 small"><strong>Điện thoại:</strong> 84-028-38221635 | <strong>Fax:</strong> 84-028-38291957</p>
+                <p class="mb-0 small"><strong>Email:</strong> info@techport.vn</p>
+            </div>
+
+            <!-- Cột 2 -->
+            <div class="col-md-4 mb-3 mb-md-0 text-center">
+                <h6 class="fw-bold">MẠNG XÃ HỘI</h6>
+                <div class="d-flex justify-content-center gap-2 mt-2">
+                    <a href="https://www.facebook.com/SanGiaoDichCongNgheTPHCM#"
+                       class="btn btn-outline-primary btn-sm bg-white"
+                       style="color: #0D6EFD !important;">
+                        <i class="bi bi-facebook"></i> Facebook
+                    </a>
+                    <a href="https://www.youtube.com/channel/UCVfkzkHQ3U7xF9oQnWxWgiA"
+                       class="btn btn-outline-danger btn-sm bg-white"
+                       style="color: #DC3545 !important;">
+                        <i class="bi bi-youtube"></i> YouTube
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cột 3 -->
+            <div class="col-md-3 text-center">
+                <h6 class="fw-bold">CHỨNG NHẬN BỞI</h6>
+                <img src="@($"{MainDomain}image/chungnhan.png")"
+                     alt="Chứng nhận" class="img-fluid mt-2" style="max-height:50px;">
+            </div>
+
+        </div>
+    </div>
+</footer>
+
+<!-- SideButtons Partial -->
+@await Html.PartialAsync("_SideButtons")
+
+@section Scripts {
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-BM80DM112X"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-BM80DM112X');
+    </script>
+
+    <!-- GA4 - G-P3LZNQKLM1 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-P3LZNQKLM1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-P3LZNQKLM1');
+    </script>
+}

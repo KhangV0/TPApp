@@ -1,0 +1,48 @@
+﻿@model TPApp.ViewModel.ForumPortletTinTucVm
+
+<div id="center_column">
+    <div class="title_block">
+        Tin Sự Kiện<span class="head-line"></span>
+    </div>
+
+    <ul class="blog-posts">
+        @foreach (var item in Model.Items)
+        {
+            <li class="post-item">
+                <article class="entry">
+                    <div class="row">
+                        <div class="col-sm-4" style="left: 5px;">
+                            <div class="entry-thumb image-hover2">
+                                <a id="hplImg"
+                                   href="@item.Url"
+                                   border="0"
+                                   align="left">
+                                    <img id="img"
+                                         src="@item.ImageUrl"
+                                         title="@item.Tooltip" />
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-8" style="right: 5px;">
+                            <div class="entry-ci">
+                                <h3 class="entry-title">
+                                    <a id="hplTitle" href="@item.Url">
+                                        @item.Title
+                                    </a>
+                                </h3>
+
+                                <div class="entry-meta-data">
+                                    <span class="date">
+                                        <i class="fa fa-calendar"></i>
+                                        @item.DateText
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </li>
+        }
+    </ul>
+</div>
