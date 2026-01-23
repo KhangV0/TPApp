@@ -1,0 +1,29 @@
+﻿@model TPApp.ViewModel.MenuLeftViewModel
+
+<div class="block left-module">
+    <p class="title_block" style="text-align:center">
+        @Model.Header
+    </p>
+
+    <div class="block_content">
+        <!-- layered -->
+        <div class="layered layered-category">
+            <div class="layered-content">
+                <ul class="tree-menu">
+                    @if (Model.Menus != null && Model.Menus.Any())
+                    {
+                        foreach (var item in Model.Menus)
+                        {
+                            <li>
+                                <a href="@item.NavigateUrl">
+                                    @item.Title
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+

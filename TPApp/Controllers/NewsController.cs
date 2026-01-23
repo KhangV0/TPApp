@@ -110,6 +110,7 @@ namespace TPApp.Controllers
             var vm = new NewsDetailVm
             {
                 Id = p.Id,
+                MenuId = p.MenuId ?? menuId,
                 Title = p.Title,
                 Description = p.Description,
                 Content = p.Contents,

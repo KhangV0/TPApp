@@ -85,9 +85,8 @@
             <!-- right column -->
             <div class="column col-xs-12 col-sm-3" id="left_column">
 
-                @* === UserControls cũ → Partial Views === *@
-                @* @await Html.PartialAsync("_MenuLeft") *@
-                @* @await Html.PartialAsync("_RightSuKien") *@
+                @await Component.InvokeAsync("MenuLeft", new { menuId = Model.MenuId })
+                @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
 
             </div>
         </div>
