@@ -1,0 +1,368 @@
+﻿@model TPApp.ViewModel.TimKiemDoiTacDetailVm
+@{
+    ViewData["Title"] = Model.TenSanPham;
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            <!-- CENTER COLUMN -->
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+                <div id="product">
+
+                    <!-- IMAGES -->
+                    <div class="product-images images zoom-enabled pic-pro img-box">
+                        <div class="pb-left-column col-xs-12 col-sm-6">
+                            <div class="product-image">
+                                <div class="product-full">
+                                    <a href="@Model.ImageUrl" class="simpleLens-lens-image">
+                                        <img src="@Model.ImageUrl"
+                                             class="simpleLens-big-image img-responsive"
+                                             alt="@Model.TenSanPham" />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT INFO -->
+                        <div class="pb-right-column col-xs-12 col-sm-6">
+
+                            <h1 class="product-name">@Model.TenSanPham</h1>
+
+                            <div class="product-desc">
+
+                                <!-- RATING -->
+                                <div class="product-star">
+                                    <input type="hidden" id="hidRating" value="@Model.Rating" />
+                                    <div id="stars-sp" data-rating="@Model.Rating"></div>
+
+                                    <span class="author">
+                                        <i class="fa fa-user" style="padding-left:20px"></i>
+                                        @Model.Viewed lượt xem
+                                    </span>
+                                </div>
+
+                                Liên hệ:
+                                <span class="NhaCungUngLink">@Model.FullName</span>
+                            </div>
+
+                            <div class="product-desc">
+                                Địa chỉ: @Model.DiaChi
+                            </div>
+
+                            <div>Điện thoại: @Model.Phone</div>
+                            <div>Email: @Model.Email</div>
+                            <div>Tên đơn vị: @Model.TenDonVi</div>
+
+                            <!-- ACTION -->
+                            <div class="form-action">
+                                <div class="button-group">
+
+                                    <a href="@Url.Action("AddCart", "TimKiemDoiTac", new { productId = Model.TimDoiTacId })"
+                                       class="btn-add-cart etheme_add_to_cart_button">
+                                        Thêm vào giỏ hàng
+                                    </a>
+
+                                    <div id="stars-default">
+                                        <input type="hidden" id="inrating" value="@Model.Rating" />
+                                    </div>
+
+                                    <div class="comments-advices">
+                                        <div class="product-star">
+                                            <i class="fa fa-pencil"></i>
+                                            <button id="btnHoanTat"
+                                                    type="button"
+                                                    class="btn btn-link"
+                                                    style="color:#3399ff">
+                                                Gửi đánh giá
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <!-- SHARE -->
+                            <div class="form-share">
+                                <div class="sendtofriend-print">
+                                    <div class="post-share">
+                                        <div class="ShareThis">
+                                            <a href="javascript:print();"><i class="fa fa-print"></i></a>
+                                            <span class='st_facebook_large'></span>
+                                            <span class='st_twitter_large'></span>
+                                            <span class='st_linkedin_large'></span>
+                                            <span class='st_pinterest_large'></span>
+                                            <span class='st_sharethis_large'></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- TABS -->
+                    <ul class="ui-tabViewNav">
+                        <li class="selected">
+                            <a href="information">MÔ TẢ</a>
+                        </li>
+                        <li>
+                            <a href="reviews">HÌNH THỨC HỢP TÁC</a>
+                        </li>
+                    </ul>
+
+                    <div id="information" class="ChiTietNhaTuVanTab">
+                        @Html.Raw(Model.MoTa)
+                    </div>
+
+                    <div id="reviews" class="ChiTietNhaTuVanTab" style="display:none">
+                        @Html.Raw(Model.HinhThuc)
+                    </div>
+
+                    <!-- RELATED -->
+                    <div class="page-product-box">
+                        <h2 class="brand-showcase-title">
+                            <a>TÌM KIẾM ĐỐI TÁC</a>
+                        </h2>
+
+                        <ul class="product-list owl-carousel">
+
+                            @foreach (var p in Model.RelatedItems)
+                            {
+                                <li>
+                                    <div class="product-container">
+                                        <div class="left-block">
+                                            <a href="@p.Url">
+                                                <img src="@p.ImageUrl"
+                                                     class="img-responsive"
+                                                     alt="@p.TenSanPham" />
+                                            </a>
+
+                                            <div class="add-to-cart">
+                                                <a href="@p.Url" class="etheme_add_to_cart_button">
+                                                    Thêm vào giỏ hàng
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div class="right-block">
+                                            <h5 class="product-name">
+                                                <a href="@p.Url">@p.TenSanPham</a>
+                                            </h5>
+
+                                            <p>Liên hệ: @p.FullName</p>
+
+                                            <div id="stars-sp" data-rating="@p.Rating"></div>
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- LEFT COLUMN -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+                <div class="block left-module">
+                    <p class="title_block">Danh mục</p>
+                    <div class="block_content">
+                        <ul class="tree-menu">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <li>
+                                    <a href="@c.Url">@c.Title</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+
+        function ajaxJquery() {
+            $(function () {
+
+                $("#product-detail p, #product-detail span, #product-detail div").each(function () {
+                    $(this).removeAttr("style");
+                });
+
+                $("#ChucNang p, #ChucNang span, #ChucNang div").each(function () {
+                    $(this).removeAttr("style");
+                });
+
+                $("#information p, #information span, #information div").each(function () {
+                    $(this).removeAttr("style");
+                });
+
+                $("#reviews p, #reviews span, #reviews div").each(function () {
+                    $(this).removeAttr("style");
+                });
+
+                // Giữ căn giữa cho image
+                $("#information p img, #information div img").each(function () {
+                    $(this).parent().attr("style", "text-align:center");
+                });
+
+
+                /* ===============================
+                 * RATING PLUGIN (GIỮ NGUYÊN)
+                 * =============================== */
+                $.fn.rating = function (method, options) {
+
+                    method = method || "create";
+
+                    var settings = $.extend({
+                        limit: 5,
+                        value: 0,
+                        glyph: "glyphicon-star",
+                        coloroff: "gray",
+                        coloron: "gold",
+                        size: "1.5em",
+                        cursor: "default",
+                        onClick: function () { },
+                        endofarray: "idontmatter"
+                    }, options);
+
+                    var style = "";
+                    style += "font-size:" + settings.size + "; ";
+                    style += "color:" + settings.coloroff + "; ";
+                    style += "cursor:" + settings.cursor + "; ";
+
+                    if (method === "create") {
+
+                        this.each(function () {
+                            var attr = $(this).attr("data-rating");
+                            if (attr === undefined || attr === false) {
+                                $(this).attr("data-rating", settings.value);
+                            }
+                        });
+
+                        for (var i = 0; i < settings.limit; i++) {
+                            this.append(
+                                '<span data-value="' + (i + 1) +
+                                '" class="ratingicon glyphicon ' + settings.glyph +
+                                '" style="' + style +
+                                '" aria-hidden="true"></span>'
+                            );
+                        }
+
+                        this.each(function () {
+                            paint($(this));
+                        });
+                    }
+
+                    if (method === "set") {
+                        this.attr("data-rating", options);
+                        this.each(function () { paint($(this)); });
+                    }
+
+                    if (method === "get") {
+                        return this.attr("data-rating");
+                    }
+
+                    this.find("span.ratingicon").click(function () {
+                        var rating = $(this).attr("data-value");
+                        $(this).parent().attr("data-rating", rating);
+                        paint($(this).parent());
+                        settings.onClick.call($(this).parent());
+                    });
+
+                    function paint(div) {
+                        var rating = parseInt(div.attr("data-rating")) || 0;
+
+                        div.find("input").val(rating);
+
+                        div.find("span.ratingicon").each(function () {
+                            var value = parseInt($(this).attr("data-value"));
+                            if (value > rating) {
+                                $(this).css("color", settings.coloroff);
+                            } else {
+                                $(this).css("color", settings.coloron);
+                            }
+                        });
+                    }
+                };
+
+
+                /* ===============================
+                 * INIT RATING
+                 * =============================== */
+                $(document).ready(function () {
+
+                    $("#stars-default").rating();
+
+                    var ratingValue = $("#hidRating").val() || 0;
+                    $("#stars-sp").rating("create", {
+                        coloron: "gold",
+                        limit: 5,
+                        value: ratingValue
+                    });
+
+                    // Disable click (giống WebForms)
+                    $("#stars-sp").children().off("click");
+                });
+
+
+                /* ===============================
+                 * TAB CLICK (UI TABVIEW)
+                 * =============================== */
+                $(".ui-tabViewNav li").click(function () {
+
+                    $(".ui-tabViewNav li").removeClass("selected");
+                    $(this).addClass("selected");
+
+                    var divShow = $(this).find("a").attr("href");
+
+                    $(".ChiTietNhaTuVanTab").hide();
+                    $("#" + divShow).show();
+
+                    return false;
+                });
+
+
+                /* ===============================
+                 * ADD TO CART (CLICK IMAGE)
+                 * =============================== */
+                $(".etheme_add_to_cart_button").click(function () {
+                    var url = $(this).closest(".product-container").find("a").attr("href");
+                    window.location.href = url;
+                    return false;
+                });
+
+
+                /* ===============================
+                 * IMAGE ZOOM
+                 * =============================== */
+                $(".ImageSmall").click(function () {
+                    var url = $(this).attr("src").replace("68-68", "400-300");
+                    $(".simpleLens-big-image").attr("src", url);
+                    return false;
+                });
+
+
+                /* ===============================
+                 * SUBMIT RATING
+                 * =============================== */
+                $("#btnHoanTat").click(function () {
+                    alert("Đánh giá gửi thành công. Cám ơn đánh giá của bạn.");
+                });
+
+            });
+        }
+
+        // AUTO CALL
+        ajaxJquery();
+
+    </script>
+}

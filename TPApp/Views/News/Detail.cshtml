@@ -1,0 +1,95 @@
+﻿@model TPApp.ViewModel.NewsDetailVm
+@{
+    Layout = "_Layout"; // giữ layout site hiện tại
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <!-- row -->
+        <div class="row">
+
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+                <h1 class="page-heading">
+                    <span class="page-heading-title2">
+                        @Model.Title
+                    </span>
+                </h1>
+
+                <article class="entry-detail">
+                    <div class="entry-meta-data">
+                        @Model.PublishedDateText
+                    </div>
+
+                    <div class="entry-photo">
+                        <b><i>@Html.Raw(Model.Description)</i></b>
+                    </div>
+
+                    <div class="content-text clearfix">
+                        @Html.Raw(Model.Content)
+
+                        <div class="content-text clearfix" style="text-align: right; font-weight: 700;">
+                            @Model.Author
+                        </div>
+
+                        @* ===== IMAGE CAROUSEL (TypeId = 4) ===== *@
+                        @if (Model.Images != null && Model.Images.Any())
+                        {
+                            <div id="myCarousel" class="carousel slide" data-ride="carousel">
+                                <div class="carousel-inner" role="listbox">
+                                    @for (int i = 0; i < Model.Images.Count; i++)
+                                    {
+                                        var img = Model.Images[i];
+                                        <div class="item @(i == 0 ? "active" : "")">
+                                            <img src="@img.ImageUrl" alt="@img.Title" />
+                                            @img.Title
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Left and right controls -->
+                                <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
+                                    <span class="glyphicon glyphicon-chevron-left"></span>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                                <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
+                                    <span class="glyphicon glyphicon-chevron-right"></span>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </article>
+
+                <!-- Related Posts -->
+                <div class="single-box">
+                    <h2 class="head-title">TIN KHÁC</h2>
+
+                    <ul class="list-other-news">
+                        @foreach (var item in Model.Related)
+                        {
+                            <li>
+                                <a class="title_pro"
+                                   href="/@item.MenuId/@(item.QueryString)-@(item.Id).html">
+                                    @item.Title
+                                </a>
+                                <span>
+                                    @item.PublishedDate?.ToString("MM/dd/yyyy")
+                                </span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <!-- ./Related Posts -->
+            </div>
+
+            <!-- right column -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                @* === UserControls cũ → Partial Views === *@
+                @* @await Html.PartialAsync("_MenuLeft") *@
+                @* @await Html.PartialAsync("_RightSuKien") *@
+
+            </div>
+        </div>
+    </div>
+</div>

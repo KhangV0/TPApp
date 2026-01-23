@@ -51,6 +51,7 @@ namespace TPApp.Data
         public DbSet<User> Users { get; set; }
         public DbSet<PhieuYeuCauCNTB> PhieuYeuCauCNTBs { get; set; }
         public DbSet<Album> Albums { get; set; }
+        public DbSet<TimKiemDoiTac> TimKiemDoiTacs { get; set; }
 
 
 

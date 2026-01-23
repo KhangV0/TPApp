@@ -1,0 +1,210 @@
+﻿@model TPApp.ViewModel.TimKiemDoiTacListVm
+
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <!-- row -->
+        <div class="row">
+
+            <!-- Center colunm-->
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+                <!-- view-product-list-->
+                <div id="view-product-list" class="view-product-list">
+                    <h2 class="brand-showcase-title">
+                        <span>@Model.CateTitle</span>
+                    </h2>
+
+                    <ul class="display-product-option">
+                        <li class="view-as-grid selected">
+                            <span>grid</span>
+                        </li>
+                        <li class="view-as-list">
+                            <span>list</span>
+                        </li>
+                    </ul>
+
+                    <!-- PRODUCT LIST -->
+                    <ul class="row product-list grid">
+
+                        @foreach (var item in Model.Items)
+                        {
+                            <li class="col-sx-12 col-sm-3 ListProductMobile">
+                                <div class="product-container">
+
+                                    <!-- LEFT -->
+                                    <div class="left-block">
+                                        <a href="@item.Url">
+                                            <img src="@item.ImageUrl"
+                                                 class="img-responsive ProductListImage"
+                                                 alt="@item.TenSanPham" />
+                                        </a>
+
+                                        <div class="quick-view"></div>
+
+                                        <div class="add-to-cart">
+                                            <form asp-action="AddCart"
+                                                  asp-controller="TimKiemDoiTac"
+                                                  method="post">
+                                                <input type="hidden" name="productId" value="@item.TimDoiTacId" />
+                                                <button type="submit" class="etheme_add_to_cart_button">
+                                                    Thêm vào giỏ hàng
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- RIGHT -->
+                                    <div class="right-block">
+                                        <h5 class="product-name">
+                                            <a href="@item.Url">@item.TenSanPham</a>
+                                        </h5>
+
+                                        <p class="LienHeTimKiemDT">
+                                            Liên hệ: @item.FullName
+                                        </p>
+
+                                        <div id="stars-sp">
+                                            @{
+                                                var rawStar = item.Rating ?? 0;
+                                                if (rawStar < 0) rawStar = 0;
+                                                if (rawStar > 5) rawStar = 5;
+
+                                                var stars = new string('★', rawStar)
+                                                + new string('☆', 5 - rawStar);
+                                            }
+                                            <span style="color:gold">@stars</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </li>
+                        }
+
+                    </ul>
+                    <!-- ./PRODUCT LIST -->
+                </div>
+                <!-- ./view-product-list-->
+                <!-- PAGINATION -->
+                <div class="sortPagiBar">
+                    <div class="bottom-pagination">
+                        <nav>
+                            <ul class="pagination">
+
+                                @{
+                                    var totalPage = (int)Math.Ceiling((double)Model.Total / Model.PageSize);
+                                    var currentPage = Model.Page;
+
+                                    const int maxPages = 10;
+                                    var half = maxPages / 2;
+
+                                    var startPage = currentPage - half;
+                                    var endPage = currentPage + half - 1;
+
+                                    if (startPage < 1)
+                                    {
+                                        startPage = 1;
+                                        endPage = Math.Min(totalPage, maxPages);
+                                    }
+
+                                    if (endPage > totalPage)
+                                    {
+                                        endPage = totalPage;
+                                        startPage = Math.Max(1, totalPage - maxPages + 1);
+                                    }
+                                }
+
+                                <!-- PREV -->
+                                @if (currentPage > 1)
+                                {
+                                    <li>
+                                        <a href="?page=@(currentPage - 1)&pageSize=@Model.PageSize">&lt;</a>
+                                    </li>
+                                }
+
+                                @for (int i = startPage; i <= endPage; i++)
+                                {
+                                    <li class="@(i == currentPage ? "active" : "")">
+                                        <a href="?page=@i&pageSize=@Model.PageSize">@i</a>
+                                    </li>
+                                }
+
+                                <!-- NEXT -->
+                                @if (currentPage < totalPage)
+                                {
+                                    <li>
+                                        <a href="?page=@(currentPage + 1)&pageSize=@Model.PageSize">&gt;</a>
+                                    </li>
+                                }
+
+                            </ul>
+                        </nav>
+                    </div>
+
+                    <div class="show-product-item">
+                        Sản phẩm / trang:
+                        <select onchange="location.href='?page=1&pageSize=' + this.value;">
+                            @foreach (var s in new[] { 12, 20, 30, 40, 50 })
+                            {
+                                <option value="@s" selected="@(s == Model.PageSize)">
+                                    @s
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <span class="first">
+                        Tổng: @Model.Total
+                    </span>
+                </div>
+
+            </div>
+            <!-- ./ Center colunm -->
+            <!-- Left colunm -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                <div class="block left-module">
+                    <p class="title_block">Danh mục</p>
+
+                    <div class="block_content">
+                        <div class="layered layered-category">
+                            <div class="layered-content">
+                                <ul class="tree-menu">
+                                    @foreach (var cate in Model.Categories)
+                                    {
+                                        <li class="@(cate.CatId == Model.CateId ? "active" : "")">
+                                            <span></span>
+                                            <a href="@cate.Url">@cate.Title</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- ./left colunm -->
+
+        </div>
+        <!-- ./row-->
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script>
+            $(function () {
+
+            $(".current").parent().addClass("active");
+
+            $(".etheme_add_to_cart_button").click(function () {
+                var url = $(this).closest(".product-container").find("a").first().attr("href");
+                window.location.href = url;
+                return false;
+            });
+
+        });
+    </script>
+}

@@ -1,0 +1,47 @@
+﻿
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <!-- row -->
+        <div class="row">
+
+            <!-- Center main column -->
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+                @* uc3:DichVuCungUng *@
+                @* @await Html.PartialAsync("~/Views/FrontEnd/DichVuTuVan/_DichVuCungUng.cshtml") *@
+
+                @* uc1:DichVuTuVan *@
+                @* @await Html.PartialAsync("~/Views/FrontEnd/DichVuTuVan/_DichVuTuVan.cshtml") *@
+
+            </div>
+
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                <div class="adv-banner left-module">
+                    <div class="box-adv">
+                        <a href="@Html.($"{MainDomain}yeu-cau-dich-vu.html")">
+                            <img src="@Html.($"{MainDomain}FrontEnd/assets/data/supportneed.jpg")"
+                                 alt="ads-banner" />
+                        </a>
+                    </div>
+
+                    <div class="box-adv">
+                        <a href="@Html.($"{MainDomain}trangdan.aspx")">
+                            <img src="@Html.($"{MainDomain}FrontEnd/assets/images/chuyengia.jpg")" />
+                            <span class="TitleQuangCao_CB">
+                                Đăng ký chào bán <br /> sản phẩm - dịch vụ
+                            </span>
+                        </a>
+                    </div>
+                </div>
+
+                @* uc2:Left *@
+                @* @await Html.PartialAsync("~/Views/FrontEnd/QuangCao/_Left.cshtml") *@
+
+            </div>
+
+        </div>
+        <!-- End row -->
+    </div>
+</div>
