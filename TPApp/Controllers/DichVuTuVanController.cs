@@ -24,6 +24,7 @@ namespace TPApp.Controllers
                 DichVuTuVan = new DichVuTuVanVm
                 {
                     MenuId = menuId,
+                    SelectedCateId = 0,
                     MainDomain = MainDomain,
                     CurrentPage = 1,
                     PageSize = 16
@@ -49,7 +50,7 @@ namespace TPApp.Controllers
             {
                 MenuId = menuId,
                 SelectedCateId = string.IsNullOrEmpty(cateId)
-                    ? null
+                    ? 0
                     : int.Parse(cateId),
                 CurrentPage = page,
                 PageSize = pageSize,
@@ -59,7 +60,7 @@ namespace TPApp.Controllers
 
             vm.DichVuOptions.Add(new SelectItemVm
             {
-                Value = "",
+                Value = "0",
                 Text = "---Chọn dịch vụ tư vấn---"
             });
 

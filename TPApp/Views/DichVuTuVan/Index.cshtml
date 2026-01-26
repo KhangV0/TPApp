@@ -13,6 +13,30 @@
                 "/DichVuTuVan/DichVuCungUng?menuId=@Model.DichVuTuVan.MenuId&industryId=0&page=1"
             );
         });
+
+
+
+            $(function () {
+                $(".GioHang").hover(function () {
+                    $(this).find(".button-group").attr("style", "display:inline");
+                }, function () {
+                    $(this).find(".button-group").attr("style", "display:none");
+                });
+            });
+
+
+
+            function ajaxJquery() {
+                $(function () {
+                    $(".current").parent().addClass("active");
+
+                    $(".etheme_add_to_cart_button").click(function () {
+                        var url = $(this).parent().parent().find("a").attr("href");
+                        window.location.href = url;
+                        return false;
+                    });
+                });
+            }   
     </script>
 }
 
@@ -54,9 +78,8 @@
 
                 </div>
 
-                @* === Left.ascx === *@
-                @* @await Html.PartialAsync("~/Views/QuangCao/_Left.cshtml") *@
-                @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
+                @await Component.InvokeAsync("QuangCaoLeft")
+
 
             </div>
             <!-- END RIGHT COLUMN -->

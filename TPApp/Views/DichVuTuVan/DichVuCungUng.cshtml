@@ -1,145 +1,136 @@
 ﻿@model TPApp.ViewModel.DichVuTuVanVm
 
-@section Scripts {
-    <script type="text/javascript">
-        $(function () {
-            $(".GioHang").hover(function () {
-                $(this).find(".button-group").attr("style", "display:inline");
-            }, function () {
-                $(this).find(".button-group").attr("style", "display:none");
-            });
-        });
-    </script>
+<div id="dich-vu-cung-ung-container">
 
-    <script type="text/javascript">
-        function ajaxJquery() {
-            $(function () {
-                $(".current").parent().addClass("active");
+    <div class="brand-showcase">
+        <h2 class="brand-showcase-title">
+            <a href="javascript:void(0)">ĐƠN VỊ TƯ VẤN</a>
+            <span class="icon-title">
+                <img alt="trademark" src="https://techport.vn/FrontEnd/assets/data/icon-title.png">
+            </span>
 
-                $(".etheme_add_to_cart_button").click(function () {
-                    var url = $(this).parent().parent().find("a").attr("href");
-                    window.location.href = url;
-                    return false;
-                });
-            });
-        }
-    </script>
+            <div class="RightTuVan">
+                <select id="ddlIndustry">
+                    @foreach (var opt in Model.DichVuOptions)
+                    {
+                        <option value="@opt.Value"
+                                selected="@(Model.SelectedCateId?.ToString() == opt.Value)">
+                            @opt.Text
+                        </option>
+                    }
+                </select>
+            </div>
+        </h2>
 
-    <script>
-        function changeIndustry(val) {
-            const url = `?industryId=${val}&page=1`;
-            window.location.href = url;
-        }
-    </script>
-}
+        <div class="brand-showcase-box">
+            <div class="brand-showcase-content">
+                <div class="row">
+                    <div class="col-md-12 box-pro-list">
+                        <ul class="row product-list grid">
+                            @foreach (var p in Model.ItemsCungUng)
+                            {
+                                <li class="col-sx-12 col-sm-3">
+                                    <div class="product-container" style="height:240px;overflow:hidden;">
+                                        <div class="left-block" style="height:218px;overflow:hidden;">
 
-<div class="brand-showcase">
-    <h2 class="brand-showcase-title">
-        <a href="javascript:void(0)">ĐƠN VỊ TƯ VẤN</a>
-        <span class="icon-title">
-            <img alt="trademark" src="https://techport.vn/FrontEnd/assets/data/icon-title.png">
-        </span>
+                                            <h4 class="entry_title">
+                                                <a href="/don-vi-tu-van/@p.CungUngId">
+                                                    @p.FullName
+                                                </a>
+                                            </h4>
 
-        <div class="RightTuVan">
-            <select id="ddlIndustry" onchange="changeIndustry(this.value)">
-                @foreach (var opt in Model.DichVuOptions)
-                {
-                    <option value="@opt.Value"
-                            selected="@(opt.Value == Model.SelectedCateId?.ToString())">
-                        @opt.Text
-                    </option>
-                }
-            </select>
-        </div>
-    </h2>
+                                            <div class="content_price">
+                                                <p>
+                                                    <span class="price product-price">
+                                                        <a href="@p.Website" target="_blank" rel="nofollow">
+                                                            @p.Website
+                                                        </a>
+                                                    </span>
+                                                </p>
+                                            </div>
 
-    <div class="brand-showcase-box">
-        <div class="brand-showcase-content">
-            <div class="row">
-                <div class="col-md-12 box-pro-list">
-                    <ul class="row product-list grid">
-                        @foreach (var p in Model.ItemsCungUng)
-                        {
-                            <li class="col-sx-12 col-sm-3">
-                                <div class="product-container" style="height:240px;overflow:hidden;">
-                                    <div class="left-block" style="height:218px;overflow:hidden;">
+                                            <div class="product-desc">
+                                                <p>Địa chỉ: @p.DiaChi</p>
+                                                <p>Điện thoại: <a href="tel:@p.Phone">@p.Phone</a></p>
+                                                <p>Email: <a href="mailto:@p.Email">@p.Email</a></p>
+                                            </div>
 
-                                        <h4 class="entry_title">
-                                            <a href="/don-vi-tu-van/@p.CungUngId">
-                                                @p.FullName
-                                            </a>
-                                        </h4>
+                                            <div id="stars-sp">
+                                                @{
+                                                    var star = Math.Clamp(p.Rating ?? 0, 0, 5);
+                                                    var stars = new string('★', star) + new string('☆', 5 - star);
+                                                }
+                                                <span style="color: gold">@stars</span>
+                                            </div>
 
-                                        <div class="content_price">
-                                            <p>
-                                                <span class="price product-price">
-                                                    <a href="@p.Website" target="_blank" rel="nofollow">
-                                                        @p.Website
-                                                    </a>
-                                                </span>
-                                            </p>
                                         </div>
-
-                                        <div class="product-desc">
-                                            <p>Địa chỉ: @p.DiaChi</p>
-                                            <p>
-                                                Điện Thoại:
-                                                <a href="tel:@p.Phone">@p.Phone</a>
-                                            </p>
-                                            <p>
-                                                Email:
-                                                <a href="mailto:@p.Email">@p.Email</a>
-                                            </p>
-                                        </div>
-
-                                        <div id="stars-sp">
-                                            @{
-                                                var star = Math.Clamp(p.Rating ?? 0, 0, 5);
-                                                var stars = new string('★', star) + new string('☆', 5 - star);
-                                            }
-                                            <span style="color: gold; font-size: medium">
-                                                @stars
-                                            </span>
-                                        </div>
-
-                                        <div class="add-to-cart">
-                                            <a href="/dich-vu-tu-van/@p.CungUngId">
-                                                Thêm cung ứng
-                                            </a>
-                                        </div>
-
                                     </div>
-                                </div>
-                            </li>
-                        }
-                    </ul>
-                </div>
-
-                <div class="sortPagiBar">
-                    <div class="bottom-pagination">
-                        <nav>
-                            <ul class="pagination" style="width: 860px;">
-                                <li>
-                                    <span class="first">
-                                        Tổng: @Model.TotalCount
-                                    </span>
                                 </li>
-
-                                @foreach (var p in Model.Pages)
-                                {
-                                    <li class="@(p == Model.CurrentPage ? "active" : "")">
-                                        <a href="?industryId=@Model.SelectedCateId&page=@p"
-                                           class="phantrang">
-                                            @p
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
-                        </nav>
+                            }
+                        </ul>
                     </div>
-                </div>
 
+                    <!-- PAGINATION -->
+                    <div class="sortPagiBar">
+                        <div class="bottom-pagination">
+                            <nav>
+                                <ul class="pagination">
+                                    <li>
+                                        <span class="first">Tổng: @Model.TotalCount</span>
+                                    </li>
+
+                                    @foreach (var p in Model.Pages)
+                                    {
+                                        <li class="@(p == Model.CurrentPage ? "active" : "")">
+                                            <a href="javascript:void(0)"
+                                               class="phantrang"
+                                               data-page="@p">
+                                                @p
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+
+        function loadCungUng(industryId, page) {
+            const url =
+                "/DichVuTuVan/DichVuCungUng"
+                + "?menuId=@Model.MenuId"
+                + "&industryId=" + industryId
+                + "&page=" + page;
+
+            $("#dich-vu-cung-ung-container").load(url, function () {
+                $("#ddlIndustry").val(industryId);
+                bindEvents(); 
+            });
+        }
+
+
+        // đổi category
+        $("#ddlIndustry").off("change").on("change", function () {
+            let industryId = $(this).val();
+            loadCungUng(industryId, 1);
+        });
+
+        // phân trang (BẮT BUỘC delegate vì load ajax)
+        $("#dich-vu-tu-van-container")
+            .off("click", ".phantrang")
+            .on("click", ".phantrang", function () {
+                let page = $(this).data("page");
+                let industryId = $("#ddlIndustry").val();
+                loadCungUng(industryId, page);
+            });
+
+    })();
+</script>

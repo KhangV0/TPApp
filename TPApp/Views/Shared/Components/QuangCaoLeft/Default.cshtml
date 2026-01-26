@@ -1,0 +1,74 @@
+﻿@model TPApp.ViewModel.QuangCaoLeftVm
+
+<div class="adv-banner left-module">
+
+    @* ===== Repeater động ===== *@
+    @if (Model.Items.Any())
+    {
+        foreach (var row in Model.Items)
+        {
+            <div class="box-adv">
+                <a href="@row.URL.Replace("https://techport.vn", "")"
+                   target="_blank"
+                   title="@row.Title">
+
+                    <img src="@Html.CookedImageURL("254-170", row.SRC)"
+                         alt="@row.Title"
+                         title="@row.Title" />
+                </a>
+            </div>
+        }
+    }
+
+    @* ===== Banner tĩnh ===== *@
+    <div class="box-adv">
+        <a href="@($"{Html.MainDomain()}video.html")">
+            <img src="@($"{Html.MainDomain()}FrontEnd/assets/images/videos.jpg")" />
+            <span class="TitleQuangCao">LIVESTREAM CÔNG NGHỆ</span>
+        </a>
+    </div>
+
+    <div class="box-adv">
+        <a href="@($"{Html.MainDomain()}en/55-list-tech-equipment/mechanical-1041.html")"
+           target="_blank">
+            <img title="Công nghệ nước ngoài giới thiệu vào Việt Nam"
+                 src="@($"{Html.MainDomain()}uploads/2018/5-28/254-170-65.2993417020418Banner-NEW-1024.jpg")"
+                 alt="Công nghệ nước ngoài giới thiệu vào Việt Nam" />
+        </a>
+    </div>
+
+    <div class="box-adv Invisible">
+        <a href="http://gccvietnam.com/" target="_blank">
+            <img title="Banner GCC"
+                 src="@($"{Html.MainDomain()}uploads/2018/5-14/254-170-Logo%20GCC.jpg")"
+                 alt="Banner GCC" />
+        </a>
+    </div>
+
+    <div class="box-adv">
+        <a href="@($"{Html.MainDomain()}11-ds-tim-kiem-doi-tac/du-an-khoi-nghiep-31.html")"
+           target="_blank">
+            <img title="Start-Up"
+                 src="@($"{Html.MainDomain()}uploads/2016/12-16/254-170-Start-Up.jpg")"
+                 alt="Start-Up" />
+        </a>
+    </div>
+
+    <div class="box-adv">
+        <a href="@($"{Html.MainDomain()}44/san-giao-dich-cong-nghe-tp-hcm-ket-noi-doanh-nghiep-dua-cong-nghe-vao-doi-song-80292.html")"
+           target="_blank">
+            <img title="Banner bài giới thiệu Techport"
+                 src="@($"{Html.MainDomain()}uploads/2018/3-22/254-170-Banner_250x300px_Techmart_BaiViet-01-01.jpg")"
+                 alt="Banner bài giới thiệu Techport" />
+        </a>
+    </div>
+
+    <div class="box-adv Invisible">
+        <a href="http://bavutex.vn/" target="_blank">
+            <img title="Sàn giao dịch Công nghệ trực tuyến tỉnh BR-VT"
+                 src="@($"{Html.MainDomain()}uploads/2017/11-3/254-170-logoKHCN_new.jpg")"
+                 alt="Sàn giao dịch Công nghệ trực tuyến tỉnh BR-VT" />
+        </a>
+    </div>
+
+</div>
