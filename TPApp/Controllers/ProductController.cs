@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.RegularExpressions;
 using TPApp.Data;
@@ -540,5 +539,65 @@ namespace TPApp.Controllers
             if (price == null) return "";
             return string.Format("{0:N0} {1}", price, currency);
         }
+
+        [HttpGet]
+        public IActionResult RelatedProducts(int productId)
+        {
+            const int languageId = 1;
+
+            var pp = _context.SanPhamCNTBs
+                .FirstOrDefault(x =>
+                    x.ID == productId &&
+                    x.LanguageId == languageId &&
+                    x.StatusId == 3);
+
+            if (pp == null || string.IsNullOrWhiteSpace(pp.CategoryId))
+                return PartialView("_ProductRelated", new List<ProductRelatedItemVm>());
+
+            var cateIds = pp.CategoryId
+                .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                .ToList();
+
+
+            var candidates = _context.SanPhamCNTBs
+                .Where(x =>
+                    x.LanguageId == languageId &&
+                    x.StatusId == 3 &&
+                    x.ID != pp.ID &&
+                    x.CategoryId != null)
+                .AsEnumerable(); // ⬅️ BẮT BUỘC
+
+            var related = candidates
+                .Where(x =>
+                    cateIds.Any(c => x.CategoryId.Contains(";" + c + ";")))
+                .OrderByDescending(x => x.Created)
+                .Take(6)
+                .Select(row => new ProductRelatedItemVm
+                {
+                    Id = row.ID,
+                    Title = row.Name,
+                    Star = row.Rating ?? 0,
+
+                    ImageUrl = string.IsNullOrEmpty(row.QuyTrinhHinhAnh)
+                        ? (row.TypeId == 2
+                            ? MainDomain + "images/sangche.png"
+                            : MainDomain + "images/research.jpg")
+                        : CookedImageURL("254-170", row.QuyTrinhHinhAnh),
+
+                    PriceText = row.OriginalPrice == null
+                        ? ""
+                        : FormatCurrencyOto((decimal?)row.OriginalPrice, row.Currency),
+
+                    Url = MainDomain +
+                          "2-cong-nghe-thiet-bi/" +
+                          row.TypeId + "/" +
+                          MakeURLFriendly(row.Name) +
+                          "-" + row.ID + ".html"
+                })
+                .ToList();
+
+            return PartialView("_ProductRelated", related);
+        }
+
     }
 }

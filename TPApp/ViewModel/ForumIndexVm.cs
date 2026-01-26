@@ -63,6 +63,8 @@ namespace TPApp.ViewModel
 
     public class PagerVm
     {
+
+        public int TotalRecord { get; set; }
         public int CurrentPage { get; set; }
         public int TotalPage { get; set; }
 

@@ -1,47 +1,66 @@
-﻿
+﻿@model TPApp.ViewModel.DichVuTuVanIndexVm
+
+@section Scripts {
+    <script>
+        $(function () {
+            $("#dich-vu-tu-van-container").load(
+                "/DichVuTuVan/DichVuTuVan?cateId=&page=1"
+            );
+        });
+
+         $(function () {
+            $("#dich-vu-cung-ung-container").load(
+                "/DichVuTuVan/DichVuCungUng?menuId=@Model.DichVuTuVan.MenuId&industryId=0&page=1"
+            );
+        });
+    </script>
+}
 
 <div class="columns-container">
     <div class="container" id="columns">
-        <!-- row -->
         <div class="row">
 
-            <!-- Center main column -->
+            <!-- CENTER COLUMN -->
             <div class="center_column col-xs-12 col-sm-9" id="center_column">
 
-                @* uc3:DichVuCungUng *@
-                @* @await Html.PartialAsync("~/Views/FrontEnd/DichVuTuVan/_DichVuCungUng.cshtml") *@
+                <div id="dich-vu-cung-ung-container">
+                </div>
 
-                @* uc1:DichVuTuVan *@
-                @* @await Html.PartialAsync("~/Views/FrontEnd/DichVuTuVan/_DichVuTuVan.cshtml") *@
+                <div id="dich-vu-tu-van-container">
+                </div>
 
             </div>
 
             <div class="column col-xs-12 col-sm-3" id="left_column">
 
                 <div class="adv-banner left-module">
+
                     <div class="box-adv">
-                        <a href="@Html.($"{MainDomain}yeu-cau-dich-vu.html")">
-                            <img src="@Html.($"{MainDomain}FrontEnd/assets/data/supportneed.jpg")"
+                        <a href="@($"{Html.MainDomain()}yeu-cau-dich-vu.html")">
+                            <img src="@($"{Html.MainDomain()}FrontEnd/assets/data/supportneed.jpg")"
                                  alt="ads-banner" />
                         </a>
                     </div>
 
                     <div class="box-adv">
-                        <a href="@Html.($"{MainDomain}trangdan.aspx")">
-                            <img src="@Html.($"{MainDomain}FrontEnd/assets/images/chuyengia.jpg")" />
+                        <a href="@($"{Html.MainDomain()}trangdan.aspx")">
+                            <img src="@($"{Html.MainDomain()}FrontEnd/assets/images/chuyengia.jpg")" />
                             <span class="TitleQuangCao_CB">
-                                Đăng ký chào bán <br /> sản phẩm - dịch vụ
+                                Đăng ký chào bán <br />
+                                sản phẩm - dịch vụ
                             </span>
                         </a>
                     </div>
+
                 </div>
 
-                @* uc2:Left *@
-                @* @await Html.PartialAsync("~/Views/FrontEnd/QuangCao/_Left.cshtml") *@
+                @* === Left.ascx === *@
+                @* @await Html.PartialAsync("~/Views/QuangCao/_Left.cshtml") *@
+                @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
 
             </div>
+            <!-- END RIGHT COLUMN -->
 
         </div>
-        <!-- End row -->
     </div>
 </div>

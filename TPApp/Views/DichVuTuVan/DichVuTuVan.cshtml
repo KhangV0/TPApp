@@ -1,0 +1,176 @@
+﻿@model TPApp.ViewModel.DichVuTuVanVm
+
+<div class="brand-showcase">
+
+    <h2 class="brand-showcase-title">
+        <a href="@($"{Model.MainDomain}8-ds-dich-vu-tu-van/0-0.html")">
+            NHÀ TƯ VẤN
+        </a>
+        <span class="icon-title">
+            <img alt="trademark"
+                 src="https://techport.vn/FrontEnd/assets/data/icon-title.png">
+        </span>
+
+        <div class="RightTuVan">
+            <form method="get">
+                <input type="hidden" name="menuId" value="@Model.MenuId" />
+
+                <select name="cateId"
+                        onchange="this.form.submit()">
+
+                    @foreach (var opt in Model.DichVuOptions)
+                    {
+                        <option value="@opt.Value"
+                                selected="@(Model.SelectedCateId?.ToString() == opt.Value ? "selected" : null)">
+                            @opt.Text
+                        </option>
+                    }
+                </select>
+            </form>
+        </div>
+    </h2>
+
+    <div class="brand-showcase-box">
+        <div class="brand-showcase-content">
+            <div id="showcase-1" class="brand-showcase-content-tab active">
+                <div class="row">
+                    <div class="col-md-12 box-pro-list">
+                        <ul class="row product-list grid">
+
+                            @foreach (var row in Model.Items)
+                            {
+                                var detailUrl =
+                                    $"{Model.MainDomain}8-dich-vu-tu-van/{row.QueryString}-{row.TuVanId}.html";
+
+                                <li class="col-sx-12 col-sm-3 GioHang">
+                                    <div class="product-container" style="height:240px;overflow:hidden;">
+                                        <div class="left-block" style="height:218px;overflow:hidden;">
+
+                                            <h2 class="entry_title">
+                                                <a href="@detailUrl" style="margin-bottom:10px;">
+                                                    @($"{row.HocHam} - {row.FullName}")
+                                                </a>
+                                            </h2>
+
+                                            @if (!string.IsNullOrEmpty(row.HinhDaiDien))
+                                            {
+                                                <a href="@detailUrl">
+                                                    <img src="@($"{Model.MainDomain}{row.HinhDaiDien}")"
+                                                         class="img-responsive"
+                                                         alt="@row.FullName"
+                                                         style="height:100px;max-width:none;" />
+                                                </a>
+                                            }
+
+                                            <div class="content_price" style="margin-bottom:10px;">
+                                                <span class="price product-price">
+                                                    @row.ChucVu
+                                                </span>
+                                            </div>
+
+                                            <div class="content_price">
+                                                Cơ quan: @row.CoQuan
+                                            </div>  
+
+                                            <div class="product-desc">
+                                                <i>
+                                                    @(string.IsNullOrEmpty(row.Phone)
+                                                        ? "Điện thoại: Đăng nhập"
+                                                        : "Điện thoại: " + row.Phone)
+                                                </i>
+                                            </div>
+
+                                            <div class="product-desc">
+                                                <i>
+                                                    @(string.IsNullOrEmpty(row.Email)
+                                                        ? "Email: Đăng nhập"
+                                                        : "Email: " + row.Email)
+                                                </i>
+                                            </div>
+
+                                            <div id="stars-sp">
+                                                @{
+                                                    var rating = row.Rating ?? 0;
+                                                }
+
+                                                @if (rating == 0)
+                                                { <span style="color:gold">☆☆☆☆☆</span> }
+                                                else if (rating == 1)
+                                                { <span style="color:gold">★☆☆☆☆</span> }
+                                                else if (rating == 2)
+                                                { <span style="color:gold">★★☆☆☆</span> }
+                                                else if (rating == 3)
+                                                { <span style="color:gold">★★★☆☆</span> }
+                                                else if (rating == 4)
+                                                { <span style="color:gold">★★★★☆</span> }
+                                                else
+                                                { <span style="color:gold">★★★★★</span> }
+                                            </div>
+
+                                            <div class="add-to-cart">
+                                                <a href="@($"{Model.MainDomain}gio-hang.html")">
+                                                    Thêm tư vấn
+                                                </a>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+
+                        </ul>
+                    </div>
+
+                    <!-- PAGING -->
+                    <div class="sortPagiBar">
+                        <div class="bottom-pagination">
+                            <nav>
+                                <ul class="pagination"
+                                    style="width:860px;position:relative;float:right;">
+
+                                    <li>
+                                        <span class="first">
+                                            Tổng số @Model.TotalCount đơn vị tư vấn
+                                        </span>
+                                    </li>
+
+                                    @if (Model.CurrentPage > 1)
+                                    {
+                                        <li>
+                                            <a class="first"
+                                               href="?menuId=@Model.MenuId&cateId=@Model.SelectedCateId&page=@(Model.CurrentPage - 1)">
+                                                Trang trước
+                                            </a>
+                                        </li>
+                                    }
+
+                                    @foreach (var p in Model.Pages)
+                                    {
+                                        <li>
+                                            <a class="phantrang @(p == Model.CurrentPage ? "current" : "")"
+                                               href="?menuId=@Model.MenuId&cateId=@Model.SelectedCateId&page=@p">
+                                                @p
+                                            </a>
+                                        </li>
+                                    }
+
+                                    @if (Model.CurrentPage < Model.TotalPage)
+                                    {
+                                        <li>
+                                            <a class="first"
+                                               href="?menuId=@Model.MenuId&cateId=@Model.SelectedCateId&page=@(Model.CurrentPage + 1)">
+                                                Trang sau
+                                            </a>
+                                        </li>
+                                    }
+
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

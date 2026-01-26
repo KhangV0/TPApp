@@ -98,8 +98,9 @@
 
             <!-- SIDEBAR -->
             <div class="col-sm-3">
-                @* @await Html.PartialAsync("_LeftAds")
-                @await Html.PartialAsync("_LienQuan", Model.Product.ID) *@
+                @* @await Html.PartialAsync("_LeftAds") *@
+                <p>Count: @Model.RelatedProducts?.Count</p>
+                @await Html.PartialAsync("_ProductRelated", Model.RelatedProducts)
                 @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
             </div>
 

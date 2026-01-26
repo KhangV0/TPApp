@@ -122,5 +122,128 @@ namespace TPApp.Controllers
 
             return View(vm);
         }
+
+
+        [Route("{queryString}-{menuId:int}.html")]
+        public async Task<IActionResult> Category(int menuId, int page = 1)
+        {
+            const int pageSize = 10;
+
+            var langId = HttpContext.Session.GetInt32("LanguageId") ?? 1;
+
+            var menu = await GetMenuAsync(menuId);
+            if (menu == null)
+                return Redirect($"{MainDomain}Errors/404.aspx");
+
+            var subMenuIds = GetSubMenuIds(menuId);
+
+            var (items, total) = await GetNewsByMenuAsync(
+                menuId,
+                subMenuIds,
+                langId,
+                page,
+                pageSize
+            );
+
+            var pager = BuildPager(total, page, pageSize, 10);
+
+            var vm = new NewsCategoryVm
+            {
+                MenuId = menuId,
+                CategoryTitle = menu.Title,
+                Items = items,
+                Pager = pager
+            };
+
+            ViewData["Title"] = menu.Title;
+
+            return View(vm);
+        }
+
+
+        private async Task<Menu?> GetMenuAsync(int menuId)
+        {
+            return await _context.Menus
+                .FirstOrDefaultAsync(x => x.MenuId == menuId);
+        }
+
+
+        private List<int> GetSubMenuIds(int menuId)
+        {
+            return _context
+                .UspSelectSubMenu(menuId)
+                .Select(x => x)
+                .ToList();
+        }
+
+
+        private async Task<(List<NewsItemVm> Items, int Total)>
+    GetNewsByMenuAsync(
+        int menuId,
+        List<int> subMenus,
+        int langId,
+        int page,
+        int pageSize)
+        {
+            var now = DateTime.Now;
+
+            var query = _context.Contents
+                .Where(q =>
+                    (q.MenuId == menuId || subMenus.Contains(q.MenuId ?? 0)) &&
+                    q.LanguageId == langId &&
+                    q.StatusId == 3 &&
+                    q.IsReport == false &&
+                    q.PublishedDate <= now &&
+                    (q.eEffectiveDate == null || q.eEffectiveDate >= now)
+                );
+
+            var total = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(q => q.PublishedDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(q => new NewsItemVm
+                {
+                    Id = q.Id,
+                    MenuId = q.MenuId,
+                    Title = q.Title,
+                    QueryString = q.QueryString,
+                    Image = q.Image,
+                    Description = q.Description,
+                    PublishedDate = q.PublishedDate
+                })
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+
+        private PagerVm BuildPager(
+            int totalRecord,
+            int currentPage,
+            int pageSize,
+            int pageToShow)
+        {
+            var totalPage = (int)Math.Ceiling(totalRecord / (double)pageSize);
+
+            var pages = new HashSet<int>();
+
+            for (int i = Math.Max(1, currentPage - pageToShow);
+                 i <= Math.Min(totalPage, currentPage + pageToShow);
+                 i++)
+            {
+                pages.Add(i);
+            }
+
+            return new PagerVm
+            {
+                TotalRecord = totalRecord,
+                TotalPage = totalPage,
+                CurrentPage = currentPage,
+                Pages = pages.OrderBy(x => x).ToList()
+            };
+        }
+
     }
 }

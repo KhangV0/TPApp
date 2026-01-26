@@ -1,0 +1,126 @@
+﻿@model TPApp.ViewModel.NewsCategoryVm
+
+@{
+    ViewData["Title"] = Model.CategoryTitle;
+    var domain = ViewBag.MainDomain as string ?? "";
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <!-- row -->
+        <div class="row">
+
+            <!-- Center column -->
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+                <h2 class="brand-showcase-title">
+                    <span>@Model.CategoryTitle</span>
+                </h2>
+
+                <ul class="blog-posts">
+                    @foreach (var item in Model.Items)
+                    {
+                        <li class="post-item">
+                            <article class="entry">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <div class="entry-thumb image-hover2">
+                                            <a href="@item.DetailUrl(domain)">
+                                                <img src="@Html.CookedImageURL("460-275", item.Image)"
+                                                     alt="@item.Title"
+                                                     title="@item.Title" />
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-sm-9">
+                                        <div class="entry-ci">
+                                            <h3 class="entry-title">
+                                                <a href="@item.DetailUrl(domain)">
+                                                    @item.Title
+                                                </a>
+                                            </h3>
+
+                                            <div class="entry-meta-data">
+                                                @if (item.MenuId != 83)
+                                                {
+                                                    <span class="Date">
+                                                        <i class="fa fa-calendar"></i>
+                                                        @item.PublishedDateText
+                                                    </span>
+                                                }
+                                            </div>
+
+                                            <div class="entry-excerpt">
+                                                @Html.Raw(item.Description)
+                                            </div>
+
+                                            <div class="entry-more">
+                                                <a href="@item.DetailUrl(domain)">Đọc thêm</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </li>
+                    }
+                </ul>
+
+                <!-- PAGINATION -->
+                @if (Model.Pager.TotalPage > 1)
+                {
+                    <div class="sortPagiBar clearfix">
+                        <div class="bottom-pagination">
+                            <nav>
+                                <ul class="pagination">
+
+                                    <!-- PREVIOUS -->
+                                    <li class="@(Model.Pager.CurrentPage == 1 ? "disabled" : "")">
+                                        <a href="@Url.Action("Category", new {
+                                                menuId = Model.MenuId,
+                                                page = Model.Pager.CurrentPage - 1
+                                            })">
+                                            Trang trước
+                                        </a>
+                                    </li>
+
+                                    <!-- PAGE NUMBERS -->
+                                    @foreach (var p in Model.Pager.Pages)
+                                    {
+                                        <li class="@(p == Model.Pager.CurrentPage ? "active" : "")">
+                                            <a href="@Url.Action("Category", new {
+                                                    menuId = Model.MenuId,
+                                                    page = p
+                                                })">
+                                                <span>@p</span>
+                                            </a>
+                                        </li>
+                                    }
+
+                                    <!-- NEXT -->
+                                    <li class="@(Model.Pager.CurrentPage == Model.Pager.TotalPage ? "disabled" : "")">
+                                        <a href="@Url.Action("Category", new {
+                                                menuId = Model.MenuId,
+                                                page = Model.Pager.CurrentPage + 1
+                                            })">
+                                            Trang sau
+                                        </a>
+                                    </li>
+
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                }
+            </div>
+            <!-- ./ Center column -->
+
+            <!-- Left column -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+                @await Component.InvokeAsync("MenuLeft", new { menuId = Model.MenuId })
+                @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
+            </div>
+            <!-- ./ Left column -->
+
+        </div>
+    </div>
+</div>

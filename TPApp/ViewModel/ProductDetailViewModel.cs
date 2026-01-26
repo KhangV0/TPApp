@@ -17,6 +17,7 @@ namespace TPApp.ViewModel
         public List<Category> RelatedCategories { get; set; }
 
         public List<KeywordVm> Keywords { get; set; }
+        public List<ProductRelatedItemVm> RelatedProducts { get; set; }
 
         public int RatingCount { get; set; }
         public int Viewed { get; set; }

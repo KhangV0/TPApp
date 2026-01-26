@@ -1,0 +1,108 @@
+﻿@model List<TPApp.ViewModel.ProductRelatedItemVm>
+
+<div style="color:red">
+    DEBUG ID = @ViewBag.DebugId <br />
+    DEBUG Lang = @ViewBag.DebugLang <br />
+    DEBUG Status = @ViewBag.DebugStatus <br />
+    DEBUG Cate = @ViewBag.DebugCate <br />
+    DEBUG COUNT = @ViewBag.Count
+</div>
+
+
+
+@if (Model != null && Model.Any())
+{
+    <div class="row"></div>
+
+    <div class="popular-tabs">
+        <ul class="nav-tab">
+            <li><a href="#">SẢN PHẨM LIÊN QUAN</a></li>
+        </ul>
+
+        <div class="tab-container">
+            <div id="tab-1" class="tab-panel active">
+
+                <ul class="product-list owl-carousel"
+                    data-dots="false"
+                    data-loop="true"
+                    data-nav="true"
+                    data-margin="20"
+                    data-autoplaytimeout="1000"
+                    data-autoplayhoverpause="true"
+                    data-responsive='{"0":{"items":3},"600":{"items":3},"1000":{"items":4}}'>
+
+                    @foreach (var row in Model)
+                    {
+                        <li>
+                            <div class="left-block">
+                                <a href="@row.Url">
+                                    <img src="@row.ImageUrl"
+                                         class="img-responsive"
+                                         alt="@row.Title" />
+                                </a>
+                            </div>
+
+                            <div class="right-block">
+                                <h5 class="product-name">
+                                    <a href="@row.Url">@row.Title</a>
+                                </h5>
+
+                                <div class="content_price">
+                                    <span class="price product-price">
+                                        Giá tham khảo :
+                                        <span>@row.PriceText</span>
+                                    </span>
+                                    <br />
+                                </div>
+
+                                <div id="stars-sp">
+                                    @{
+                                        var star = row.Star;
+                                    }
+
+                                    @if (star == 0)
+                                    {
+                                        <span style="color:gold;font-size:medium">☆☆☆☆☆</span>
+                                    }
+                                    else if (star == 1)
+                                    {
+
+                                        <span style="color:gold;font-size:medium">★☆☆☆☆</span>
+                                    }
+                                    else if (star == 2)
+                                    {
+
+                                        <span style="color:gold;font-size:medium">★★☆☆☆</span>
+                                    }
+                                    else if (star == 3)
+                                    {
+
+                                        <span style="color:gold;font-size:medium">★★★☆☆</span>
+                                    }
+                                    else if (star == 4)
+                                    {
+
+                                        <span style="color:gold;font-size:medium">★★★★☆</span>
+                                    }
+                                    else if (star >= 5)
+                                    {
+
+                                        <span style="color:gold;font-size:medium">★★★★★</span>
+                                    }
+                                </div>
+
+                                <div class="info-orther" style="display:none">
+                                    <p>
+                                        Mã sản phẩm:
+                                        <span>@row.Id</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <!-- end tab 1 -->
+        </div>
+    </div>
+}
