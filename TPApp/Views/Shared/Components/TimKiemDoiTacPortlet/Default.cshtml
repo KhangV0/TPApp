@@ -1,0 +1,69 @@
+﻿@model List<TPApp.ViewModel.TimKiemDoiTacPortletItemVm>
+
+    <div class="DivRow">
+        <div class="popular-tabs" id="pl_TimKiemDoiTac">
+            <ul class="nav-tab">
+                <li>
+                <a data-toggle="tab" href="#tab-4">
+                        GỢI Ý TÌM KIẾM ĐỐI TÁC
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-container">
+                <div class="tab-panel active">
+                    <ul class="product-list owl-carousel GoiYTimKiemDoiTac"
+                        data-dots="false"
+                        data-loop="true"
+                        data-nav="true"
+                        data-margin="30"
+                        data-responsive='{"0":{"items":2},"600":{"items":4},"1000":{"items":4}}'>
+
+                        @foreach (var item in Model)
+                        {
+                            <li>
+                                <div class="product-container">
+                                    <div class="left-block">
+                                        <a href="@item.Url">
+                                            <img src="@item.ImageUrl"
+                                                 class="img-responsive"
+                                                 alt="@item.TenSanPham" />
+                                        </a>
+
+                                        <div class="add-to-cart">
+                                            <a href="/gio-hang/add/@item.Id"
+                                               class="btn btn-primary">
+                                                Thêm vào giỏ hàng
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="right-block">
+                                        <h5 class="product-name">
+                                            <a href="@item.Url">@item.TenSanPham</a>
+                                        </h5>
+
+                                        <p>Liên hệ: @item.FullName</p>
+
+                                        <div class="stars">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= item.Star)
+                                                {
+                                                    <span style="color:gold">★</span>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color:gold">☆</span>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>

@@ -1,0 +1,217 @@
+﻿@model TPApp.ViewModel.ChiTietNhaTuVanVm
+@{
+    Layout = "_Layout";
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            <!-- CENTER -->
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+                <div id="product">
+
+                    <!-- IMAGE + INFO -->
+                    <div class="product-images images zoom-enabled pic-pro img-box">
+                        <div class="pb-left-column col-xs-12 col-sm-6">
+                            <div class="product-image">
+                                <div class="product-full">
+                                    <a href="@Model.ImageUrl" class="simpleLens-lens-image">
+                                        <img src="@Model.ImageUrl"
+                                             class="simpleLens-big-image"
+                                             data-big-image="@Model.ImageUrl" />
+                                    </a>
+                                </div>
+                            </div>
+                            <input type="hidden" id="hidLinhVucId" value="@Model.LinhVucId" />
+                            <input type="hidden" id="hidID" value="@Model.Id" />
+                        </div>
+
+                        <div class="pb-right-column col-xs-12 col-sm-6">
+                            <h1 class="product-name">@Model.FullName</h1>
+
+                            <div class="product-desc">
+                                <div class="product-star" id="stars-sp" data-rating="@Model.Rating">
+                                    <input type="hidden" id="inratingsp" value="@Model.Rating" />
+                                    <span style="color:gold">
+                                        @Html.Raw(new string('★', Model.Rating) + new string('☆', 5 - Model.Rating))
+                                    </span>
+                                    <span>@Model.LuotDanhGia</span>
+                                    <span class="author">
+                                        <i class="fa fa-user"></i> @Model.LuotXem
+                                    </span>
+                                </div>
+                                Địa chỉ thường trú: @Model.DiaChi
+                            </div>
+
+                            <div class="product-desc">Ngày sinh: @Model.NgaySinh</div>
+                            <div>Điện thoại: <i>@Model.Phone</i></div>
+                            <div>Email: <i>@Model.Email</i></div>
+                            <div>Học hàm/ Học vị: @Model.HocHam</div>
+                            <div>Cơ quan công tác: @Model.CoQuan</div>
+                            <div>Chức vụ/ Chức danh: @Model.ChucVu</div>
+
+                            <div class="form-action">
+                                <div class="button-group">
+                                    <a class="btn-add-cart" href="#">Chọn nhà tư vấn</a>
+
+                                    <div id="stars-default">
+                                        <input type="hidden" id="inrating" />
+                                    </div>
+
+                                    <div class="comments-advices">
+                                        <div class="product-star">
+                                            <i class="fa fa-pencil"></i>
+                                            <button id="btnHoanTat" class="btn btn-link">
+                                                Gửi đánh giá
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB -->
+                    <div class="tab-container product-tabModify">
+
+                        <li class="activedTitle">
+                            <a href="#product-detail">LĨNH VỰC</a>
+                        </li>
+                        <div id="product-detail" class="tab-panel active">
+                            @Html.Raw(Model.LinhVucText)
+                        </div>
+
+                        <li class="activedTitle">
+                            <a href="#information">DỊCH VỤ CÓ THỂ ĐẢM NHIỆM</a>
+                        </li>
+                        <div id="information" class="tab-panel active">
+                            @Html.Raw(Model.DichVuText)
+                        </div>
+
+                        <li class="activedTitle">
+                            <a href="#reviews">KẾT QUẢ NGHIÊN CỨU</a>
+                        </li>
+                        <div id="reviews" class="tab-panel active">
+                            @Html.Raw(Model.KetQuaNghienCuu)
+                        </div>
+
+                    </div>
+
+                    @if (Model.TuKhoa?.Any() == true)
+                    {
+                        <div class="col-sm-12" id="TuKhoa" style="padding-top:10px">
+                            <a class="Tags TagsHead">Tags</a>
+                            @foreach (var t in Model.TuKhoa)
+                            {
+                                <a class="Tags">@t</a>
+                            }
+                        </div>
+                    }
+
+                    <!-- NHÀ TƯ VẤN KHÁC -->
+                    @if (Model.NhaTuVanKhac?.Any() == true)
+                    {
+                        <div class="page-product-box">
+                            <h2 class="brand-showcase-title">NHÀ TƯ VẤN KHÁC</h2>
+                            <ul class="product-list owl-carousel"
+                                data-dots="false"
+                                data-loop="true"
+                                data-nav="true"
+                                data-margin="30"
+                                data-autoplaytimeout="1000"
+                                data-autoplayhoverpause="true"
+                                data-responsive='{"0":{"items":2},"600":{"items":4},"1000":{"items":4}}'>
+                                @foreach (var n in Model.NhaTuVanKhac)
+                                {
+                                    <li class="GioHang">
+                                        <div class="product-container">
+                                            <h2 class="entry_title">
+                                                <a href="@n.DetailUrl">@n.FullName</a>
+                                            </h2>
+                                            <a href="@n.DetailUrl">
+                                                <img src="@n.ImageUrl" class="img-responsive" />
+                                            </a>
+                                            <div>Cơ quan: @n.CoQuan</div>
+                                            <div style="color:gold">
+                                                @Html.Raw(new string('★', n.Rating) + new string('☆', 5 - n.Rating))
+                                            </div>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    @await Component.InvokeAsync("ProductPortletIOSanpham")
+                    @await Component.InvokeAsync("TimKiemDoiTacPortlet")
+                </div>
+            </div>
+
+            <!-- LEFT -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+                <div class="block left-module">
+                    <p class="title_block">DANH MỤC TƯ VẤN</p>
+                    <div class="block_content">
+                        <ul class="tree-menu">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <li>
+                                    <a href="@c.Url">@c.Name</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+             $(".GioHang").hover(
+                function () { $(this).find(".button-group").show(); },
+                function () { $(this).find(".button-group").hide(); }
+            );
+
+            $("#product-detail p, #product-detail span, #product-detail div").removeAttr("style");
+            $("#information p, #information span, #information div").removeAttr("style");
+            $("#reviews p, #reviews span, #reviews div").removeAttr("style");
+
+            $(".ui-tabViewNav li").click(function () {
+                $(".ui-tabViewNav li").removeClass("selected");
+                $(this).addClass("selected");
+
+                $(".ChiTietNhaTuVanTab").hide();
+                $("#" + $(this).find("a").attr("href")).show();
+                return false;
+            });
+
+            $("#btnHoanTat").click(function () {
+                alert("Đánh giá gửi thành công. Cám ơn đánh giá của bạn.");
+            });
+
+            // ====== INIT OWL ======
+            $(".owl-carousel").owlCarousel({
+                items: 4,
+                loop: true,
+                nav: true,
+                dots: false,
+                margin: 30,
+                autoplay: true,
+                autoplayTimeout: 3000,
+                autoplayHoverPause: true,
+                responsive: {
+                    0: { items: 2 },
+                    600: { items: 4 },
+                    1000: { items: 4 }
+                }
+            });
+
+        });
+    </script>
+}

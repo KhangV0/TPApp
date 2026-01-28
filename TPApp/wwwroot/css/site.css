@@ -1335,7 +1335,7 @@ ul.product-list {
 }
 
 .owl-carousel {
-    display: none;
+    /*display: none;*/
     width: 100%;
     z-index: 1;
 }

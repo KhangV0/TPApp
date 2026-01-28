@@ -29,12 +29,15 @@
                         <ul class="row product-list grid">
                             @foreach (var p in Model.ItemsCungUng)
                             {
+                                var detailUrl =
+                                $"{Model.MainDomain}8-dich-vu-cung-ung/{p.QueryString}-{p.CungUngId}.html";
+
                                 <li class="col-sx-12 col-sm-3">
                                     <div class="product-container" style="height:240px;overflow:hidden;">
                                         <div class="left-block" style="height:218px;overflow:hidden;">
 
                                             <h4 class="entry_title">
-                                                <a href="/don-vi-tu-van/@p.CungUngId">
+                                                <a href="@detailUrl" style="margin-bottom:10px;">
                                                     @p.FullName
                                                 </a>
                                             </h4>

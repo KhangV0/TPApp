@@ -1,0 +1,113 @@
+﻿@model TPApp.ViewModel.DichVuTuVanListVm
+
+@section script {
+    <script>
+        $(function () {
+            $(".GioHang").hover(function () {
+                $(this).find(".button-group").show();
+            }, function () {
+                $(this).find(".button-group").hide();
+            });
+        });
+    </script>
+
+    <script>
+        function ajaxJquery() {
+            $(".current").parent().addClass("active");
+
+            $(".etheme_add_to_cart_button").click(function () {
+                var url = $(this).closest("li").find("a").attr("href");
+                window.location.href = url;
+                return false;
+            });
+        }
+    </script>
+
+}
+
+<div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+    <div class="view-product-list">
+        <h2 class="brand-showcase-title">
+            <a>@Model.Title</a>
+        </h2>
+
+        <ul class="row product-list grid">
+            @foreach (var p in Model.TuVanItems)
+            {
+                <li class="col-sx-12 col-sm-3 GioHang">
+                    <div class="product-container" style="height:210px;overflow:hidden">
+                        <div class="left-block" style="height:183px;overflow:hidden">
+
+                            <h2 class="entry_title">
+                                <a href="@p.Url">@p.FullName</a>
+                            </h2>
+
+                            <a href="@p.Url">
+                                <img src="@Html.CookedImageURL("thumb", p.ImageUrl)"
+                                     class="img-responsive" />
+                            </a>
+
+                            <div class="content_price">
+                                <span class="price">@p.CoQuan</span>
+                            </div>
+
+                            <div class="product-desc">
+                                <p>Điện thoại: @p.Phone</p>
+                                <p>Email: @p.Email</p>
+                            </div>
+
+                            <div id="stars-sp">
+                                @{
+                                    var stars = new string('★', p.Rating) + new string('☆', 5 - p.Rating);
+                                }
+                                <span style="color:gold">@stars</span>
+                            </div>
+
+                            <div class="add-to-cart">
+                                <a href="@p.Url">Thêm tư vấn</a>
+                            </div>
+
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+    <div class="sortPagiBar">
+        <div class="bottom-pagination">
+            <ul class="pagination">
+                @for (int i = 1; i <= Math.Ceiling((double)Model.Total / Model.PageSize); i++)
+                {
+                    <li class="@(i == Model.Page ? "active" : "")">
+                        <a href="?page=@i&pageSize=@Model.PageSize">@i</a>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div class="show-product-item">
+            Nhà tư vấn / trang:
+            <select onchange="location='?pageSize='+this.value">
+                <option value="12">12</option>
+                <option value="24">24</option>
+                <option value="48">48</option>
+            </select>
+        </div>
+    </div>
+    <div class="column col-xs-12 col-sm-3" id="left_column">
+        <div class="block left-module">
+            <p class="title_block">Danh mục</p>
+
+            <div class="block_content">
+                <ul class="tree-menu">
+                    @foreach (var c in Model.Categories)
+                    {
+                        <li>
+                            <a href="@c.Url">@c.Name</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>

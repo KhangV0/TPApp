@@ -54,5 +54,6 @@ namespace TPApp.Entities
         public string Domain { get; set; } = string.Empty;
 
         public int? SiteId { get; set; }
+
     }
 }

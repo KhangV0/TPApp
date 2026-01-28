@@ -34,4 +34,24 @@ namespace TPApp.ViewModel
         public string Value { get; set; }
         public string Text { get; set; }
     }
+
+    public class DichVuTuVanListVm
+    {
+        public string? Title { get; set; }
+        public string? TitleCU { get; set; }
+
+        public List<NhaTuVanItemVm> TuVanItems { get; set; } = new();
+        public List<NhaTuVanItemVm> NhaCungUngItems { get; set; } = new();
+
+        public List<CategoryVm> Categories { get; set; } = new();
+
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int Total { get; set; }
+
+        public int PageCU { get; set; }
+        public int PageSizeCU { get; set; }
+        public int TotalCU { get; set; }
+    }
+
 }

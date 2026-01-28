@@ -1,0 +1,88 @@
+﻿@model List<TPApp.ViewModel.ProductPortletItemVm>
+
+<div class="DivRow">
+    <!-- portlet product -->
+    <div class="popular-tabs" id="Product_PortletIOSanpham">
+        <ul class="nav-tab">
+            <li><a data-toggle="tab" href="#tab-3">GỢI Ý</a></li>
+        </ul>
+
+        <div class="tab-container">
+            <div id="tab-1" class="tab-panel active">
+
+                <ul class="product-list owl-carousel"
+                    data-dots="false"
+                    data-loop="true"
+                    data-nav="true"
+                    data-margin="20"
+                    data-autoplaytimeout="1000"
+                    data-autoplayhoverpause="true"
+                    data-responsive='{"0":{"items":3},"600":{"items":3},"1000":{"items":4}}'>
+
+                    @foreach (var p in Model)
+                    {
+                        <li>
+                            <div class="left-block">
+
+                                <a href="@p.Url">
+                                    <img class="img-responsive"
+                                         src="@Html.CookedImageURL("org", p.ImageUrl)"
+                                         alt="@p.Name" />
+                                </a>
+
+                                @if (p.IsSC)
+                                {
+                                    <div class="label_sc"></div>
+                                }
+                                @if (p.IsNC)
+                                {
+                                    <div class="label_nc"></div>
+                                }
+
+                                <div class="quick-view"></div>
+
+                                <div class="add-to-cart">
+                                    <a class="btn btn-primary"
+                                       href="/cart/add/@p.Id">
+                                        Chọn sản phẩm
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="right-block">
+                                <h4 class="product-name">
+                                    <a href="@p.Url">@p.Name</a>
+                                </h4>
+
+                                <div class="content_price">
+                                    <span class="price product-price">
+                                        Giá tham khảo : @p.PriceText
+                                    </span>
+                                    <br />
+                                </div>
+
+                                <div id="stars-sp">
+                                    @{
+                                        var star = Math.Clamp(p.Star, 0, 5);
+                                        var stars = new string('★', star) + new string('☆', 5 - star);
+                                    }
+                                    <span style="color: gold; font-size: medium">
+                                        @stars
+                                    </span>
+                                </div>
+
+                                <div class="info-orther">
+                                    <p>Mã sản phẩm: @p.Code</p>
+                                </div>
+                            </div>
+                        </li>
+                    }
+
+                </ul>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+

@@ -62,26 +62,26 @@
 
                         <ul class="ui-tabViewNav">
                             <li class="selected"><a href="tabThongtin">THÔNG TIN</a></li>
+                                <div id="tabThongtin" class="detailTab">
+                                    @Html.Raw(Model.Product.MoTa)
+                                </div>
                             <li><a href="tabThongso">THÔNG SỐ</a></li>
+                                <div id="tabThongso" class="detailTab" style="display:none">
+                                    @Html.Raw(Model.Product.ThongSo)
+                                </div>
                             <li><a href="tabUudiem">ƯU ĐIỂM</a></li>
+                                <div id="tabUudiem" class="detailTab" style="display:none">
+                                    @Html.Raw(Model.Product.UuDiem)
+                                </div>
                             <li><a href="tabGiaithuong">GIẢI THƯỞNG</a></li>
+                                <div id="tabGiaithuong" class="detailTab" style="display:none">
+                                    @Html.Raw(Model.Product.GiaiThuong)
+                                </div>
                         </ul>
 
-                        <div id="tabThongtin" class="detailTab">
-                            @Html.Raw(Model.Product.MoTa)
-                        </div>
 
-                        <div id="tabThongso" class="detailTab" style="display:none">
-                            @Html.Raw(Model.Product.ThongSo)
-                        </div>
 
-                        <div id="tabUudiem" class="detailTab" style="display:none">
-                            @Html.Raw(Model.Product.UuDiem)
-                        </div>
 
-                        <div id="tabGiaithuong" class="detailTab" style="display:none">
-                            @Html.Raw(Model.Product.GiaiThuong)
-                        </div>
                     </div>
 
                     <!-- TAGS -->
