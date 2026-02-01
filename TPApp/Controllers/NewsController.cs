@@ -124,7 +124,8 @@ namespace TPApp.Controllers
         }
 
 
-        [Route("{queryString}-{menuId:int}.html")]
+        [HttpGet]
+        [Route("{queryString:regex(^tin-su-kien|hoi-thao-trinh-dien-cong-nghe$)}-{menuId:int}.html")]
         public async Task<IActionResult> Category(int menuId, int page = 1)
         {
             const int pageSize = 10;

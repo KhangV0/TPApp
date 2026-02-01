@@ -17,7 +17,8 @@ namespace TPApp.Controllers
             _config = config;
         }
 
-
+        [HttpGet]
+        [Route("{queryString:regex(^gioi-thieu-chung|quy-dinh-chung$)}-{menuId:int}.html")]
         public IActionResult Detail(int menuId)
         {
             var lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;

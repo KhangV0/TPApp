@@ -37,6 +37,41 @@ namespace TPApp.ViewModel
         
     }
 
+    public class ProductDetailForumVm
+    {
+        public int ProductId { get; set; }
+        public string CateTitle { get; set; } = "";
+        public List<Category> Categories { get; set; } = new();
+
+        // CENTER
+        public string ForumTitle { get; set; } = "Thảo luận công nghệ";
+
+        // LIST THẢO LUẬN
+        public List<ForumTopicVm> Topics { get; set; } = new();
+
+        // PAGING
+        public int CurrentPage { get; set; }
+        public int PageSize { get; set; }
+        public int TotalItems { get; set; }
+        public ForumPortletNhieuNhatVm PortletNhieuNhat { get; set; } = new();
+        public ForumPortletGiaiPhapCongNgheVm PortletGiaiPhap { get; set; } = new();
+        public ForumPortletTinTucVm PortletTinTuc { get; set; } = new();
+    }
+
+    public class ForumTopicVm
+    {
+        public string Title { get; set; } = "";
+        public string Url { get; set; } = "";
+        public string Content { get; set; } = "";
+
+        public int ViewCount { get; set; }
+        public int CommentCount { get; set; }
+        public int LikeCount { get; set; }
+
+        public List<CategoryVm> Categories { get; set; } = new();
+    }
+
+
     public class ForumItemVm
     {
         public int Id { get; set; }

@@ -1,0 +1,240 @@
+﻿@model TPApp.ViewModel.TiemLucKHCNIndexVm
+
+
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            <!-- SEARCH (ẩn giống WebForms) -->
+            <div class="center_column col-xs-12" style="display: none">
+                <div class="SearchForm">
+                    <div class="searchbar">
+                        <form method="get">
+                            <input type="hidden" name="t" value="@Model.TypeKey" />
+                            <div class="form-group">
+                                <input name="search"
+                                       class="bar form-control"
+                                       autocomplete="off"
+                                       value="@Model.SearchText"
+                                       placeholder="Nhập từ khóa tìm kiếm" />
+                                <i class="glyphicon glyphicon-search IconSearch"></i>
+                                <button class="btn" type="submit">Search</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER -->
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+                <div class="brand-showcase-box">
+                    <div class="brand-showcase-content">
+                        <div class="brand-showcase-content-tab active">
+                            <div class="row">
+
+                                <div class="col-xs-12 col-sm-12 trademark-info">
+                                    <div class="col-sm-12">
+
+                                        <h2 class="brand-showcase-title_black">
+                                            <a class="TitleHome_black" href="#" style="cursor:pointer">
+                                                KẾT QUẢ TÌM KIẾM
+                                            </a>
+
+                                            <i style="float:right; text-transform:none; margin-top:5px; cursor:pointer; font-size:13px;"
+                                               id="HuongDan">
+                                                <i class="fa fa-info-circle"></i> Hướng dẫn
+                                            </i>
+                                        </h2>
+
+                                        <!-- KẾT QUẢ + PHÂN TRANG TRÊN -->
+                                        <div class="sortPagiBar">
+                                            <div class="SortPage">
+                                                <span class="KetQua">
+                                                    Tìm thấy <b>@Model.TotalRecord</b> kết quả.
+                                                </span>
+                                            </div>
+
+                                            <div class="bottom-pagination">
+                                                <nav>
+                                                    <ul class="pagination">
+
+                                                        <!-- PREV -->
+                                                        <li>
+                                                            <a class="first @(Model.CurrentPage <= 1 ? "disabled" : "")"
+                                                               href="@Url.Action("Index", new {
+                                                                   t = Model.TypeKey,
+                                                                   page = Model.CurrentPage - 1,
+                                                                   search = Model.SearchText
+                                                               })">
+                                                                <i class="fa fa-angle-left" style="font-size:17px"></i>
+                                                            </a>
+                                                        </li>
+
+                                                        @foreach (var p in Model.Pages)
+                                                        {
+                                                            <li class="@(p == Model.CurrentPage ? "active" : "")">
+                                                                <a class="phantrang"
+                                                                   href="@Url.Action("Index", new {
+                                                                       t = Model.TypeKey,
+                                                                       page = p,
+                                                                       search = Model.SearchText
+                                                                   })">
+                                                                    @p
+                                                                </a>
+                                                            </li>
+                                                        }
+
+                                                        <!-- NEXT -->
+                                                        <li>
+                                                            <a class="first @(Model.CurrentPage >= Model.TotalPage ? "disabled" : "")"
+                                                               href="@Url.Action("Index", new {
+                                                                   t = Model.TypeKey,
+                                                                   page = Model.CurrentPage + 1,
+                                                                   search = Model.SearchText
+                                                               })">
+                                                                <i class="fa fa-angle-right" style="font-size:17px"></i>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>
+
+                                        <div style="clear: both"></div>
+
+                                        <!-- LIST -->
+                                        <ul class="blog-posts">
+                                            @foreach (var item in Model.Items)
+                                            {
+                                                <li class="ITemSearch">
+                                                    <article class="entry">
+                                                        <div class="row">
+
+                                                            <!-- IMAGE (ẩn như WebForms) -->
+                                                            <div class="col-sm-4 TiemLuc" style="display:none">
+                                                                <div class="entry-thumb image-hover2">
+                                                                    <a href="javascript:SelectDataBox('@Html.TiemLucDetailUrl(item)')">
+                                                                        <img src="" alt="" />
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col-sm-12">
+                                                                <div class="entry-ci">
+                                                                    <h3 class="entry-title ContentSearch">
+                                                                        <a class="TitleSearch"
+                                                                           href="javascript:SelectDataBox('@Html.TiemLucDetailUrl(item)')">
+                                                                            @(string.IsNullOrWhiteSpace(item.Title)
+                                                                                ? "Chưa cung cấp"
+                                                                                : item.Title)
+                                                                        </a>
+
+                                                                        <span class="hplMore hplMoreSearch">
+                                                                            @item.TypeName
+                                                                        </span>
+                                                                    </h3>
+
+                                                                    <div class="DetailSearch entry-excerpt ContentSearch">
+                                                                        @Html.Raw(item.Description)
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </article>
+                                                </li>
+                                            }
+                                        </ul>
+
+                                        <!-- PHÂN TRANG DƯỚI -->
+                                        <div class="sortPagiBar">
+                                            <div class="bottom-pagination">
+                                                <nav>
+                                                    <ul class="pagination">
+
+                                                        <li>
+                                                            <a class="first @(Model.CurrentPage <= 1 ? "disabled" : "")"
+                                                               href="@Url.Action("Index", new {
+                                                                   t = Model.TypeKey,
+                                                                   page = Model.CurrentPage - 1,
+                                                                   search = Model.SearchText
+                                                               })">
+                                                                <i class="fa fa-angle-left" style="font-size:17px"></i>
+                                                            </a>
+                                                        </li>
+
+                                                        @foreach (var p in Model.Pages)
+                                                        {
+                                                            <li class="@(p == Model.CurrentPage ? "active" : "")">
+                                                                <a class="phantrang"
+                                                                   href="@Url.Action("Index", new {
+                                                                       t = Model.TypeKey,
+                                                                       page = p,
+                                                                       search = Model.SearchText
+                                                                   })">
+                                                                    @p
+                                                                </a>
+                                                            </li>
+                                                        }
+
+                                                        <li>
+                                                            <a class="first @(Model.CurrentPage >= Model.TotalPage ? "disabled" : "")"
+                                                               href="@Url.Action("Index", new {
+                                                                   t = Model.TypeKey,
+                                                                   page = Model.CurrentPage + 1,
+                                                                   search = Model.SearchText
+                                                               })">
+                                                                <i class="fa fa-angle-right" style="font-size:17px"></i>
+                                                            </a>
+                                                        </li>
+
+                                                    </ul>
+                                                </nav>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN -->
+@*             @await Html.PartialAsync("~/Views/Shared/QuangCao/RightHome.cshtml")
+
+            @await Html.PartialAsync("~/Views/Shared/Messagebox/msbox.cshtml")
+ *@
+        </div>
+    </div>
+</div>
+
+@section script {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.es6.js"></script>
+    <script>
+    $(function () {
+
+        $("#HuongDan").click(function () {
+            $("#noidung").html(
+                'Sử dụng các từ khóa cho trong tiêu đề hoặc nội dung bài viết để tìm kiếm <br>' +
+                'Khi muốn tìm chính xác một cụm từ, có thể sử dụng dấu ngoặc kép để tìm kiếm. Ví dụ "Máy sấy" <br>' +
+                'Từ khóa tìm kiếm cần đúng chính tả, có thể sử dụng từ tiếng Việt có dấu hoặc không dấu'
+            );
+            $("#Notice").click();
+            return false;
+        });
+
+        // hide image tiem luc
+        $(".hplMore").each(function () {
+            if ($(this).text().indexOf("Tiềm lực") >= 0) {
+                $(this).closest(".row").find(".TiemLuc").hide();
+            }
+        });
+    });
+</script>
+}

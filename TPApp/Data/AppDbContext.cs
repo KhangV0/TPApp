@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TPApp.Data.Entities;
 using TPApp.Entities;
 
 namespace TPApp.Data
@@ -55,6 +56,7 @@ namespace TPApp.Data
         public DbSet<NhaTuVan> NhaTuVans { get; set; }
         public DbSet<ImageAdver> ImageAdvers { get; set; }
         public DbSet<Store> Stores { get; set; }
+        public DbSet<SearchIndexContent> SearchIndexContents { get; set; }
 
 
 

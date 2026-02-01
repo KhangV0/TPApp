@@ -1,0 +1,184 @@
+﻿@model TPApp.ViewModel.ProductDetailForumVm
+@{
+    ViewData["Title"] = Model.ForumTitle;
+}
+
+<style>
+    .summary {
+        width: 100% !important;
+    }
+
+    .narrow .started {
+        width: 99%;
+        float: right;
+    }
+
+    .btn-add-cart:before {
+        background: none;
+        padding-left: 5px;
+    }
+
+    .Category {
+        font-weight: normal;
+        font-size: 12px;
+        color: #0b77c8;
+        padding-left: 10px;
+    }
+
+    .HuongDan {
+        font-weight: bold;
+        text-transform: uppercase
+    }
+</style>
+
+<script>
+    $(function () {
+        $(".current").parent().addClass("active");
+
+        $(".ui-tabViewNav li").click(function () {
+            $(".ui-tabViewNav li").removeClass("selected");
+            $(this).addClass("selected");
+            var divShow = $(this).find("a").attr("href");
+            $(".detailTab").hide();
+            $("#" + divShow).show();
+            return false;
+        });
+    });
+</script>
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            <!-- LEFT -->
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                <div class="block left-module">
+                    <p class="title_block">
+                        <a href="#">Lĩnh vực thảo luận</a>
+                    </p>
+                    <div class="block_content">
+                        <ul class="tree-menu">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <li>
+                                    <a href="@c.QueryString">@c.Title</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+@*                 @await Html.PartialAsync("_PortletNhieuNhat")
+                @await Html.PartialAsync("_PortletGiaiPhapCongNghe")
+                @await Html.PartialAsync("_PortletTinTuc") *@
+
+            </div>
+
+            <!-- CENTER -->
+            <div class="center_column col-xs-12 col-sm-9 thao-luan" id="center_column">
+
+                <h2 class="page-heading ForumHeader">
+                    <span class="page-heading-title" style="text-transform:uppercase">
+                        @Model.CateTitle
+                    </span>
+                </h2>
+
+                <div class="services3">
+                    <ul>
+                        <li class="col-xs-6 col-sm-9 services3-item color-2">
+                            <div class="service-wapper" style="height:100px">
+                                <div class="row">
+                                    <div class="col-sm-4 image">
+                                        <img src="/FrontEnd/assets/data/icon-service.png" width="90" />
+                                    </div>
+                                    <div class="col-sm-8 text">
+                                        Chuyên trang Thảo luận được thành lập để các doanh nghiệp, chuyên gia và nhà cung ứng trao đổi, chia sẻ, tư vấn công nghệ.
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="row-btn-l">
+                    <a href="/forum/create" class="btn-add-cart">Tạo thảo luận</a>
+                </div>
+
+                <div class="question-summary narrow">
+                    <div class="summary">
+                        <ul class="blog-list-sidebar clearfix">
+
+                            @foreach (var p in Model.Topics)
+                            {
+                                <li>
+                                    <h3 class="question-hyperlink">
+                                        <a href="@p.Url">@p.Title</a>
+
+                                        @foreach (var cate in p.Categories)
+                                        {
+                                            <a href="@cate.Url" class="Category">@cate.Name</a>
+                                        }
+                                    </h3>
+
+                                    <div class="started">
+                                        @Html.Raw(p.Content)
+                                    </div>
+
+                                    <div class="post-controls controls width-narrow">
+                                        <span><i class="fa fa-eye"></i> @p.ViewCount</span>
+                                        <span><i class="fa fa-comments-o"></i> @p.CommentCount</span>
+                                        <span><i class="fa fa-thumbs-up"></i> @p.LikeCount</span>
+                                    </div>
+                                </li>
+                            }
+
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- PAGINATION -->
+                <div class="sortPagiBar">
+                    <ul class="pagination">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <li>
+                                <a href="?page=@(Model.CurrentPage - 1)">Trang trước</a>
+                            </li>
+                        }
+
+                        @for (int i = 1; i <= Model.TotalItems; i++)
+                        {
+                            <li class="@(i == Model.CurrentPage ? "active" : "")">
+                                <a href="?page=@i">@i</a>
+                            </li>
+                        }
+
+                        @if (Model.CurrentPage < Model.TotalItems)
+                        {
+                            <li>
+                                <a href="?page=@(Model.CurrentPage + 1)">Trang sau</a>
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="show-product-item">
+                        Thảo luận / trang:
+                        <select onchange="location='?pageSize='+this.value">
+                            @foreach (var s in new[] { 10, 20, 30, 40, 50 })
+                            {
+                                <option value="@s" selected="@(s == Model.PageSize)">
+                                    @s
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <span>Tổng: @Model.TotalItems</span>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>

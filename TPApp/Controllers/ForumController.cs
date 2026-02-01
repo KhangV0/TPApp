@@ -20,7 +20,6 @@ namespace TPApp.Controllers
 
         // ================= INDEX =================
         [Route("thao-luan.html")]
-        [Route("thao-luan-{linhvuc:int}-{parentid:int}.html")]
         public IActionResult Index(int? linhvuc, int? parentid, int page = 1, int pageSize = 10)
         {
             int lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
@@ -63,6 +62,25 @@ namespace TPApp.Controllers
 
 
             return View(model);
+        }
+
+        [Route("thao-luan-{linhvuc:int}-{parentid:int}.html")]
+        public IActionResult Detail(int productId = 1)
+        {
+            // tương đương Page.RouteData.Values("ProductId") = 1
+            var vm = new ProductDetailForumVm
+            {
+                ProductId = productId,
+                CateTitle = "Danh mục ngành nghề"
+            };
+
+            // === LoadData(1) ===
+            vm.Categories = _context.Categories
+                .Where(x => x.ParentId == 1 && x.MainCate == true)
+                .OrderBy(x => x.Sort)
+                .ToList();
+
+            return View(vm);
         }
 
         // ================= LOAD ALL =================

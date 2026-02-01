@@ -4055,3 +4055,27 @@ header {
     transform: translate(-40%, -50%) scale(1.1);
 }
 
+@media print {
+    /* Ẩn sidebar */
+    .col-sm-3
+
+{
+    display: none !important;
+}
+
+/* Cho nội dung full width */
+.col-sm-9 {
+    width: 100% !important;
+}
+
+/* Ẩn các nút không cần khi in */
+button, .btn {
+    display: none !important;
+}
+
+/* Ẩn carousel nhỏ */
+.owl-carousel {
+    display: none !important;
+}
+
+
