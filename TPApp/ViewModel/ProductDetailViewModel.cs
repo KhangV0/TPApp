@@ -7,6 +7,8 @@ namespace TPApp.ViewModel
         public SanPhamCNTB Product { get; set; }
 
         public string CategoryTitle { get; set; }
+        
+        // Ensure these properties are explicitly public and available
         public string SupplierName { get; set; }
         public string SupplierUrl { get; set; }
 
@@ -17,6 +19,8 @@ namespace TPApp.ViewModel
         public List<Category> RelatedCategories { get; set; }
 
         public List<KeywordVm> Keywords { get; set; }
+       
+        // Note: RelatedProducts type might have been causing issues if mismatched
         public List<ProductRelatedItemVm> RelatedProducts { get; set; }
 
         public int RatingCount { get; set; }

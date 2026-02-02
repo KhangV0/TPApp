@@ -4,7 +4,7 @@ namespace TPApp.ViewModel
 {
     public class ProductIndexViewModel
     {
-        public string? ProductCNMoiCapNhatHtml { get; set; }
+        public List<SanPhamCNTB> NewProducts { get; set; } = new();
         public List<CategoryBlockVm> Categories { get; set; } = new();
     }
 

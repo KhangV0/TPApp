@@ -1,184 +1,243 @@
-﻿@model TPApp.ViewModel.ProductDetailForumVm
+﻿@using TPApp.ViewModel
+@model ForumDetailVm
+
 @{
-    ViewData["Title"] = Model.ForumTitle;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var mainDomain = ViewBag.MainDomain as string;
 }
-
-<style>
-    .summary {
-        width: 100% !important;
-    }
-
-    .narrow .started {
-        width: 99%;
-        float: right;
-    }
-
-    .btn-add-cart:before {
-        background: none;
-        padding-left: 5px;
-    }
-
-    .Category {
-        font-weight: normal;
-        font-size: 12px;
-        color: #0b77c8;
-        padding-left: 10px;
-    }
-
-    .HuongDan {
-        font-weight: bold;
-        text-transform: uppercase
-    }
-</style>
-
-<script>
-    $(function () {
-        $(".current").parent().addClass("active");
-
-        $(".ui-tabViewNav li").click(function () {
-            $(".ui-tabViewNav li").removeClass("selected");
-            $(this).addClass("selected");
-            var divShow = $(this).find("a").attr("href");
-            $(".detailTab").hide();
-            $("#" + divShow).show();
-            return false;
-        });
-    });
-</script>
 
 <div class="columns-container">
     <div class="container" id="columns">
+       
+        <!-- row -->
         <div class="row">
-
-            <!-- LEFT -->
-            <div class="column col-xs-12 col-sm-3" id="left_column">
-
-                <div class="block left-module">
+            <!-- Left colunm -->
+            <div class="column col-xs-12 col-md-3" id="left_column">
+                <!-- block category -->
+               <div class="block left-module">
                     <p class="title_block">
-                        <a href="#">Lĩnh vực thảo luận</a>
+                        <a href="@(mainDomain)thao-luan-cong-nghe.html" style="color:white">Lĩnh vực công nghệ thiết bị</a>
                     </p>
                     <div class="block_content">
-                        <ul class="tree-menu">
-                            @foreach (var c in Model.Categories)
-                            {
-                                <li>
-                                    <a href="@c.QueryString">@c.Title</a>
-                                </li>
-                            }
-                        </ul>
+                        <!-- layered -->
+                        <div class="layered layered-category">
+                            <div class="layered-content">
+                                <ul class="tree-menu">
+                                    @foreach (var cat in Model.Categories)
+                                    {
+                                        <li class="active"><span></span>
+                                            <a href="@cat.Url">@cat.Title</a>
+                                        </li>
+                                    }
+                                </ul>    
+                            </div>
+                        </div>
+                        <!-- ./layered -->
                     </div>
                 </div>
-
-@*                 @await Html.PartialAsync("_PortletNhieuNhat")
-                @await Html.PartialAsync("_PortletGiaiPhapCongNghe")
-                @await Html.PartialAsync("_PortletTinTuc") *@
-
+                <!-- ./block category  --> 
+                
+                 <!-- Thanh vien tich cu -->
+                <div class="block left-module">
+                    <!-- PortletNhieunhat -->
+                    @if (Model.PortletNhieuNhat != null)
+                    {
+                        <div class="block-content">
+                             <h4 class="title_block">Thành viên tích cực</h4>
+                             <div class="block_content">
+                                 <ul class="list-block list-group list-blog">
+                                     <!-- TAB 1: Hoi Nhieu -->
+                                     <li style="border-bottom: 1px solid #eaeaea; margin-bottom: 10px;">
+                                         <b>Hỏi nhiều</b>
+                                         <ul>
+                                             @foreach(var item in Model.PortletNhieuNhat.HoiNhieu)
+                                             {
+                                                 <li>
+                                                     <i class="fa fa-angle-right"></i> @item.FullName (@item.CountyCTB)
+                                                 </li>
+                                             }
+                                         </ul>
+                                     </li>
+                                     <!-- TAB 2: Tra Loi Nhieu -->
+                                     <li>
+                                         <b>Trả lời nhiều</b>
+                                          <ul>
+                                             @foreach(var item in Model.PortletNhieuNhat.TraLoiNhieu)
+                                             {
+                                                 <li>
+                                                     <i class="fa fa-angle-right"></i> @item.Name (@item.CountyCTB)
+                                                 </li>
+                                             }
+                                         </ul>
+                                     </li>
+                                 </ul>
+                             </div>
+                        </div>
+                    }
+                 </div>
+                <!-- ./Het Thanh Vien tich cuc -->
+                               
             </div>
-
-            <!-- CENTER -->
-            <div class="center_column col-xs-12 col-sm-9 thao-luan" id="center_column">
-
-                <h2 class="page-heading ForumHeader">
-                    <span class="page-heading-title" style="text-transform:uppercase">
-                        @Model.CateTitle
-                    </span>
-                </h2>
-
-                <div class="services3">
-                    <ul>
-                        <li class="col-xs-6 col-sm-9 services3-item color-2">
-                            <div class="service-wapper" style="height:100px">
-                                <div class="row">
-                                    <div class="col-sm-4 image">
-                                        <img src="/FrontEnd/assets/data/icon-service.png" width="90" />
-                                    </div>
-                                    <div class="col-sm-8 text">
-                                        Chuyên trang Thảo luận được thành lập để các doanh nghiệp, chuyên gia và nhà cung ứng trao đổi, chia sẻ, tư vấn công nghệ.
+            <!-- ./left colunm -->
+            
+            <!-- Center colunm-->
+            <div class="center_column col-xs-12 col-md-9" id="center_column">
+                <!-- Product -->
+                
+                    <div id="product">
+                        <div class="product-images images zoom-enabled pic-pro img-box row" >
+                           
+                            <div hidden class="pb-left-column col-xs-12 col-sm-6">
+                                <!-- product-imge-->
+                                <div class="product-image">
+                                    <div class="product-full">
+                                        <a class="simpleLens-lens-image" href="javascript:void(0);">
+                                            <img src="@Model.HinhDaiDien" class="simpleLens-big-image img-responsive" style="max-width:100%"/>
+                                        </a>
                                     </div>
                                 </div>
+                                <!-- product-imge-->
                             </div>
-                        </li>
-                    </ul>
-                </div>
+                           
+                            <div class="pb-right-column col-xs-12 col-sm-12">
+                                <h1 class="product-name">@Model.Title</h1>
+                                <div>
+                                    <span class="author">
+                                                <i class="fa fa-user"></i>
+                                                @Model.Viewed
+                                                <i class="fa fa-thumbs-up" style="margin-left:10px;"></i>
+                                                @Model.Like
+                                    </span>  
+                                </div>
+                                <div class="product-desc">
+                                    <p>@Html.Raw(Model.Content)</p>
+                                    <p>Người đăng tin: @Model.FullName
+                                       -  @Model.CreatedDateText
+                                       
+                                       <br/>
+                                       @if (!Model.IsLoggedIn)
+                                       {
+                                           <a href="@(mainDomain)dang-nhap.html" style="font-style:italic">Đăng nhập để xem thông tin liên hệ</a>
+                                       }
+                                       else
+                                       {
+                                            @if(!string.IsNullOrEmpty(Model.Phone)) 
+                                            {
+                                                <span style="font-style:italic; margin-right:10px;"><i class="fa fa-phone"></i> @Model.Phone</span>
+                                            }
+                                            @if(!string.IsNullOrEmpty(Model.Email)) 
+                                            {
+                                                <span style="font-style:italic"><i class="fa fa-envelope"></i> @Model.Email</span>
+                                            }
+                                            @if(!string.IsNullOrEmpty(Model.TenDonVi))
+                                            {
+                                                 <br/><span>@Model.TenDonVi</span>
+                                            }
+                                            @if(!string.IsNullOrEmpty(Model.DiaChi))
+                                            {
+                                                 <br/><span>@Model.DiaChi</span>
+                                            }
+                                       }
+                                    </p>
+                                </div>
+                                
+                               
+                                <div class="form-share">
+                                    <form asp-action="Like" asp-route-id="@Model.Id" method="post" id="formLike">
+                                        <div class="post-share" id="divLike">
+                                            <button type="submit" class="btn btn-default" style="color: #3399ff; border: 1px solid #ccc;">
+                                                 <i class="fa fa-thumbs-up"> </i> Thích 
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- tab product -->
+                        <div style ="clear:both"></div>
+                        
+                        <!-- Comment Section (Placeholder) -->
+                        <div class="comment-section mt-4 mb-4">
+                             <!-- uc2:Comment implementation would go here -->
+                        </div>
 
-                <div class="row-btn-l">
-                    <a href="/forum/create" class="btn-add-cart">Tạo thảo luận</a>
-                </div>
-
-                <div class="question-summary narrow">
-                    <div class="summary">
-                        <ul class="blog-list-sidebar clearfix">
-
-                            @foreach (var p in Model.Topics)
-                            {
-                                <li>
-                                    <h3 class="question-hyperlink">
-                                        <a href="@p.Url">@p.Title</a>
-
-                                        @foreach (var cate in p.Categories)
-                                        {
-                                            <a href="@cate.Url" class="Category">@cate.Name</a>
-                                        }
-                                    </h3>
-
-                                    <div class="started">
-                                        @Html.Raw(p.Content)
-                                    </div>
-
-                                    <div class="post-controls controls width-narrow">
-                                        <span><i class="fa fa-eye"></i> @p.ViewCount</span>
-                                        <span><i class="fa fa-comments-o"></i> @p.CommentCount</span>
-                                        <span><i class="fa fa-thumbs-up"></i> @p.LikeCount</span>
-                                    </div>
-                                </li>
-                            }
-
-                        </ul>
+                        <!-- ./tab product -->
+                        <!-- box product -->
+                        <div class="page-product-box">
+                            <h3 class="heading">PHIẾU YÊU CẦU SẢN PHẨM KHÁC</h3>
+                            <div class="tab-container">
+                                    <div id="tab-1" class="tab-panel active">
+                                        <ul class="product-list owl-carousel" data-dots="false" data-loop="true" data-nav="true" data-margin="30" data-autoplayTimeout="1000" data-autoplayHoverPause="true" data-responsive='{"0":{"items":1},"600":{"items":3},"1000":{"items":3}}'>
+                                            @foreach (var item in Model.RelatedItems)
+                                            {
+                                                <li>
+                                                    <div class="product-containerYC">
+                                                        <div class="left-block">
+                                                            <a href="@item.Url">
+                                                                <img src="@item.HinhDaiDien" class="img-responsive" alt="@item.Title" style="width:100%; height:auto;" />
+                                                            </a>
+                                                        </div>
+                                                        <div class="right-block">
+                                                             <span class="date">
+                                                                <h5 class="entry_title">
+                                                                    <a href="@item.Url">@item.Title</a><br />
+                                                                </h5>
+                                                                <div>@Html.Raw(item.AuthorInfo)</div> <!-- Assuming AuthorInfo contains simple text or safe HTML -->
+                                                                
+                                                                @if (!Model.IsLoggedIn)
+                                                                {
+                                                                    <!-- Logic from legacy: Visible=false -->
+                                                                }
+                                                                else 
+                                                                {
+                                                                     @if(!string.IsNullOrEmpty(item.Phone)) { <div>@item.Phone</div> }
+                                                                     @if(!string.IsNullOrEmpty(item.Email)) { <div>@item.Email</div> }
+                                                                }
+                                                                <!-- Date logic? Legacy says "Đăng ký ngày: ltrCreated" -->
+                                                                <!-- We don't have Created in ForumItemVm explicitly aside from AuthorInfo which says "user lúc date" -->
+                                                            </span>
+                                                         </div>   
+                                                     </div>
+                                                 </li> 
+                                            }
+                                        </ul>
+                                     </div><!--end tab 1 -->                                 
+                              </div>
+                        </div>
+                        <!-- ./box product -->
+                       
                     </div>
-                </div>
-
-                <!-- PAGINATION -->
-                <div class="sortPagiBar">
-                    <ul class="pagination">
-                        @if (Model.CurrentPage > 1)
-                        {
-                            <li>
-                                <a href="?page=@(Model.CurrentPage - 1)">Trang trước</a>
-                            </li>
-                        }
-
-                        @for (int i = 1; i <= Model.TotalItems; i++)
-                        {
-                            <li class="@(i == Model.CurrentPage ? "active" : "")">
-                                <a href="?page=@i">@i</a>
-                            </li>
-                        }
-
-                        @if (Model.CurrentPage < Model.TotalItems)
-                        {
-                            <li>
-                                <a href="?page=@(Model.CurrentPage + 1)">Trang sau</a>
-                            </li>
-                        }
-                    </ul>
-
-                    <div class="show-product-item">
-                        Thảo luận / trang:
-                        <select onchange="location='?pageSize='+this.value">
-                            @foreach (var s in new[] { 10, 20, 30, 40, 50 })
-                            {
-                                <option value="@s" selected="@(s == Model.PageSize)">
-                                    @s
-                                </option>
-                            }
-                        </select>
-                    </div>
-
-                    <span>Tổng: @Model.TotalItems</span>
-                </div>
-
+                <!-- Product -->
             </div>
-
+            <!-- ./ Center colunm -->
         </div>
+        <!-- ./row-->
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize Owl Carousel if not already automatically initialized by class
+            if ($('.owl-carousel').length > 0) {
+                $('.owl-carousel').owlCarousel({
+                    loop:true,
+                    margin:30,
+                    nav:true,
+                    dots: false,
+                    responsive:{
+                        0:{
+                            items:1
+                        },
+                        600:{
+                            items:3
+                        },
+                        1000:{
+                            items:3
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

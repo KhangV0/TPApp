@@ -88,6 +88,10 @@ namespace TPApp.ViewModel
 
         // Category gắn kèm bài viết
         public List<CategoryVm> Categories { get; set; } = new();
+
+        public string HinhDaiDien { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Email { get; set; } = "";
     }
 
     public class CategoryVm
@@ -107,5 +111,27 @@ namespace TPApp.ViewModel
 
         // danh sách số trang để foreach
         public List<int> Pages { get; set; } = new();
+    }
+    public class ForumDetailVm
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = ""; // NoiDung
+        public string FullName { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string TenDonVi { get; set; } = "";
+        public string DiaChi { get; set; } = "";
+        public string HinhDaiDien { get; set; } = "";
+        public int Viewed { get; set; }
+        public int Like { get; set; }
+        public string CreatedDateText { get; set; } = "";
+
+        // UI Logic
+        public bool IsLoggedIn { get; set; }
+
+        public List<ForumItemVm> RelatedItems { get; set; } = new();
+        public List<CategoryVm> Categories { get; set; } = new();
+        public ForumPortletNhieuNhatVm PortletNhieuNhat { get; set; } = new();
     }
 }

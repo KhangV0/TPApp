@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.ViewModel;
 using System.Globalization;
+using TPApp.Helpers;
 
 namespace TPApp.Controllers
 {
@@ -11,14 +13,14 @@ namespace TPApp.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
-        private const string MainDomain = "https://localhost:7232/";
-        public NewsController(AppDbContext context, IConfiguration config)
+        private readonly string _mainDomain;
+
+        public NewsController(AppDbContext context, IConfiguration config, IOptions<AppSettings> appSettings)
         {
             _context = context;
             _config = config;
+            _mainDomain = appSettings.Value.MainDomain;
         }
-
-        [Route("{menuId:int}/{queryString}-{id:long}.html")]
 
         [HttpGet]
         public async Task<IActionResult> Detail(
@@ -33,11 +35,11 @@ namespace TPApp.Controllers
                 .FirstOrDefaultAsync();
 
             if (p == null)
-                return Redirect($"{MainDomain}Errors/404.aspx");
+                return Redirect($"{_mainDomain}Errors/404.aspx");
 
             // === CHECK ROUTE (GIỐNG HỆT WEBFORMS) ===
             if (menuId != p.MenuId || queryString != p.QueryString)
-                return Redirect($"{MainDomain}Errors/404.aspx");
+                return Redirect($"{_mainDomain}Errors/404.aspx");
 
             // === META ===
             ViewData["Title"] = p.Title;
@@ -125,7 +127,7 @@ namespace TPApp.Controllers
 
 
         [HttpGet]
-        [Route("{queryString:regex(^tin-su-kien|hoi-thao-trinh-dien-cong-nghe$)}-{menuId:int}.html")]
+
         public async Task<IActionResult> Category(int menuId, int page = 1)
         {
             const int pageSize = 10;
@@ -134,7 +136,7 @@ namespace TPApp.Controllers
 
             var menu = await GetMenuAsync(menuId);
             if (menu == null)
-                return Redirect($"{MainDomain}Errors/404.aspx");
+                return Redirect($"{_mainDomain}Errors/404.aspx");
 
             var subMenuIds = GetSubMenuIds(menuId);
 

@@ -12,7 +12,7 @@
 <div class="container">
     @await Html.PartialAsync(
     "_CongNgheMoiCapNhat",
-        Model.CongNgheMoiCapNhatHtml
+        (IEnumerable<TPApp.Entities.SanPhamCNTB>)ViewBag.NewTech
         )
 
 </div>

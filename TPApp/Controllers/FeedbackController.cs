@@ -1,27 +1,31 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using TPApp.Data;
 using TPApp.Entities;
+using TPApp.Helpers;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers
 {
-    [Route("")]
+
     public class FeedbackController : Controller
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly string _mainDomain;
 
         // ===== GIỮ NGUYÊN LOGIC WEBFORMS =====
         private int SiteId => 1;
-        private string DomainName => _config["AppSettings:MainDomain"] ?? "";
+        private string DomainName => _mainDomain;
 
-        public FeedbackController(AppDbContext context, IConfiguration config)
+        public FeedbackController(AppDbContext context, IConfiguration config, IOptions<AppSettings> appSettings)
         {
             _context = context;
             _config = config;
+            _mainDomain = appSettings.Value.MainDomain;
         }
 
-        [HttpGet("lien-he-74.html")]
+        [HttpGet]
         public IActionResult Index()
         {
             var vm = new FeedbackCreateViewModel();
@@ -52,7 +56,7 @@ namespace TPApp.Controllers
         // =====================================================
         // POST: /lien-he-74.html
         // =====================================================
-        [HttpPost("lien-he-74.html")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Index(FeedbackCreateViewModel vm)
         {

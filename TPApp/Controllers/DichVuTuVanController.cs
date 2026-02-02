@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using TPApp.Data;
 using TPApp.Entities;
+using TPApp.Helpers;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers
@@ -8,12 +11,12 @@ namespace TPApp.Controllers
     public class DichVuTuVanController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly string _mainDomain;
 
-        private const string MainDomain = "https://localhost:7232/";
-
-        public DichVuTuVanController(AppDbContext context)
+        public DichVuTuVanController(AppDbContext context, IOptions<AppSettings> appSettings)
         {
             _context = context;
+            _mainDomain = appSettings.Value.MainDomain;
         }
 
         // ================= INDEX =================
@@ -26,7 +29,7 @@ namespace TPApp.Controllers
                 {
                     MenuId = menuId,
                     SelectedCateId = 0,
-                    MainDomain = MainDomain,
+                    MainDomain = _mainDomain,
                     CurrentPage = 1,
                     PageSize = 16
                 }
@@ -55,7 +58,7 @@ namespace TPApp.Controllers
                     : int.Parse(cateId),
                 CurrentPage = page,
                 PageSize = pageSize,
-                MainDomain = MainDomain
+                MainDomain = _mainDomain
             };
 
 
@@ -140,7 +143,7 @@ namespace TPApp.Controllers
                 SelectedCateId = industryId,
                 CurrentPage = page,
                 PageSize = pageSize,
-                MainDomain = MainDomain
+                MainDomain = _mainDomain
             };
 
             // Dropdown
@@ -281,8 +284,8 @@ namespace TPApp.Controllers
                 LuotXem = entity.Viewed ?? 0,
 
                 ImageUrl = string.IsNullOrEmpty(entity.HinhDaiDien)
-                    ? $"{MainDomain}image/NoAvarta.jpg"
-                    : $"{MainDomain}{entity.HinhDaiDien}",
+                    ? $"{_mainDomain}image/NoAvarta.jpg"
+                    : $"{_mainDomain}{entity.HinhDaiDien}",
 
                 DichVuText = dichVuText,
                 LinhVucText = linhVucText,
@@ -306,13 +309,14 @@ namespace TPApp.Controllers
                 )
                 .OrderByDescending(x => x.Created)
                 .Take(8)
+                .AsEnumerable()
                 .Select(x => new NhaTuVanItemVm
                 {
                     Id = x.TuVanId,
                     FullName = x.FullName,
                     ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                        ? $"{MainDomain}image/NoImages.jpg"
-                        : $"{MainDomain}{x.HinhDaiDien}",
+                        ? $"{_mainDomain}image/NoImages.jpg"
+                        : $"{_mainDomain}{x.HinhDaiDien}",
                     CoQuan = x.CoQuan,
                     Phone = x.Phone,
                     Email = x.Email,
@@ -414,8 +418,8 @@ namespace TPApp.Controllers
                 LuotXem = entity.Viewed ?? 0,
 
                 ImageUrl = string.IsNullOrEmpty(entity.HinhDaiDien)
-                    ? $"{MainDomain}/image/logoT.png"
-                    : $"{MainDomain}{entity.HinhDaiDien}"
+                    ? $"{_mainDomain}/image/logoT.png"
+                    : $"{_mainDomain}{entity.HinhDaiDien}"
             };
 
             // ================== NHÀ CUNG ỨNG KHÁC ==================
@@ -427,6 +431,7 @@ namespace TPApp.Controllers
                 )
                 .OrderByDescending(x => x.Created)
                 .Take(8)
+                .AsEnumerable()
                 .Select(x => new NhaCungUngItemVm
                 {
                     Id = x.CungUngId,
@@ -437,8 +442,8 @@ namespace TPApp.Controllers
                     Website = x.Website,
                     Rating = x.Rating ?? 0,
                     ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                        ? $"{MainDomain}image/NoImages.jpg"
-                        : $"{MainDomain}{x.HinhDaiDien}"
+                        ? $"{_mainDomain}image/NoImages.jpg"
+                        : $"{_mainDomain}{x.HinhDaiDien}"
                 })
                 .ToList();
 
@@ -450,7 +455,7 @@ namespace TPApp.Controllers
                 {
                     Id = x.CatId,
                     Name = x.Title,
-                    Url = $"{MainDomain}8-ds-dich-vu-tu-van/{x.QueryString}-{x.CatId}.html"
+                    Url = $"{_mainDomain}8-ds-dich-vu-tu-van/{x.QueryString}-{x.CatId}.html"
                 })
                 .ToList();
 
@@ -488,7 +493,7 @@ namespace TPApp.Controllers
                     SelectedCateId = cateId,
                     CurrentPage = page,
                     PageSize = pageSize,
-                    MainDomain = MainDomain
+                    MainDomain = _mainDomain
                 }
             };
 
@@ -517,16 +522,14 @@ namespace TPApp.Controllers
                     Quantity = 1,
                     DateCreated = DateTime.Now,
                     TypeId = 2,
-                    Domain = MainDomain
+                    Domain = _mainDomain
                 });
 
                 _context.SaveChanges();
             }
 
-            return Redirect($"{MainDomain}gio-hang.html");
+            return Redirect($"{_mainDomain}gio-hang.html");
         }
-
-
 
     }
 }

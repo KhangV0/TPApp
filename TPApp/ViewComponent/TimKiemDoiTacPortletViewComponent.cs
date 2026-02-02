@@ -1,16 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using TPApp.Controllers;
 using TPApp.Data;
+using TPApp.Helpers;
 using TPApp.ViewModel;
 
 public class TimKiemDoiTacPortletViewComponent : ViewComponent
 {
     private readonly AppDbContext _context;
-    private const string MainDomain = "https://localhost:7232/";
+    private readonly string _mainDomain;
 
-    public TimKiemDoiTacPortletViewComponent(AppDbContext context)
+    public TimKiemDoiTacPortletViewComponent(AppDbContext context, IOptions<AppSettings> appSettings)
     {
         _context = context;
+        _mainDomain = appSettings.Value.MainDomain;
     }
 
     public IViewComponentResult Invoke()
@@ -48,9 +51,9 @@ public class TimKiemDoiTacPortletViewComponent : ViewComponent
             FullName = x.FullName,
             Star = x.Rating ?? 0,
             ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                ? MainDomain + "images/research.jpg"
-                : x.HinhDaiDien,
-            Url = MainDomain +
+                ? _mainDomain + "images/research.jpg"
+                : x.HinhDaiDien, // Assuming no CookedImageURL needed here as previously it wasn't used
+            Url = _mainDomain +
                   "11-tim-kiem-doi-tac/" +
                   ProductController.MakeURLFriendly(x.TenSanPham) +
                   "-" + x.TimDoiTacId + ".html"

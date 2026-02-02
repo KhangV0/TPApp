@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Text.RegularExpressions;
 using TPApp.Data;
 using TPApp.Entities;
+using TPApp.Helpers;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers
@@ -10,16 +12,17 @@ namespace TPApp.Controllers
     public class TimKiemDoiTacController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly string _mainDomain;
 
-        private const string MainDomain = "https://localhost:7232/";
         private const int DEFAULT_CAT_ID = 3;
 
-        public TimKiemDoiTacController(AppDbContext context)
+        public TimKiemDoiTacController(AppDbContext context, IOptions<AppSettings> appSettings)
         {
             _context = context;
+            _mainDomain = appSettings.Value.MainDomain;
         }
 
-        [Route("tim-kiem-doi-tac-11.html")]
+
         public IActionResult Index()
         {
             var model = new TimKiemDoiTacIndexVm
@@ -31,7 +34,7 @@ namespace TPApp.Controllers
         }
 
         // ================= DETAIL =================
-        [Route("11-tim-kiem-doi-tac/{slug}-{id}.html")]
+
         public IActionResult Detail(string slug, int id)
         {
             var lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
@@ -71,7 +74,7 @@ namespace TPApp.Controllers
                 Viewed = p.Viewed ?? 0,
                 CategoryId = p.CategoryId,
                 ImageUrl = string.IsNullOrEmpty(p.HinhDaiDien)
-                    ? $"{MainDomain}images/research.jpg"
+                    ? $"{_mainDomain}images/research.jpg"
                     : p.HinhDaiDien
             };
 
@@ -86,6 +89,7 @@ namespace TPApp.Controllers
                 )
                 .OrderByDescending(x => x.Created)
                 .Take(8)
+                .AsEnumerable()
                 .Select(x => new TimKiemDoiTacItemVm
                 {
                     TimDoiTacId = x.TimDoiTacId,
@@ -93,9 +97,9 @@ namespace TPApp.Controllers
                     FullName = x.FullName,
                     Rating = x.Rating,
                     ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                        ? $"{MainDomain}images/research.jpg"
-                        : CookedImageURL("254-170", x.HinhDaiDien),
-                    Url = $"{MainDomain}11-tim-kiem-doi-tac/" +
+                        ? $"{_mainDomain}images/research.jpg"
+                        : CookedImageURL("254-170", x.HinhDaiDien, _mainDomain),
+                    Url = $"{_mainDomain}11-tim-kiem-doi-tac/" +
                           $"{MakeURLFriendly(x.TenSanPham)}-{x.TimDoiTacId}.html"
                 })
                 .ToList();
@@ -108,7 +112,7 @@ namespace TPApp.Controllers
                 {
                     CatId = x.CatId,
                     Title = x.Title,
-                    Url = $"{MainDomain}11-ds-tim-kiem-doi-tac/" +
+                    Url = $"{_mainDomain}11-ds-tim-kiem-doi-tac/" +
                           $"{MakeURLFriendly(x.QueryString)}-{x.CatId}.html",
                     Products = new List<TimKiemDoiTacItemVm>() // không load SP ở đây
                 })
@@ -118,7 +122,7 @@ namespace TPApp.Controllers
         }
 
         // ================= LIST BY CATEGORY =================
-        [Route("11-ds-tim-kiem-doi-tac/{slug}-{cateId}.html")]
+
         public IActionResult List(string slug, int cateId, int page = 1)
         {
             var lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
@@ -144,6 +148,7 @@ namespace TPApp.Controllers
             var items = query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .AsEnumerable()
                 .Select(x => new TimKiemDoiTacItemVm
                 {
                     TimDoiTacId = x.TimDoiTacId,
@@ -151,9 +156,9 @@ namespace TPApp.Controllers
                     FullName = x.FullName,
                     Rating = x.Rating,
                     ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                        ? $"{MainDomain}images/research.jpg"
+                        ? $"{_mainDomain}images/research.jpg"
                         : x.HinhDaiDien,
-                    Url = $"{MainDomain}11-tim-kiem-doi-tac/" +
+                    Url = $"{_mainDomain}11-tim-kiem-doi-tac/" +
                           $"{MakeURLFriendly(x.TenSanPham)}-{x.TimDoiTacId}.html"
                 })
                 .ToList();
@@ -176,7 +181,7 @@ namespace TPApp.Controllers
                     {
                         CatId = x.CatId,
                         Title = x.Title,
-                        Url = $"{MainDomain}11-ds-tim-kiem-doi-tac/" +
+                        Url = $"{_mainDomain}11-ds-tim-kiem-doi-tac/" +
                               $"{MakeURLFriendly(x.QueryString)}-{x.CatId}.html"
                     })
                     .ToList()
@@ -209,6 +214,7 @@ namespace TPApp.Controllers
                     )
                     .OrderByDescending(x => x.Created)
                     .Take(8)
+                    .AsEnumerable()
                     .Select(x => new TimKiemDoiTacItemVm
                     {
                         TimDoiTacId = x.TimDoiTacId,
@@ -216,9 +222,9 @@ namespace TPApp.Controllers
                         FullName = x.FullName,
                         Rating = x.Rating,
                         ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                            ? $"{MainDomain}images/research.jpg"
-                            : CookedImageURL("254-170", x.HinhDaiDien),
-                        Url = $"{MainDomain}11-tim-kiem-doi-tac/" +
+                            ? $"{_mainDomain}images/research.jpg"
+                            : CookedImageURL("254-170", x.HinhDaiDien, _mainDomain),
+                        Url = $"{_mainDomain}11-tim-kiem-doi-tac/" +
                               $"{MakeURLFriendly(x.TenSanPham)}-{x.TimDoiTacId}.html"
                     })
                     .ToList();
@@ -227,7 +233,7 @@ namespace TPApp.Controllers
                 {
                     CatId = c.CatId,
                     Title = c.Title,
-                    Url = $"{MainDomain}11-ds-tim-kiem-doi-tac/" +
+                    Url = $"{_mainDomain}11-ds-tim-kiem-doi-tac/" +
                           $"{MakeURLFriendly(c.QueryString)}-{c.CatId}.html",
                     Products = products
                 });
@@ -242,7 +248,7 @@ namespace TPApp.Controllers
         {
             AddShoppingCart(productId);
             HttpContext.Session.SetString("LastURL", Request.Headers["Referer"].ToString());
-            return Redirect($"{MainDomain}gio-hang.html");
+            return Redirect($"{_mainDomain}gio-hang.html");
         }
 
         private void AddShoppingCart(int productId)
@@ -275,10 +281,9 @@ namespace TPApp.Controllers
             }
         }
 
-        public static string CookedImageURL(string size, string? imageUrl)
+        // Static method using passed mainDomain
+        public static string CookedImageURL(string size, string? imageUrl, string mainDomain)
         {
-            var mainDomain = MainDomain;
-
             if (string.IsNullOrWhiteSpace(imageUrl))
             {
                 return $"{mainDomain.TrimEnd('/')}/images/{size}_noImage.jpg";

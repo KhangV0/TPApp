@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using TPApp.Data;
 using TPApp.Entities;
+using TPApp.Helpers;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers
@@ -9,17 +11,19 @@ namespace TPApp.Controllers
     public class ForumController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly string _mainDomain;
+        private readonly AppSettings _appSettings;
 
-        private const string MainDomain = "https://localhost:7232/";
         private const int STATUS_APPROVED = 3;
 
-        public ForumController(AppDbContext context)
+        public ForumController(AppDbContext context, IOptions<AppSettings> appSettings)
         {
             _context = context;
+            _mainDomain = appSettings.Value.MainDomain;
+            _appSettings = appSettings.Value;
         }
 
         // ================= INDEX =================
-        [Route("thao-luan.html")]
         public IActionResult Index(int? linhvuc, int? parentid, int page = 1, int pageSize = 10)
         {
             int lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
@@ -59,28 +63,187 @@ namespace TPApp.Controllers
             model.PortletTinTuc = LoadPortletTinTuc();
             model.PortletGiaiPhapCongNghe = LoadPortletGiaiPhapCongNghe();
 
-
-
             return View(model);
         }
 
-        [Route("thao-luan-{linhvuc:int}-{parentid:int}.html")]
-        public IActionResult Detail(int productId = 1)
+        
+        [HttpGet]
+        public IActionResult Detail(int id)
         {
-            // tương đương Page.RouteData.Values("ProductId") = 1
-            var vm = new ProductDetailForumVm
-            {
-                ProductId = productId,
-                CateTitle = "Danh mục ngành nghề"
-            };
+            var vm = new ForumDetailVm();
+            int lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
 
-            // === LoadData(1) ===
+            // 1. GET DATA
+            var p = _context.ForumYCTBs
+                .FirstOrDefault(x => x.ForumYCTBId == id);
+
+            if (p == null)
+            {
+                return Redirect($"{_mainDomain}Errors/404.aspx");
+            }
+
+            // 2. MAP TO VM
+            vm.Id = p.ForumYCTBId;
+            vm.Title = p.Title ?? "";
+            vm.Content = p.NoiDung ?? "";
+            vm.FullName = p.FullName ?? "";
+            vm.TenDonVi = p.TenDonVi ?? "";
+            vm.DiaChi = p.DiaChi ?? "";
+            
+            // Image Logic
+            if (string.IsNullOrEmpty(p.HinhDaiDien))
+            {
+                 vm.HinhDaiDien = $"{_mainDomain}images/TimSanPham.jpg";
+            }
+            else
+            {
+                vm.HinhDaiDien = p.HinhDaiDien;
+            }
+
+            vm.CreatedDateText = DateToString(p.Created, "mm/dd/yyyy");
+
+            // 3. CHECK LOGIN
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var username = HttpContext.Session.GetString("Username");
+
+            if (string.IsNullOrEmpty(username))
+            {
+                vm.IsLoggedIn = false;
+                vm.Phone = "Đăng nhập để xem thông tin";
+                vm.Email = "Đăng nhập để xem thông tin";
+            }
+            else
+            {
+                vm.IsLoggedIn = true;
+                vm.Phone = p.Phone ?? "";
+                vm.Email = p.Email ?? "";
+            }
+
+            // 4. UPDATE VIEW COUNT
+            // Logic: Session Key "PageViewPhieuYCTB" + ID
+            string sessionKey = $"PageViewPhieuYCTB{id}";
+            string? lastView = HttpContext.Session.GetString(sessionKey);
+
+            int updateTime = _appSettings.SettingTimeUpdatePageView; // Retrieved from AppSettings
+
+            bool shouldUpdate = false;
+            if (lastView == null)
+            {
+                shouldUpdate = true;
+            }
+            else
+            {
+                 if ((DateTime.Now - DateTime.Parse(lastView)).TotalSeconds >= updateTime)
+                 {
+                     shouldUpdate = true;
+                 }
+            }
+
+            if (shouldUpdate)
+            {
+                p.Viewed = (p.Viewed ?? 0) + 1;
+                _context.SaveChanges();
+                HttpContext.Session.SetString(sessionKey, DateTime.Now.ToString());
+            }
+
+            vm.Viewed = p.Viewed ?? 0;
+            vm.Like = p.Like ?? 0;
+
+            // 5. RELATED ITEMS (LoadPhieuYeuCau)
+            // Logic: Take 8 newest, Lang=1 (Source code hardcoded 1)
+            vm.RelatedItems = _context.ForumYCTBs
+                .AsNoTracking()
+                .Where(q => q.LanguageId == 1 && q.StatusId == STATUS_APPROVED && q.ForumYCTBId != id) // Added ID check and Status check for safety
+                .OrderByDescending(q => q.Created)
+                .Take(8)
+                .AsEnumerable()
+                .Select(x => new ForumItemVm
+                {
+                    Id = x.ForumYCTBId,
+                    Title = x.Title,
+                    Url = $"{_mainDomain}chi-tiet-thao-luan-{x.ForumYCTBId}.html",
+                    AuthorInfo = x.FullName, // used as name
+                    HinhDaiDien = string.IsNullOrEmpty(x.HinhDaiDien) ? $"{_mainDomain}images/TimSanPham.jpg" : x.HinhDaiDien,
+                    Phone = x.Phone,
+                    Email = x.Email
+                })
+                .ToList();
+                
+            // NOTE: ForumItemVm doesn't have Image/Phone fields. 
+            // I should use ForumDetailVm or expand ForumItemVm? 
+            // The existing ForumItemVm is minimal.
+            // I will use ForumItemVm but I might need to fetch the image in the View or add it to VM.
+            // Let's Add HinhDaiDien to ForumItemVm or use a dedicated inner class for RelatedItems.
+            // Currently ForumItemVm has Title, Url.
+            // I will check ForumIndexVm again. It has AuthorInfo. 
+            // I will Use ForumItemVm but I need HinhDaiDien.
+            // I will ADD HinhDaiDien, Phone, Email to ForumItemVm below.
+
+            // 6. CATEGORIES (Side Menu)
+            // Logic: ParentId = 1 (Source code passed 1 to LoadData)
             vm.Categories = _context.Categories
                 .Where(x => x.ParentId == 1 && x.MainCate == true)
                 .OrderBy(x => x.Sort)
+                .Select(x => new CategoryVm
+                {
+                    Id = x.CatId,
+                    Title = x.Title,
+                    Url = $"{_mainDomain}thao-luan-{x.CatId}-1.html"
+                })
                 .ToList();
 
+            // 7. PORTLETS
+            vm.PortletNhieuNhat = LoadPortletNhieuNhat();
+
+            // Set Meta
+            ViewData["Title"] = vm.Title;
+            ViewData["MetaDescription"] = vm.Content; // Source code set MetaKeywords to NoiDung
+
             return View(vm);
+        }
+
+        [HttpPost]
+        public IActionResult Like(int id)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId"); // or String "0"?
+            string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+            
+            // Logic: Check LikePage
+            // If User logged in: Check (IP + UserId + IdPage + TypeID=1)
+            // If Not logged in: Check (IP + IdPage + TypeID=1)
+            
+            bool alreadyLiked = false;
+            if (userId.HasValue)
+            {
+                 alreadyLiked = _context.Likepages.Any(q => q.IPAddress == ipAddress && q.UserId == userId.ToString() && q.IdPage == id && q.TypeID == 1);
+            }
+            else
+            {
+                 alreadyLiked = _context.Likepages.Any(q => q.IPAddress == ipAddress && q.IdPage == id && q.TypeID == 1);
+            }
+
+            if (!alreadyLiked)
+            {
+                var likePage = new Likepage
+                {
+                    IdPage = id,
+                    IPAddress = ipAddress,
+                    UserId = userId?.ToString(),
+                    TypeID = 1,
+                    Like = 1,
+                    Created = DateTime.Now
+                };
+                _context.Likepages.Add(likePage);
+
+                var p = _context.ForumYCTBs.FirstOrDefault(x => x.ForumYCTBId == id);
+                if (p != null)
+                {
+                    p.Like = (p.Like ?? 0) + 1;
+                }
+                _context.SaveChanges();
+            }
+
+            return Redirect($"{_mainDomain}chi-tiet-thao-luan-{id}.html");
         }
 
         // ================= LOAD ALL =================
@@ -161,7 +324,7 @@ namespace TPApp.Controllers
             {
                 Id = x.ForumYCTBId,
                 Title = x.Title,
-                Url = $"{MainDomain}chi-tiet-thao-luan-{x.ForumYCTBId}.html",
+                Url = $"{_mainDomain}chi-tiet-thao-luan-{x.ForumYCTBId}.html",
                 AuthorInfo = $"<b>{x.LastModifiedBy}</b> lúc <i>{x.LastModified}</i>",
                 Viewed = x.Viewed ?? 0,
                 Like = x.Like ?? 0,
@@ -179,7 +342,7 @@ namespace TPApp.Controllers
             {
                 Id = x.ForumYCDVId,
                 Title = x.Title,
-                Url = $"{MainDomain}chi-tiet-thao-luanDVTV-{x.ForumYCDVId}.html",
+                Url = $"{_mainDomain}chi-tiet-thao-luanDVTV-{x.ForumYCDVId}.html",
                 AuthorInfo = $"<b>{x.LastModifiedBy}</b> lúc <i>{x.LastModified}</i>",
                 Viewed = x.Viewed ?? 0,
                 Like = x.Like ?? 0,
@@ -211,7 +374,7 @@ namespace TPApp.Controllers
                 .Select(x => new CategoryVm
                 {
                     Title = x.Title,
-                    Url = $"{MainDomain}thao-luan-{x.CatId}-1.html"
+                    Url = $"{_mainDomain}thao-luan-{x.CatId}-1.html"
                 })
                 .ToList();
         }
@@ -281,14 +444,15 @@ namespace TPApp.Controllers
                 )
                 .OrderByDescending(x => x.Viewed)
                 .Take(5)
+                .AsEnumerable()
                 .Select(x => new ForumPortletDangMoItemVm
                 {
                     Id = x.ForumYCTBId,
                     Title = x.Title,
-                    ImageUrl = CookedImageURL("254-170", x.HinhDaiDien),
+                    ImageUrl = CookedImageURL("254-170", x.HinhDaiDien, _mainDomain),
                     Tooltip = x.NoiDung,
                     DateText = DateToString(x.Created, "MM/dd/yyyy"),
-                    Url = $"{MainDomain}chi-tiet-thao-luan-{x.ForumYCTBId}.html"
+                    Url = $"{_mainDomain}chi-tiet-thao-luan-{x.ForumYCTBId}.html"
                 })
                 .ToList();
 
@@ -352,10 +516,8 @@ namespace TPApp.Controllers
             return KQ;
         }
 
-        public static string CookedImageURL(string size, string? imageUrl)
+        public static string CookedImageURL(string size, string? imageUrl, string mainDomain)
         {
-            var mainDomain = MainDomain;
-
             if (string.IsNullOrWhiteSpace(imageUrl))
             {
                 return $"{mainDomain.TrimEnd('/')}/images/{size}_noImage.jpg";
@@ -392,16 +554,17 @@ namespace TPApp.Controllers
                 )
                 .OrderByDescending(q => q.PublishedDate)
                 .Take(5)
+                .AsEnumerable()
                 .Select(q => new ForumTinTucItemVm
                 {
                     MenuId = (int)q.MenuId,
                     Id = (int)q.Id,
                     Title = q.Title,
                     QueryString = q.QueryString,
-                    ImageUrl = CookedImageURL("254-170", q.Image),
+                    ImageUrl = CookedImageURL("254-170", q.Image, _mainDomain),
                     Tooltip = q.Title,
                     DateText = DateToString(q.PublishedDate, "mm/dd/yyyy"),
-                    Url = $"{MainDomain}{q.MenuId}/{q.QueryString}-{q.Id}.html"
+                    Url = $"{_mainDomain}{q.MenuId}/{q.QueryString}-{q.Id}.html"
                 })
                 .ToList();
 
@@ -421,13 +584,14 @@ namespace TPApp.Controllers
                 .Where(q =>
                     q.MenuId == 72 &&
                     q.LanguageId == lang &&
-                    q.StatusId == STATUS_APPROVED &&
+                    q.StatusId == 3 &&
                     q.IsReport == false &&
                     q.PublishedDate <= now &&
                     (q.eEffectiveDate == null || q.eEffectiveDate >= now)
                 )
                 .OrderByDescending(q => q.PublishedDate)
                 .Take(5)
+                .AsEnumerable()
                 .Select(q => new ForumGiaiPhapCongNgheItemVm
                 {
                     MenuId = (int)q.MenuId,
@@ -435,10 +599,10 @@ namespace TPApp.Controllers
                     Title = q.Title,
                     QueryString = q.QueryString,
                     Description = q.Description,
-                    ImageUrl = CookedImageURL("254-170", q.Image),
+                    ImageUrl = CookedImageURL("254-170", q.Image, _mainDomain),
                     Tooltip = q.Title,
                     DateText = DateToString(q.PublishedDate, "mm/dd/yyyy"),
-                    Url = $"{MainDomain}{q.MenuId}/{q.QueryString}-{q.Id}.html"
+                    Url = $"{_mainDomain}{q.MenuId}/{q.QueryString}-{q.Id}.html"
                 })
                 .ToList();
 

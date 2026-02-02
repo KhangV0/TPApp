@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Options;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Enums;
+using TPApp.Helpers;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers.FrontEnd
@@ -10,14 +12,15 @@ namespace TPApp.Controllers.FrontEnd
     public class NhucaucongngheController : Controller
     {
         private readonly AppDbContext _context;
-        private const string MainDomain = "https://localhost:7232/";
+        private readonly string _mainDomain;
 
-        public NhucaucongngheController(AppDbContext context)
+        public NhucaucongngheController(AppDbContext context, IOptions<AppSettings> appSettings)
         {
             _context = context;
+            _mainDomain = appSettings.Value.MainDomain;
         }
 
-        [Route("yeu-cau-cong-nghe-67.html")]
+
         public IActionResult CateTechNeeds(
             int menuId,
             string? linhvuc,
@@ -126,7 +129,7 @@ namespace TPApp.Controllers.FrontEnd
                 Image = q.Image,
                 Description = q.Description,
                 PublishedDate = q.PublishedDate,
-                DetailUrl = $"{MainDomain}{menuId}/yeu-cau/{q.QueryString}-{id}.html"
+                DetailUrl = $"{_mainDomain}{menuId}/yeu-cau/{q.QueryString}-{id}.html"
             };
         }
 
@@ -196,7 +199,7 @@ namespace TPApp.Controllers.FrontEnd
                     // Send mail ở đây (nếu bạn đã có helper)
                 }
 
-                return Redirect(MainDomain + "page/thanks");
+                return Redirect(_mainDomain + "page/thanks");
             }
             catch
             {
@@ -222,7 +225,7 @@ namespace TPApp.Controllers.FrontEnd
             );
         }
 
-        [Route("{menuId:int}/yeu-cau/{slug}-{id:int}.html")]
+
         public IActionResult Detail(int id)
         {
             var vm = new NhuCauCongNgheDetailViewModel();
@@ -309,7 +312,7 @@ namespace TPApp.Controllers.FrontEnd
 
             ViewData["Title"] = p.Title;
             ViewData["MetaDescription"] = p.Description;
-            ViewData["BackLink"] = MainDomain + "yeu-cau-cong-nghe-67.html";
+            ViewData["BackLink"] = _mainDomain + "yeu-cau-cong-nghe-67.html";
 
             return View("Detail", vm);
         }

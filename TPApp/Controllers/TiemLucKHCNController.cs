@@ -14,7 +14,7 @@ namespace TPApp.Controllers
             _context = context;
             _config = config;
         }
-        [Route("tiem-luc-KHCN.html")]
+
         [HttpGet]
         public IActionResult Index(
             string? t,

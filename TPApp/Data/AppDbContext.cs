@@ -57,6 +57,7 @@ namespace TPApp.Data
         public DbSet<ImageAdver> ImageAdvers { get; set; }
         public DbSet<Store> Stores { get; set; }
         public DbSet<SearchIndexContent> SearchIndexContents { get; set; }
+        public DbSet<Likepage> Likepages { get; set; }
 
 
 
