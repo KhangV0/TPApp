@@ -4079,3 +4079,22 @@ button, .btn {
 }
 
 
+.main-logo {
+    height: 42px;
+}
+
+.category-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #000;
+    font-weight: 500;
+}
+
+.category-pill:hover {
+    background: #f2f2f2;
+}
+
+.megamenu {
+    width: 600px;
+}

@@ -10,7 +10,7 @@ namespace TPApp.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        public int? DuAnId { get; set; }
+        public int? ProjectId { get; set; }
 
         public int? EContractId { get; set; }
 

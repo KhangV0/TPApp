@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore; // Added for AnyAsync and FirstOrDefaultAsync
 using TPApp.Data;
 using TPApp.Entities;
 
@@ -11,19 +12,34 @@ namespace TPApp.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly Services.IWorkflowService _workflowService;
 
-        public AcceptanceController(AppDbContext context, UserManager<ApplicationUser> userManager)
+        public AcceptanceController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService)
         {
             _context = context;
             _userManager = userManager;
+            _workflowService = workflowService;
         }
 
-        // GET: /Acceptance/Create
+        // GET: /Acceptance/Create?projectId=5
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(int? projectId)
         {
+            if (projectId == null) return NotFound("Project Id is required");
+
+            var userId = _userManager.GetUserId(User);
+            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == projectId && m.UserId == userId);
+            if (!isMember) return Forbid();
+
+            // Check Workflow Access (Step 10)
+            if (!await _workflowService.CanAccessStep(projectId.Value, 10)) return Forbid();
+
+            var existing = await _context.AcceptanceReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (existing != null) return RedirectToAction("Details", "Project", new { id = projectId });
+
             var model = new AcceptanceReport
             {
+                ProjectId = projectId,
                 NgayNghiemThu = DateTime.Now
             };
             return View(model);
@@ -34,19 +50,26 @@ namespace TPApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AcceptanceReport model)
         {
+            var userId = _userManager.GetUserId(User);
+            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
+            if (!isMember) return Forbid();
+
             if (ModelState.IsValid)
             {
                 try
                 {
                     model.TrangThaiKy = "Chưa ký";
-                    model.NguoiTao = _userManager.GetUserId(User);
+                    model.NguoiTao = userId;
                     model.NgayTao = DateTime.Now;
                     model.StatusId = 1;
 
                     _context.AcceptanceReports.Add(model);
                     await _context.SaveChangesAsync();
 
-                    return RedirectToAction(nameof(Details), new { id = model.Id });
+                    // Complete Step 10
+                    await _workflowService.CompleteStep(model.ProjectId.Value, 10);
+
+                    return RedirectToAction("Details", "Project", new { id = model.ProjectId });
                 }
                 catch (Exception ex)
                 {

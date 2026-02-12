@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TPApp.Data;
 using TPApp.Entities;
+using Microsoft.EntityFrameworkCore; // Added for FirstOrDefaultAsync
 
 namespace TPApp.Controllers
 {
@@ -12,19 +13,34 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
+        private readonly Services.IWorkflowService _workflowService;
 
-        public LiquidationController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment)
+        public LiquidationController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment, Services.IWorkflowService workflowService)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
+            _workflowService = workflowService;
         }
 
-        // GET: /Liquidation/Create
+        // GET: /Liquidation/Create?projectId=5
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(int? projectId)
         {
-            return View();
+            if (projectId == null) return NotFound("Project Id is required");
+
+            var userId = _userManager.GetUserId(User);
+            var member = await _context.ProjectMembers.FirstOrDefaultAsync(m => m.ProjectId == projectId && m.UserId == userId);
+            if (member == null) return Forbid();
+            if (member.Role == 3) return Forbid(); // Consultant/Other restricted?
+
+            // Check Workflow Access (Step 11)
+            if (!await _workflowService.CanAccessStep(projectId.Value, 11)) return Forbid();
+
+            var existing = await _context.LiquidationReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (existing != null) return RedirectToAction("Details", "Project", new { id = projectId });
+
+            return View(new LiquidationReport { ProjectId = projectId });
         }
 
         // POST: /Liquidation/Create
@@ -32,6 +48,11 @@ namespace TPApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(LiquidationReport model, IFormFile? HoaDonUpload)
         {
+            var userId = _userManager.GetUserId(User);
+            var member = await _context.ProjectMembers.FirstOrDefaultAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
+            if (member == null) return Forbid();
+            if (member.Role == 3) return Forbid();
+
             ModelState.Remove("HoaDonFile");
 
             if (ModelState.IsValid)
@@ -81,14 +102,18 @@ namespace TPApp.Controllers
                         model.StatusId = 1;
                     }
 
-                    // Metadata
-                    model.NguoiTao = _userManager.GetUserId(User);
+                    // Set Metadata
+                    model.NguoiTao = userId;
                     model.NgayTao = DateTime.Now;
+                    model.StatusId = 1;
 
                     _context.LiquidationReports.Add(model);
                     await _context.SaveChangesAsync();
 
-                    return RedirectToAction(nameof(Details), new { id = model.Id });
+                    // Complete Step 11
+                    await _workflowService.CompleteStep(model.ProjectId.Value, 11);
+
+                    return RedirectToAction("Details", "Project", new { id = model.ProjectId });
                 }
                 catch (Exception ex)
                 {

@@ -44,7 +44,7 @@ namespace TPApp.Entities
 
         public decimal? NganSachDuKien { get; set; }
 
-        public int? DuAnId { get; set; }
+        public int? ProjectId { get; set; }
 
         public int StatusId { get; set; } = 1;
 

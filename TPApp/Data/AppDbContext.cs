@@ -40,6 +40,10 @@ namespace TPApp.Data
         public DbSet<uspPortletCountTichcuu_Result> PortletHoiNhieu { get; set; }
         public DbSet<uspPortletCountTichcuuTraloi_Result> PortletTraLoiNhieu { get; set; }
 
+        public DbSet<Project> Projects { get; set; }
+        public DbSet<ProjectMember> ProjectMembers { get; set; }
+        public DbSet<ProjectStep> ProjectSteps { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

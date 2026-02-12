@@ -12,7 +12,7 @@ namespace TPApp.Entities
 
         public int? RFQId { get; set; }
 
-        public int? DuAnId { get; set; }
+        public int? ProjectId { get; set; }
 
         public decimal? GiaChotCuoiCung { get; set; }
 

@@ -12,6 +12,7 @@
         <div class="card-body">
             <form asp-action="Create" method="post">
                 @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ProjectId" />
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                 <div class="row g-3">
@@ -47,9 +48,9 @@
 
                     <!-- Dự án ID (Optional) -->
                     <div class="col-md-6">
-                        <label asp-for="DuAnId" class="form-label">Dự án ID (Nếu có)</label>
-                        <input asp-for="DuAnId" class="form-control" type="number" />
-                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                        <label asp-for="ProjectId" class="form-label">Dự án ID (Nếu có)</label>
+                        <input asp-for="ProjectId" class="form-control" type="number" />
+                        <span asp-validation-for="ProjectId" class="text-danger"></span>
                     </div>
 
                     <!-- Xác nhận ký số -->

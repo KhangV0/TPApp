@@ -29,7 +29,7 @@ namespace TPApp.Entities
         [StringLength(100)]
         public string? XacNhanKySo { get; set; }
 
-        public int? DuAnId { get; set; }
+        public int? ProjectId { get; set; }
 
         [Required(ErrorMessage = "Bạn phải đồng ý điều khoản trước khi tiếp tục.")]
         public bool DaDongY { get; set; }

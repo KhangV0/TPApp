@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Không có quyền truy cập";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="text-danger">
+                <i class="bi bi-exclamation-triangle-fill"></i> Không có quyền truy cập
+            </h1>
+            <p class="lead mt-3">Bạn không có quyền truy cập vào chức năng hoặc tài nguyên này.</p>
+            <p>
+                Điều này có thể do:
+                <ul class="list-unstyled">
+                    <li>Bạn chưa đăng nhập.</li>
+                    <li>Tài khoản của bạn không có vai trò phù hợp.</li>
+                    <li>Bạn đang cố truy cập một bước trong quy trình chưa được mở khóa.</li>
+                </ul>
+            </p>
+            <hr />
+            <a href="/" class="btn btn-primary">Về trang chủ</a>
+            <a href="javascript:history.back()" class="btn btn-secondary">Quay lại</a>
+        </div>
+    </div>
+</div>

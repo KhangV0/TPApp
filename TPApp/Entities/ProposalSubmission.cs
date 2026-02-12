@@ -12,7 +12,7 @@ namespace TPApp.Entities
 
         public int? RFQId { get; set; }
 
-        public int? DuAnId { get; set; }
+        public int? ProjectId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng tải lên giải pháp kỹ thuật")]
         public string GiaiPhapKyThuat { get; set; } = null!; // File path

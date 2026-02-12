@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<TPApp.Services.IWorkflowService, TPApp.Services.WorkflowService>();
 
 // Cho phép lấy HttpContext trong Razor
 builder.Services.AddHttpContextAccessor();

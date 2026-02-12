@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TPApp.Data;
 using TPApp.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace TPApp.Controllers
 {
@@ -12,19 +13,33 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
+        private readonly Services.IWorkflowService _workflowService;
 
-        public AdvancePaymentController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment)
+        public AdvancePaymentController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment, Services.IWorkflowService workflowService)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
+            _workflowService = workflowService;
         }
 
-        // GET: /AdvancePayment/Create
+        // GET: /AdvancePayment/Create?projectId=5
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(int? projectId)
         {
-            return View();
+             if (projectId == null) return NotFound("Project Id is required");
+
+            var userId = _userManager.GetUserId(User);
+            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == projectId && m.UserId == userId);
+            if (!isMember) return Forbid();
+
+            // Check Workflow Access (Step 7)
+            if (!await _workflowService.CanAccessStep(projectId.Value, 7)) return Forbid();
+
+            var existing = await _context.AdvancePaymentConfirmations.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (existing != null) return RedirectToAction("Details", "Project", new { id = projectId });
+
+            return View(new AdvancePaymentConfirmation { ProjectId = projectId });
         }
 
         // POST: /AdvancePayment/Create
@@ -32,6 +47,10 @@ namespace TPApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AdvancePaymentConfirmation model, IFormFile? ChungTuFile)
         {
+            var userId = _userManager.GetUserId(User);
+            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
+            if (!isMember) return Forbid();
+
             // Remove ModelState error because we manually handle the file path
             ModelState.Remove("ChungTuChuyenTienFile");
 
@@ -74,7 +93,7 @@ namespace TPApp.Controllers
                     }
 
                     // Set Metadata
-                    model.NguoiTao = _userManager.GetUserId(User);
+                    model.NguoiTao = userId;
                     model.NgayTao = DateTime.Now;
                     
                     if (model.DaXacNhanNhanTien)
@@ -89,7 +108,10 @@ namespace TPApp.Controllers
                     _context.AdvancePaymentConfirmations.Add(model);
                     await _context.SaveChangesAsync();
 
-                    return RedirectToAction(nameof(Success));
+                    // Complete Step 7
+                    await _workflowService.CompleteStep(model.ProjectId.Value, 7);
+
+                    return RedirectToAction("Details", "Project", new { id = model.ProjectId });
                 }
                 catch (Exception ex)
                 {

@@ -1,0 +1,84 @@
+@model IEnumerable<TPApp.Entities.ProposalSubmission>
+
+@{
+    ViewData["Title"] = "Danh sách hồ sơ đề xuất";
+    int duAnId = ViewBag.ProjectId;
+    int userRole = ViewBag.UserRole; // 1: Buyer, 2: Seller, 3: Consultant
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>@ViewData["Title"]</h2>
+        <div>
+            @if (userRole != 1) // Only Seller/Consultant can create
+            {
+                <a asp-action="Create" asp-route-duAnId="@duAnId" class="btn btn-primary"><i class="fas fa-plus"></i> Nộp hồ sơ mới</a>
+            }
+            <a asp-controller="Project" asp-action="Details" asp-route-id="@duAnId" class="btn btn-secondary">Quay lại dự án</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info">Chưa có hồ sơ đề xuất nào cho dự án này.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ngày tạo</th>
+                                <th>Người tạo</th>
+                                <th>Báo giá sơ bộ</th>
+                                <th>Thời gian triển khai</th>
+                                <th>Trạng thái</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.NgayTao.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@item.NguoiTao</td>
+                                    <td>@(item.BaoGiaSoBo.HasValue ? item.BaoGiaSoBo.Value.ToString("N0") + " VNĐ" : "-")</td>
+                                    <td>@item.ThoiGianTrienKhai</td>
+                                    <td>
+                                        @switch (item.StatusId)
+                                        {
+                                            case 1:
+                                                <span class="badge bg-secondary">Draft</span>
+                                                break;
+                                            case 2:
+                                                <span class="badge bg-warning text-dark">Processing</span>
+                                                break;
+                                            case 3:
+                                                <span class="badge bg-success">Approved</span>
+                                                break;
+                                            case 4:
+                                                <span class="badge bg-danger">Rejected</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-light text-dark">Unknown</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info" title="Xem chi tiết"><i class="fas fa-eye"></i></a>
+                                        @if (userRole != 1) // Seller/Consultant can edit
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Sửa"><i class="fas fa-edit"></i></a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

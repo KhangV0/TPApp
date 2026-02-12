@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TPApp.Data;
 using TPApp.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace TPApp.Controllers
 {
@@ -12,19 +13,33 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
+        private readonly Services.IWorkflowService _workflowService;
 
-        public NegotiationController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment)
+        public NegotiationController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment, Services.IWorkflowService workflowService)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
+            _workflowService = workflowService;
         }
 
-        // GET: /Negotiation/Create
+        // GET: /Negotiation/Create?projectId=5
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create(int? projectId)
         {
-            return View();
+             if (projectId == null) return NotFound("Project Id is required");
+
+            var userId = _userManager.GetUserId(User);
+            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == projectId && m.UserId == userId);
+            if (!isMember) return Forbid();
+
+            // Check Workflow Access (Step 5)
+            if (!await _workflowService.CanAccessStep(projectId.Value, 5)) return Forbid();
+
+            var existing = await _context.NegotiationForms.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (existing != null) return RedirectToAction("Details", "Project", new { id = projectId });
+
+            return View(new NegotiationForm { ProjectId = projectId });
         }
 
         // POST: /Negotiation/Create
@@ -32,6 +47,10 @@ namespace TPApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(NegotiationForm model, IFormFile? BienBanFile)
         {
+            var userId = _userManager.GetUserId(User);
+            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
+            if (!isMember) return Forbid();
+
             // Validate File if "Upload file" is selected
             if (model.HinhThucKy == "Upload file")
             {
@@ -89,14 +108,17 @@ namespace TPApp.Controllers
                     }
 
                     // Set Metadata
-                    model.NguoiTao = _userManager.GetUserId(User);
+                    model.NguoiTao = userId;
                     model.NgayTao = DateTime.Now;
                     model.StatusId = 1;
 
                     _context.NegotiationForms.Add(model);
                     await _context.SaveChangesAsync();
 
-                    return RedirectToAction(nameof(Success));
+                    // Complete Step 5
+                    await _workflowService.CompleteStep(model.ProjectId.Value, 5);
+
+                    return RedirectToAction("Details", "Project", new { id = model.ProjectId });
                 }
                 catch (Exception ex)
                 {

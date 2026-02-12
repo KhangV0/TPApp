@@ -22,7 +22,7 @@ namespace TPApp.Entities
         [Required(ErrorMessage = "Vui lòng nhập hạn chót nộp hồ sơ")]
         public DateTime HanChotNopHoSo { get; set; }
 
-        public int? DuAnId { get; set; }
+        public int? ProjectId { get; set; }
 
         public bool DaGuiNhaCungUng { get; set; } = false;
 

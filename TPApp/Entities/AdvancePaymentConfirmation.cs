@@ -12,7 +12,7 @@ namespace TPApp.Entities
 
         public int? EContractId { get; set; }
 
-        public int? DuAnId { get; set; }
+        public int? ProjectId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập số tiền tạm ứng")]
         public decimal SoTienTamUng { get; set; }
