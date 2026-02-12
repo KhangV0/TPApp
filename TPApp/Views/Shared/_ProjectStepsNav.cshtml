@@ -1,0 +1,143 @@
+@model List<TPApp.ViewModel.ProjectStepNavVm>
+
+@{
+    var completedCount = Model.Count(s => s.StatusId > 0);
+    var progressPercent = (int)Math.Round((completedCount / 11.0) * 100);
+}
+
+<div class="project-steps-nav mb-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Progress Bar -->
+            <div class="progress mb-4" style="height: 8px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: @progressPercent%" aria-valuenow="@progressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+
+            <!-- Horizontal Steps -->
+            <ul class="nav nav-pills nav-justified flex-nowrap overflow-auto">
+                @foreach (var step in Model)
+                {
+                    var stepClass = step.StatusId > 0 ? "completed" : (step.IsCurrent ? "current" : "pending");
+                    var badgeClass = step.StatusId > 0 ? "bg-success" : (step.IsCurrent ? "bg-primary" : "bg-light text-muted");
+                    var disabled = !step.IsAccessible ? "disabled" : "";
+                    
+                    <li class="nav-item step-item">
+                        @if (step.IsAccessible)
+                        {
+                            <a class="nav-link step-link @stepClass" href="#" data-step="@step.StepNumber">
+                                <div class="step-circle @badgeClass">
+                                    @if (step.StatusId > 0)
+                                    {
+                                        <i class="fas fa-check"></i>
+                                    }
+                                    else
+                                    {
+                                        @step.StepNumber
+                                    }
+                                </div>
+                                <div class="step-name">@step.StepName</div>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="nav-link disabled @stepClass">
+                                <div class="step-circle @badgeClass">@step.StepNumber</div>
+                                <div class="step-name">@step.StepName</div>
+                            </span>
+                        }
+                    </li>
+                }
+            </ul>
+
+            <!-- Progress Text -->
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-tasks"></i> Hoàn thành: <strong>@completedCount/11</strong> bước (@progressPercent%)
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .project-steps-nav .nav {
+        gap: 10px;
+    }
+
+    .step-item {
+        min-width: 100px;
+        flex: 0 0 auto;
+    }
+
+    .step-item .nav-link {
+        padding: 10px;
+        text-decoration: none;
+        transition: all 0.3s;
+        border: none;
+        background: transparent;
+    }
+
+    .step-item .nav-link:hover:not(.disabled) {
+        transform: translateY(-2px);
+    }
+
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-weight: bold;
+        font-size: 18px;
+        transition: all 0.3s;
+    }
+
+    .step-item .nav-link.current .step-circle {
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+        animation: pulse 2s infinite;
+    }
+
+    .step-name {
+        font-size: 11px;
+        color: #6c757d;
+        line-height: 1.2;
+        max-width: 100px;
+        margin: 0 auto;
+    }
+
+    .step-item .nav-link.disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+        }
+        50% {
+            box-shadow: 0 0 0 8px rgba(13, 110, 253, 0.15);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .project-steps-nav .nav {
+            padding-bottom: 10px;
+        }
+        
+        .step-item {
+            min-width: 80px;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+        }
+        
+        .step-name {
+            font-size: 10px;
+        }
+    }
+</style>

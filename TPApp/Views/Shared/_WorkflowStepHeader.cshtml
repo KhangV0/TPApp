@@ -1,0 +1,112 @@
+@using TPApp.ViewModel
+
+@{
+    var steps = ViewBag.ProjectSteps as List<ProjectStepNavVm>;
+    var projectId = ViewBag.ProjectId as int?;
+}
+
+@if (steps != null && steps.Any() && projectId.HasValue)
+{
+    <!-- Vertical Step Navigation for Sidebar -->
+    <div class="workflow-sidebar-nav">
+        <h6 class="text-muted mb-3 px-2">
+            <i class="fas fa-tasks"></i> Quy trình
+        </h6>
+        <div class="list-group list-group-flush">
+            @foreach (var step in steps)
+            {
+                var itemClass = "list-group-item list-group-item-action p-2";
+                var badgeClass = "badge";
+                var iconClass = "";
+                
+                if (step.IsCurrent)
+                {
+                    itemClass += " active";
+                    badgeClass += " bg-white text-primary";
+                    iconClass = "fas fa-arrow-right";
+                }
+                else if (step.StatusId > 0)
+                {
+                    badgeClass += " bg-success";
+                    iconClass = "fas fa-check";
+                }
+                else
+                {
+                    badgeClass += " bg-secondary";
+                    iconClass = "fas fa-circle";
+                }
+
+                if (step.IsAccessible)
+                {
+                    <a href="@Url.Action(step.ActionName, step.ControllerName, new { projectId = projectId })" 
+                       class="@itemClass" 
+                       style="font-size: 0.85rem; border: none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>
+                                <span class="@badgeClass" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.7rem;">
+                                    @if (step.StatusId > 0 || step.IsCurrent)
+                                    {
+                                        <i class="@iconClass" style="font-size: 0.6rem;"></i>
+                                    }
+                                    else
+                                    {
+                                        @step.StepNumber
+                                    }
+                                </span>
+                                <span class="ms-2">@step.StepName</span>
+                            </span>
+                        </div>
+                    </a>
+                }
+                else
+                {
+                    <div class="@itemClass disabled" style="font-size: 0.85rem; opacity: 0.5; cursor: not-allowed; border: none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>
+                                <span class="@badgeClass" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.7rem;">
+                                    @step.StepNumber
+                                </span>
+                                <span class="ms-2">@step.StepName</span>
+                            </span>
+                            <i class="fas fa-lock text-muted" style="font-size: 0.7rem;"></i>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        
+        <!-- Progress Summary -->
+        <div class="mt-3 p-2 bg-light rounded">
+            <small class="text-muted d-block mb-1">Tiến độ</small>
+            @{
+                var completedCount = steps.Count(s => s.StatusId > 0);
+                var progressPercent = (int)Math.Round((completedCount / 11.0) * 100);
+            }
+            <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: @progressPercent%" aria-valuenow="@progressPercent" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <small class="text-muted">@completedCount/11 bước (@progressPercent%)</small>
+        </div>
+    </div>
+
+    <style>
+        .workflow-sidebar-nav .list-group-item {
+            transition: all 0.2s ease;
+        }
+        
+        .workflow-sidebar-nav .list-group-item:hover:not(.disabled):not(.active) {
+            background-color: #f8f9fa;
+            transform: translateX(2px);
+        }
+        
+        .workflow-sidebar-nav .list-group-item.active {
+            background-color: #0d6efd;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .workflow-sidebar-nav .list-group-item.disabled {
+            background-color: transparent;
+        }
+    </style>
+}

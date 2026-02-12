@@ -1,0 +1,86 @@
+/* AdminLTE Account Layout Custom Styles */
+
+.main-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 250px;
+    background-color: #343a40;
+    z-index: 1038;
+    overflow-y: auto;
+}
+
+.sidebar-dark-primary {
+    background-color: #343a40;
+}
+
+.content-wrapper {
+    margin-left: 250px;
+    background-color: #f4f6f9;
+    min-height: 100vh;
+}
+
+.main-header {
+    margin-left: 250px;
+}
+
+.main-footer {
+    margin-left: 250px;
+}
+
+.user-panel .image img {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.nav-sidebar .nav-link.active {
+    background-color: #007bff !important;
+    color: #fff !important;
+}
+
+.nav-sidebar .nav-link:hover {
+    background-color: #4b545c;
+}
+
+.brand-link {
+    border-bottom: 1px solid #4b545c;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .main-sidebar {
+        margin-left: -250px;
+    }
+    
+    .sidebar-open .main-sidebar {
+        margin-left: 0;
+    }
+    
+    .content-wrapper,
+    .main-header,
+    .main-footer {
+        margin-left: 0;
+    }
+}
+
+/* Avatar upload preview */
+.avatar-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #007bff;
+}
+
+/* Progress bars */
+.progress {
+    height: 20px;
+}
+
+.progress-bar {
+    font-size: 12px;
+    line-height: 20px;
+}

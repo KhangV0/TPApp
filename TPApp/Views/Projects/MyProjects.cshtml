@@ -1,0 +1,157 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model List<TPApp.ViewModel.MyProjectVm>
+
+@{
+    ViewData["Title"] = "Dự án của tôi";
+    
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            @await Html.PartialAsync("_AccountSidebar", sidebarData)
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-folder"></i> Danh sách dự án</h5>
+                    <span class="badge bg-primary">Tổng: @Model.Count dự án</span>
+                </div>
+                <div class="card-body">
+                    @if (Model.Count == 0)
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Bạn chưa tham gia dự án nào.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Mã dự án</th>
+                                        <th>Tên dự án</th>
+                                        <th>Vai trò</th>
+                                        <th>Bước hiện tại</th>
+                                        <th>Trạng thái</th>
+                                        <th>Tiến độ</th>
+                                        <th>Ngày tạo</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var project in Model)
+                                    {
+                                        <tr>
+                                            <td><strong>@project.Code</strong></td>
+                                            <td>@project.Name</td>
+                                            <td>
+                                                @switch (project.RoleId)
+                                                {
+                                                    case 1:
+                                                        <span class="badge bg-primary">@project.Role</span>
+                                                        break;
+                                                    case 2:
+                                                        <span class="badge bg-success">@project.Role</span>
+                                                        break;
+                                                    case 3:
+                                                        <span class="badge bg-info">@project.Role</span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge bg-secondary">@project.Role</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-warning text-dark">Bước @project.CurrentStep/11</span>
+                                            </td>
+                                            <td>
+                                                @switch (project.StatusId)
+                                                {
+                                                    case 1:
+                                                        <span class="badge bg-secondary">@project.Status</span>
+                                                        break;
+                                                    case 2:
+                                                        <span class="badge bg-success">@project.Status</span>
+                                                        break;
+                                                    case 3:
+                                                        <span class="badge bg-primary">@project.Status</span>
+                                                        break;
+                                                    case 4:
+                                                        <span class="badge bg-danger">@project.Status</span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge bg-secondary">@project.Status</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar @(project.ProgressPercent >= 100 ? "bg-success" : project.ProgressPercent >= 50 ? "bg-info" : "bg-warning")" 
+                                                         role="progressbar" 
+                                                         style="width: @project.ProgressPercent%"
+                                                         aria-valuenow="@project.ProgressPercent" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                        @project.ProgressPercent%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@project.CreatedDate.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <a href="@Url.Action("Details", "Project", new { id = project.Id })" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-eye"></i> Xem
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (Model.Count > 0)
+            {
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white shadow-sm">
+                            <div class="card-body">
+                                <h3>@Model.Count</h3>
+                                <p class="mb-0">Tổng dự án</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white shadow-sm">
+                            <div class="card-body">
+                                <h3>@Model.Count(p => p.StatusId == 2)</h3>
+                                <p class="mb-0">Dự án đang hoạt động</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning text-dark shadow-sm">
+                            <div class="card-body">
+                                <h3>@Model.Count(p => p.ProgressPercent < 100)</h3>
+                                <p class="mb-0">Dự án chưa hoàn thành</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div><!-- End Main Content -->
+    </div><!-- End row -->
+</div><!-- End container-fluid -->

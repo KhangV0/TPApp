@@ -70,6 +70,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // --- Services ---
 builder.Services.AddScoped<TPApp.Interfaces.IProductService, TPApp.Services.ProductService>();
+builder.Services.AddScoped<TPApp.Interfaces.IDashboardService, TPApp.Services.DashboardService>();
+builder.Services.AddScoped<TPApp.Interfaces.IAccountService, TPApp.Services.AccountService>();
+builder.Services.AddScoped<TPApp.Interfaces.IProjectService, TPApp.Services.ProjectService>();
 
 var app = builder.Build();
 

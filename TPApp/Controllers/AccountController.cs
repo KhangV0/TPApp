@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TPApp.Entities;
 using TPApp.ViewModel;
+using TPApp.Interfaces;
 
 namespace TPApp.Controllers
 {
@@ -10,11 +11,16 @@ namespace TPApp.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IAccountService _accountService;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public AccountController(
+            UserManager<ApplicationUser> userManager, 
+            SignInManager<ApplicationUser> signInManager,
+            IAccountService accountService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _accountService = accountService;
         }
 
         // GET: /Account/Register
@@ -71,7 +77,7 @@ namespace TPApp.Controllers
                 HttpContext.Session.SetInt32("UserId", user.Id);
                 HttpContext.Session.SetString("Username", user.UserName);
 
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Dashboard");
             }
             return View(model);
         }
@@ -114,12 +120,104 @@ namespace TPApp.Controllers
                         {
                             return Redirect(returnUrl);
                         }
-                        return RedirectToAction("Index", "Home");
+                        return RedirectToAction("Index", "Dashboard");
                     }
                 }
                 
                 ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không chính xác.");
             }
+            return View(model);
+        }
+
+        // GET: /Account/Profile
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+            var model = await _accountService.GetProfileAsync(userId);
+            
+            if (model == null)
+                return NotFound();
+            
+            return View(model);
+        }
+
+        // POST: /Account/Profile
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile(ProfileVm model, IFormFile? avatar)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+
+            try
+            {
+                // Upload avatar if provided
+                if (avatar != null)
+                {
+                    var avatarPath = await _accountService.UploadAvatarAsync(userId, avatar);
+                    model.AvatarUrl = avatarPath;
+                }
+
+                // Update profile
+                var success = await _accountService.UpdateProfileAsync(userId, model);
+                
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật thông tin thành công!";
+                    return RedirectToAction(nameof(Profile));
+                }
+                
+                ModelState.AddModelError("", "Không thể cập nhật thông tin");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+            }
+
+            return View(model);
+        }
+
+        // GET: /Account/ChangePassword
+        [Authorize]
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        // POST: /Account/ChangePassword
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordVm model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+
+            try
+            {
+                var success = await _accountService.ChangePasswordAsync(userId, model);
+                
+                if (success)
+                {
+                    TempData["SuccessMessage"] = "Đổi mật khẩu thành công!";
+                    return RedirectToAction(nameof(Profile));
+                }
+                
+                ModelState.AddModelError("", "Không thể đổi mật khẩu");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+            }
+
             return View(model);
         }
 

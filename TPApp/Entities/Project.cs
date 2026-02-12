@@ -23,13 +23,11 @@ namespace TPApp.Entities
 
         public int StatusId { get; set; } = 1; // 1=Draft, 2=Active, 3=Completed
 
-        [StringLength(450)]
-        public string? CreatedBy { get; set; }
+        public int? CreatedBy { get; set; } // int to match database UserId
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
-        [StringLength(450)]
-        public string? ModifiedBy { get; set; }
+        public int? ModifiedBy { get; set; } // int to match database UserId
         
         public DateTime? ModifiedDate { get; set; }
     }

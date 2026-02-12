@@ -23,13 +23,24 @@ namespace TPApp.Controllers
             _workflowService = workflowService;
         }
 
+        // Helper method to get current user ID as int
+        private int GetCurrentUserId()
+        {
+            var userIdString = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            {
+                throw new UnauthorizedAccessException("Invalid user ID");
+            }
+            return userId;
+        }
+
         // GET: /EContract/Create?projectId=5
         [HttpGet]
         public async Task<IActionResult> Create(int? projectId)
         {
              if (projectId == null) return NotFound("Project Id is required");
 
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == projectId && m.UserId == userId);
             if (!isMember) return Forbid();
 
@@ -47,7 +58,7 @@ namespace TPApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EContract model, IFormFile? ContractFile)
         {
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
             if (!isMember) return Forbid();
 
@@ -159,7 +170,7 @@ namespace TPApp.Controllers
             var user = await _userManager.GetUserAsync(User);
             eContract.NguoiKyBenA = $"{user.UserName} - Giám Đốc - {Guid.NewGuid()}";
             eContract.NgaySua = DateTime.Now;
-            eContract.NguoiSua = _userManager.GetUserId(User);
+            eContract.NguoiSua = GetCurrentUserId();
 
             // Update Status
             if (string.IsNullOrEmpty(eContract.NguoiKyBenB))
@@ -198,7 +209,7 @@ namespace TPApp.Controllers
             var user = await _userManager.GetUserAsync(User);
             eContract.NguoiKyBenB = $"{user.UserName} - Đối tác - {Guid.NewGuid()}";
             eContract.NgaySua = DateTime.Now;
-            eContract.NguoiSua = _userManager.GetUserId(User);
+            eContract.NguoiSua = GetCurrentUserId();
 
             // Update Status
             if (string.IsNullOrEmpty(eContract.NguoiKyBenA))

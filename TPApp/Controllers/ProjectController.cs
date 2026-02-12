@@ -22,11 +22,22 @@ namespace TPApp.Controllers
             _workflowService = workflowService;
         }
 
+        // Helper method to get current user ID as int
+        private int GetCurrentUserId()
+        {
+            var userIdString = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            {
+                throw new UnauthorizedAccessException("Invalid user ID");
+            }
+            return userId;
+        }
+
         // GET: /Project/Workflow/5
         [HttpGet]
         public async Task<IActionResult> Workflow(int id)
         {
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == id && m.UserId == userId);
             if (!isMember) return Forbid();
 
@@ -42,7 +53,7 @@ namespace TPApp.Controllers
         // GET: /Project
         public async Task<IActionResult> Index()
         {
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var projects = await _context.ProjectMembers
                 .Where(m => m.UserId == userId)
                 .Include(m => m.Project)
@@ -57,64 +68,164 @@ namespace TPApp.Controllers
         {
             if (id == null) return NotFound();
 
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var member = await _context.ProjectMembers
                 .Include(m => m.Project)
                 .FirstOrDefaultAsync(m => m.ProjectId == id && m.UserId == userId);
 
             if (member == null) return Forbid();
 
-            // Check workflow status
+            // Get step statuses
+            var statuses = await GetProjectStepStatuses(id.Value);
+
+            // Build step navigation
+            var steps = BuildStepNavigation(statuses);
+
+            // Calculate current step (first incomplete step)
+            var currentStep = 1;
+            for (int i = 0; i < 11; i++)
+            {
+                if (steps[i].StatusId == 0)
+                {
+                    currentStep = i + 1;
+                    break;
+                }
+                if (i == 10) currentStep = 11; // All completed
+            }
+
+            // Mark current step
+            steps[currentStep - 1].IsCurrent = true;
+
+            // Calculate progress
+            var completedCount = statuses.Values.Count(s => s > 0);
+            var progressPercent = (int)Math.Round((completedCount / 11.0) * 100);
+
+            var viewModel = new TPApp.ViewModel.ProjectDetailWithStepsVm
+            {
+                Project = member.Project,
+                Steps = steps,
+                CurrentStep = currentStep,
+                UserRole = member.Role,
+                ProgressPercent = progressPercent
+            };
+
+            return View(viewModel);
+        }
+
+        // Helper: Get step statuses
+        private async Task<Dictionary<string, int>> GetProjectStepStatuses(int projectId)
+        {
             var statuses = new Dictionary<string, int>();
 
-            // 1. TechTransfer
-            var tech = await _context.TechTransferRequests.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var tech = await _context.TechTransferRequests.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["TechTransfer"] = tech?.StatusId ?? 0;
 
-            // 2. NDA
-            var nda = await _context.NDAAgreements.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var nda = await _context.NDAAgreements.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["NDA"] = nda?.StatusId ?? 0;
 
-            // 3. RFQ
-            var rfq = await _context.RFQRequests.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var rfq = await _context.RFQRequests.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["RFQ"] = rfq?.StatusId ?? 0;
 
-            // 4. Proposal
-            var proposal = await _context.ProposalSubmissions.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var proposal = await _context.ProposalSubmissions.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["Proposal"] = proposal?.StatusId ?? 0;
 
-            // 5. Negotiation
-            var negotiation = await _context.NegotiationForms.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var negotiation = await _context.NegotiationForms.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["Negotiation"] = negotiation?.StatusId ?? 0;
 
-            // 6. EContract
-            var contract = await _context.EContracts.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var contract = await _context.EContracts.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["EContract"] = contract?.StatusId ?? 0;
 
-            // 7. AdvancePayment
-            var payment = await _context.AdvancePaymentConfirmations.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var payment = await _context.AdvancePaymentConfirmations.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["AdvancePayment"] = payment?.StatusId ?? 0;
 
-            // 8. Implementation
-            var log = await _context.ImplementationLogs.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var log = await _context.ImplementationLogs.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["ImplementationLog"] = log?.StatusId ?? 0;
 
-            // 9. Handover
-            var handover = await _context.HandoverReports.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var handover = await _context.HandoverReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["Handover"] = handover?.StatusId ?? 0;
 
-            // 10. Acceptance
-            var acceptance = await _context.AcceptanceReports.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var acceptance = await _context.AcceptanceReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["Acceptance"] = acceptance?.StatusId ?? 0;
 
-            // 11. Liquidation
-            var liquidation = await _context.LiquidationReports.FirstOrDefaultAsync(x => x.ProjectId == id);
+            var liquidation = await _context.LiquidationReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["Liquidation"] = liquidation?.StatusId ?? 0;
 
-            ViewBag.Statuses = statuses;
-            ViewBag.UserRole = member.Role;
+            return statuses;
+        }
 
-            return View(member.Project);
+        // Helper: Build step navigation list
+        private List<TPApp.ViewModel.ProjectStepNavVm> BuildStepNavigation(Dictionary<string, int> statuses)
+        {
+            var steps = new List<TPApp.ViewModel.ProjectStepNavVm>
+            {
+                new() { StepNumber = 1, StepName = "Yêu cầu chuyển giao", StatusId = statuses["TechTransfer"], ControllerName = "TechTransfer", ActionName = "Details", IsAccessible = true },
+                new() { StepNumber = 2, StepName = "Thỏa thuận NDA", StatusId = statuses["NDA"], ControllerName = "NDA", ActionName = "Create", IsAccessible = statuses["TechTransfer"] > 0 },
+                new() { StepNumber = 3, StepName = "Yêu cầu báo giá", StatusId = statuses["RFQ"], ControllerName = "RFQ", ActionName = "Create", IsAccessible = statuses["NDA"] > 0 },
+                new() { StepNumber = 4, StepName = "Nộp hồ sơ", StatusId = statuses["Proposal"], ControllerName = "Proposal", ActionName = "Index", IsAccessible = statuses["RFQ"] > 0 },
+                new() { StepNumber = 5, StepName = "Đàm phán", StatusId = statuses["Negotiation"], ControllerName = "Negotiation", ActionName = "Create", IsAccessible = statuses["Proposal"] > 0 },
+                new() { StepNumber = 6, StepName = "Ký hợp đồng", StatusId = statuses["EContract"], ControllerName = "EContract", ActionName = "Create", IsAccessible = statuses["Negotiation"] > 0 },
+                new() { StepNumber = 7, StepName = "Xác nhận tạm ứng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["EContract"] > 0 },
+                new() { StepNumber = 8, StepName = "Nhật ký triển khai", StatusId = statuses["ImplementationLog"], ControllerName = "ImplementationLog", ActionName = "Create", IsAccessible = statuses["AdvancePayment"] > 0 },
+                new() { StepNumber = 9, StepName = "Bàn giao", StatusId = statuses["Handover"], ControllerName = "Handover", ActionName = "Create", IsAccessible = statuses["ImplementationLog"] > 0 },
+                new() { StepNumber = 10, StepName = "Nghiệm thu", StatusId = statuses["Acceptance"], ControllerName = "Acceptance", ActionName = "Create", IsAccessible = statuses["Handover"] > 0 },
+                new() { StepNumber = 11, StepName = "Thanh lý", StatusId = statuses["Liquidation"], ControllerName = "Liquidation", ActionName = "Create", IsAccessible = statuses["Acceptance"] > 0 }
+            };
+
+            return steps;
+        }
+
+        // GET: /Project/Step - AJAX endpoint for loading step content
+        [HttpGet]
+        public async Task<IActionResult> Step(int projectId, int stepNumber)
+        {
+            // Validate project exists and user has access
+            var userId = GetCurrentUserId();
+            var member = await _context.ProjectMembers
+                .Include(m => m.Project)
+                .FirstOrDefaultAsync(m => m.ProjectId == projectId && m.UserId == userId);
+            
+            if (member == null) return Forbid();
+            
+            // Validate step number
+            if (stepNumber < 1 || stepNumber > 11) return BadRequest("Invalid step number");
+            
+            // Get step statuses
+            var statuses = await GetProjectStepStatuses(projectId);
+            var steps = BuildStepNavigation(statuses);
+            
+            // Determine current step (first incomplete)
+            var currentStep = 1;
+            for (int i = 0; i < 11; i++)
+            {
+                if (steps[i].StatusId == 0)
+                {
+                    currentStep = i + 1;
+                    break;
+                }
+                if (i == 10) currentStep = 11; // All complete
+            }
+            
+            // Validate access - can't skip ahead
+            if (stepNumber > currentStep)
+            {
+                // Return current step instead
+                stepNumber = currentStep;
+            }
+            
+            // Build model for partial view
+            var model = new TPApp.ViewModel.StepContentVm
+            {
+                ProjectId = projectId,
+                StepNumber = stepNumber,
+                StepName = steps[stepNumber - 1].StepName,
+                Project = member.Project,
+                UserRole = member.Role,
+                Steps = steps,
+                CurrentStep = currentStep
+            };
+            
+            // Return appropriate partial view
+            return PartialView($"Steps/_Step{stepNumber}", model);
         }
     }
 }

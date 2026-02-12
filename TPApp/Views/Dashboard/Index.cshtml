@@ -1,0 +1,287 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model TPApp.ViewModel.UserDashboardVm
+@{
+    ViewData["Title"] = "Dashboard";
+    var currentTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+    
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            @await Html.PartialAsync("_AccountSidebar", sidebarData)
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-1">Xin chào, <strong>@Model.FullName</strong></h2>
+            <p class="text-muted mb-0">
+                <i class="bi bi-clock"></i> @currentTime
+            </p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Tổng dự án</h6>
+                            <h2 class="mb-0 text-primary">@Model.TotalProjects</h2>
+                        </div>
+                        <div class="icon-box bg-primary bg-opacity-10 text-primary">
+                            <i class="bi bi-folder-fill fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Đang xử lý</h6>
+                            <h2 class="mb-0 text-warning">@Model.InProgressProjects</h2>
+                        </div>
+                        <div class="icon-box bg-warning bg-opacity-10 text-warning">
+                            <i class="bi bi-hourglass-split fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Chờ tôi xử lý</h6>
+                            <h2 class="mb-0 text-info">@Model.WaitingForMe</h2>
+                        </div>
+                        <div class="icon-box bg-info bg-opacity-10 text-info">
+                            <i class="bi bi-bell-fill fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Đã hoàn thành</h6>
+                            <h2 class="mb-0 text-success">@Model.CompletedProjects</h2>
+                        </div>
+                        <div class="icon-box bg-success bg-opacity-10 text-success">
+                            <i class="bi bi-check-circle-fill fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Dự án của tôi</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Projects.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã dự án</th>
+                                <th>Tên dự án</th>
+                                <th>Vai trò</th>
+                                <th>Bước hiện tại</th>
+                                <th>Trạng thái</th>
+                                <th>Tiến độ</th>
+                                <th>Workflow</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var project in Model.Projects)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary">@project.Code</strong>
+                                    </td>
+                                    <td>@project.Name</td>
+                                    <td>
+                                        <span class="badge bg-secondary">@project.RoleName</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">Bước @project.CurrentStepNumber:</small><br />
+                                        <strong>@project.CurrentStepName</strong>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var statusBadge = project.CurrentStepStatus switch
+                                            {
+                                                "Completed" => "bg-success",
+                                                "InProgress" => "bg-primary",
+                                                _ => "bg-secondary"
+                                            };
+                                            var statusText = project.CurrentStepStatus switch
+                                            {
+                                                "Completed" => "Hoàn thành",
+                                                "InProgress" => "Đang xử lý",
+                                                _ => "Chưa bắt đầu"
+                                            };
+                                        }
+                                        <span class="badge @statusBadge">@statusText</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                <div class="progress-bar bg-success" 
+                                                     role="progressbar" 
+                                                     style="width: @project.ProgressPercent%"
+                                                     aria-valuenow="@project.ProgressPercent" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">@project.ProgressPercent%</small>
+                                        </div>
+                                        <small class="text-muted">@project.CompletedSteps/11 bước</small>
+                                    </td>
+                                    <td>
+                                        <div class="workflow-steps d-flex gap-1">
+                                            @foreach (var step in project.StepsSummary)
+                                            {
+                                                var stepClass = step.StatusId switch
+                                                {
+                                                    2 => "step-completed",
+                                                    1 => "step-inprogress",
+                                                    _ => "step-notstarted"
+                                                };
+                                                <div class="workflow-step @stepClass" 
+                                                     title="Bước @step.StepNumber"
+                                                     data-bs-toggle="tooltip">
+                                                </div>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="/Project/Details/@project.ProjectId" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Xem chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                    <p class="text-muted mt-3">Bạn chưa tham gia dự án nào.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .icon-box {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+    
+    .workflow-step {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        transition: all 0.2s ease;
+    }
+    
+    .workflow-step:hover {
+        transform: scale(1.3);
+    }
+    
+    .step-completed {
+        background-color: #198754;
+    }
+    
+    .step-inprogress {
+        background-color: #0d6efd;
+        animation: pulse 2s infinite;
+    }
+    
+    .step-notstarted {
+        background-color: #dee2e6;
+    }
+    
+    @@keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+    
+    .table th {
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+}
+        </div><!-- End Main Content col-md-9 -->
+    </div><!-- End row -->
+</div><!-- End container-fluid -->

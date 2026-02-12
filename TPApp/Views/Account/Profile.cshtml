@@ -1,0 +1,126 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model TPApp.ViewModel.ProfileVm
+
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+    
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            @await Html.PartialAsync("_AccountSidebar", sidebarData)
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-user"></i> Thông tin cá nhân</h5>
+                        </div>
+                        
+                        <form asp-action="Profile" method="post" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <div class="card-body">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                                <div class="mb-3">
+                                    <label asp-for="UserName" class="form-label">Tên đăng nhập</label>
+                                    <input asp-for="UserName" class="form-control" readonly />
+                                    <small class="form-text text-muted">Tên đăng nhập không thể thay đổi</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="FullName" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                    <input asp-for="FullName" class="form-control" placeholder="Nhập họ và tên" />
+                                    <span asp-validation-for="FullName" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input asp-for="Email" class="form-control" type="email" placeholder="Nhập email" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Avatar</label>
+                                    <div class="mb-3 text-center">
+                                        <img src="@Model.AvatarUrl" alt="Avatar" class="rounded-circle" id="avatarPreview" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #0d6efd;">
+                                    </div>
+                                    <input type="file" name="avatar" class="form-control" id="avatarInput" accept="image/jpeg,image/png,image/jpg">
+                                    <small class="form-text text-muted">Chỉ chấp nhận JPG, JPEG, PNG. Tối đa 2MB.</small>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Đăng nhập lần cuối</label>
+                                            <input type="text" class="form-control" value="@(Model.LastLogin?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có")" readonly />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Ngày tạo tài khoản</label>
+                                            <input type="text" class="form-control" value="@(Model.Created?.ToString("dd/MM/yyyy") ?? "N/A")" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Lưu thay đổi
+                                </button>
+                                <a href="@Url.Action("Index", "Dashboard")" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Hủy
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Hướng dẫn</h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-check text-success"></i> Cập nhật thông tin cá nhân</li>
+                                <li class="mb-2"><i class="fas fa-check text-success"></i> Upload avatar (tối đa 2MB)</li>
+                                <li class="mb-2"><i class="fas fa-check text-success"></i> Ảnh tự động resize 300x300px</li>
+                                <li><i class="fas fa-check text-success"></i> <a href="@Url.Action("ChangePassword", "Account")">Đổi mật khẩu</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- End Main Content -->
+    </div><!-- End row -->
+</div><!-- End container-fluid -->
+
+@section Scripts {
+    <script>
+        document.getElementById('avatarInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatarPreview').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

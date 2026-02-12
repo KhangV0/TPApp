@@ -24,13 +24,24 @@ namespace TPApp.Controllers
             _workflowService = workflowService;
         }
 
+        // Helper method to get current user ID as int
+        private int GetCurrentUserId()
+        {
+            var userIdString = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            {
+                throw new UnauthorizedAccessException("Invalid user ID");
+            }
+            return userId;
+        }
+
         // GET: /Proposal/Index?duAnId=5
         [HttpGet]
         public async Task<IActionResult> Index(int? duAnId)
         {
             if (duAnId == null) return NotFound("ProjectId is required");
 
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var member = await _context.ProjectMembers
                 .FirstOrDefaultAsync(m => m.ProjectId == duAnId && m.UserId == userId);
             
@@ -53,7 +64,7 @@ namespace TPApp.Controllers
         {
             if (duAnId == null) return NotFound("ProjectId is required");
 
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var member = await _context.ProjectMembers
                 .FirstOrDefaultAsync(m => m.ProjectId == duAnId && m.UserId == userId);
 
@@ -72,7 +83,7 @@ namespace TPApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProposalSubmission model, IFormFile? GiaiPhapFile, IFormFile? HoSoFile)
         {
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var member = await _context.ProjectMembers
                  .FirstOrDefaultAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
 
@@ -117,7 +128,7 @@ namespace TPApp.Controllers
                     }
 
                     // Set Metadata
-                    model.NguoiTao = User.Identity?.Name ?? userId;
+                    model.NguoiTao = userId;
                     model.NgayTao = DateTime.Now;
                     model.StatusId = 1; // Draft
 
@@ -147,7 +158,7 @@ namespace TPApp.Controllers
             var proposal = await _context.ProposalSubmissions.FindAsync(id);
             if (proposal == null) return NotFound();
 
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var member = await _context.ProjectMembers
                 .FirstOrDefaultAsync(m => m.ProjectId == proposal.ProjectId && m.UserId == userId);
 
@@ -167,7 +178,7 @@ namespace TPApp.Controllers
             var proposal = await _context.ProposalSubmissions.FindAsync(id);
             if (proposal == null) return NotFound();
 
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var member = await _context.ProjectMembers
                 .FirstOrDefaultAsync(m => m.ProjectId == proposal.ProjectId && m.UserId == userId);
 
@@ -202,7 +213,7 @@ namespace TPApp.Controllers
 
                     proposal.BaoGiaSoBo = model.BaoGiaSoBo;
                     proposal.ThoiGianTrienKhai = model.ThoiGianTrienKhai;
-                    proposal.NguoiSua = User.Identity?.Name ?? userId;
+                    proposal.NguoiSua = userId;
                     proposal.NgaySua = DateTime.Now;
 
                     _context.Update(proposal);
@@ -226,7 +237,7 @@ namespace TPApp.Controllers
              var proposal = await _context.ProposalSubmissions.FindAsync(id);
             if (proposal == null) return NotFound();
 
-            var userId = _userManager.GetUserId(User);
+            var userId = GetCurrentUserId();
             var member = await _context.ProjectMembers
                 .FirstOrDefaultAsync(m => m.ProjectId == proposal.ProjectId && m.UserId == userId);
 

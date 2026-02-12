@@ -1,0 +1,71 @@
+@model TPApp.ViewModel.AccountSidebarVm
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <!-- User Panel -->
+        <div class="text-center mb-4">
+            <img src="@Model.AvatarUrl" class="rounded-circle mb-3" alt="Avatar" style="width: 80px; height: 80px; object-fit: cover;">
+            <h6 class="mb-1">@Model.FullName</h6>
+            <small class="text-muted">@Model.Email</small>
+        </div>
+
+        <hr>
+
+        <!-- Navigation Menu -->
+        <nav class="nav flex-column">
+            <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Dashboard") ? "active" : "")" href="@Url.Action("Index", "Dashboard")">
+                <i class="fas fa-home me-2"></i> Dashboard
+            </a>
+            <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Projects/MyProjects") ? "active" : "")" href="@Url.Action("MyProjects", "Projects")">
+                <i class="fas fa-folder me-2"></i> Dự án của tôi
+                @if (Model.ProjectCount > 0)
+                {
+                    <span class="badge bg-primary float-end">@Model.ProjectCount</span>
+                }
+            </a>
+            <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Account/Profile") ? "active" : "")" href="@Url.Action("Profile", "Account")">
+                <i class="fas fa-user me-2"></i> Thông tin cá nhân
+            </a>
+            <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Account/ChangePassword") ? "active" : "")" href="@Url.Action("ChangePassword", "Account")">
+                <i class="fas fa-key me-2"></i> Đổi mật khẩu
+            </a>
+            
+            <hr>
+            
+            <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+            </a>
+        </nav>
+    </div>
+</div>
+
+<form id="logout-form" action="@Url.Action("Logout", "Account")" method="POST" style="display: none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<style>
+    .nav-link {
+        color: #495057;
+        padding: 0.75rem 1rem;
+        border-radius: 0.25rem;
+        transition: all 0.2s;
+    }
+    
+    .nav-link:hover {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+    }
+    
+    .nav-link.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .nav-link.active:hover {
+        background-color: #0b5ed7;
+    }
+    
+    .nav-link i {
+        width: 20px;
+    }
+</style>

@@ -80,6 +80,12 @@
 
                 <!-- CATEGORY PILL -->
                 <div class="d-flex gap-2 flex-wrap">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a class="category-pill text-decoration-none" href="/Dashboard/Index">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    }
                     <a class="category-pill text-decoration-none" href="@($"{MainDomain}gioi-thieu-chung-3.html")">Giới thiệu</a>
                     @* <a class="category-pill text-decoration-none" href="@($"{MainDomain}tech-event/")">Tech event</a> *@
                     <a class="category-pill text-decoration-none" href="https://techport.vn/tech-event/">Tech event</a>

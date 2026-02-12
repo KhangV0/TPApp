@@ -16,8 +16,7 @@ namespace TPApp.Entities
         public virtual Project Project { get; set; } = null!;
 
         [Required]
-        [StringLength(450)]
-        public string UserId { get; set; } = null!;
+        public int UserId { get; set; } // int to match database schema
 
         // 1=Buyer, 2=Seller, 3=Consultant
         public int Role { get; set; }

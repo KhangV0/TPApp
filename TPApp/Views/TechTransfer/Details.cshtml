@@ -1,0 +1,113 @@
+@model TPApp.Entities.TechTransferRequest
+
+@{
+    ViewData["Title"] = "Chi tiết Yêu cầu Chuyển giao Công nghệ";
+    Layout = "_ProjectWorkflowLayout";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-file-alt"></i> Chi tiết Yêu cầu Chuyển giao Công nghệ</h4>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Họ tên:</dt>
+                        <dd class="col-sm-9">@Model.HoTen</dd>
+
+                        <dt class="col-sm-3">Chức vụ:</dt>
+                        <dd class="col-sm-9">@Model.ChucVu</dd>
+
+                        <dt class="col-sm-3">Đơn vị:</dt>
+                        <dd class="col-sm-9">@Model.DonVi</dd>
+
+                        <dt class="col-sm-3">Địa chỉ:</dt>
+                        <dd class="col-sm-9">@Model.DiaChi</dd>
+
+                        <dt class="col-sm-3">Điện thoại:</dt>
+                        <dd class="col-sm-9">@Model.DienThoai</dd>
+
+                        <dt class="col-sm-3">Email:</dt>
+                        <dd class="col-sm-9">@Model.Email</dd>
+
+                        <dt class="col-sm-3">Tên công nghệ:</dt>
+                        <dd class="col-sm-9"><strong>@Model.TenCongNghe</strong></dd>
+
+                        <dt class="col-sm-3">Lĩnh vực:</dt>
+                        <dd class="col-sm-9">@Model.LinhVuc</dd>
+
+                        <dt class="col-sm-3">Mô tả nhu cầu:</dt>
+                        <dd class="col-sm-9">
+                            <div class="border p-3 bg-light">
+                                @Html.Raw(Model.MoTaNhuCau?.Replace("\n", "<br/>"))
+                            </div>
+                        </dd>
+
+                        <dt class="col-sm-3">Ngân sách dự kiến:</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.NganSachDuKien.HasValue)
+                            {
+                                <span class="badge badge-success">@Model.NganSachDuKien.Value.ToString("N0") VNĐ</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Chưa xác định</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3">Trạng thái:</dt>
+                        <dd class="col-sm-9">
+                            @switch (Model.StatusId)
+                            {
+                                case 1:
+                                    <span class="badge badge-warning">Mới tạo</span>
+                                    break;
+                                case 2:
+                                    <span class="badge badge-info">Đang xử lý</span>
+                                    break;
+                                case 3:
+                                    <span class="badge badge-success">Hoàn thành</span>
+                                    break;
+                                default:
+                                    <span class="badge badge-secondary">Không xác định</span>
+                                    break;
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3">Ngày tạo:</dt>
+                        <dd class="col-sm-9">@Model.NgayTao.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                        @if (Model.NgaySua.HasValue)
+                        {
+                            <dt class="col-sm-3">Ngày cập nhật:</dt>
+                            <dd class="col-sm-9">@Model.NgaySua.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                        }
+
+                        @if (Model.ProjectId.HasValue)
+                        {
+                            <dt class="col-sm-3">Dự án liên kết:</dt>
+                            <dd class="col-sm-9">
+                                <a href="@Url.Action("Details", "Project", new { id = Model.ProjectId })" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-project-diagram"></i> Xem dự án #@Model.ProjectId
+                                </a>
+                            </dd>
+                        }
+                    </dl>
+                </div>
+                <div class="card-footer">
+                    @if (Model.ProjectId.HasValue)
+                    {
+                        <a href="@Url.Action("Details", "Project", new { id = Model.ProjectId })" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Quay lại Dự án
+                        </a>
+                    }
+                    <a href="@Url.Action("Index", "Dashboard")" class="btn btn-secondary">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -48,13 +48,11 @@ namespace TPApp.Entities
 
         public int StatusId { get; set; } = 1;
 
-        [StringLength(450)]
-        public string? NguoiTao { get; set; }
+        public int? NguoiTao { get; set; } // int to match Users.UserId
 
         public DateTime NgayTao { get; set; } = DateTime.Now;
 
-        [StringLength(450)]
-        public string? NguoiSua { get; set; }
+        public int? NguoiSua { get; set; } // int to match Users.UserId
 
         public DateTime? NgaySua { get; set; }
     }
