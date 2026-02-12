@@ -1,0 +1,68 @@
+@model TPApp.Entities.ProposalSubmission
+
+@{
+    ViewData["Title"] = "PHIẾU NỘP HỒ SƠ ĐỀ XUẤT (DÀNH CHO BÊN BÁN)";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-file-upload me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="RFQId" class="form-label">Mã RFQ ID (Nếu có)</label>
+                        <input asp-for="RFQId" class="form-control" type="number" placeholder="Nhập ID yêu cầu báo giá" />
+                        <span asp-validation-for="RFQId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID (Nếu có)</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" placeholder="Nhập ID dự án" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="BaoGiaSoBo" class="form-label">Báo giá sơ bộ (VNĐ)</label>
+                        <input asp-for="BaoGiaSoBo" class="form-control" type="number" placeholder="Nhập số tiền..." />
+                        <span asp-validation-for="BaoGiaSoBo" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ThoiGianTrienKhai" class="form-label">Thời gian triển khai dự kiến <span class="text-danger">*</span></label>
+                        <input asp-for="ThoiGianTrienKhai" class="form-control" placeholder="Ví dụ: 3 tháng, 1 năm..." />
+                        <span asp-validation-for="ThoiGianTrienKhai" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Giải pháp kỹ thuật (File đính kèm) <span class="text-danger">*</span></label>
+                        <input type="file" name="GiaiPhapFile" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx" required />
+                        <div class="form-text">Chấp nhận: .pdf, .doc, .docx, .xls, .xlsx (Tối đa 20MB)</div>
+                        <span asp-validation-for="GiaiPhapKyThuat" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Hồ sơ năng lực đính kèm <span class="text-danger">*</span></label>
+                        <input type="file" name="HoSoFile" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx" required />
+                        <div class="form-text">Chấp nhận: .pdf, .doc, .docx, .xls, .xlsx (Tối đa 20MB)</div>
+                        <span asp-validation-for="HoSoNangLucDinhKem" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>Nộp hồ sơ đề xuất</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

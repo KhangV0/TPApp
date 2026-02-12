@@ -1,0 +1,72 @@
+@model TPApp.Entities.ImplementationLog
+
+@{
+    ViewData["Title"] = "PHIẾU NHẬT KÝ TRIỂN KHAI";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-clipboard-list me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" placeholder="Nhập ID dự án" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EContractId" class="form-label">E-Contract ID</label>
+                        <input asp-for="EContractId" class="form-control" type="number" placeholder="Nhập ID hợp đồng" />
+                        <span asp-validation-for="EContractId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="GiaiDoan" class="form-label">Giai đoạn <span class="text-danger">*</span></label>
+                        <select asp-for="GiaiDoan" class="form-select" required>
+                            <option value="">-- Chọn giai đoạn --</option>
+                            <option value="Pilot">Pilot</option>
+                            <option value="Triển khai đại trà">Triển khai đại trà</option>
+                        </select>
+                        <span asp-validation-for="GiaiDoan" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="KetQuaThucHien" class="form-label">Kết quả thực hiện</label>
+                        <textarea asp-for="KetQuaThucHien" class="form-control" rows="4" placeholder="Mô tả chi tiết kết quả..."></textarea>
+                        <span asp-validation-for="KetQuaThucHien" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Hình ảnh / Video bằng chứng</label>
+                        <input type="file" name="MediaFile" class="form-control" accept=".jpg,.png,.mp4,.mov,.pdf" />
+                        <div class="form-text">File .jpg, .png, .mp4, .mov, .pdf (Tối đa 50MB)</div>
+                        <span asp-validation-for="HinhAnhVideoFile" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Biên bản xác nhận hiện trường</label>
+                        <input type="file" name="BienBanFile" class="form-control" accept=".pdf,.doc,.docx" />
+                        <div class="form-text">File .pdf, .doc, .docx (Tối đa 20MB)</div>
+                        <span asp-validation-for="BienBanXacNhanFile" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu nhật ký triển khai</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

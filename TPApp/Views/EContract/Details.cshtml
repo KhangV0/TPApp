@@ -1,0 +1,133 @@
+@model TPApp.Entities.EContract
+
+@{
+    ViewData["Title"] = "Chi tiết Hợp đồng điện tử";
+}
+
+<div class="container mt-5">
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0"><i class="fas fa-file-contract me-2"></i>Hợp đồng số: @Model.SoHopDong</h2>
+            
+            @if (Model.TrangThaiKy == "Đã hoàn tất")
+            {
+                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Đã hoàn tất</span>
+            }
+            else if (Model.TrangThaiKy == "Đã ký 1 bên")
+            {
+                <span class="badge bg-warning text-dark"><i class="fas fa-pen-nib me-1"></i>Đã ký 1 bên</span>
+            }
+            else
+            {
+                 <span class="badge bg-secondary"><i class="fas fa-hourglass-start me-1"></i>Chưa ký</span>
+            }
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Ngày tạo:</strong> @Model.NgayTao.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>RFQ ID:</strong> @Model.RFQId</p>
+                    <p><strong>Dự án ID:</strong> @Model.DuAnId</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p><strong>File hợp đồng:</strong></p>
+                    @if (!string.IsNullOrEmpty(Model.FileHopDong))
+                    {
+                        <a href="@Model.FileHopDong" class="btn btn-outline-primary" target="_blank">
+                            <i class="fas fa-download me-2"></i>Tải về hợp đồng
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Chưa có file</span>
+                    }
+                </div>
+            </div>
+
+            <hr />
+
+            <div class="row g-4">
+                <!-- Ben A -->
+                <div class="col-md-6">
+                    <div class="card h-100 @(!string.IsNullOrEmpty(Model.NguoiKyBenA) ? "border-success" : "border-secondary")">
+                        <div class="card-header @(!string.IsNullOrEmpty(Model.NguoiKyBenA) ? "bg-success text-white" : "bg-light")">
+                            <h5 class="mb-0">Bên A (Chủ đầu tư)</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(Model.NguoiKyBenA))
+                            {
+                                <div class="text-success text-center mb-3">
+                                    <i class="fas fa-signature fa-3x"></i>
+                                </div>
+                                <p class="card-text"><strong>Người ký:</strong> @Model.NguoiKyBenA.Split('-')[0]</p>
+                                <p class="card-text"><strong>Chức vụ:</strong> @(Model.NguoiKyBenA.Split('-').Length > 1 ? Model.NguoiKyBenA.Split('-')[1] : "")</p>
+                                <p class="card-text text-muted small">Token: @(Model.NguoiKyBenA.Split('-').Length > 2 ? Model.NguoiKyBenA.Split('-')[2] : "")</p>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted mb-3">
+                                    <i class="fas fa-file-signature fa-3x"></i>
+                                    <p class="mt-2">Chưa ký</p>
+                                </div>
+                                <div class="d-grid">
+                                    <form asp-action="SignAsBenA" method="post">
+                                        <input type="hidden" name="id" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-outline-primary" @(Model.TrangThaiKy == "Đã hoàn tất" ? "disabled" : "")>
+                                            <i class="fas fa-pen me-2"></i>Ký với tư cách Bên A
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ben B -->
+                <div class="col-md-6">
+                    <div class="card h-100 @(!string.IsNullOrEmpty(Model.NguoiKyBenB) ? "border-success" : "border-secondary")">
+                        <div class="card-header @(!string.IsNullOrEmpty(Model.NguoiKyBenB) ? "bg-success text-white" : "bg-light")">
+                            <h5 class="mb-0">Bên B (Đối tác)</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(Model.NguoiKyBenB))
+                            {
+                                <div class="text-success text-center mb-3">
+                                    <i class="fas fa-signature fa-3x"></i>
+                                </div>
+                                <p class="card-text"><strong>Người ký:</strong> @Model.NguoiKyBenB.Split('-')[0]</p>
+                                <p class="card-text"><strong>Chức vụ:</strong> @(Model.NguoiKyBenB.Split('-').Length > 1 ? Model.NguoiKyBenB.Split('-')[1] : "")</p>
+                                <p class="card-text text-muted small">Token: @(Model.NguoiKyBenB.Split('-').Length > 2 ? Model.NguoiKyBenB.Split('-')[2] : "")</p>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted mb-3">
+                                    <i class="fas fa-file-signature fa-3x"></i>
+                                    <p class="mt-2">Chưa ký</p>
+                                </div>
+                                <div class="d-grid">
+                                    <form asp-action="SignAsBenB" method="post">
+                                        <input type="hidden" name="id" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-outline-primary" @(Model.TrangThaiKy == "Đã hoàn tất" ? "disabled" : "")>
+                                            <i class="fas fa-pen me-2"></i>Ký với tư cách Bên B
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <a asp-action="Create" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Quay lại</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,24 @@
+@{
+    ViewData["Title"] = "Nộp hồ sơ thành công";
+}
+
+<div class="container mt-5 text-center">
+    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card-body py-5">
+            <div class="mb-4 text-success">
+                <i class="fas fa-check-circle fa-5x"></i>
+            </div>
+            <h2 class="card-title text-success mb-3">Hồ sơ đề xuất đã được gửi thành công!</h2>
+            <p class="card-text text-muted mb-4">
+                Cảm ơn bạn đã gửi hồ sơ đề xuất.<br />
+                Chúng tôi sẽ xem xét và phản hồi trong thời gian sớm nhất.
+            </p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Về trang chủ
+            </a>
+            <a asp-action="Create" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-plus me-2"></i>Nộp hồ sơ khác
+            </a>
+        </div>
+    </div>
+</div>

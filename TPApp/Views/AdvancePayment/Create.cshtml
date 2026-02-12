@@ -1,0 +1,70 @@
+@model TPApp.Entities.AdvancePaymentConfirmation
+
+@{
+    ViewData["Title"] = "PHIẾU XÁC NHẬN TẠM ỨNG";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-money-check-alt me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="EContractId" class="form-label">E-Contract ID</label>
+                        <input asp-for="EContractId" class="form-control" type="number" placeholder="Nhập ID hợp đồng" />
+                        <span asp-validation-for="EContractId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" placeholder="Nhập ID dự án" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="SoTienTamUng" class="form-label">Số tiền tạm ứng (VNĐ) <span class="text-danger">*</span></label>
+                        <input asp-for="SoTienTamUng" class="form-control" type="number" placeholder="Nhập số tiền..." required />
+                        <span asp-validation-for="SoTienTamUng" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="NgayChuyen" class="form-label">Ngày chuyển <span class="text-danger">*</span></label>
+                        <input asp-for="NgayChuyen" class="form-control" type="date" required />
+                        <span asp-validation-for="NgayChuyen" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Chứng từ chuyển tiền (PDF/JPG/PNG) <span class="text-danger">*</span></label>
+                        <input type="file" name="ChungTuFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required />
+                        <div class="form-text">Chấp nhận: .pdf, .jpg, .png (Tối đa 20MB)</div>
+                        <span asp-validation-for="ChungTuChuyenTienFile" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input asp-for="DaXacNhanNhanTien" class="form-check-input" type="checkbox" />
+                            <label asp-for="DaXacNhanNhanTien" class="form-check-label">
+                                Bên B đã xác nhận nhận tiền
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu xác nhận tạm ứng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

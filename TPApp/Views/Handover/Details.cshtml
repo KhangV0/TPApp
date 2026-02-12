@@ -1,0 +1,142 @@
+@model TPApp.Entities.HandoverReport
+@using Newtonsoft.Json
+
+@{
+    ViewData["Title"] = "Chi tiết Biên bản bàn giao";
+    
+    var equipmentList = !string.IsNullOrEmpty(Model.DanhMucThietBiJson) 
+        ? JsonConvert.DeserializeObject<List<dynamic>>(Model.DanhMucThietBiJson) 
+        : new List<dynamic>();
+
+    var checklist = !string.IsNullOrEmpty(Model.DanhMucHoSoJson)
+        ? JsonConvert.DeserializeObject<List<string>>(Model.DanhMucHoSoJson)
+        : new List<string>();
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0"><i class="fas fa-file-signature me-2"></i>Biên bản số: @Model.Id</h2>
+            <span class="badge bg-light text-primary">@Model.NgayTao.ToString("dd/MM/yyyy")</span>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Dự án ID:</strong> @Model.DuAnId</p>
+                    <p><strong>E-Contract ID:</strong> @Model.EContractId</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p><strong>Người tạo:</strong> @Model.NguoiTao</p>
+                </div>
+            </div>
+
+            <!-- EQUIPMENT -->
+            <h5 class="border-bottom pb-2 mb-3 text-primary">I. Danh mục thiết bị</h5>
+            <div class="table-responsive mb-4">
+                <table class="table table-striped table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tên thiết bị</th>
+                            <th>Model</th>
+                            <th>Serial</th>
+                            <th>Tình trạng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (equipmentList != null && equipmentList.Count > 0)
+                        {
+                            foreach (var item in equipmentList)
+                            {
+                                <tr>
+                                    <td>@item.Ten</td>
+                                    <td>@item.Model</td>
+                                    <td>@item.Serial</td>
+                                    <td>@item.TinhTrang</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="4" class="text-center text-muted">Không có thiết bị ghi nhận</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CHECKLIST -->
+            <h5 class="border-bottom pb-2 mb-3 text-primary">II. Hồ sơ bàn giao</h5>
+            <div class="row g-3 mb-4">
+                @if (checklist != null && checklist.Count > 0)
+                {
+                    foreach (var item in checklist)
+                    {
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-square text-success me-2"></i>
+                                <span>@item</span>
+                            </div>
+                        </div>
+                    }
+                }
+                else 
+                {
+                     <div class="col-12 text-muted">Chưa bàn giao hồ sơ nào.</div>
+                }
+            </div>
+
+            <!-- TRAINING -->
+            <h5 class="border-bottom pb-2 mb-3 text-primary">III. Đào tạo & Hướng dẫn</h5>
+            <div class="mb-4">
+                @if (Model.DaHoanThanhDaoTao)
+                {
+                    <div class="alert alert-success d-flex align-items-center">
+                        <i class="fas fa-chalkboard-teacher fa-2x me-3"></i>
+                        <div>
+                            <strong>Đã hoàn thành</strong><br>
+                            Hướng dẫn vận hành và đào tạo sử dụng đã được thực hiện.
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div>
+                            <strong>Chưa hoàn thành</strong><br>
+                            Chưa thực hiện đào tạo/hướng dẫn.
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- RATING -->
+            <h5 class="border-bottom pb-2 mb-3 text-primary">IV. Đánh giá</h5>
+            <div class="mb-3">
+                <div class="d-flex align-items-center">
+                    <span class="me-3 fw-bold">Mức độ hài lòng:</span>
+                    <div class="text-warning fs-5">
+                        @for(int i=1; i<=5; i++)
+                        {
+                            if(Model.DanhGiaSao >= i) { <i class="fas fa-star"></i>; }
+                            else { <i class="far fa-star"></i>; }
+                        }
+                        <span class="text-dark ms-2 small">(@(Model.DanhGiaSao ?? 0)/5)</span>
+                    </div>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.NhanXet))
+            {
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <strong>Nhận xét:</strong> <br>
+                        @Model.NhanXet
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="card-footer bg-white">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Về trang chủ</a>
+            <a asp-action="Create" class="btn btn-outline-primary ms-2"><i class="fas fa-plus me-2"></i>Tạo phiếu mới</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,65 @@
+@model TPApp.Entities.EContract
+
+@{
+    ViewData["Title"] = "PHIẾU KÝ HỢP ĐỒNG ĐIỆN TỬ (E-CONTRACT)";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-file-contract me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="RFQId" class="form-label">Mã RFQ ID</label>
+                        <input asp-for="RFQId" class="form-control" type="number" placeholder="Nhập ID yêu cầu báo giá" />
+                        <span asp-validation-for="RFQId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" placeholder="Nhập ID dự án" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="SoHopDong" class="form-label">Số hợp đồng <span class="text-danger">*</span></label>
+                        <input asp-for="SoHopDong" class="form-control" placeholder="Nhập số hợp đồng..." required />
+                        <span asp-validation-for="SoHopDong" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">File hợp đồng (PDF/DOC/DOCX) <span class="text-danger">*</span></label>
+                        <input type="file" name="ContractFile" class="form-control" accept=".pdf,.doc,.docx" required />
+                        <div class="form-text">Chấp nhận: .pdf, .doc, .docx (Tối đa 20MB)</div>
+                        <span asp-validation-for="FileHopDong" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-6">
+                         <label class="form-label">Bên A (Dự kiến)</label>
+                         <input type="text" class="form-control" value="Công ty TP" readonly />
+                    </div>
+
+                    <div class="col-md-6">
+                         <label class="form-label">Bên B (Dự kiến)</label>
+                         <input type="text" class="form-control" value="Đối tác cung ứng" readonly />
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i>Tạo hợp đồng điện tử</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

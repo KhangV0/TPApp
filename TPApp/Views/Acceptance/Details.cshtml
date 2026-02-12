@@ -1,0 +1,109 @@
+@model TPApp.Entities.AcceptanceReport
+
+@{
+    ViewData["Title"] = "Chi tiết Biên bản nghiệm thu";
+    var statusColor = Model.TrangThaiKy == "Hoàn tất" ? "success" : (Model.TrangThaiKy == "Chưa ký" ? "secondary" : "warning");
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0"><i class="fas fa-file-contract me-2"></i>@ViewData["Title"] #@Model.Id</h2>
+            <span class="badge bg-light text-primary">@Model.NgayTao.ToString("dd/MM/yyyy")</span>
+        </div>
+        <div class="card-body">
+            <!-- Project Info -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <p><strong>Dự án ID:</strong> @Model.DuAnId</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>E-Contract ID:</strong> @Model.EContractId</p>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Ngày nghiệm thu:</strong> @Model.NgayNghiemThu.ToString("dd/MM/yyyy HH:mm")</p>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- Content -->
+            <div class="mb-3">
+                <h6 class="fw-bold">Thành phần tham gia:</h6>
+                <p>@Model.ThanhPhanThamGia</p>
+            </div>
+            <div class="mb-3">
+                <h6 class="fw-bold">Kết luận nghiệm thu:</h6>
+                <p>@Model.KetLuanNghiemThu</p>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.VanDeTonDong))
+            {
+                <div class="mb-3">
+                    <h6 class="fw-bold text-danger">Vấn đề tồn đọng:</h6>
+                    <p class="text-danger">@Model.VanDeTonDong</p>
+                </div>
+            }
+
+            <hr />
+
+            <!-- Status & Signatures -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-12 text-center mb-3">
+                    <h4>Trạng thái: <span class="badge bg-@statusColor">@Model.TrangThaiKy</span></h4>
+                </div>
+                
+                <div class="col-md-6 text-center">
+                    <div class="border p-3 rounded">
+                        <h6 class="fw-bold">ĐẠI DIỆN BÊN A</h6>
+                        @if (!string.IsNullOrEmpty(Model.ChuKyBenA))
+                        {
+                            <div class="text-success my-3">
+                                <i class="fas fa-signature fa-2x"></i><br>
+                                已 ký bởi: <strong>@Model.ChuKyBenA</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-muted my-3">Chưa ký</div>
+                            @if (Model.TrangThaiKy != "Hoàn tất")
+                            {
+                                <form asp-action="SignAsBenA" method="post">
+                                    <input type="hidden" asp-for="Id" />
+                                    <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fas fa-pen-nib me-2"></i>Ký với tư cách Bên A</button>
+                                </form>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6 text-center">
+                    <div class="border p-3 rounded">
+                        <h6 class="fw-bold">ĐẠI DIỆN BÊN B</h6>
+                        @if (!string.IsNullOrEmpty(Model.ChuKyBenB))
+                        {
+                            <div class="text-success my-3">
+                                <i class="fas fa-signature fa-2x"></i><br>
+                                Đã ký bởi: <strong>@Model.ChuKyBenB</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-muted my-3">Chưa ký</div>
+                            @if (Model.TrangThaiKy != "Hoàn tất")
+                            {
+                                <form asp-action="SignAsBenB" method="post">
+                                    <input type="hidden" asp-for="Id" />
+                                    <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fas fa-pen-nib me-2"></i>Ký với tư cách Bên B</button>
+                                </form>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-white">
+            <a asp-action="Create" class="btn btn-outline-secondary"><i class="fas fa-plus me-2"></i>Tạo biên bản mới</a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary float-end"><i class="fas fa-home me-2"></i>Về trang chủ</a>
+        </div>
+    </div>
+</div>

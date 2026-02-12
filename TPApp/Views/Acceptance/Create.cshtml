@@ -1,0 +1,66 @@
+@model TPApp.Entities.AcceptanceReport
+
+@{
+    ViewData["Title"] = "BIÊN BẢN NGHIỆM THU";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-check-double me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" placeholder="Nhập ID dự án" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="EContractId" class="form-label">E-Contract ID</label>
+                        <input asp-for="EContractId" class="form-control" type="number" placeholder="Nhập ID hợp đồng" />
+                        <span asp-validation-for="EContractId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="NgayNghiemThu" class="form-label">Ngày nghiệm thu <span class="text-danger">*</span></label>
+                        <input asp-for="NgayNghiemThu" class="form-control" type="datetime-local" />
+                        <span asp-validation-for="NgayNghiemThu" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="ThanhPhanThamGia" class="form-label">Thành phần tham gia</label>
+                        <textarea asp-for="ThanhPhanThamGia" class="form-control" rows="3" placeholder="Liệt kê thành phần tham gia..."></textarea>
+                        <span asp-validation-for="ThanhPhanThamGia" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="KetLuanNghiemThu" class="form-label">Kết luận nghiệm thu</label>
+                        <textarea asp-for="KetLuanNghiemThu" class="form-control" rows="3" placeholder="Kết luận..."></textarea>
+                        <span asp-validation-for="KetLuanNghiemThu" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="VanDeTonDong" class="form-label">Các vấn đề tồn đọng</label>
+                        <textarea asp-for="VanDeTonDong" class="form-control" rows="3" placeholder="Nếu có..."></textarea>
+                        <span asp-validation-for="VanDeTonDong" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i>Tạo biên bản nghiệm thu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

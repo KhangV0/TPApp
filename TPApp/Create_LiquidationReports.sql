@@ -1,0 +1,20 @@
+CREATE TABLE [dbo].[LiquidationReports](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[DuAnId] [int] NULL,
+	[EContractId] [int] NULL,
+	[GiaTriThanhToanConLai] [decimal](18, 2) NULL,
+	[SoHoaDon] [nvarchar](50) NULL,
+	[HoaDonFile] [nvarchar](max) NULL,
+	[SanDaChuyenTien] [bit] NOT NULL DEFAULT ((0)),
+	[HopDongClosed] [bit] NOT NULL DEFAULT ((0)),
+	[StatusId] [int] NOT NULL DEFAULT ((1)),
+	[NguoiTao] [nvarchar](450) NULL,
+	[NgayTao] [datetime] NOT NULL DEFAULT (getdate()),
+	[NguoiSua] [nvarchar](450) NULL,
+	[NgaySua] [datetime] NULL,
+ CONSTRAINT [PK_LiquidationReports] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO

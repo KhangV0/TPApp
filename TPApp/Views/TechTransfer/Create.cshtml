@@ -1,0 +1,99 @@
+@model TPApp.Entities.TechTransferRequest
+
+@{
+    ViewData["Title"] = "PHIẾU YÊU CẦU CHUYỂN GIAO CÔNG NGHỆ";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-file-signature me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row">
+                    <!-- Thông tin liên hệ -->
+                    <div class="col-md-12 mb-4">
+                        <h5 class="text-primary border-bottom pb-2 mb-3">Thông tin liên hệ</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="HoTen" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                                <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên" />
+                                <span asp-validation-for="HoTen" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ChucVu" class="form-label">Chức vụ</label>
+                                <input asp-for="ChucVu" class="form-control" />
+                                <span asp-validation-for="ChucVu" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="DonVi" class="form-label">Đơn vị</label>
+                                <input asp-for="DonVi" class="form-control" />
+                                <span asp-validation-for="DonVi" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="DiaChi" class="form-label">Địa chỉ</label>
+                                <input asp-for="DiaChi" class="form-control" />
+                                <span asp-validation-for="DiaChi" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="DienThoai" class="form-label">Điện thoại <span class="text-danger">*</span></label>
+                                <input asp-for="DienThoai" class="form-control" />
+                                <span asp-validation-for="DienThoai" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input asp-for="Email" class="form-control" type="email" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông tin nhu cầu -->
+                    <div class="col-md-12">
+                        <h5 class="text-primary border-bottom pb-2 mb-3">Thông tin nhu cầu công nghệ</h5>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="TenCongNghe" class="form-label">Tên công nghệ yêu cầu <span class="text-danger">*</span></label>
+                                <input asp-for="TenCongNghe" class="form-control" placeholder="Nhập tên công nghệ cần chuyển giao" />
+                                <span asp-validation-for="TenCongNghe" class="text-danger"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="MoTaNhuCau" class="form-label">Mô tả chi tiết nhu cầu <span class="text-danger">*</span></label>
+                                <textarea asp-for="MoTaNhuCau" class="form-control" rows="5" placeholder="Mô tả chi tiết về công nghệ, thông số kỹ thuật, yêu cầu cụ thể..."></textarea>
+                                <span asp-validation-for="MoTaNhuCau" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LinhVuc" class="form-label">Lĩnh vực</label>
+                                <input asp-for="LinhVuc" class="form-control" />
+                                <span asp-validation-for="LinhVuc" class="text-danger"></span>
+                            </div>
+                             <div class="col-md-6">
+                                <label asp-for="NganSachDuKien" class="form-label">Ngân sách dự kiến (VNĐ)</label>
+                                <input asp-for="NganSachDuKien" class="form-control" type="number" />
+                                <span asp-validation-for="NganSachDuKien" class="text-danger"></span>
+                            </div>
+                             <div class="col-md-6" style="display:none;">
+                                <label asp-for="DuAnId" class="form-label">Dự án liên quan (ID)</label>
+                                <input asp-for="DuAnId" class="form-control" />
+                                <span asp-validation-for="DuAnId" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Quay lại</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>Gửi yêu cầu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

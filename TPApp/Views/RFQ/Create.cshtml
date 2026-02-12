@@ -1,0 +1,60 @@
+@model TPApp.Entities.RFQRequest
+
+@{
+    ViewData["Title"] = "PHIẾU YÊU CẦU BÁO GIÁ (BÊN MUA YÊU CẦU)";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="MaRFQ" class="form-label">Mã RFQ <span class="text-danger">*</span></label>
+                        <input asp-for="MaRFQ" class="form-control" placeholder="Nhập mã RFQ..." />
+                        <span asp-validation-for="MaRFQ" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="HanChotNopHoSo" class="form-label">Hạn chót nộp hồ sơ <span class="text-danger">*</span></label>
+                        <input asp-for="HanChotNopHoSo" class="form-control" type="datetime-local" />
+                        <span asp-validation-for="HanChotNopHoSo" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="YeuCauKyThuat" class="form-label">Yêu cầu kỹ thuật chi tiết <span class="text-danger">*</span></label>
+                        <textarea asp-for="YeuCauKyThuat" class="form-control" rows="5" placeholder="Mô tả kỹ thuật, số lượng, quy cách..."></textarea>
+                        <span asp-validation-for="YeuCauKyThuat" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="TieuChuanNghiemThu" class="form-label">Tiêu chuẩn nghiệm thu mong muốn</label>
+                        <textarea asp-for="TieuChuanNghiemThu" class="form-control" rows="3" placeholder="Các tiêu chuẩn về chất lượng, kiểm định..."></textarea>
+                        <span asp-validation-for="TieuChuanNghiemThu" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i>Tạo yêu cầu báo giá</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,93 @@
+@model TPApp.Entities.NDAAgreement
+
+@{
+    ViewData["Title"] = "PHIẾU THỎA THUẬN BẢO MẬT";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-file-contract me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <!-- Bên A / Bên B -->
+                    <div class="col-md-6">
+                        <label asp-for="BenA" class="form-label">Bên A (Bên sở hữu thông tin) <span class="text-danger">*</span></label>
+                        <input asp-for="BenA" class="form-control" placeholder="Nhập tên đơn vị/cá nhân" />
+                        <span asp-validation-for="BenA" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="BenB" class="form-label">Bên B (Bên nhận thông tin) <span class="text-danger">*</span></label>
+                        <input asp-for="BenB" class="form-control" placeholder="Nhập tên đơn vị/cá nhân" />
+                        <span asp-validation-for="BenB" class="text-danger"></span>
+                    </div>
+
+                    <!-- Loại NDA -->
+                    <div class="col-md-6">
+                        <label asp-for="LoaiNDA" class="form-label">Loại DNA <span class="text-danger">*</span></label>
+                        <select asp-for="LoaiNDA" class="form-select">
+                            <option value="">-- Chọn loại NDA --</option>
+                            <option value="Mẫu chuẩn của Sàn">Mẫu chuẩn của Sàn</option>
+                            <option value="Tải lên mẫu riêng">Tải lên mẫu riêng</option>
+                        </select>
+                        <span asp-validation-for="LoaiNDA" class="text-danger"></span>
+                    </div>
+
+                    <!-- Thời hạn bảo mật -->
+                    <div class="col-md-6">
+                        <label asp-for="ThoiHanBaoMat" class="form-label">Thời hạn bảo mật <span class="text-danger">*</span></label>
+                        <input asp-for="ThoiHanBaoMat" class="form-control" placeholder="Ví dụ: 2 năm, Vĩnh viễn..." />
+                        <span asp-validation-for="ThoiHanBaoMat" class="text-danger"></span>
+                    </div>
+
+                    <!-- Dự án ID (Optional) -->
+                    <div class="col-md-6">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID (Nếu có)</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <!-- Xác nhận ký số -->
+                    <div class="col-md-6">
+                        <label asp-for="XacNhanKySo" class="form-label">Xác nhận ký số</label>
+                        <select asp-for="XacNhanKySo" class="form-select">
+                            <option value="">-- Chọn hình thức --</option>
+                            <option value="E-Sign">E-Sign</option>
+                            <option value="OTP">OTP</option>
+                            <option value="Không áp dụng">Không áp dụng</option>
+                        </select>
+                        <span asp-validation-for="XacNhanKySo" class="text-danger"></span>
+                    </div>
+
+                    <!-- Cam kết -->
+                    <div class="col-12 mt-4">
+                        <div class="form-check">
+                            <input asp-for="DaDongY" class="form-check-input" type="checkbox" />
+                            <label asp-for="DaDongY" class="form-check-label fw-bold">
+                                Tôi đã đọc và đồng ý với nội dung thỏa thuận bảo mật
+                            </label>
+                        </div>
+                        <span asp-validation-for="DaDongY" class="text-danger d-block"></span>
+                        <div class="form-text text-muted fst-italic mt-1">
+                            Lưu ý: Trước khi Bên mua xem xét hồ sơ năng lực hoặc bí quyết công nghệ của Bên bán, họ phải đồng ý hoặc ký số vào văn bản NDA.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-signature me-2"></i>Ký và gửi NDA</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

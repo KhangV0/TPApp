@@ -95,5 +95,16 @@ namespace TPApp.Data
         public DbSet<Store> Stores { get; set; }
         public DbSet<SearchIndexContent> SearchIndexContents { get; set; }
         public DbSet<Likepage> Likepages { get; set; }
+        public DbSet<TechTransferRequest> TechTransferRequests { get; set; } = null!;
+        public DbSet<NDAAgreement> NDAAgreements { get; set; } = null!;
+        public DbSet<RFQRequest> RFQRequests { get; set; } = null!;
+        public DbSet<ProposalSubmission> ProposalSubmissions { get; set; } = null!;
+        public DbSet<NegotiationForm> NegotiationForms { get; set; } = null!;
+        public DbSet<EContract> EContracts { get; set; } = null!;
+        public DbSet<AdvancePaymentConfirmation> AdvancePaymentConfirmations { get; set; } = null!;
+        public DbSet<ImplementationLog> ImplementationLogs { get; set; } = null!;
+        public DbSet<HandoverReport> HandoverReports { get; set; } = null!;
+        public DbSet<AcceptanceReport> AcceptanceReports { get; set; } = null!;
+        public DbSet<LiquidationReport> LiquidationReports { get; set; } = null!;
     }
 }

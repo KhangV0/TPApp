@@ -32,6 +32,39 @@
                 <span class="nav-link text-dark">Hello, @User.Identity.Name!</span>
             </li>
             <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="TechTransfer" asp-action="Create">1. Yêu cầu chuyển giao</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="NDA" asp-action="Create">2. Thỏa thuận bảo mật</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="RFQ" asp-action="Create">3. Yêu cầu báo giá</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="Proposal" asp-action="Create">4. Nộp hồ sơ đề xuất</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="Negotiation" asp-action="Create">5. Thương thảo giá</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="EContract" asp-action="Create">6. Ký hợp đồng điện tử</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="AdvancePayment" asp-action="Create">7. Xác nhận tạm ứng</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="ImplementationLog" asp-action="Create">8. Nhật ký triển khai</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="Handover" asp-action="Create">9. Biên bản bàn giao</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="Acceptance" asp-action="Create">10. Biên bản nghiệm thu</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="Liquidation" asp-action="Create">11. Biên bản thanh lý</a>
+            </li>
+            <li class="nav-item">
                 <form class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
                     <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
                 </form>

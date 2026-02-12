@@ -1,0 +1,73 @@
+@model TPApp.Entities.LiquidationReport
+
+@{
+    ViewData["Title"] = "BIÊN BẢN THANH LÝ";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" placeholder="Nhập ID dự án" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EContractId" class="form-label">E-Contract ID</label>
+                        <input asp-for="EContractId" class="form-control" type="number" placeholder="Nhập ID hợp đồng" />
+                        <span asp-validation-for="EContractId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="GiaTriThanhToanConLai" class="form-label">Giá trị thanh toán còn lại</label>
+                        <div class="input-group">
+                            <input asp-for="GiaTriThanhToanConLai" class="form-control" type="number" step="0.01" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <span asp-validation-for="GiaTriThanhToanConLai" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="SoHoaDon" class="form-label">Số hóa đơn</label>
+                        <input asp-for="SoHoaDon" class="form-control" placeholder="Nhập số hóa đơn..." />
+                        <span asp-validation-for="SoHoaDon" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Upload hóa đơn điện tử</label>
+                        <input type="file" name="HoaDonUpload" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx" />
+                        <div class="form-text">File .pdf, .doc, .docx, .xls, .xlsx (Tối đa 20MB)</div>
+                        <span asp-validation-for="HoaDonFile" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12 pt-3">
+                        <div class="form-check">
+                            <input asp-for="SanDaChuyenTien" class="form-check-input" type="checkbox" />
+                            <label asp-for="SanDaChuyenTien" class="form-check-label fw-bold">
+                                Sàn đã chuyển tiền cho Bên bán (Đánh dấu nếu đã thực hiện)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu biên bản thanh lý</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

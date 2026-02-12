@@ -1,0 +1,66 @@
+@model TPApp.Entities.RFQRequest
+
+@{
+    ViewData["Title"] = "CHI TIẾT YÊU CẦU BÁO GIÁ";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="h4 mb-0"><i class="fas fa-info-circle me-2"></i>@ViewData["Title"]</h2>
+            @if (Model.DaGuiNhaCungUng)
+            {
+                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Đã gửi nhà cung ứng</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>Chưa gửi</span>
+            }
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Mã RFQ</dt>
+                <dd class="col-sm-9">@Model.MaRFQ</dd>
+
+                <dt class="col-sm-3">Ngày tạo</dt>
+                <dd class="col-sm-9">@Model.NgayTao.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-3">Hạn chót nộp hồ sơ</dt>
+                <dd class="col-sm-9 text-danger fw-bold">@Model.HanChotNopHoSo.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt class="col-sm-3">Dự án ID</dt>
+                <dd class="col-sm-9">@(Model.DuAnId.HasValue ? Model.DuAnId.ToString() : "N/A")</dd>
+
+                <dt class="col-sm-12 mt-3 text-primary border-bottom pb-2">Yêu cầu kỹ thuật</dt>
+                <dd class="col-sm-12 mt-2">
+                    <pre class="bg-light p-3 border rounded">@Model.YeuCauKyThuat</pre>
+                </dd>
+
+                <dt class="col-sm-12 mt-3 text-primary border-bottom pb-2">Tiêu chuẩn nghiệm thu</dt>
+                <dd class="col-sm-12 mt-2">
+                    <pre class="bg-light p-3 border rounded">@(string.IsNullOrEmpty(Model.TieuChuanNghiemThu) ? "Không có" : Model.TieuChuanNghiemThu)</pre>
+                </dd>
+            </dl>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <a asp-action="Create" class="btn btn-secondary me-md-2">Tạo mới</a>
+                
+                @if (!Model.DaGuiNhaCungUng)
+                {
+                    <form asp-action="SendToSuppliers" asp-route-id="@Model.Id" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Bạn có chắc chắn muốn gửi yêu cầu này đến các nhà cung ứng mục tiêu?');">
+                            <i class="fas fa-paper-plane me-2"></i>Gửi đến nhà cung ứng mục tiêu
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <button class="btn btn-outline-success" disabled>
+                        <i class="fas fa-check-double me-2"></i>Đã gửi yêu cầu
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,24 @@
+@{
+    ViewData["Title"] = "Ký NDA thành công";
+}
+
+<div class="container mt-5 text-center">
+    <div class="card shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="card-body py-5">
+            <div class="mb-4 text-success">
+                <i class="fas fa-file-contract fa-5x"></i>
+            </div>
+            <h2 class="card-title text-success mb-3">Ký thỏa thuận thành công!</h2>
+            <p class="card-text text-muted mb-4">
+                Thỏa thuận bảo mật (NDA) của bạn đã được ghi nhận vào hệ thống.<br />
+                Vui lòng kiểm tra email để nhận bản sao thỏa thuận.
+            </p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Về trang chủ
+            </a>
+            <a asp-action="Create" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-plus me-2"></i>Tạo thỏa thuận mới
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,88 @@
+@model TPApp.Entities.NegotiationForm
+
+@{
+    ViewData["Title"] = "PHIẾU THƯƠNG THẢO GIÁ VÀ ĐIỀU KHOẢN";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h4 mb-0"><i class="fas fa-handshake me-2"></i>@ViewData["Title"]</h2>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="RFQId" class="form-label">Mã RFQ ID</label>
+                        <input asp-for="RFQId" class="form-control" type="number" placeholder="Nhập ID yêu cầu báo giá" />
+                        <span asp-validation-for="RFQId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DuAnId" class="form-label">Dự án ID</label>
+                        <input asp-for="DuAnId" class="form-control" type="number" placeholder="Nhập ID dự án" />
+                        <span asp-validation-for="DuAnId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="GiaChotCuoiCung" class="form-label">Giá chốt cuối cùng (VNĐ)</label>
+                        <input asp-for="GiaChotCuoiCung" class="form-control" type="number" placeholder="Nhập số tiền..." />
+                        <span asp-validation-for="GiaChotCuoiCung" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="DieuKhoanThanhToan" class="form-label">Điều khoản thanh toán <span class="text-danger">*</span></label>
+                        <textarea asp-for="DieuKhoanThanhToan" class="form-control" rows="4" placeholder="Ví dụ: Thanh toán 30% khi ký hợp đồng, 70% khi nghiệm thu..."></textarea>
+                        <span asp-validation-for="DieuKhoanThanhToan" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="HinhThucKy" class="form-label">Hình thức ký <span class="text-danger">*</span></label>
+                        <select asp-for="HinhThucKy" class="form-select" id="hinhThucKySelect">
+                            <option value="">-- Chọn hình thức --</option>
+                            <option value="Upload file">Upload file</option>
+                            <option value="E-Sign">E-Sign</option>
+                            <option value="OTP">OTP</option>
+                        </select>
+                        <span asp-validation-for="HinhThucKy" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6" id="uploadArea">
+                        <label class="form-label">Biên bản thương lượng (File đính kèm)</label>
+                        <input type="file" name="BienBanFile" class="form-control" accept=".pdf,.doc,.docx" />
+                        <div class="form-text">Chấp nhận: .pdf, .doc, .docx (Tối đa 20MB)</div>
+                        <span asp-validation-for="BienBanThuongLuongFile" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu kết quả thương thảo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function () {
+            function toggleUpload() {
+                var selected = $('#hinhThucKySelect').val();
+                if (selected === 'Upload file') {
+                    $('#uploadArea').show();
+                } else {
+                    $('#uploadArea').hide();
+                }
+            }
+            // Initial check
+            toggleUpload();
+            // Change event
+            $('#hinhThucKySelect').change(toggleUpload);
+        });
+    </script>
+}
