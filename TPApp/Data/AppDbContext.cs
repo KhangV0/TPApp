@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TPApp.Data.Entities;
 using TPApp.Entities;
 
 namespace TPApp.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
@@ -46,10 +48,45 @@ namespace TPApp.Data
 
             modelBuilder.Entity<uspPortletCountTichcuu_Result>().HasNoKey();
             modelBuilder.Entity<uspPortletCountTichcuuTraloi_Result>().HasNoKey();
+
+            // Configure Identity Mapping to existing User table
+            modelBuilder.Entity<ApplicationUser>(entity =>
+            {
+                entity.ToTable("Users");
+
+                entity.Property(e => e.Id).HasColumnName("UserId");
+                entity.Property(e => e.PasswordHash).HasColumnName("Password");
+                
+                // Map PhoneNumber to Mobile
+                entity.Property(e => e.PhoneNumber).HasColumnName("Mobile");
+
+                // IGNORE Identity columns that don't exist in existing table
+                entity.Ignore(e => e.NormalizedUserName);
+                entity.Ignore(e => e.NormalizedEmail);
+                entity.Ignore(e => e.TwoFactorEnabled);
+                entity.Ignore(e => e.EmailConfirmed);
+                entity.Ignore(e => e.PhoneNumberConfirmed);
+                entity.Ignore(e => e.AccessFailedCount);
+                entity.Ignore(e => e.LockoutEnabled);
+                entity.Ignore(e => e.LockoutEnd);
+                entity.Ignore(e => e.SecurityStamp);
+                entity.Ignore(e => e.ConcurrencyStamp);
+            });
+
+            // Ignore other Identity tables
+            modelBuilder.Ignore<IdentityRole<int>>();
+            modelBuilder.Ignore<IdentityUserToken<int>>();
+            modelBuilder.Ignore<IdentityUserRole<int>>();
+            modelBuilder.Ignore<IdentityUserLogin<int>>();
+            modelBuilder.Ignore<IdentityUserClaim<int>>();
+            modelBuilder.Ignore<IdentityRoleClaim<int>>();
         }
 
         public DbSet<Feedback> Feedbacks { get; set; }
-        public DbSet<User> Users { get; set; }
+        // Users DbSet is now provided by IdentityDbContext as Users property, but typed as ApplicationUser
+        // We can expose it as Users if we want, or use the inherited property.
+        // public DbSet<User> Users { get; set; } // REMOVED
+        
         public DbSet<PhieuYeuCauCNTB> PhieuYeuCauCNTBs { get; set; }
         public DbSet<Album> Albums { get; set; }
         public DbSet<TimKiemDoiTac> TimKiemDoiTacs { get; set; }
@@ -58,10 +95,5 @@ namespace TPApp.Data
         public DbSet<Store> Stores { get; set; }
         public DbSet<SearchIndexContent> SearchIndexContents { get; set; }
         public DbSet<Likepage> Likepages { get; set; }
-
-
-
-
-
     }
 }

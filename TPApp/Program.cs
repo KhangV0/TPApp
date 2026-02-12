@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using TPApp.Data;
+using TPApp.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,8 +28,44 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
+
 // --- Configuration ---
 builder.Services.Configure<TPApp.Helpers.AppSettings>(builder.Configuration.GetSection("AppSettings"));
+
+// --- Identity Configuration ---
+builder.Services.AddIdentityCore<ApplicationUser>(options =>
+{
+    // Configure Identity options
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+    options.User.RequireUniqueEmail = false; 
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddSignInManager<SignInManager<ApplicationUser>>() // Add SignInManager for cookie handling
+.AddUserStore<TPApp.Services.ApplicationUserStore>() // Use Custom Store
+.AddDefaultTokenProviders();
+
+// Add Authentication Cookie
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+})
+.AddIdentityCookies();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/dang-nhap.html";
+    options.LogoutPath = "/dang-ky.html"; // Or logout logic
+    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.Cookie.Name = "TPApp.Identity";
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+    options.SlidingExpiration = true;
+});
 
 // --- Services ---
 builder.Services.AddScoped<TPApp.Interfaces.IProductService, TPApp.Services.ProductService>();
@@ -49,6 +87,8 @@ app.UseRouting();
 // --- Bắt buộc: UseSession phải nằm ở đây ---
 app.UseSession();
 
+// Authentication & Authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 
@@ -158,11 +198,23 @@ app.MapControllerRoute(
     defaults: new { controller = "Forum", action = "Index" }
 );
 
-
 app.MapControllerRoute(
     name: "feedback_index",
     pattern: "lien-he-74.html",
     defaults: new { controller = "Feedback", action = "Index" }
+);
+
+// 8. Auth Routes
+app.MapControllerRoute(
+    name: "login_page",
+    pattern: "dang-nhap.html",
+    defaults: new { controller = "Account", action = "Login" }
+);
+
+app.MapControllerRoute(
+    name: "register_page",
+    pattern: "dang-ky.html",
+    defaults: new { controller = "Account", action = "Register" }
 );
 
 

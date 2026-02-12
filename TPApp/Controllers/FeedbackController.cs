@@ -34,7 +34,7 @@ namespace TPApp.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId.HasValue)
             {
-                var user = _context.Users.FirstOrDefault(x => x.UserId == userId.Value);
+                var user = _context.Users.FirstOrDefault(x => x.Id == userId.Value);
                 if (user != null)
                 {
                     vm.FullName = user.FullName ?? "";

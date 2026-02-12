@@ -18,7 +18,38 @@
 
 </head>
 <body>
-    
+    <ul class="navbar-nav flex-grow-1">
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </li>
+        
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <li class="nav-item">
+                <span class="nav-link text-dark">Hello, @User.Identity.Name!</span>
+            </li>
+            <li class="nav-item">
+                <form class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
+                </form>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-controller="Secure" asp-action="Index">Secure Page</a>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-route="register_page">Register</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-route="login_page">Login</a>
+            </li>
+        }
+    </ul>
 
     <div class="app-layout">
         @await Html.PartialAsync("_Header")
