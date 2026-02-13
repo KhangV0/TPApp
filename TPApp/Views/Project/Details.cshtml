@@ -39,21 +39,57 @@
     </div>
 </div>
 
+<!-- Include Edit Modal -->
+@await Html.PartialAsync("_StepEditModal")
+
 @section Scripts {
     <script>
         $(document).ready(function() {
+            var currentProjectId = @Model.Project.Id;
+            var currentStepNumber = null;
+            var editModal = null;
+
+            // Initialize Bootstrap modal
+            var modalElement = document.getElementById('editStepModal');
+            if (modalElement) {
+                editModal = new bootstrap.Modal(modalElement);
+            }
+
             // Handle step navigation clicks
             $(document).on('click', '.step-link', function(e) {
                 e.preventDefault();
                 
                 var step = $(this).data('step');
-                var projectId = @Model.Project.Id;
-                
+                loadStepContent(step);
+            });
+            
+            // Handle next/prev buttons in step content
+            $(document).on('click', '.step-nav-btn', function(e) {
+                e.preventDefault();
+                var step = $(this).data('step');
+                $(`.step-link[data-step="${step}"]`).click();
+            });
+
+            // Handle edit button clicks
+            $(document).on('click', '.edit-step-btn', function(e) {
+                e.preventDefault();
+                var stepNumber = $(this).data('step');
+                var projectId = $(this).data('project-id');
+                openEditModal(stepNumber, projectId);
+            });
+
+            // Handle save button in modal
+            $('#saveStepBtn').on('click', function() {
+                saveStepData();
+            });
+
+            // Function to load step content
+            function loadStepContent(step) {
                 // Show loading
                 $('#step-content').html('<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-3x text-primary"></i><p class="mt-3">Đang tải...</p></div>');
                 
                 // Load step content via AJAX
-                $.get('/Project/Step', { projectId: projectId, stepNumber: step }, function(data) {
+                $.get('/Project/Step', { projectId: currentProjectId, stepNumber: step }, function(data) {
                     $('#step-content').html(data);
                     
                     // Update active state in navigation
@@ -67,14 +103,450 @@
                 }).fail(function() {
                     $('#step-content').html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Lỗi tải nội dung. Vui lòng thử lại.</div>');
                 });
-            });
-            
-            // Handle next/prev buttons in step content
-            $(document).on('click', '.step-nav-btn', function(e) {
-                e.preventDefault();
-                var step = $(this).data('step');
-                $(`.step-link[data-step="${step}"]`).click();
-            });
+            }
+
+            // Function to open edit modal
+            function openEditModal(stepNumber, projectId) {
+                currentStepNumber = stepNumber;
+                
+                // Show loading in modal
+                $('#editStepModalBody').html('<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-3x text-primary"></i><p class="mt-3">Đang tải...</p></div>');
+                
+                // Show modal
+                if (editModal) {
+                    editModal.show();
+                }
+
+                // Load edit form based on step number
+                var formUrl = `/Project/GetStepEditForm?projectId=${projectId}&stepNumber=${stepNumber}`;
+                
+                // For now, we'll load the form directly from the partial view
+                // In a real implementation, you'd have a controller action to return the form
+                $.get('/Project/Step', { projectId: projectId, stepNumber: stepNumber }, function(data) {
+                    // Extract the data and render the form
+                    loadEditForm(stepNumber, projectId);
+                }).fail(function() {
+                    $('#editStepModalBody').html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Lỗi tải form. Vui lòng thử lại.</div>');
+                });
+            }
+
+            // Function to load edit form (simplified - renders form based on step)
+            function loadEditForm(stepNumber, projectId) {
+                // For Step 1, we'll render the form with current data
+                if (stepNumber === 1) {
+                    // Get current data from the displayed content
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="HoTen" class="form-label">Họ tên <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="HoTen" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="ChucVu" class="form-label">Chức vụ</label>
+                                    <input type="text" class="form-control" name="ChucVu" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="DonVi" class="form-label">Đơn vị</label>
+                                    <input type="text" class="form-control" name="DonVi" />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="DiaChi" class="form-label">Địa chỉ</label>
+                                    <input type="text" class="form-control" name="DiaChi" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="DienThoai" class="form-label">Điện thoại <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control" name="DienThoai" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="Email" class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" name="Email" required />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="TenCongNghe" class="form-label">Tên công nghệ <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="TenCongNghe" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="LinhVuc" class="form-label">Lĩnh vực</label>
+                                <input type="text" class="form-control" name="LinhVuc" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="MoTaNhuCau" class="form-label">Mô tả nhu cầu <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="MoTaNhuCau" rows="5" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="NganSachDuKien" class="form-label">Ngân sách dự kiến (VNĐ)</label>
+                                <input type="number" class="form-control" name="NganSachDuKien" step="1000" />
+                            </div>
+                        </form>
+                    `;
+                    
+                    $('#editStepModalBody').html(formHtml);
+                    
+                    // Populate form with current values from the page
+                    populateFormFromPage();
+                }
+                else if (stepNumber === 2) {
+                    // Step 2: NDA form
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="BenA" class="form-label">Bên A <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="BenA" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="BenB" class="form-label">Bên B <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="BenB" required />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="LoaiNDA" class="form-label">Loại NDA <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="LoaiNDA" required>
+                                        <option value="">-- Chọn loại NDA --</option>
+                                        <option value="Một chiều">Một chiều</option>
+                                        <option value="Hai chiều">Hai chiều</option>
+                                        <option value="Đa bên">Đa bên</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="ThoiHanBaoMat" class="form-label">Thời hạn bảo mật <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="ThoiHanBaoMat" placeholder="VD: 2 năm" required />
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="XacNhanKySo" class="form-label">Xác nhận ký số</label>
+                                <input type="text" class="form-control" name="XacNhanKySo" />
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" name="DaDongY" id="DaDongY" value="true" />
+                                <label class="form-check-label" for="DaDongY">
+                                    Tôi đã đọc và đồng ý với các điều khoản bảo mật
+                                </label>
+                            </div>
+                        </form>
+                    `;
+                    
+                    $('#editStepModalBody').html(formHtml);
+                    
+                    // Populate form with current values from the page
+                    populateStep2FormFromPage();
+                }
+                else if (stepNumber === 3) {
+                    // Step 3: RFQ form
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="mb-3">
+                                <label for="MaRFQ" class="form-label">Mã RFQ <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="MaRFQ" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="YeuCauKyThuat" class="form-label">Yêu cầu kỹ thuật <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="YeuCauKyThuat" rows="6" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="TieuChuanNghiemThu" class="form-label">Tiêu chuẩn nghiệm thu</label>
+                                <textarea class="form-control" name="TieuChuanNghiemThu" rows="4"></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="HanChotNopHoSo" class="form-label">Hạn chót nộp hồ sơ <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="HanChotNopHoSo" required />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check mt-4">
+                                        <input type="checkbox" class="form-check-input" name="DaGuiNhaCungUng" id="DaGuiNhaCungUng" value="true" />
+                                        <label class="form-check-label" for="DaGuiNhaCungUng">
+                                            Đã gửi nhà cung ứng
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    `;
+                    
+                    $('#editStepModalBody').html(formHtml);
+                    
+                    // Populate form with current values from the page
+                    populateStep3FormFromPage();
+                }
+                else if (stepNumber === 4) {
+                    // Step 4: Proposal form (only editable fields, not file uploads)
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle"></i> 
+                                <strong>Lưu ý:</strong> Chỉ có thể chỉnh sửa báo giá và thời gian triển khai. Để thay đổi file đính kèm, vui lòng sử dụng trang chi tiết.
+                            </div>
+                            <div class="mb-3">
+                                <label for="BaoGiaSoBo" class="form-label">Báo giá sơ bộ (VNĐ)</label>
+                                <input type="number" class="form-control" name="BaoGiaSoBo" step="1000" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="ThoiGianTrienKhai" class="form-label">Thời gian triển khai <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="ThoiGianTrienKhai" placeholder="VD: 3 tháng" required />
+                            </div>
+                        </form>
+                    `;
+                    
+                    $('#editStepModalBody').html(formHtml);
+                    
+                    // Populate form with current values from the page
+                    populateStep4FormFromPage();
+                }
+            }
+
+            // Function to populate form from displayed data
+            function populateFormFromPage() {
+                var $content = $('#step-content');
+                
+                // Extract values from the dl/dd structure
+                $content.find('dl.row dt').each(function() {
+                    var label = $(this).text().trim().replace(':', '');
+                    var value = $(this).next('dd').text().trim();
+                    
+                    // Map labels to form fields
+                    var fieldMap = {
+                        'Họ tên': 'HoTen',
+                        'Chức vụ': 'ChucVu',
+                        'Đơn vị': 'DonVi',
+                        'Địa chỉ': 'DiaChi',
+                        'Điện thoại': 'DienThoai',
+                        'Email': 'Email',
+                        'Tên công nghệ': 'TenCongNghe',
+                        'Lĩnh vực': 'LinhVuc'
+                    };
+                    
+                    if (fieldMap[label]) {
+                        var fieldName = fieldMap[label];
+                        var $field = $(`[name="${fieldName}"]`);
+                        
+                        if ($field.length && value && value !== 'Chưa cập nhật') {
+                            $field.val(value);
+                        }
+                    }
+                });
+                
+                // Handle MoTaNhuCau (from div with br tags)
+                var moTa = $content.find('dt:contains("Mô tả nhu cầu")').next('dd').find('div').html();
+                if (moTa) {
+                    moTa = moTa.replace(/<br\s*\/?>/gi, '\n');
+                    $('[name="MoTaNhuCau"]').val($('<div>').html(moTa).text());
+                }
+                
+                // Handle NganSachDuKien (extract number from badge)
+                var nganSach = $content.find('dt:contains("Ngân sách dự kiến")').next('dd').find('.badge').text();
+                if (nganSach) {
+                    nganSach = nganSach.replace(/[^\d]/g, '');
+                    if (nganSach) {
+                        $('[name="NganSachDuKien"]').val(nganSach);
+                    }
+                }
+            }
+
+            // Function to populate Step 2 (NDA) form from displayed data
+            function populateStep2FormFromPage() {
+                var $content = $('#step-content');
+                
+                // Extract values from the dl/dd structure
+                $content.find('dl.row dt').each(function() {
+                    var label = $(this).text().trim().replace(':', '');
+                    var value = $(this).next('dd').text().trim();
+                    
+                    // Map labels to form fields
+                    var fieldMap = {
+                        'Bên A': 'BenA',
+                        'Bên B': 'BenB',
+                        'Loại NDA': 'LoaiNDA',
+                        'Thời hạn bảo mật': 'ThoiHanBaoMat',
+                        'Xác nhận ký số': 'XacNhanKySo'
+                    };
+                    
+                    if (fieldMap[label]) {
+                        var fieldName = fieldMap[label];
+                        var $field = $(`[name="${fieldName}"]`);
+                        
+                        if ($field.length && value && value !== 'Chưa cập nhật') {
+                            $field.val(value);
+                        }
+                    }
+                });
+                
+                // Handle DaDongY checkbox
+                var daDongYBadge = $content.find('dt:contains("Đã đồng ý điều khoản")').next('dd').find('.badge').text();
+                if (daDongYBadge && daDongYBadge.includes('Đã đồng ý')) {
+                    $('#DaDongY').prop('checked', true);
+                }
+            }
+
+            // Function to populate Step 3 (RFQ) form from displayed data
+            function populateStep3FormFromPage() {
+                var $content = $('#step-content');
+                
+                // Extract values from the dl/dd structure
+                $content.find('dl.row dt').each(function() {
+                    var label = $(this).text().trim().replace(':', '');
+                    var value = $(this).next('dd').text().trim();
+                    
+                    // Map labels to form fields
+                    var fieldMap = {
+                        'Mã RFQ': 'MaRFQ'
+                    };
+                    
+                    if (fieldMap[label]) {
+                        var fieldName = fieldMap[label];
+                        var $field = $(`[name="${fieldName}"]`);
+                        
+                        if ($field.length && value && value !== 'Chưa cập nhật') {
+                            $field.val(value);
+                        }
+                    }
+                });
+                
+                // Handle YeuCauKyThuat (from div with br tags)
+                var yeuCau = $content.find('dt:contains("Yêu cầu kỹ thuật")').next('dd').find('div').html();
+                if (yeuCau) {
+                    yeuCau = yeuCau.replace(/<br\s*\/?>/gi, '\n');
+                    $('[name="YeuCauKyThuat"]').val($('<div>').html(yeuCau).text());
+                }
+                
+                // Handle TieuChuanNghiemThu (from div with br tags)
+                var tieuChuan = $content.find('dt:contains("Tiêu chuẩn nghiệm thu")').next('dd').find('div').html();
+                if (tieuChuan) {
+                    tieuChuan = tieuChuan.replace(/<br\s*\/?>/gi, '\n');
+                    $('[name="TieuChuanNghiemThu"]').val($('<div>').html(tieuChuan).text());
+                }
+                
+                // Handle HanChotNopHoSo (extract date from badge)
+                var hanChot = $content.find('dt:contains("Hạn chót nộp hồ sơ")').next('dd').find('.badge').text().trim();
+                if (hanChot) {
+                    // Parse dd/MM/yyyy to yyyy-MM-dd for input type="date"
+                    var dateParts = hanChot.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                    if (dateParts) {
+                        var isoDate = `${dateParts[3]}-${dateParts[2]}-${dateParts[1]}`;
+                        $('[name="HanChotNopHoSo"]').val(isoDate);
+                    }
+                }
+                
+                // Handle DaGuiNhaCungUng checkbox
+                var daGuiBadge = $content.find('dt:contains("Đã gửi nhà cung ứng")').next('dd').find('.badge').text();
+                if (daGuiBadge && daGuiBadge.includes('Đã gửi')) {
+                    $('#DaGuiNhaCungUng').prop('checked', true);
+                }
+            }
+
+            // Function to populate Step 4 (Proposal) form from displayed data
+            function populateStep4FormFromPage() {
+                var $content = $('#step-content');
+                
+                // Extract BaoGiaSoBo from badge
+                var baoGia = $content.find('dt:contains("Báo giá sơ bộ")').next('dd').find('.badge').text();
+                if (baoGia && !baoGia.includes('Chưa cập nhật')) {
+                    // Extract number from "123,456 VNĐ"
+                    baoGia = baoGia.replace(/[^\d]/g, '');
+                    if (baoGia) {
+                        $('[name="BaoGiaSoBo"]').val(baoGia);
+                    }
+                }
+                
+                // Extract ThoiGianTrienKhai
+                var thoiGian = $content.find('dt:contains("Thời gian triển khai")').next('dd').text().trim();
+                if (thoiGian) {
+                    $('[name="ThoiGianTrienKhai"]').val(thoiGian);
+                }
+            }
+
+            // Function to save step data
+            function saveStepData() {
+                var form = $('#editStepForm')[0];
+                
+                // Validate form
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                
+                // Get form data as object
+                var formData = new FormData(form);
+                var dataObject = {
+                    projectId: currentProjectId,
+                    stepNumber: currentStepNumber
+                };
+                
+                // Add all form fields to data object
+                for (var pair of formData.entries()) {
+                    dataObject[pair[0]] = pair[1];
+                }
+                
+                // Disable save button
+                var $saveBtn = $('#saveStepBtn');
+                $saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...');
+                
+                // Submit via AJAX
+                $.ajax({
+                    url: '/Project/UpdateStepData',
+                    type: 'POST',
+                    data: dataObject,
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success message
+                            showToast('success', response.message || 'Cập nhật thành công!');
+                            
+                            // Close modal
+                            if (editModal) {
+                                editModal.hide();
+                            }
+                            
+                            // Reload step content
+                            loadStepContent(currentStepNumber);
+                        } else {
+                            showToast('error', response.message || 'Có lỗi xảy ra');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', xhr.responseText);
+                        showToast('error', 'Lỗi kết nối. Vui lòng thử lại.');
+                    },
+                    complete: function() {
+                        // Re-enable save button
+                        $saveBtn.prop('disabled', false).html('<i class="fas fa-save"></i> Lưu thay đổi');
+                    }
+                });
+            }
+
+            // Function to show toast notification
+            function showToast(type, message) {
+                var bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+                var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+                
+                var toast = $(`
+                    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+                        <div class="toast show ${bgClass} text-white" role="alert">
+                            <div class="toast-body">
+                                <i class="fas ${icon}"></i> ${message}
+                            </div>
+                        </div>
+                    </div>
+                `);
+                
+                $('body').append(toast);
+                
+                setTimeout(function() {
+                    toast.fadeOut(function() {
+                        $(this).remove();
+                    });
+                }, 3000);
+            }
         });
     </script>
 }
