@@ -1,0 +1,79 @@
+﻿@model List<TPApp.ViewModel.TinSuKienTabVm>
+
+@{
+    var tab = Model.FirstOrDefault(x => x.MenuId == 83);
+    var items = tab?.Items ?? new();
+}
+
+@if (items.Any())
+{
+    <section class="hp-section GPCN">
+        <div class="container">
+
+            <p class="text-center">
+                <a href="#" class="text-decoration-none" style="color: #111111; font-size: 16px; font-weight: 700;">
+                    GIẢI PHÁP CÔNG NGHỆ
+                </a>
+            </p>
+
+            <div id="gpcnCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+
+                    @for (int i = 0; i < items.Count; i += 3)
+                    {
+                        var group = items.Skip(i).Take(3);
+
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <div class="row g-4">
+
+                                @foreach (var item in group)
+                                {
+                                    <div class="col-lg-4">
+                                        <div class="hp-news-card h-100">
+
+                                            <a href="@item.Link" class="text-decoration-none text-dark">
+                                                <img src="@item.ImageUrl"
+                                                     class="img-fluid rounded mb-2"
+                                                     alt="@item.Title"
+                                                     onerror="this.src='https://placehold.co/400x250?text=News'">
+
+                                                <h6 class="fw-bold">
+                                                    @item.Title
+                                                </h6>
+
+                                                @if (!string.IsNullOrEmpty(item.Description))
+                                                {
+                                                    <small class="text-muted text-limit">
+                                                        @item.Description
+                                                    </small>
+                                                }
+                                            </a>
+
+                                        </div>
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Nút trái phải -->
+                @* <button class="carousel-control-prev" type="button" data-bs-target="#gpcnCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+
+                <button class="carousel-control-next" type="button" data-bs-target="#gpcnCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button> *@
+
+            </div>
+
+        </div>
+    </section>
+}
+
+
+   
+

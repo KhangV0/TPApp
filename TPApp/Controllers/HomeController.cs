@@ -70,8 +70,6 @@ namespace TPApp.Controllers
                     {
                         Title = x.Title,
                         Description = x.Description,
-                        // Using ProductController helper with injected domain for now (or duplicate/move helper to Common)
-                        // Ideally move to CommonService. keeping quick fix: ProductController.CookedImageURL static.
                         ImageUrl = ProductController.CookedImageURL("460-275", x.Image, _mainDomain),
                         Link = $"{_mainDomain}{x.MenuId}/{x.QueryString}-{x.Id}.html"
                     })
@@ -117,7 +115,7 @@ namespace TPApp.Controllers
                 .Where(x => (x.MenuId == YEU_CAU_MENU_ID || childIds.Contains(x.MenuId ?? 0))
                          && x.StatusId == 3)
                 .OrderByDescending(x => x.PublishedDate)
-                .Take(6)
+                .Take(7)
                 .ToList();
 
             return new YeuCauCongNgheVm
@@ -126,8 +124,9 @@ namespace TPApp.Controllers
                 // Passing _mainDomain to MapYeuCau via closure or change method
                 // LINQ Select with method group `MapYeuCau` won't work if MapYeuCau needs instance state _mainDomain.
                 // Changing to lambda.
-                Col1 = list.Take(3).Select(x => MapYeuCau(x)).ToList(),
-                Col2 = list.Skip(3).Take(3).Select(x => MapYeuCau(x)).ToList()
+                Col1 = list.Take(2).Select(x => MapYeuCau(x)).ToList(),
+                Col2 = list.Skip(2).Take(3).Select(x => MapYeuCau(x)).ToList(),
+                Col3 = list.Skip(5).Take(2).Select(x => MapYeuCau(x)).ToList()
             };
         }
         
@@ -158,6 +157,7 @@ namespace TPApp.Controllers
             return new YeuCauItemVm
             {
                 Title = x.Title,
+                Viewed = x.Viewed,
                 ImageUrl = ProductController.CookedImageURL("254-170", x.Image, _mainDomain),
                 Link = $"{_mainDomain}{x.MenuId}/yeu-cau/{x.QueryString}-{x.Id}.html"
             };

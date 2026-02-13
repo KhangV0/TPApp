@@ -2,17 +2,17 @@
 @using Microsoft.Extensions.Options
 @inject IOptions<TPApp.Helpers.AppSettings> AppSettings
 
-<section class="hp-section">
+<section class="yc-section">
     <div class="container">
 
-        <h2 class="hp-section-title text-center">
-            <a href="cong-nghe-thiet-bi-2.html" class="text-decoration-none">
-                CÔNG NGHỆ NỔI BẬT
+        <p class="text-center">
+            <a href="cong-nghe-thiet-bi-2.html" class="text-decoration-none" style="color: #111111; font-size: 16px; font-weight: 700;">
+                CÔNG NGHỆ MỚI CẬP NHẬT
             </a>
-        </h2>
+        </p>
 
         <div id="carouselTechCombined"
-             class="carousel slide"
+             class="carousel slide TechCarousel"
              data-bs-ride="carousel">
 
             <div class="carousel-inner">
@@ -45,31 +45,31 @@
                                     $"{TPApp.Controllers.ProductController.MakeURLFriendly(item.Name)}-{item.ID}.html";
 
                                     <div class="col-lg-3 col-md-4 col-6">
-                                        <div class="hp-tech-card h-100">
-
+                                        <div class="hp-tech-card-new">
                                             <img src="@imgUrl"
-                                                 class="hp-tech-img"
                                                  alt="@item.Name"
                                                  onerror="this.src='/image/default-tech.jpg'">
 
-                                            <div class="hp-tech-body text-center">
-                                                <h6 class="hp-tech-title text-truncate">
+                                            <div class="overlay"></div>
+
+                                            <div class="content">
+                                                <h5 class="title">
                                                     @item.Name
-                                                </h6>
+                                                </h5>
 
                                                 @if (!string.IsNullOrEmpty(item.MoTaNgan))
                                                 {
-                                                    <p class="hp-tech-desc small text-truncate">
+                                                    <p class="desc">
                                                         @item.MoTaNgan
-                                                    </p> 
+                                                    </p>
                                                 }
 
-                                                <a href="@url" class="hp-tech-btn">
-                                                    Xem chi tiết
+                                                <a href="@url" class="btn-view">
+                                                    Xem thêm »
                                                 </a>
                                             </div>
-
                                         </div>
+
                                     </div>
                                 }
 

@@ -8,17 +8,47 @@
     @await Html.PartialAsync("_TopBigBanner")
     @await Html.PartialAsync("_MainIcon")
 
+    <h3 class="hp-section-title">Công nghệ nổi bật</h3>
+    <ul class="nav nav-tabs justify-content-center mb-4" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cnmcn" type="button">
+                Công nghệ mới cập nhật
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#vdcn" type="button">
+                Video công nghệ
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#gpcn" type="button">
+                Giải pháp công nghệ
+            </button>
+        </li>
+    </ul>
 
-    <div class="container">
-        @await Html.PartialAsync(
-        "_CongNgheMoiCapNhat",
-                (IEnumerable<TPApp.Entities.SanPhamCNTB>)ViewBag.NewTech
-                )
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="cnmcn">
+            @await Html.PartialAsync(
+            "_CongNgheMoiCapNhat",
+                        (IEnumerable<TPApp.Entities.SanPhamCNTB>)ViewBag.NewTech
+                        )
+
+        </div>
+
+        <div class="tab-pane fade" id="vdcn">
+            @await Html.PartialAsync("_VideoCongNghe", Model.VideoCongNghe)
+
+        </div>
+
+        <div class="tab-pane fade" id="gpcn">
+            @await Html.PartialAsync("_GiaiPhapCongNghe", Model.TinSuKien)
+
+        </div>
 
     </div>
 
-    @* VideoCongNghe *@
-    @await Html.PartialAsync("_VideoCongNghe", Model.VideoCongNghe)
+
 
     @* YeuCauCongNghe *@
     @await Html.PartialAsync("_YeuCauCongNghe", Model.YeuCauCongNghe)

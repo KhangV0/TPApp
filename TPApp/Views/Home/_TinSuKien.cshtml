@@ -1,5 +1,10 @@
 ﻿@model List<TPApp.ViewModel.TinSuKienTabVm>
 
+@{
+    const int GIAI_PHAP_MENU_ID = 83;
+    var tabs = Model.Where(x => x.MenuId != GIAI_PHAP_MENU_ID).ToList();
+}
+
 <section class="hp-section">
     <div class="container">
 
@@ -9,9 +14,9 @@
 
         <!-- TAB HEADER -->
         <ul class="nav nav-tabs justify-content-center mb-4" role="tablist">
-            @for (int i = 0; i < Model.Count; i++)
+            @for (int i = 0; i < tabs.Count; i++)
             {
-                var tab = Model[i];
+                var tab = tabs[i];
                 <li class="nav-item">
                     <button class="nav-link @(i == 0 ? "active" : "")"
                             data-bs-toggle="tab"
@@ -26,9 +31,9 @@
         <!-- TAB CONTENT -->
         <div class="tab-content">
 
-            @for (int i = 0; i < Model.Count; i++)
+            @for (int i = 0; i < tabs.Count; i++)
             {
-                var tab = Model[i];
+                var tab = tabs[i];
 
                 <div class="tab-pane fade @(i == 0 ? "show active" : "")"
                      id="content-@tab.MenuId">
@@ -49,7 +54,7 @@
 
                                         <img src="@mainItem.ImageUrl"
                                              alt="@mainItem.Title"
-                                             class="img-fluid rounded-3"
+                                             class="img-fluid"
                                              onerror="this.src='https://placehold.co/600x400?text=Event';">
 
                                         <div class="hp-event-overlay">
@@ -89,7 +94,7 @@
 
                                             @if (!string.IsNullOrEmpty(item.Description))
                                             {
-                                                <small class="text-muted text-truncate d-block">
+                                                <small class="text-muted text-limit d-block">
                                                     @item.Description
                                                 </small>
                                             }
