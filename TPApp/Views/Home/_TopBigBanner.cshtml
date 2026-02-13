@@ -1,14 +1,90 @@
-﻿<section class="container">
-    <div class="hp-hero-section">
-        <div class="row align-items-center">
-            <div class="col-lg-10 hp-hero-content">
-                <h1>Cổng thông tin Đổi mới sáng tạo<br>và Chuyển giao công nghệ</h1>
-                <p>Mục tiêu của Hệ thống nhằm tạo môi trường giao dịch, tìm kiếm đối tác thuận lợi trên mạng Internet, với sự tham gia của các bên cung - cầu công nghệ và các tổ chức dịch vụ trung gian.</p>
-                <a href="~/cong-nghe-thiet-bi-2.html" class="hp-hero-btn">Khám phá công nghệ <i class="bi bi-arrow-right"></i></a>
+﻿<section class="hero-section" style="margin-top:0;">
+    <div class=" container">
+        <div id="heroCarousel"
+             class="carousel slide carousel-fade"
+             data-bs-ride="carousel"
+             data-bs-interval="5000">
+
+            <div class="carousel-inner">
+
+                <!-- Slide 1 -->
+                <div class="carousel-item active hero-slide"
+                     style="background-image:url('../../image/hero1.png')">
+
+                    <div class="hero-content">
+                        <h1>Cổng thông tin Đổi mới sáng tạo<br>và Chuyển giao công nghệ</h1>
+
+                        <p>
+                            Mục tiêu của Hệ thống nhằm tạo môi trường giao dịch,
+                            tìm kiếm đối tác thuận lợi trên mạng Internet, với sự tham gia của các bên cung - cầu công nghệ và các tổ chức dịch vụ trung gian.
+                        </p>
+
+                        <a href="@Url.Action("Index", "CongNghe")"
+                           class="btn btn-primary hero-btn">
+                            Khám phá công nghệ <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Slide 2 -->
+                <div class="carousel-item hero-slide"
+                     style="background-image:url('../../image/hero3.png')">
+                    <div class="hero-content">
+                        <h1>Cổng thông tin Đổi mới sáng tạo<br>và Chuyển giao công nghệ</h1>
+                        <p>
+                            Mục tiêu của Hệ thống nhằm tạo môi trường giao dịch,
+                            tìm kiếm đối tác thuận lợi trên mạng Internet, với sự tham gia của các bên cung - cầu công nghệ và các tổ chức dịch vụ trung gian.
+                        </p>
+                        <a href="@Url.Action("Index", "CongNghe")" class="btn btn-primary hero-btn">
+                            Khám phá công nghệ <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Slide 3 -->
+                <div class="carousel-item hero-slide"
+                     style="background-image:url('../../image/hero2.png')">
+                    <div class="hero-content">
+                        <h1>Cổng thông tin Đổi mới sáng tạo<br>và Chuyển giao công nghệ</h1>
+                        <p>
+                            Mục tiêu của Hệ thống nhằm tạo môi trường giao dịch,
+                            tìm kiếm đối tác thuận lợi trên mạng Internet, với sự tham gia của các bên cung - cầu công nghệ và các tổ chức dịch vụ trung gian.
+                        </p>
+                        <a href="@Url.Action("Index", "CongNghe")" class="btn btn-primary hero-btn">
+                            Khám phá công nghệ <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Slide 4 -->
+                <div class="carousel-item hero-slide"
+                     style="background-image:url('../..../../image/hero4.png')">
+                    <div class="hero-content">
+                        <h1>Cổng thông tin Đổi mới sáng tạo<br>và Chuyển giao công nghệ</h1>
+                        <p>
+                            Mục tiêu của Hệ thống nhằm tạo môi trường giao dịch,
+                            tìm kiếm đối tác thuận lợi trên mạng Internet, với sự tham gia của các bên cung - cầu công nghệ và các tổ chức dịch vụ trung gian.
+                        </p>
+                        <a href="@Url.Action("Index", "CongNghe")" class="btn btn-primary hero-btn">
+                            Khám phá công nghệ <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
             </div>
+
+            <!-- Indicators -->
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#heroCarousel"
+                        data-bs-slide-to="0" class="active"></button>
+                <button type="button" data-bs-target="#heroCarousel"
+                        data-bs-slide-to="1"></button>
+                <button type="button" data-bs-target="#heroCarousel"
+                        data-bs-slide-to="2"></button>
+                <button type="button" data-bs-target="#heroCarousel"
+                        data-bs-slide-to="3"></button>
+            </div>
+
         </div>
     </div>
 </section>
-
-
-
