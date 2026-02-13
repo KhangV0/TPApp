@@ -1,115 +1,14 @@
-﻿
-
-<div class="navigation-main">
-    <!-- Hero Section -->
-    <div class="col-lg-12 main-banner col-12">
-        <div class="hero-banner">
-            <div class="container position-relative text-white align-items-center justify-content-center">
-                <div class="row">
-                    <div class="col-lg-6 col-md-6">
-                        <div class="row pt-5">
-                            <div class="col-lg-12 text-center">
-                                <h2 class="fw-bold mb-3">CÔNG NGHỆ MỚI CẬP NHẬT</h2>
-
-                                <div class="d-flex justify-content-center">
-                                    <div class="input-group" style="max-width: 500px;">
-                                        <input type="text"
-                                               id="searchInput"
-                                               class="form-control"
-                                               placeholder="Tìm công nghệ / Thiết bị / Nhà cung ứng"
-                                               aria-label="Search"
-                                               autocomplete="off" />
-
-                                        <button class="btn"
-                                                id="btnSearch"
-                                                style="background-color:#3780b8;color:#fff"
-                                                type="button"
-                                                title="Search">
-                                            <i class="bi bi-search"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div id="alertBox"
-                                     class="alert alert-danger d-none mt-2"
-                                     role="alert"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- BANNER -->
-                    <div class="col-lg-6 col-md-6">
-                        <div id="productCarousel"
-                             class="carousel slide my-3 banner-carousel">
-                            <div class="carousel-inner">
-                                <div class="carousel-item active">
-                                    <div class="card w-100">
-                                        <div class="row">
-                                            <div class="col-12 banner-card-img">
-                                                <a href="https://techmart.techport.vn/"
-                                                   target="_blank">
-                                                    <img src="@($"{Html.MainDomain()}image/2025Techmart.jpg")"
-                                                         class="card-img-top img-fluid"
-                                                         alt="Banner" />
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Controls -->
-                            <button class="carousel-control-prev"
-                                    type="button"
-                                    data-bs-target="#productCarousel"
-                                    data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon"></span>
-                            </button>
-                            <button class="carousel-control-next"
-                                    type="button"
-                                    data-bs-target="#productCarousel"
-                                    data-bs-slide="next">
-                                <span class="carousel-control-next-icon"></span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+﻿<section class="container">
+    <div class="hp-hero-section">
+        <div class="row align-items-center">
+            <div class="col-lg-8 hp-hero-content">
+                <h1>Cổng thông tin Đổi mới sáng tạo<br>và Chuyển giao công nghệ</h1>
+                <p>Hệ thống nền tảng công nghệ toàn diện giúp kết nối cung cầu, thúc đẩy đổi mới sáng tạo và phát triển các giải pháp công nghệ số thiết thực.</p>
+                <a href="#" class="hp-hero-btn">Xem chi tiết ngay <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<script>
-    $(function () {
 
-        function showAlert(msg) {
-            $("#alertBox").text(msg).removeClass("d-none");
-            setTimeout(function () {
-                $("#alertBox").addClass("d-none");
-            }, 3000);
-        }
 
-        $("#btnSearch").on("click", function () {
-            let keyword = $("#searchInput").val();
-
-            if (!keyword || keyword.length < 2) {
-                showAlert("Vui lòng nhập từ khóa (tối thiểu 2 ký tự)");
-                return;
-            }
-
-            keyword = keyword
-                .replace(/\+/g, "AND")
-                .replace(/\-/g, "NOT");
-
-            // .NET 8: chuyển sang route MVC thay vì Search.aspx
-            window.location.href = "@Html.MainDomain()" + "search?s=" + encodeURIComponent(keyword);
-        });
-
-        $("#searchInput").on("keydown", function (e) {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                $("#btnSearch").click();
-            }
-        });
-    });
-</script>

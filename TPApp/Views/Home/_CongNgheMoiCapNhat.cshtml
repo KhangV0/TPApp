@@ -1,72 +1,107 @@
-﻿@model IEnumerable<TPApp.Entities.SanPhamCNTB>   
+﻿@model IEnumerable<TPApp.Entities.SanPhamCNTB>
 @using Microsoft.Extensions.Options
 @inject IOptions<TPApp.Helpers.AppSettings> AppSettings
 
-@* HTML slides *@
+<section class="hp-section">
+    <div class="container">
 
-<div class="row new-tech">
-    <div class="col-12">
-        <div class="body-carousel">
-            <h3 class="text-center my-3 fw-bold" style="color:#046dbd;">
-                <a href="cong-nghe-thiet-bi-2.html">CÔNG NGHỆ MỚI CẬP NHẬT</a>
-            </h3>
+        <h2 class="hp-section-title text-center">
+            <a href="cong-nghe-thiet-bi-2.html" class="text-decoration-none">
+                CÔNG NGHỆ NỔI BẬT
+            </a>
+        </h2>
 
-            <div id="carouselTechCombined"
-                 class="carousel slide over-flow"
-                 data-bs-ride="carousel">
+        <div id="carouselTechCombined"
+             class="carousel slide"
+             data-bs-ride="carousel">
 
-                <div class="carousel-inner">
+            <div class="carousel-inner">
 
-                    @{
-                        // Configuration matches original HomeController logic
-                        int perSlide = 5; 
-                        var list = Model != null ? Model.ToList() : new List<TPApp.Entities.SanPhamCNTB>();
-                        int slideIndex = 0;
-                        var mainDomain = AppSettings.Value.MainDomain;
-                    }
+                @{
+                    int perSlide = 3;
+                    var list = Model != null
+                        ? Model.Take(9).ToList() 
+                        : new List<TPApp.Entities.SanPhamCNTB>();
+                    int slideIndex = 0;
+                    var mainDomain = AppSettings.Value.MainDomain;
+                }
 
-                    @if (list.Any())
+                @if (list.Any())
+                {
+                    for (int i = 0; i < list.Count; i += perSlide)
                     {
-                        for (int i = 0; i < list.Count; i += perSlide)
-                        {
-                            slideIndex++;
-                            var group = list.Skip(i).Take(perSlide);
+                        slideIndex++;
+                        var group = list.Skip(i).Take(perSlide);
 
-                            <div class="carousel-item @(slideIndex == 1 ? "active" : "")">
-                                <div class="row justify-content-center text-center">
-                                    @foreach (var item in group)
-                                    {
-                                        string imgUrl = TPApp.Controllers.ProductController.CookedImageURL("254-170", item.QuyTrinhHinhAnh, mainDomain);
-                                        string url = $"{mainDomain}2-cong-nghe-thiet-bi/{item.TypeId}/{TPApp.Controllers.ProductController.MakeURLFriendly(item.Name)}-{item.ID}.html";
+                        <div class="carousel-item @(slideIndex == 1 ? "active" : "")">
+                            <div class="row g-4 justify-content-center">
 
-                                        <div class="col-md-2 col-6 mb-4">
-                                            <a href="@url" class="card border-0 tech-card">
-                                                <img src="@imgUrl" class="img-fluid" />
-                                                <small>@item.Name</small>
-                                            </a>
+                                @foreach (var item in group)
+                                {
+                                    string imgUrl = TPApp.Controllers.ProductController
+                                    .CookedImageURL("254-170", item.QuyTrinhHinhAnh, mainDomain);
+
+                                    string url = $"{mainDomain}2-cong-nghe-thiet-bi/{item.TypeId}/" +
+                                    $"{TPApp.Controllers.ProductController.MakeURLFriendly(item.Name)}-{item.ID}.html";
+
+                                    <div class="col-lg-3 col-md-4 col-6">
+                                        <div class="hp-tech-card h-100">
+
+                                            <img src="@imgUrl"
+                                                 class="hp-tech-img"
+                                                 alt="@item.Name"
+                                                 onerror="this.src='/image/default-tech.jpg'">
+
+                                            <div class="hp-tech-body text-center">
+                                                <h6 class="hp-tech-title text-truncate">
+                                                    @item.Name
+                                                </h6>
+
+                                                @if (!string.IsNullOrEmpty(item.MoTaNgan))
+                                                {
+                                                    <p class="hp-tech-desc small text-truncate">
+                                                        @item.MoTaNgan
+                                                    </p> 
+                                                }
+
+                                                <a href="@url" class="hp-tech-btn">
+                                                    Xem chi tiết
+                                                </a>
+                                            </div>
+
                                         </div>
-                                    }
-                                </div>
+                                    </div>
+                                }
+
                             </div>
-                        }
+                        </div>
                     }
-                </div>
-
-                <button class="carousel-control-prev"
-                        type="button"
-                        data-bs-target="#carouselTechCombined"
-                        data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-
-                <button class="carousel-control-next"
-                        type="button"
-                        data-bs-target="#carouselTechCombined"
-                        data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
+                }
+                else
+                {
+                    <div class="carousel-item active">
+                        <div class="text-center py-4">
+                            Đang cập nhật công nghệ...
+                        </div>
+                    </div>
+                }
 
             </div>
+
+            <button class="carousel-control-prev"
+                    type="button"
+                    data-bs-target="#carouselTechCombined"
+                    data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+
+            <button class="carousel-control-next"
+                    type="button"
+                    data-bs-target="#carouselTechCombined"
+                    data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+
         </div>
     </div>
-</div>
+</section>

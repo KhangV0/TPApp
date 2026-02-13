@@ -1,57 +1,115 @@
 ﻿@model TPApp.ViewModel.YeuCauCongNgheVm
 
-<div class="container my-4">
-    <div class="technology">
-        <div class="technology-title align-items-center mb-3">
-            <h4 class="fw-bold pb-1">
-                <a href="yeu-cau-cong-nghe-67.html">
-                    @Model.Title
-                </a>
-                    
-                
-            </h4>
-        </div>
+<section class="hp-section bg-light">
+    <div class="container">
+
+        <h2 class="hp-section-title">
+            <a href="yeu-cau-cong-nghe-67.html" class="text-decoration-none">
+                @Model.Title
+            </a>
+        </h2>
 
         <div class="row g-4">
 
             <!-- CỘT 1 -->
             <div class="col-md-6">
-                <div class="p-3 bg-white shadow-sm h-100">
-                    <div class="row g-3">
-                        @foreach (var item in Model.Col1)
-                        {
-                            <div class="col-6 col-md-4">
-                                <a href="@item.Link" class="card">
-                                    <img src="@item.ImageUrl" class="card-img-top" />
-                                    <div class="card-body p-2 text-center">
-                                        <small>@item.Title</small>
-                                    </div>
-                                </a>
+                <div class="row g-4">
+                    @foreach (var item in Model.Col1)
+                    {
+                        <div class="col-6 col-lg-4">
+                            <div class="hp-tech-card h-100">
+
+                                <div class="hp-tech-tags">
+                                    <span class="hp-tag">
+                                        <i class="bi bi-check-circle"></i> Yêu cầu
+                                    </span>
+                                </div>
+
+                                <img src="@item.ImageUrl"
+                                     class="hp-tech-img"
+                                     alt="@item.Title"
+                                     onerror="this.src='/image/yeucaucongnghe.jpg'">
+
+                                <div class="hp-tech-body text-center">
+                                    <h6 class="hp-tech-title text-truncate">
+                                        @item.Title
+                                    </h6>
+
+                                    <a href="@item.Link" class="hp-tech-btn">
+                                        Xem chi tiết
+                                    </a>
+                                </div>
+
                             </div>
-                        }
-                    </div>
+                        </div>
+                    }
                 </div>
             </div>
 
             <!-- CỘT 2 -->
             <div class="col-md-6">
-                <div class="p-3 bg-white shadow-sm h-100">
-                    <div class="row g-3">
-                        @foreach (var item in Model.Col2)
-                        {
-                            <div class="col-6 col-md-4">
-                                <a href="@item.Link" class="card">
-                                    <img src="@item.ImageUrl" class="card-img-top" />
-                                    <div class="card-body p-2 text-center">
-                                        <small>@item.Title</small>
-                                    </div>
-                                </a>
+                <div class="row g-4">
+                    @foreach (var item in Model.Col2)
+                    {
+                        <div class="col-6 col-lg-4">
+                            <div class="hp-tech-card h-100">
+
+                                <div class="hp-tech-tags">
+                                    <span class="hp-tag">
+                                        <i class="bi bi-check-circle"></i> Yêu cầu
+                                    </span>
+                                </div>
+
+                                <img src="@item.ImageUrl"
+                                     class="hp-tech-img"
+                                     alt="@item.Title"
+                                     onerror="this.src='/image/yeucaucongnghe.jpg'">
+
+                                <div class="hp-tech-body text-center">
+                                    <h6 class="hp-tech-title text-truncate">
+                                        @item.Title
+                                    </h6>
+
+                                    <a href="@item.Link" class="hp-tech-btn">
+                                        Xem chi tiết
+                                    </a>
+                                </div>
+
                             </div>
-                        }
-                    </div>
+                        </div>
+                    }
                 </div>
             </div>
 
+            <section class="hp-stats-banner">
+                <div class="container">
+                    <div class="text-center mb-5">
+                        <h2 style="font-weight: 700;">Thúc đẩy nền kinh tế tầm thấp<br>thông qua Công nghệ</h2>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 hp-stat-item">
+                            <div class="hp-stat-number">10+</div>
+                            <div class="hp-stat-label">Năm kinh nghiệm</div>
+                        </div>
+                        <div class="col-md-3 hp-stat-item">
+                            <div class="hp-stat-number">30+</div>
+                            <div class="hp-stat-label">Chuyên gia Công nghệ</div>
+                        </div>
+                        <div class="col-md-3 hp-stat-item">
+                            <div class="hp-stat-number">100+</div>
+                            <div class="hp-stat-label">Công nghệ chuyển giao</div>
+                        </div>
+                        <div class="col-md-3 hp-stat-item">
+                            <div class="hp-stat-number">1000+</div>
+                            <div class="hp-stat-label">Đối tác tin cậy</div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-5">
+                        <a href="#" class="btn btn-primary btn-lg rounded-pill px-5">Đăng Ký Ngay</a>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </div>
-</div>
+</section>
