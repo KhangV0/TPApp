@@ -4,33 +4,61 @@
     var userName = HttpContextAccessor.HttpContext.Session.GetString("UserName");
 }
 
-<header class="hp-header">
+<header class="hp-header navbar navbar-expand-lg">
     <div class="container">
-        <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <button class="navbar-toggler me-2"
+                    type="button"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#hpOffcanvas">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-            <!-- Left Side: Logo & Navigation -->
+            <a href="@MainDomain"
+               class="navbar-brand d-lg-none p-0">
+                <img src="@($"{MainDomain}image/logo.png")"
+                     alt="Techport"
+                     class="hp-header-logo"
+                     onerror="this.src='/image/default-logo.png'">
+            </a>
+        </div>
+        <div class="d-lg-none">
+            @if (string.IsNullOrEmpty(userName))
+            {
+                <a href="@($"{MainDomain}dang-nhap.html")"
+                   class="hp-header-btn-login">
+                    Đăng nhập
+                </a>
+            }
+            else
+            {
+                <a href="@($"{MainDomain}myAdmin.html")"
+                   class="hp-header-btn-login">
+                    Hello, @userName
+                </a>
+            }
+        </div>
+        <!-- DESKTOP -->
+        <div class="d-none d-lg-flex align-items-center justify-content-between w-100">
+
+            <!-- LEFT -->
             <div class="d-flex align-items-center gap-4">
 
-                <!-- Logo -->
-                <a href="@MainDomain">
+                <a href="@MainDomain" class="navbar-brand p-0">
                     <img src="@($"{MainDomain}image/logo.png")"
                          alt="Techport"
                          class="hp-header-logo"
                          onerror="this.src='/image/default-logo.png'">
                 </a>
 
-                <!-- CATEGORY DROPDOWN (GIỮ NGUYÊN FULL DATA CŨ) -->
                 <div class="dropdown">
                     <button class="hp-header-btn-menu dropdown-toggle"
-                            type="button"
                             data-bs-toggle="dropdown">
                         <i class="bi bi-list"></i> Danh mục
                     </button>
 
                     <div class="dropdown-menu p-3" style="min-width:450px;">
                         <div class="row g-3">
-
-                            <!-- COLUMN 1 -->
                             <div class="col-6">
                                 <h6>Công nghệ & Thiết bị</h6>
                                 <a class="dropdown-item" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/dien-dien-tu-cong-nghe-thong-tin-4.html")">Điện, điện tử, CNTT</a>
@@ -41,8 +69,6 @@
                                 <a class="dropdown-item" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/chan-nuoi-15.html")">Chăn nuôi</a>
                                 <a class="dropdown-item" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/thuy-san-18.html")">Thuỷ sản</a>
                             </div>
-
-                            <!-- COLUMN 2 -->
                             <div class="col-6">
                                 <h6>&nbsp;</h6>
                                 <a class="dropdown-item" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/co-khi-5.html")">Cơ khí</a>
@@ -52,83 +78,97 @@
                                 <a class="dropdown-item" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/trong-trot-14.html")">Trồng trọt</a>
                                 <a class="dropdown-item" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/lam-nghiep-17.html")">Lâm nghiệp</a>
                             </div>
-
                         </div>
                     </div>
                 </div>
 
-                <!-- NAVIGATION LINKS (GIỮ LINK CŨ) -->
-                <nav class="d-none d-lg-flex align-items-center gap-3">
-
-                    <a href="@($"{MainDomain}gioi-thieu-chung-3.html")"
-                       class="hp-header-link">Giới thiệu</a>
-
-                    <a href="https://techport.vn/startup-products/"
-                       class="hp-header-link">SP khởi nghiệp</a>
-
-                    <a href="https://techport.vn/tech-event/"
-                       class="hp-header-link">Tech event</a>
-
-                    <a href="@($"{MainDomain}thao-luan.html")"
-                       class="hp-header-link">Thảo luận</a>
-
-                    <a href="@($"{MainDomain}lien-he-74.html")"
-                       class="hp-header-link">Liên hệ</a>
+                <nav class="navbar-nav d-flex align-items-center gap-3">
+                    <a href="@($"{MainDomain}gioi-thieu-chung-3.html")" class="hp-header-link nav-link">Giới thiệu</a>
+                    <a href="https://techport.vn/startup-products/" class="hp-header-link nav-link">SP khởi nghiệp</a>
+                    <a href="https://techport.vn/tech-event/" class="hp-header-link nav-link">Tech event</a>
+                    <a href="@($"{MainDomain}thao-luan.html")" class="hp-header-link nav-link">Thảo luận</a>
+                    <a href="@($"{MainDomain}lien-he-74.html")" class="hp-header-link nav-link">Liên hệ</a>
                 </nav>
             </div>
 
-            <!-- Right Side -->
+            <!-- RIGHT -->
             <div class="d-flex align-items-center gap-3">
-
-                <!-- SEARCH -->
-                <div class="hp-header-search-container d-none d-md-block">
+                <div class="hp-header-search-container">
                     <i class="bi bi-search hp-header-search-icon"></i>
                     <input type="text"
                            class="hp-header-search-input"
                            placeholder="Tìm công nghệ / Thiết bị / Nhà cung ứng">
                 </div>
 
-                <!-- LOGIN / ADMIN -->
                 @if (string.IsNullOrEmpty(userName))
                 {
-                    <a href="@($"{MainDomain}dang-nhap.html")"
-                       class="hp-header-btn-login">
+                    <a href="@($"{MainDomain}dang-nhap.html")" class="hp-header-btn-login">
                         Đăng nhập
                     </a>
                 }
                 else
                 {
-                    <a href="@($"{MainDomain}myAdmin.html")"
-                       class="hp-header-btn-login">
+                    <a href="@($"{MainDomain}myAdmin.html")" class="hp-header-btn-login">
                         Hello, @userName
                     </a>
                 }
 
                 <div class="hp-header-divider"></div>
-
-                <!-- LANGUAGE -->
-                <div class="dropdown">
-                    <button class="btn btn-link text-decoration-none text-dark p-0 d-flex align-items-center gap-1 dropdown-toggle"
-                            data-bs-toggle="dropdown">
-                        <img src="@($"{MainDomain}image/vietnam.png")" width="20"> VI
-                    </button>
-
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li>
-                            <a class="dropdown-item d-flex align-items-center gap-2" href="#">
-                                <img src="@($"{MainDomain}image/vietnam.png")" width="20"> Tiếng Việt
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item d-flex align-items-center gap-2"
-                               href="https://techport.vn/en/index.html">
-                                <img src="@($"{MainDomain}image/united-states.png")" width="20"> English
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
             </div>
         </div>
     </div>
 </header>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="hpOffcanvas">
+    <div class="offcanvas-header">
+        <img src="@($"{MainDomain}image/logo.png")"
+             class="hp-header-logo"
+             onerror="this.src='/image/default-logo.png'">
+
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+
+    <div class="offcanvas-body">
+
+        <div class="mb-3">Menu</div>
+
+        <a href="@($"{MainDomain}gioi-thieu-chung-3.html")" class="hp-header-link d-block mb-2">Giới thiệu</a>
+        <a href="https://techport.vn/startup-products/" class="hp-header-link d-block mb-2">SP khởi nghiệp</a>
+        <a href="https://techport.vn/tech-event/" class="hp-header-link d-block mb-2">Tech event</a>
+        <a href="@($"{MainDomain}thao-luan.html")" class="hp-header-link d-block mb-2">Thảo luận</a>
+        <a href="@($"{MainDomain}lien-he-74.html")" class="hp-header-link d-block mb-3">Liên hệ</a>
+
+        <hr />
+
+        <div class="mb-2">Ngôn ngữ</div>
+
+        <div class="d-flex gap-2 mb-3">
+            <a class="hmf active" href="#">
+                <img src="@($"{MainDomain}image/vietnam.png")" width="20"> Tiếng Việt
+            </a>
+            <a class="hmf" href="https://techport.vn/en/index.html">
+                <img src="@($"{MainDomain}image/united-states.png")" width="20"> Tiếng Anh
+            </a>
+        </div>
+
+        <hr />
+
+        <div class="mb-2">Công nghệ & Thiết bị</div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/dien-dien-tu-cong-nghe-thong-tin-4.html")">Điện, điện tử, CNTT</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/moi-truong-9.html")">Môi trường</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/cong-nghe-nano-11.html")">Công nghệ Nano</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/y-hoc-8.html")">Y học</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/co-khi-5.html")">Cơ khí</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/vat-lieu-luyen-kim-7.html")">Vật liệu & luyện kim</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/duoc-hoc-13.html")">Dược học</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/chan-nuoi-15.html")">Chăn nuôi</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/thuy-san-18.html")">Thuỷ sản</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/trong-trot-14.html")">Trồng trọt</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/cong-nghe-sinh-hoc-10.html")">Công nghệ sinh học</a>
+            <a class="hm" href="@($"{MainDomain}2-ds-cong-nghe-thiet-bi/lam-nghiep-17.html")">Lâm nghiệp</a>
+        </div>
+
+    </div>
+</div>
