@@ -275,6 +275,13 @@ namespace TPApp.Controllers
                     2 => await UpdateNDAData(projectId, formData, userId),
                     3 => await UpdateRFQData(projectId, formData, userId),
                     4 => await UpdateProposalData(projectId, formData, userId),
+                    5 => await UpdateNegotiationData(projectId, formData, userId),
+                    6 => await UpdateEContractData(projectId, formData, userId),
+                    7 => await UpdateAdvancePaymentData(projectId, formData, userId),
+                    8 => await UpdateImplementationData(projectId, formData, userId),
+                    9 => await UpdateHandoverData(projectId, formData, userId),
+                    10 => await UpdateAcceptanceData(projectId, formData, userId),
+                    11 => await UpdateLiquidationData(projectId, formData, userId),
                     _ => false
                 };
                 
@@ -385,6 +392,177 @@ namespace TPApp.Controllers
             }
             
             entity.ThoiGianTrienKhai = formData.GetValueOrDefault("ThoiGianTrienKhai", entity.ThoiGianTrienKhai);
+
+            entity.NguoiSua = userId;
+            entity.NgaySua = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Helper: Update Negotiation data
+        private async Task<bool> UpdateNegotiationData(int projectId, Dictionary<string, string> formData, int userId)
+        {
+            var entity = await _context.NegotiationForms.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (entity == null) return false;
+
+            // Update editable fields (not file path)
+            if (formData.ContainsKey("GiaChotCuoiCung") && decimal.TryParse(formData["GiaChotCuoiCung"], out decimal gia))
+            {
+                entity.GiaChotCuoiCung = gia;
+            }
+            
+            entity.DieuKhoanThanhToan = formData.GetValueOrDefault("DieuKhoanThanhToan", entity.DieuKhoanThanhToan);
+            entity.HinhThucKy = formData.GetValueOrDefault("HinhThucKy", entity.HinhThucKy);
+            
+            if (formData.ContainsKey("DaKySo") && bool.TryParse(formData["DaKySo"], out bool daKy))
+            {
+                entity.DaKySo = daKy;
+            }
+
+            entity.NguoiSua = userId;
+            entity.NgaySua = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Helper: Update E-Contract data
+        private async Task<bool> UpdateEContractData(int projectId, Dictionary<string, string> formData, int userId)
+        {
+            var entity = await _context.EContracts.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (entity == null) return false;
+
+            entity.SoHopDong = formData.GetValueOrDefault("SoHopDong", entity.SoHopDong);
+            entity.NguoiKyBenA = formData.GetValueOrDefault("NguoiKyBenA", entity.NguoiKyBenA);
+            entity.NguoiKyBenB = formData.GetValueOrDefault("NguoiKyBenB", entity.NguoiKyBenB);
+            entity.TrangThaiKy = formData.GetValueOrDefault("TrangThaiKy", entity.TrangThaiKy);
+
+            entity.NguoiSua = userId;
+            entity.NgaySua = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Helper: Update Advance Payment data
+        private async Task<bool> UpdateAdvancePaymentData(int projectId, Dictionary<string, string> formData, int userId)
+        {
+            var entity = await _context.AdvancePaymentConfirmations.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (entity == null) return false;
+
+            if (formData.ContainsKey("SoTienTamUng") && decimal.TryParse(formData["SoTienTamUng"], out decimal soTien))
+            {
+                entity.SoTienTamUng = soTien;
+            }
+
+            if (formData.ContainsKey("NgayChuyen") && DateTime.TryParse(formData["NgayChuyen"], out DateTime ngay))
+            {
+                entity.NgayChuyen = ngay;
+            }
+
+            if (formData.ContainsKey("DaXacNhanNhanTien") && bool.TryParse(formData["DaXacNhanNhanTien"], out bool daXacNhan))
+            {
+                entity.DaXacNhanNhanTien = daXacNhan;
+            }
+
+            entity.NguoiSua = userId;
+            entity.NgaySua = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Helper: Update Implementation data
+        private async Task<bool> UpdateImplementationData(int projectId, Dictionary<string, string> formData, int userId)
+        {
+            var entity = await _context.ImplementationLogs.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (entity == null) return false;
+
+            entity.GiaiDoan = formData.GetValueOrDefault("GiaiDoan", entity.GiaiDoan);
+            entity.KetQuaThucHien = formData.GetValueOrDefault("KetQuaThucHien", entity.KetQuaThucHien);
+
+            entity.NguoiSua = userId;
+            entity.NgaySua = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Helper: Update Handover data
+        private async Task<bool> UpdateHandoverData(int projectId, Dictionary<string, string> formData, int userId)
+        {
+            var entity = await _context.HandoverReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (entity == null) return false;
+
+            entity.DanhMucThietBiJson = formData.GetValueOrDefault("DanhMucThietBiJson", entity.DanhMucThietBiJson);
+            entity.DanhMucHoSoJson = formData.GetValueOrDefault("DanhMucHoSoJson", entity.DanhMucHoSoJson);
+            entity.NhanXet = formData.GetValueOrDefault("NhanXet", entity.NhanXet);
+
+            if (formData.ContainsKey("DaHoanThanhDaoTao") && bool.TryParse(formData["DaHoanThanhDaoTao"], out bool daHoanThanh))
+            {
+                entity.DaHoanThanhDaoTao = daHoanThanh;
+            }
+
+            if (formData.ContainsKey("DanhGiaSao") && int.TryParse(formData["DanhGiaSao"], out int sao))
+            {
+                entity.DanhGiaSao = sao;
+            }
+
+            entity.NguoiSua = userId;
+            entity.NgaySua = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Helper: Update Acceptance data
+        private async Task<bool> UpdateAcceptanceData(int projectId, Dictionary<string, string> formData, int userId)
+        {
+            var entity = await _context.AcceptanceReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (entity == null) return false;
+
+            if (formData.ContainsKey("NgayNghiemThu") && DateTime.TryParse(formData["NgayNghiemThu"], out DateTime ngay))
+            {
+                entity.NgayNghiemThu = ngay;
+            }
+
+            entity.ThanhPhanThamGia = formData.GetValueOrDefault("ThanhPhanThamGia", entity.ThanhPhanThamGia);
+            entity.KetLuanNghiemThu = formData.GetValueOrDefault("KetLuanNghiemThu", entity.KetLuanNghiemThu);
+            entity.VanDeTonDong = formData.GetValueOrDefault("VanDeTonDong", entity.VanDeTonDong);
+            entity.ChuKyBenA = formData.GetValueOrDefault("ChuKyBenA", entity.ChuKyBenA);
+            entity.ChuKyBenB = formData.GetValueOrDefault("ChuKyBenB", entity.ChuKyBenB);
+            entity.TrangThaiKy = formData.GetValueOrDefault("TrangThaiKy", entity.TrangThaiKy);
+
+            entity.NguoiSua = userId;
+            entity.NgaySua = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Helper: Update Liquidation data
+        private async Task<bool> UpdateLiquidationData(int projectId, Dictionary<string, string> formData, int userId)
+        {
+            var entity = await _context.LiquidationReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (entity == null) return false;
+
+            if (formData.ContainsKey("GiaTriThanhToanConLai") && decimal.TryParse(formData["GiaTriThanhToanConLai"], out decimal giaTri))
+            {
+                entity.GiaTriThanhToanConLai = giaTri;
+            }
+
+            entity.SoHoaDon = formData.GetValueOrDefault("SoHoaDon", entity.SoHoaDon);
+
+            if (formData.ContainsKey("SanDaChuyenTien") && bool.TryParse(formData["SanDaChuyenTien"], out bool daChuyenTien))
+            {
+                entity.SanDaChuyenTien = daChuyenTien;
+            }
+
+            if (formData.ContainsKey("HopDongClosed") && bool.TryParse(formData["HopDongClosed"], out bool closed))
+            {
+                entity.HopDongClosed = closed;
+            }
 
             entity.NguoiSua = userId;
             entity.NgaySua = DateTime.Now;

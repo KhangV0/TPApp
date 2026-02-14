@@ -304,6 +304,217 @@
                     // Populate form with current values from the page
                     populateStep4FormFromPage();
                 }
+                else if (stepNumber === 5) {
+                    // Step 5: Negotiation form (only editable fields, not file upload)
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle"></i> 
+                                <strong>Lưu ý:</strong> Chỉ có thể chỉnh sửa giá, điều khoản và hình thức ký. Để thay đổi file biên bản, vui lòng sử dụng trang chi tiết.
+                            </div>
+                            <div class="mb-3">
+                                <label for="GiaChotCuoiCung" class="form-label">Giá chốt cuối cùng (VNĐ)</label>
+                                <input type="number" class="form-control" name="GiaChotCuoiCung" step="1000" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="DieuKhoanThanhToan" class="form-label">Điều khoản thanh toán <span class="text-danger">*</span></label>
+                                <textarea class="form-control" name="DieuKhoanThanhToan" rows="5" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="HinhThucKy" class="form-label">Hình thức ký <span class="text-danger">*</span></label>
+                                <select class="form-select" name="HinhThucKy" required>
+                                    <option value="">-- Chọn hình thức ký --</option>
+                                    <option value="Upload file">Upload file</option>
+                                    <option value="Chữ ký điện tử">Chữ ký điện tử</option>
+                                    <option value="OTP">OTP</option>
+                                </select>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" name="DaKySo" id="DaKySo" value="true" />
+                                <label class="form-check-label" for="DaKySo">
+                                    Đã ký số
+                                </label>
+                            </div>
+                        </form>
+                    `;
+                    
+                    $('#editStepModalBody').html(formHtml);
+                    
+                    // Populate form with current values from the page
+                    populateStep5FormFromPage();
+                }
+                else if (stepNumber === 6) {
+                    // Step 6: E-Contract form
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="alert alert-warning">
+                                <i class="fas fa-info-circle"></i> Chỉ chỉnh sửa số hợp đồng, người ký và trạng thái. File hợp đồng không thể thay đổi qua modal.
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Số hợp đồng <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="SoHopDong" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Người ký bên A</label>
+                                <input type="text" class="form-control" name="NguoiKyBenA" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Người ký bên B</label>
+                                <input type="text" class="form-control" name="NguoiKyBenB" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái ký <span class="text-danger">*</span></label>
+                                <select class="form-select" name="TrangThaiKy" required>
+                                    <option value="Chưa ký">Chưa ký</option>
+                                    <option value="Đã ký 1 bên">Đã ký 1 bên</option>
+                                    <option value="Đã hoàn tất">Đã hoàn tất</option>
+                                </select>
+                            </div>
+                        </form>
+                    `;
+                    $('#editStepModalBody').html(formHtml);
+                    populateStep6FormFromPage();
+                }
+                else if (stepNumber === 7) {
+                    // Step 7: Advance Payment form
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="mb-3">
+                                <label class="form-label">Số tiền tạm ứng (VNĐ) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" name="SoTienTamUng" step="1000" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ngày chuyển <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="NgayChuyen" required />
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" name="DaXacNhanNhanTien" id="DaXacNhanNhanTien" value="true" />
+                                <label class="form-check-label" for="DaXacNhanNhanTien">Đã xác nhận nhận tiền</label>
+                            </div>
+                        </form>
+                    `;
+                    $('#editStepModalBody').html(formHtml);
+                    populateStep7FormFromPage();
+                }
+                else if (stepNumber === 8) {
+                    // Step 8: Implementation form
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="mb-3">
+                                <label class="form-label">Giai đoạn <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="GiaiDoan" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Kết quả thực hiện</label>
+                                <textarea class="form-control" name="KetQuaThucHien" rows="5"></textarea>
+                            </div>
+                        </form>
+                    `;
+                    $('#editStepModalBody').html(formHtml);
+                    populateStep8FormFromPage();
+                }
+                else if (stepNumber === 9) {
+                    // Step 9: Handover form
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="mb-3">
+                                <label class="form-label">Danh mục thiết bị (JSON)</label>
+                                <textarea class="form-control" name="DanhMucThietBiJson" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Danh mục hồ sơ (JSON)</label>
+                                <textarea class="form-control" name="DanhMucHoSoJson" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Đánh giá (1-5 sao)</label>
+                                <input type="number" class="form-control" name="DanhGiaSao" min="1" max="5" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nhận xét</label>
+                                <textarea class="form-control" name="NhanXet" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" name="DaHoanThanhDaoTao" id="DaHoanThanhDaoTao" value="true" />
+                                <label class="form-check-label" for="DaHoanThanhDaoTao">Đã hoàn thành đào tạo</label>
+                            </div>
+                        </form>
+                    `;
+                    $('#editStepModalBody').html(formHtml);
+                    populateStep9FormFromPage();
+                }
+                else if (stepNumber === 10) {
+                    // Step 10: Acceptance form
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="mb-3">
+                                <label class="form-label">Ngày nghiệm thu <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="NgayNghiemThu" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Thành phần tham gia</label>
+                                <textarea class="form-control" name="ThanhPhanThamGia" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Kết luận nghiệm thu</label>
+                                <textarea class="form-control" name="KetLuanNghiemThu" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Vấn đề tồn đọng</label>
+                                <textarea class="form-control" name="VanDeTonDong" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Chữ ký bên A</label>
+                                <input type="text" class="form-control" name="ChuKyBenA" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Chữ ký bên B</label>
+                                <input type="text" class="form-control" name="ChuKyBenB" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái ký</label>
+                                <select class="form-select" name="TrangThaiKy">
+                                    <option value="Chưa ký">Chưa ký</option>
+                                    <option value="Đã ký 1 bên">Đã ký 1 bên</option>
+                                    <option value="Hoàn tất">Hoàn tất</option>
+                                </select>
+                            </div>
+                        </form>
+                    `;
+                    $('#editStepModalBody').html(formHtml);
+                    populateStep10FormFromPage();
+                }
+                else if (stepNumber === 11) {
+                    // Step 11: Liquidation form
+                    var formHtml = `
+                        <form id="editStepForm">
+                            <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
+                            <div class="mb-3">
+                                <label class="form-label">Giá trị thanh toán còn lại (VNĐ)</label>
+                                <input type="number" class="form-control" name="GiaTriThanhToanConLai" step="1000" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Số hóa đơn</label>
+                                <input type="text" class="form-control" name="SoHoaDon" />
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" name="SanDaChuyenTien" id="SanDaChuyenTien" value="true" />
+                                <label class="form-check-label" for="SanDaChuyenTien">Đã chuyển tiền</label>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" name="HopDongClosed" id="HopDongClosed" value="true" />
+                                <label class="form-check-label" for="HopDongClosed">Hợp đồng đã đóng</label>
+                            </div>
+                        </form>
+                    `;
+                    $('#editStepModalBody').html(formHtml);
+                    populateStep11FormFromPage();
+                }
             }
 
             // Function to populate form from displayed data
@@ -463,6 +674,125 @@
                 var thoiGian = $content.find('dt:contains("Thời gian triển khai")').next('dd').text().trim();
                 if (thoiGian) {
                     $('[name="ThoiGianTrienKhai"]').val(thoiGian);
+                }
+            }
+
+            // Function to populate Step 5 (Negotiation) form from displayed data
+            function populateStep5FormFromPage() {
+                var $content = $('#step-content');
+                
+                // Extract GiaChotCuoiCung from badge
+                var gia = $content.find('dt:contains("Giá chốt cuối cùng")').next('dd').find('.badge').text();
+                if (gia && !gia.includes('Chưa cập nhật')) {
+                    // Extract number from "4,200,000,000 VNĐ"
+                    gia = gia.replace(/[^\d]/g, '');
+                    if (gia) {
+                        $('[name="GiaChotCuoiCung"]').val(gia);
+                    }
+                }
+                
+                // Extract DieuKhoanThanhToan (from div with br tags)
+                var dieuKhoan = $content.find('dt:contains("Điều khoản thanh toán")').next('dd').find('div').html();
+                if (dieuKhoan) {
+                    dieuKhoan = dieuKhoan.replace(/<br\s*\/?>/gi, '\n');
+                    $('[name="DieuKhoanThanhToan"]').val($('<div>').html(dieuKhoan).text());
+                }
+                
+                // Extract HinhThucKy
+                var hinhThuc = $content.find('dt:contains("Hình thức ký")').next('dd').text().trim();
+                if (hinhThuc) {
+                    $('[name="HinhThucKy"]').val(hinhThuc);
+                }
+                
+                // Handle DaKySo checkbox
+                var daKyBadge = $content.find('dt:contains("Đã ký số")').next('dd').find('.badge').text();
+                if (daKyBadge && daKyBadge.includes('Đã ký')) {
+                    $('#DaKySo').prop('checked', true);
+                }
+            }
+
+            // Populate functions for Steps 6-11
+            function populateStep6FormFromPage() {
+                var $content = $('#step-content');
+                $('[name="SoHopDong"]').val($content.find('dt:contains("Số hợp đồng")').next('dd').text().trim());
+                $('[name="NguoiKyBenA"]').val($content.find('dt:contains("Người ký bên A")').next('dd').find('strong').text().trim());
+                $('[name="NguoiKyBenB"]').val($content.find('dt:contains("Người ký bên B")').next('dd').find('strong').text().trim());
+                var trangThai = $content.find('dt:contains("Trạng thái ký")').next('dd').find('.badge').text().trim();
+                $('[name="TrangThaiKy"]').val(trangThai);
+            }
+
+            function populateStep7FormFromPage() {
+                var $content = $('#step-content');
+                var soTien = $content.find('dt:contains("Số tiền tạm ứng")').next('dd').find('.badge').text().replace(/[^\d]/g, '');
+                if (soTien) $('[name="SoTienTamUng"]').val(soTien);
+                
+                var ngay = $content.find('dt:contains("Ngày chuyển")').next('dd').text().trim();
+                if (ngay) {
+                    var parts = ngay.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                    if (parts) $('[name="NgayChuyen"]').val(parts[3] + '-' + parts[2] + '-' + parts[1]);
+                }
+                
+                var daXacNhan = $content.find('dt:contains("Đã xác nhận")').next('dd').find('.badge').text();
+                if (daXacNhan && daXacNhan.includes('Đã xác nhận')) {
+                    $('#DaXacNhanNhanTien').prop('checked', true);
+                }
+            }
+
+            function populateStep8FormFromPage() {
+                var $content = $('#step-content');
+                $('[name="GiaiDoan"]').val($content.find('dt:contains("Giai đoạn")').next('dd').text().trim());
+                var ketQua = $content.find('dt:contains("Kết quả")').next('dd').find('div').html();
+                if (ketQua) {
+                    ketQua = ketQua.replace(/<br\s*\/?>/gi, '\n');
+                    $('[name="KetQuaThucHien"]').val($('<div>').html(ketQua).text());
+                }
+            }
+
+            function populateStep9FormFromPage() {
+                var $content = $('#step-content');
+                // For JSON fields, just leave empty or show current value as-is
+                var sao = $content.find('dt:contains("Đánh giá")').next('dd').text().match(/\((\d)\/5\)/);
+                if (sao) $('[name="DanhGiaSao"]').val(sao[1]);
+                
+                $('[name="NhanXet"]').val($content.find('dt:contains("Nhận xét")').next('dd').text().trim());
+                
+                var daHoanThanh = $content.find('dt:contains("đào tạo")').next('dd').find('.badge').text();
+                if (daHoanThanh && daHoanThanh.includes('Đã hoàn thành')) {
+                    $('#DaHoanThanhDaoTao').prop('checked', true);
+                }
+            }
+
+            function populateStep10FormFromPage() {
+                var $content = $('#step-content');
+                var ngay = $content.find('dt:contains("Ngày nghiệm thu")').next('dd').text().trim();
+                if (ngay) {
+                    var parts = ngay.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                    if (parts) $('[name="NgayNghiemThu"]').val(parts[3] + '-' + parts[2] + '-' + parts[1]);
+                }
+                
+                $('[name="ThanhPhanThamGia"]').val($content.find('dt:contains("Thành phần")').next('dd').text().trim());
+                $('[name="KetLuanNghiemThu"]').val($content.find('dt:contains("Kết luận")').next('dd').text().trim());
+                $('[name="VanDeTonDong"]').val($content.find('dt:contains("Vấn đề")').next('dd').text().trim());
+                $('[name="ChuKyBenA"]').val($content.find('dt:contains("Chữ ký bên A")').next('dd').text().trim());
+                $('[name="ChuKyBenB"]').val($content.find('dt:contains("Chữ ký bên B")').next('dd').text().trim());
+                $('[name="TrangThaiKy"]').val($content.find('dt:contains("Trạng thái ký")').next('dd').find('.badge').text().trim());
+            }
+
+            function populateStep11FormFromPage() {
+                var $content = $('#step-content');
+                var giaTri = $content.find('dt:contains("Giá trị thanh toán")').next('dd').find('.badge').text().replace(/[^\d]/g, '');
+                if (giaTri) $('[name="GiaTriThanhToanConLai"]').val(giaTri);
+                
+                $('[name="SoHoaDon"]').val($content.find('dt:contains("Số hóa đơn")').next('dd').text().trim());
+                
+                var daChuyenTien = $content.find('dt:contains("Đã chuyển tiền")').next('dd').find('.badge').text();
+                if (daChuyenTien && daChuyenTien.includes('Đã chuyển')) {
+                    $('#SanDaChuyenTien').prop('checked', true);
+                }
+                
+                var hopDongClosed = $content.find('dt:contains("Hợp đồng đã đóng")').next('dd').find('.badge').text();
+                if (hopDongClosed && hopDongClosed.includes('Đã đóng')) {
+                    $('#HopDongClosed').prop('checked', true);
                 }
             }
 
