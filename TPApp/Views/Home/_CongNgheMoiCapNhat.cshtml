@@ -57,12 +57,12 @@
                                                     @item.Name
                                                 </h5>
 
-                                                @if (!string.IsNullOrEmpty(item.MoTaNgan))
+@*                                                 @if (!string.IsNullOrEmpty(item.MoTaNgan))
                                                 {
                                                     <p class="desc">
-                                                        @item.MoTaNgan
+                                                        @Html.Raw(item.MoTaNgan)
                                                     </p>
-                                                }
+                                                } *@
 
                                                 <a href="@url" class="btn-view">
                                                     Xem thêm »
