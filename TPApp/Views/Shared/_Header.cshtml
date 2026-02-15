@@ -1,7 +1,19 @@
 ﻿@inject IHttpContextAccessor HttpContextAccessor
+@inject Microsoft.AspNetCore.Identity.UserManager<TPApp.Entities.ApplicationUser> UserManager
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
-    var MainDomain = "https://localhost:7232/";
-    var userName = HttpContextAccessor.HttpContext.Session.GetString("UserName");
+    var MainDomain = Configuration["AppSettings:MainDomain"] ?? "https://localhost:7232/";
+    var userName = HttpContextAccessor.HttpContext.Session.GetString("Username");
+    var userAvatar = "";
+    
+    if (!string.IsNullOrEmpty(userName))
+    {
+        var user = await UserManager.FindByNameAsync(userName);
+        if (user != null && !string.IsNullOrEmpty(user.Img))
+        {
+            userAvatar = user.Img;
+        }
+    }
 }
 
 <header class="hp-header navbar navbar-expand-lg">
@@ -25,17 +37,43 @@
         <div class="d-lg-none">
             @if (string.IsNullOrEmpty(userName))
             {
-                <a href="@($"{MainDomain}dang-nhap.html")"
-                   class="hp-header-btn-login">
-                    Đăng nhập
+                <a href="#" 
+                   class="hp-header-btn-login"
+                   data-bs-toggle="modal" 
+                   data-bs-target="#loginModal">
+                    <i class="bi bi-person-circle" style="font-size: 24px;"></i>
                 </a>
             }
             else
             {
-                <a href="@($"{MainDomain}myAdmin.html")"
-                   class="hp-header-btn-login">
-                    Hello, @userName
-                </a>
+                <div class="dropdown">
+                    <a href="#" 
+                       class="hp-user-avatar-btn dropdown-toggle" 
+                       data-bs-toggle="dropdown" 
+                       aria-expanded="false">
+                        <img src="@(!string.IsNullOrEmpty(userAvatar) ? userAvatar : "/image/default-avatar.png")" 
+                             alt="@userName" 
+                             class="hp-user-avatar"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2220%22 fill=%22%230056b3%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2218%22 font-weight=%22bold%22%3E@userName.Substring(0, 1).ToUpper()%3C/text%3E%3C/svg%3E'">
+                        <span class="hp-user-name d-none">@userName</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end hp-user-dropdown">
+                        <li>
+                            <a class="dropdown-item" href="@($"{MainDomain}Dashboard")">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             }
         </div>
         <!-- DESKTOP -->
@@ -84,7 +122,7 @@
 
                 <nav class="navbar-nav d-flex align-items-center gap-3">
                     <a href="@($"{MainDomain}gioi-thieu-chung-3.html")" class="hp-header-link nav-link">Giới thiệu</a>
-                    <a href="https://techport.vn/startup-products/" class="hp-header-link nav-link">SP khởi nghiệp</a>
+                    <a href="https://techport.vn/startup-products/" class="hp-header-link nav-link">Sản phẩm khởi nghiệp</a>
                     <a href="https://techport.vn/tech-event/" class="hp-header-link nav-link">Tech event</a>
                     <a href="@($"{MainDomain}thao-luan.html")" class="hp-header-link nav-link">Thảo luận</a>
                     <a href="@($"{MainDomain}lien-he-74.html")" class="hp-header-link nav-link">Liên hệ</a>
@@ -100,20 +138,53 @@
                            placeholder="Tìm công nghệ / Thiết bị / Nhà cung ứng">
                 </div>
 
+
+
+
                 @if (string.IsNullOrEmpty(userName))
                 {
-                    <a href="@($"{MainDomain}dang-nhap.html")" class="hp-header-btn-login">
-                        Đăng nhập
+                    <a href="#" 
+                       class="hp-header-btn-login"
+                       data-bs-toggle="modal" 
+                       data-bs-target="#loginModal">
+                        <i class="bi bi-person-circle" style="font-size: 24px;"></i>
                     </a>
                 }
                 else
                 {
-                    <a href="@($"{MainDomain}myAdmin.html")" class="hp-header-btn-login">
-                        Hello, @userName
-                    </a>
+                    <div class="dropdown">
+                        <a href="#" 
+                           class="hp-user-avatar-btn dropdown-toggle" 
+                           data-bs-toggle="dropdown" 
+                           aria-expanded="false">
+                            <img src="@(!string.IsNullOrEmpty(userAvatar) ? userAvatar : "/image/default-avatar.png")" 
+                                 alt="@userName" 
+                                 class="hp-user-avatar"
+                                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2220%22 fill=%22%230056b3%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2218%22 font-weight=%22bold%22%3E@userName.Substring(0, 1).ToUpper()%3C/text%3E%3C/svg%3E'">
+                            <span class="hp-user-name d-none">@userName</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end hp-user-dropdown">
+                            <li>
+                                <a class="dropdown-item" href="@($"{MainDomain}Dashboard")">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                 }
-
-                <div class="hp-header-divider"></div>
+                <!-- Language Selector -->
+                <a class="hp-lang-btn" href="https://techport.vn/en/index.html" title="English">
+                    <img src="@($"{MainDomain}image/united-states.png")" width="20" alt="EN">
+                </a>
             </div>
         </div>
     </div>

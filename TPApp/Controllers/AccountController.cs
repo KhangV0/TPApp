@@ -129,6 +129,104 @@ namespace TPApp.Controllers
             return View(model);
         }
 
+        // POST: /Account/LoginAjax - AJAX Login
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LoginAjax(LoginViewModel model, [FromServices] TPApp.Data.AppDbContext context, string? returnUrl = null)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                return Json(new { success = false, errors });
+            }
+
+            // Manual lookup because Normalized columns are ignored
+            var user = context.Users.FirstOrDefault(u => u.UserName == model.UserName);
+            
+            if (user != null)
+            {
+                // Verify password
+                var passwordVerification = _userManager.PasswordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password);
+                if (passwordVerification == PasswordVerificationResult.Success)
+                {
+                    await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
+
+                    user.LastLogin = DateTime.Now;
+                    await _userManager.UpdateAsync(user);
+
+                    // Set Session for legacy support
+                    HttpContext.Session.SetInt32("UserId", user.Id);
+                    HttpContext.Session.SetString("Username", user.UserName);
+
+                    var redirectUrl = !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) 
+                        ? returnUrl 
+                        : Url.Action("Index", "Dashboard");
+
+                    return Json(new { success = true, redirectUrl });
+                }
+            }
+            
+            return Json(new { success = false, errors = new[] { "Tên đăng nhập hoặc mật khẩu không chính xác." } });
+        }
+
+        // POST: /Account/RegisterAjax - AJAX Register
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RegisterAjax(RegisterViewModel model, [FromServices] TPApp.Data.AppDbContext context)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                return Json(new { success = false, errors });
+            }
+
+            // Manual check because Normalized columns are ignored
+            if (context.Users.Any(u => u.UserName == model.UserName))
+            {
+                return Json(new { success = false, errors = new[] { "Tên đăng nhập đã tồn tại." } });
+            }
+
+            if (context.Users.Any(u => u.Email == model.Email))
+            {
+                return Json(new { success = false, errors = new[] { "Email đã tồn tại." } });
+            }
+
+            var user = new ApplicationUser
+            {
+                UserName = model.UserName, 
+                Email = model.Email,
+                FullName = model.FullName,
+                Created = DateTime.Now,
+                IsActivated = true,
+                Domain = Request.Host.Host,
+                PhoneNumber = model.PhoneNumber 
+            };
+
+            // Manual Password Hashing
+            user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, model.Password);
+
+            // Add to Context directly
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+            
+            // Sign In
+            await _signInManager.SignInAsync(user, isPersistent: false);
+                
+            // Set Session for legacy support
+            HttpContext.Session.SetInt32("UserId", user.Id);
+            HttpContext.Session.SetString("Username", user.UserName);
+
+            var redirectUrl = Url.Action("Index", "Dashboard");
+            return Json(new { success = true, redirectUrl });
+        }
+
+
         // GET: /Account/Profile
         [Authorize]
         [HttpGet]

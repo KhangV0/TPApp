@@ -1,0 +1,79 @@
+<!-- Login Modal -->
+<div class="modal fade auth-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Header with gradient -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body with form -->
+            <div class="modal-body">
+                <form id="loginForm" method="post">
+                    @Html.AntiForgeryToken()
+                    
+                    <!-- Error display -->
+                    <div class="alert alert-danger d-none" id="loginErrors" role="alert"></div>
+
+                    <!-- Username input with icon -->
+                    <div class="form-group mb-3">
+                        <label for="loginUsername" class="form-label">Tên đăng nhập</label>
+                        <div class="input-group-icon">
+                            <i class="bi bi-person input-icon"></i>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="loginUsername" 
+                                   name="UserName" 
+                                   placeholder="Nhập tên đăng nhập"
+                                   required>
+                        </div>
+                    </div>
+
+                    <!-- Password input with icon -->
+                    <div class="form-group mb-3">
+                        <label for="loginPassword" class="form-label">Mật khẩu</label>
+                        <div class="input-group-icon">
+                            <i class="bi bi-lock input-icon"></i>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="loginPassword" 
+                                   name="Password" 
+                                   placeholder="Nhập mật khẩu"
+                                   required>
+                        </div>
+                    </div>
+
+                    <!-- Remember me checkbox -->
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="rememberMe" 
+                               name="RememberMe">
+                        <label class="form-check-label" for="rememberMe">
+                            Ghi nhớ đăng nhập
+                        </label>
+                    </div>
+
+                    <!-- Submit button with loading state -->
+                    <button type="submit" class="btn btn-primary w-100 auth-submit-btn">
+                        <span class="btn-text">Đăng nhập</span>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Footer with register link -->
+            <div class="modal-footer justify-content-center">
+                <p class="mb-0">
+                    Chưa có tài khoản? 
+                    <a href="#" class="auth-switch-link" onclick="switchToRegister(event)">Đăng ký ngay</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

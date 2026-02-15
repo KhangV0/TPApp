@@ -1,0 +1,115 @@
+<!-- Register Modal -->
+<div class="modal fade auth-modal" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <!-- Header with gradient -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="registerModalLabel">
+                    <i class="bi bi-person-plus me-2"></i>Đăng ký thành viên
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body with form -->
+            <div class="modal-body">
+                <form id="registerForm" method="post">
+                    @Html.AntiForgeryToken()
+                    
+                    <!-- Error display -->
+                    <div class="alert alert-danger d-none" id="registerErrors" role="alert"></div>
+
+                    <div class="row">
+                        <!-- Username -->
+                        <div class="col-md-6 mb-3">
+                            <label for="registerUsername" class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+                            <div class="input-group-icon">
+                                <i class="bi bi-person input-icon"></i>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="registerUsername" 
+                                       name="UserName" 
+                                       placeholder="Tên đăng nhập"
+                                       required>
+                            </div>
+                        </div>
+
+                        <!-- Full Name -->
+                        <div class="col-md-6 mb-3">
+                            <label for="registerFullName" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                            <div class="input-group-icon">
+                                <i class="bi bi-person-badge input-icon"></i>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="registerFullName" 
+                                       name="FullName" 
+                                       placeholder="Họ và tên đầy đủ"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group mb-3">
+                        <label for="registerEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                        <div class="input-group-icon">
+                            <i class="bi bi-envelope input-icon"></i>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="registerEmail" 
+                                   name="Email" 
+                                   placeholder="email@example.com"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Password -->
+                        <div class="col-md-6 mb-3">
+                            <label for="registerPassword" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                            <div class="input-group-icon">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="registerPassword" 
+                                       name="Password" 
+                                       placeholder="Mật khẩu"
+                                       required>
+                            </div>
+                            <small class="text-muted">Tối thiểu 6 ký tự</small>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="col-md-6 mb-3">
+                            <label for="registerConfirmPassword" class="form-label">Nhập lại mật khẩu <span class="text-danger">*</span></label>
+                            <div class="input-group-icon">
+                                <i class="bi bi-lock-fill input-icon"></i>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="registerConfirmPassword" 
+                                       name="ConfirmPassword" 
+                                       placeholder="Nhập lại mật khẩu"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit button with loading state -->
+                    <button type="submit" class="btn btn-success w-100 auth-submit-btn mt-3">
+                        <span class="btn-text">Đăng ký</span>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Footer with login link -->
+            <div class="modal-footer justify-content-center">
+                <p class="mb-0">
+                    Đã có tài khoản? 
+                    <a href="#" class="auth-switch-link" onclick="switchToLogin(event)">Đăng nhập</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
