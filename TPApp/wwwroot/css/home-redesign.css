@@ -126,6 +126,22 @@
         font-size: 30px;
         text-align: left;
     }
+
+    .home-page-container {
+        margin-top: 40px;
+    }
+
+    .header-mobile {
+        display: flex;
+        width: 100%;
+        position: fixed;
+        top: 0px;
+        z-index: 1030;
+        right: 0px;
+        left: 0px;
+        background: #fff;
+        padding: 10px 10px;
+    }
 }
 
 /* Floating Search/Category Box */
@@ -1002,5 +1018,14 @@
     .hp-user-avatar-btn {
         padding: 4px 8px;
     }
+}
+.d-flex:has(.hp-header-search-container.mobile) {
+    justify-content: right;
+    width: 60%;
+}
+.hp-header-search-container.mobile {
+    display: block;
+    width: 180px;
+    margin-right: 5px;
 }
 
