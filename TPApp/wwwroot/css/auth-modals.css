@@ -76,7 +76,7 @@
 .auth-modal .form-control {
     border-radius: 8px;
     border: 1px solid #ced4da;
-    padding: 12px 16px;
+    padding: 12px 16px 12px 35px;
     font-size: 14px;
     transition: all 0.3s ease;
 }
