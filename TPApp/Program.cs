@@ -32,6 +32,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // --- Configuration ---
 builder.Services.Configure<TPApp.Helpers.AppSettings>(builder.Configuration.GetSection("AppSettings"));
+builder.Services.Configure<TPApp.Configuration.FeatureFlags>(builder.Configuration.GetSection("FeatureFlags"));
 
 // --- Identity Configuration ---
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
@@ -73,6 +74,21 @@ builder.Services.AddScoped<TPApp.Interfaces.IProductService, TPApp.Services.Prod
 builder.Services.AddScoped<TPApp.Interfaces.IDashboardService, TPApp.Services.DashboardService>();
 builder.Services.AddScoped<TPApp.Interfaces.IAccountService, TPApp.Services.AccountService>();
 builder.Services.AddScoped<TPApp.Interfaces.IProjectService, TPApp.Services.ProjectService>();
+
+// --- AI Semantic Matching Services ---
+builder.Services.AddMemoryCache();
+
+// Infrastructure layer
+builder.Services.AddHttpClient<TPApp.Infrastructure.AI.IEmbeddingService, TPApp.Infrastructure.AI.OpenAIEmbeddingService>();
+builder.Services.AddScoped<TPApp.Infrastructure.Repositories.IEmbeddingRepository, TPApp.Infrastructure.Repositories.EmbeddingRepository>();
+builder.Services.AddScoped<TPApp.Infrastructure.Repositories.ISearchLogRepository, TPApp.Infrastructure.Repositories.SearchLogRepository>();
+
+// Application layer
+builder.Services.AddScoped<TPApp.Application.Services.IAISupplierMatchingService, TPApp.Application.Services.AISupplierMatchingService>();
+builder.Services.AddScoped<TPApp.Application.Services.IProductEmbeddingService, TPApp.Application.Services.ProductEmbeddingService>();
+
+// Background service
+builder.Services.AddHostedService<TPApp.BackgroundServices.ProductEmbeddingUpdaterService>();
 
 var app = builder.Build();
 

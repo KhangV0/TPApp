@@ -1,0 +1,267 @@
+@model TPApp.ViewModel.SearchViewModel
+@{
+    ViewData["Title"] = $"Tìm kiếm: {Model.Query}";
+    var showAITab = ViewBag.EnableAISearch == 1;
+    var showKeywordTab = ViewBag.EnableKeywordSearch == 1;
+    var minAILength = ViewBag.MinAISearchLength ?? 5;
+}
+
+<div class="container my-5">
+    <div class="search-results-header mb-4">
+        <h1 class="h3">Kết quả tìm kiếm: <span class="text-primary">"@Model.Query"</span></h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Query))
+        {
+            <p class="text-muted">
+                @if (Model.IsAiSearchEnabled)
+                {
+                    <span>Tìm thấy @Model.AiSuppliers.Count nhà cung ứng (AI), </span>
+                }
+                <span>@Model.Products.Count sản phẩm, @Model.Suppliers.Count nhà cung ứng (từ khóa)</span>
+            </p>
+        }
+    </div>
+
+    @if (string.IsNullOrWhiteSpace(Model.Query))
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            Vui lòng nhập từ khóa tìm kiếm
+        </div>
+    }
+    else
+    {
+        @if (!showAITab && !showKeywordTab)
+        {
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Chức năng tìm kiếm tạm thời không khả dụng. Vui lòng liên hệ quản trị viên.
+            </div>
+        }
+        else
+        {
+            <!-- Bootstrap 5 Tabs -->
+            <ul class="nav nav-tabs mb-4" id="searchTabs" role="tablist">
+                @if (showAITab)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(showAITab ? "active" : "")" 
+                                id="ai-tab-btn" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#ai-tab" 
+                                type="button" 
+                                role="tab">
+                            <i class="bi bi-stars me-2"></i>
+                            Gợi ý thông minh (AI)
+                            @if (Model.AiSuppliers.Any())
+                            {
+                                <span class="badge bg-success ms-2">@Model.AiSuppliers.Count</span>
+                            }
+                        </button>
+                    </li>
+                }
+                @if (showKeywordTab)
+                {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(!showAITab && showKeywordTab ? "active" : "")" 
+                                id="keyword-tab-btn" 
+                                data-bs-toggle="tab" 
+                                data-bs-target="#keyword-tab" 
+                                type="button" 
+                                role="tab">
+                            <i class="bi bi-search me-2"></i>
+                            Tìm kiếm thông thường
+                            @if (Model.Products.Any() || Model.Suppliers.Any())
+                            {
+                                <span class="badge bg-primary ms-2">@(Model.Products.Count + Model.Suppliers.Count)</span>
+                            }
+                        </button>
+                    </li>
+                }
+            </ul>
+
+            <div class="tab-content" id="searchTabContent">
+                @if (showAITab)
+                {
+                    <!-- TAB 1: AI Smart Suggestion -->
+                    <div class="tab-pane fade @(showAITab ? "show active" : "")" id="ai-tab" role="tabpanel">
+                        @if (!string.IsNullOrWhiteSpace(Model.Query) && Model.Query.Length < minAILength)
+                        {
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Vui lòng nhập ít nhất <strong>@minAILength ký tự</strong> để sử dụng tìm kiếm AI thông minh
+                            </div>
+                        }
+                        else if (Model.AiSuppliers.Any())
+                        {
+                    <div class="row g-4">
+                        @foreach (var supplier in Model.AiSuppliers)
+                        {
+                            <div class="col-12">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h5 class="card-title mb-1">
+                                                    <a href="/nha-cung-ung/@supplier.CungUngId" class="text-decoration-none">
+                                                        @supplier.SupplierName
+                                                    </a>
+                                                </h5>
+                                                <div class="text-muted small">
+                                                    <i class="bi bi-star-fill text-warning me-1"></i>
+                                                    @supplier.Rating.ToString("0.0")/5
+                                                    <span class="mx-2">•</span>
+                                                    <i class="bi bi-eye me-1"></i>
+                                                    @supplier.Viewed.ToString("N0") lượt xem
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span class="badge bg-success fs-6 px-3 py-2">
+                                                    @((supplier.FinalScore * 100).ToString("0"))% phù hợp
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        @if (supplier.TopProducts.Any())
+                                        {
+                                            <div class="mt-3">
+                                                <h6 class="text-muted mb-2">
+                                                    <i class="bi bi-box-seam me-2"></i>Sản phẩm phù hợp:
+                                                </h6>
+                                                <ul class="list-unstyled mb-0">
+                                                    @foreach (var product in supplier.TopProducts.Take(3))
+                                                    {
+                                                        <li class="mb-2">
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <span class="text-dark">
+                                                                    @product.Name
+                                                                </span>
+                                                                <span class="badge bg-light text-dark">
+                                                                    @((product.SimilarityScore * 100).ToString("0"))%
+                                                                </span>
+                                                            </div>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                AI chưa tìm thấy nhà cung ứng phù hợp với yêu cầu của bạn. 
+                                @if (showKeywordTab)
+                                {
+                                    <span>Hãy thử tab <strong>Tìm kiếm thông thường</strong> hoặc thay đổi từ khóa.</span>
+                                }
+                                else
+                                {
+                                    <span>Hãy thử thay đổi từ khóa.</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (showKeywordTab)
+                {
+                    <!-- TAB 2: Keyword Search -->
+                    <div class="tab-pane fade @(!showAITab && showKeywordTab ? "show active" : "")" id="keyword-tab" role="tabpanel">
+                <div class="row">
+                    <!-- Left Column: Products -->
+                    <div class="col-md-8">
+                        <h4 class="mb-3">
+                            <i class="bi bi-box-seam me-2"></i>
+                            Sản phẩm (@Model.Products.Count)
+                        </h4>
+                        @if (Model.Products.Any())
+                        {
+                            <div class="list-group">
+                                @foreach (var product in Model.Products)
+                                {
+                                    <a href="/@product.Url" class="list-group-item list-group-item-action">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">@product.Name</h6>
+                                            @if (product.Created.HasValue)
+                                            {
+                                                <small class="text-muted">@product.Created.Value.ToString("dd/MM/yyyy")</small>
+                                            }
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(product.CategoryName))
+                                        {
+                                            <small class="text-muted">
+                                                <i class="bi bi-tag me-1"></i>@product.CategoryName
+                                            </small>
+                                        }
+                                    </a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">Không tìm thấy sản phẩm nào</p>
+                        }
+                    </div>
+
+                    <!-- Right Column: Suppliers -->
+                    <div class="col-md-4">
+                        <h4 class="mb-3">
+                            <i class="bi bi-building me-2"></i>
+                            Nhà cung ứng (@Model.Suppliers.Count)
+                        </h4>
+                        @if (Model.Suppliers.Any())
+                        {
+                            <div class="list-group">
+                                @foreach (var supplier in Model.Suppliers)
+                                {
+                                    <a href="/nha-cung-ung/@supplier.Id" class="list-group-item list-group-item-action">
+                                        <h6 class="mb-1">@supplier.FullName</h6>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="bi bi-star-fill text-warning me-1"></i>
+                                                @supplier.Rating/5
+                                            </small>
+                                            <small class="text-muted">
+                                                @supplier.ProductCount sản phẩm
+                                            </small>
+                                        </div>
+                                    </a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">Không tìm thấy nhà cung ứng nào</p>
+                        }
+                    </div>
+                </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Optional: Add loading spinner for AI tab if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            const aiTab = document.getElementById('ai-tab-btn');
+            const keywordTab = document.getElementById('keyword-tab-btn');
+            
+            // Log tab switches for analytics
+            aiTab?.addEventListener('click', function() {
+                console.log('Switched to AI tab');
+            });
+            
+            keywordTab?.addEventListener('click', function() {
+                console.log('Switched to Keyword tab');
+            });
+        });
+    </script>
+}

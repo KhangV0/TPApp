@@ -36,12 +36,15 @@
                 </a>
             </div>
             <div class="d-lg-none d-flex">
-                <div class="hp-header-search-container mobile">
+                <form action="/Search/Index" method="get" class="hp-header-search-container mobile">
                     <i class="bi bi-search hp-header-search-icon"></i>
                     <input type="text"
+                           name="q"
                            class="hp-header-search-input"
-                           placeholder="Tìm công nghệ / Thiết bị / Nhà cung ứng">
-                </div>
+                           placeholder="Tìm công nghệ / Thiết bị / Nhà cung ứng"
+                           required>
+                    <button type="submit" class="hp-header-search-submit" style="display:none;"></button>
+                </form>
                 @if (string.IsNullOrEmpty(userName))
                 {
                     <a href="#"
@@ -139,12 +142,15 @@
 
             <!-- RIGHT -->
             <div class="d-flex align-items-center gap-3">
-                <div class="hp-header-search-container">
+                <form action="/Search/Index" method="get" class="hp-header-search-container">
                     <i class="bi bi-search hp-header-search-icon"></i>
                     <input type="text"
+                           name="q"
                            class="hp-header-search-input"
-                           placeholder="Tìm công nghệ / Thiết bị / Nhà cung ứng">
-                </div>
+                           placeholder="Tìm công nghệ / Thiết bị / Nhà cung ứng"
+                           required>
+                    <button type="submit" class="hp-header-search-submit" style="display:none;"></button>
+                </form>
 
 
 

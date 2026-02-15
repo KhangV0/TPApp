@@ -110,5 +110,9 @@ namespace TPApp.Data
         public DbSet<HandoverReport> HandoverReports { get; set; } = null!;
         public DbSet<AcceptanceReport> AcceptanceReports { get; set; } = null!;
         public DbSet<LiquidationReport> LiquidationReports { get; set; } = null!;
+
+        // AI Semantic Matching
+        public DbSet<TPApp.Domain.Entities.SanPhamEmbedding> SanPhamEmbeddings { get; set; } = null!;
+        public DbSet<TPApp.Domain.Entities.AISearchLog> AISearchLogs { get; set; } = null!;
     }
 }
