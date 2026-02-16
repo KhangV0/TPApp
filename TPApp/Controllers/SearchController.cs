@@ -1,52 +1,52 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using TPApp.Application.DTOs;
+using TPApp.Application.Helpers;
 using TPApp.Application.Services;
 using TPApp.Configuration;
-using TPApp.Data;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers
 {
     /// <summary>
-    /// Controller for global search with AI and keyword tabs
+    /// Controller for global search using centralized SearchIndexContents table
+    /// Supports: Normal FullText search, AI semantic search, Autocomplete, Trending
     /// </summary>
     public class SearchController : Controller
     {
+        private readonly ISearchService _searchService;
         private readonly IAISupplierMatchingService _aiMatchingService;
-        private readonly AppDbContext _context;
         private readonly ILogger<SearchController> _logger;
         private readonly FeatureFlags _featureFlags;
 
-        private const int MAX_PRODUCTS = 50;
-        private const int MAX_SUPPLIERS = 20;
-
         public SearchController(
+            ISearchService searchService,
             IAISupplierMatchingService aiMatchingService,
-            AppDbContext context,
             ILogger<SearchController> logger,
             IOptions<FeatureFlags> featureFlags)
         {
+            _searchService = searchService ?? throw new ArgumentNullException(nameof(searchService));
             _aiMatchingService = aiMatchingService ?? throw new ArgumentNullException(nameof(aiMatchingService));
-            _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _featureFlags = featureFlags?.Value ?? new FeatureFlags();
         }
 
         /// <summary>
-        /// Search results page with AI and keyword tabs
+        /// Main search page with mode parameter (normal/ai)
+        /// GET /search?q=keyword&mode=normal&page=1
         /// </summary>
-        /// <param name="q">Search query</param>
         [HttpGet]
-        public async Task<IActionResult> Index(string q)
+        public async Task<IActionResult> Index(string q, string mode = "normal", int page = 1)
         {
             var viewModel = new SearchViewModel
             {
-                Query = q?.Trim() ?? string.Empty
+                Query = q?.Trim() ?? string.Empty,
+                Mode = mode?.ToLower() ?? "normal"
             };
 
             // Empty query - return empty view
@@ -56,54 +56,30 @@ namespace TPApp.Controllers
                 return View(viewModel);
             }
 
-            _logger.LogInformation("Search request: {Query}", viewModel.Query);
+            _logger.LogInformation("Search request: {Query}, Mode: {Mode}, Page: {Page}", 
+                viewModel.Query, viewModel.Mode, page);
 
             try
             {
-                // AI Search (if enabled and query long enough)
-                if (_featureFlags.EnableAISearch == 1 && 
-                    !string.IsNullOrWhiteSpace(viewModel.Query) &&
-                    viewModel.Query.Length >= _featureFlags.MinAISearchLength)
+                var options = new SearchOptions
                 {
-                    _logger.LogDebug("Performing AI search for: {Query}", viewModel.Query);
-                    var aiResults = await _aiMatchingService.FindMatchingSuppliersAsync(viewModel.Query);
-                    
-                    // Apply max results limit
-                    viewModel.AiSuppliers = aiResults.Take(_featureFlags.MaxAISearchResults).ToList();
-                    _logger.LogInformation("AI search found {Count} suppliers (limited to {Max})", 
-                        aiResults.Count, _featureFlags.MaxAISearchResults);
+                    PageNumber = page,
+                    PageSize = 20,
+                    TypeName = null // Get all types (no filter)
+                };
+
+                // Route to appropriate search mode
+                if (viewModel.Mode == "ai" && _featureFlags.EnableAISearch == 1)
+                {
+                    await PerformAISearchAsync(viewModel, options);
                 }
                 else
                 {
-                    if (_featureFlags.EnableAISearch == 0)
-                    {
-                        _logger.LogDebug("AI search disabled by feature flag");
-                    }
-                    else
-                    {
-                        _logger.LogDebug("Query too short for AI search ({Length} chars), minimum is {Min}",
-                            viewModel.Query.Length, _featureFlags.MinAISearchLength);
-                    }
+                    await PerformNormalSearchAsync(viewModel, options);
                 }
 
-                // Keyword Search (if enabled) - Run in parallel for better performance
-                if (_featureFlags.EnableKeywordSearch == 1)
-                {
-                    var productsTask = SearchProductsAsync(viewModel.Query);
-                    var suppliersTask = SearchSuppliersAsync(viewModel.Query);
-
-                    await Task.WhenAll(productsTask, suppliersTask);
-
-                    viewModel.Products = productsTask.Result;
-                    viewModel.Suppliers = suppliersTask.Result;
-
-                    _logger.LogInformation("Keyword search found {ProductCount} products, {SupplierCount} suppliers", 
-                        viewModel.Products.Count, viewModel.Suppliers.Count);
-                }
-                else
-                {
-                    _logger.LogDebug("Keyword search disabled by feature flag");
-                }
+                // Get trending searches for sidebar
+                viewModel.TrendingSearches = await _searchService.GetTrendingSearchesAsync(7, 10);
             }
             catch (Exception ex)
             {
@@ -111,69 +87,119 @@ namespace TPApp.Controllers
                 // Return partial results if available
             }
 
-            // Pass feature flags to view for conditional rendering
+            // Pass feature flags to view
             ViewBag.EnableAISearch = _featureFlags.EnableAISearch;
-            ViewBag.EnableKeywordSearch = _featureFlags.EnableKeywordSearch;
+            ViewBag.EnableKeywordSearch = 1; // Always enabled for new unified search
             ViewBag.MinAISearchLength = _featureFlags.MinAISearchLength;
 
             return View(viewModel);
         }
 
         /// <summary>
-        /// Search products by keyword (Name, Keywords)
-        /// Optimized: Uses EF.Functions.Like for better performance, removed MoTa search
+        /// Autocomplete suggestions endpoint
+        /// GET /search/suggest?prefix=máy
         /// </summary>
-        private async Task<List<ProductSearchItem>> SearchProductsAsync(string query)
+        [HttpGet("suggest")]
+        public async Task<IActionResult> Suggest(string prefix)
         {
-            var searchPattern = $"%{query}%";
+            if (string.IsNullOrWhiteSpace(prefix) || prefix.Length < 2)
+            {
+                return Json(new List<SearchSuggestion>());
+            }
 
-            var products = await _context.SanPhamCNTBs
-                .Where(p => p.StatusId == 3 && // Only published products
-                           (EF.Functions.Like(p.Name, searchPattern) ||
-                            (p.Keywords != null && EF.Functions.Like(p.Keywords, searchPattern))))
-                .OrderByDescending(p => p.Created)
-                .Take(MAX_PRODUCTS)
-                .Select(p => new ProductSearchItem
-                {
-                    Id = p.ID,
-                    Name = p.Name,
-                    Url = p.URL ?? string.Empty,
-                    CategoryName = null, // Category navigation not available
-                    Created = p.Created
-                })
-                .ToListAsync();
-
-            return products;
+            try
+            {
+                var suggestions = await _searchService.GetSuggestionsAsync(prefix);
+                return Json(suggestions);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting suggestions for prefix: {Prefix}", prefix);
+                return Json(new List<SearchSuggestion>());
+            }
         }
 
         /// <summary>
-        /// Search suppliers by keyword (FullName, Keywords)
-        /// Optimized: Uses EF.Functions.Like and single query with JOIN for product counts
+        /// Trending searches endpoint
+        /// GET /search/trending?days=7&topN=10
         /// </summary>
-        private async Task<List<SupplierSearchItem>> SearchSuppliersAsync(string query)
+        [HttpGet("trending")]
+        public async Task<IActionResult> Trending(int days = 7, int topN = 10)
         {
-            var searchPattern = $"%{query}%";
+            try
+            {
+                var trending = await _searchService.GetTrendingSearchesAsync(days, topN);
+                return Json(trending);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting trending searches");
+                return Json(new List<TrendingSearch>());
+            }
+        }
 
-            // Single query with LEFT JOIN to get product counts
-            var results = await (
-                from s in _context.NhaCungUngs
-                where (s.FullName != null && EF.Functions.Like(s.FullName, searchPattern)) ||
-                      (s.Keywords != null && EF.Functions.Like(s.Keywords, searchPattern))
-                join p in _context.SanPhamCNTBs.Where(p => p.StatusId == 3)
-                    on s.CungUngId equals p.NCUId into products
-                select new SupplierSearchItem
-                {
-                    Id = s.CungUngId,
-                    FullName = s.FullName ?? string.Empty,
-                    Rating = s.Rating ?? 0,
-                    ProductCount = products.Count(),
-                    Viewed = s.Viewed ?? 0
-                })
-                .OrderByDescending(s => s.Viewed)
-                .Take(MAX_SUPPLIERS)
-                .ToListAsync();
+        // =============================================
+        // Private Helper Methods
+        // =============================================
 
-            return results;
+        /// <summary>
+        /// Perform normal FullText search
+        /// </summary>
+        private async Task PerformNormalSearchAsync(SearchViewModel viewModel, SearchOptions options)
+        {
+            _logger.LogDebug("Performing normal FullText search for: {Query}", viewModel.Query);
+
+            var result = await _searchService.SearchNormalAsync(viewModel.Query, options);
+
+            // Convert SearchIndexContent to view models
+            viewModel.SearchResults = result.Items.Select(item => new SearchResultItem
+            {
+                Id = item.RefId ?? 0,
+                Title = SearchHighlightHelper.HighlightKeywords(item.Title ?? string.Empty, viewModel.Query),
+                Description = SearchHighlightHelper.CreateSnippet(
+                    item.Description ?? item.Contents ?? string.Empty, 
+                    viewModel.Query, 
+                    200),
+                Url = item.URL ?? string.Empty,
+                ImageUrl = item.ImgPreview ?? string.Empty,
+                TypeName = item.TypeName ?? string.Empty,
+                Created = item.Created
+            }).ToList();
+
+            viewModel.TotalResults = result.TotalCount;
+            viewModel.CurrentPage = result.PageNumber;
+            viewModel.TotalPages = result.TotalPages;
+
+            _logger.LogInformation("Normal search found {Count} results", result.TotalCount);
+        }
+
+        /// <summary>
+        /// Perform AI semantic search
+        /// </summary>
+        private async Task PerformAISearchAsync(SearchViewModel viewModel, SearchOptions options)
+        {
+            // Check minimum length requirement
+            if (viewModel.Query.Length < _featureFlags.MinAISearchLength)
+            {
+                _logger.LogDebug("Query too short for AI search ({Length} chars), minimum is {Min}. Falling back to normal search.",
+                    viewModel.Query.Length, _featureFlags.MinAISearchLength);
+                
+                await PerformNormalSearchAsync(viewModel, options);
+                return;
+            }
+
+            _logger.LogDebug("Performing AI semantic search for: {Query}", viewModel.Query);
+
+            // Get grouped AI results
+            viewModel.AISearchResults = await _searchService.SearchAIGroupedAsync(viewModel.Query, options);
+
+            viewModel.TotalResults = viewModel.AISearchResults.Sum(g => g.Products.Count);
+            viewModel.CurrentPage = options.PageNumber;
+            viewModel.TotalPages = (int)Math.Ceiling(viewModel.TotalResults / (double)options.PageSize);
+
+            _logger.LogInformation("AI search found {Companies} companies with {Total} products", 
+                viewModel.AISearchResults.Count,
+                viewModel.TotalResults);
         }
     }
 }

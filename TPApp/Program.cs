@@ -86,6 +86,7 @@ builder.Services.AddScoped<TPApp.Infrastructure.Repositories.ISearchLogRepositor
 // Application layer
 builder.Services.AddScoped<TPApp.Application.Services.IAISupplierMatchingService, TPApp.Application.Services.AISupplierMatchingService>();
 builder.Services.AddScoped<TPApp.Application.Services.IProductEmbeddingService, TPApp.Application.Services.ProductEmbeddingService>();
+builder.Services.AddScoped<TPApp.Application.Services.ISearchService, TPApp.Application.Services.SearchService>();
 
 // Background service
 builder.Services.AddHostedService<TPApp.BackgroundServices.ProductEmbeddingUpdaterService>();
