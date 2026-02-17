@@ -877,6 +877,113 @@
                     });
                 }, 3000);
             }
+
+            // ===== E-Sign Handlers for Step 2 (NDA) =====
+            var otpSent = false;
+            var currentDocumentId = 0;
+
+            // Create NDA + Upload form (combined)
+            $(document).on('submit', '#createNdaForm', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const projectId = $('#projectId').val();
+                formData.append('projectId', projectId);
+
+                // Validate
+                if (!$('#ndaFile')[0].files[0]) {
+                    showToast('Vui lòng chọn file PDF', 'warning');
+                    return;
+                }
+
+                if (!$('#daDongY').is(':checked')) {
+                    showToast('Bạn phải đồng ý với điều khoản', 'warning');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/ESign/UploadNda',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('Tạo Phiếu NDA và tải lên file thành công!', 'success');
+                            currentDocumentId = response.documentId;
+                            // Reload step content
+                            setTimeout(function() {
+                                loadStepContent(2);
+                            }, 1500);
+                        } else {
+                            showToast('Lỗi: ' + response.message, 'danger');
+                        }
+                    },
+                    error: function(xhr) {
+                        var errorMsg = 'Có lỗi xảy ra';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        showToast(errorMsg, 'danger');
+                    }
+                });
+            });
+
+            // Send OTP
+            $(document).on('click', '#btnSendOtp', function() {
+                const phone = $('#phoneNumber').val();
+                if (!phone) {
+                    showToast('Vui lòng nhập số điện thoại', 'warning');
+                    return;
+                }
+
+                $.post('/ESign/SendOtp', { phoneNumber: phone }, function(response) {
+                    if (response.success) {
+                        otpSent = true;
+                        $('#otpSection').show();
+                        showToast('OTP đã được gửi! (Test mode: ' + response.otp + ')', 'success');
+                    } else {
+                        showToast('Lỗi: ' + response.message, 'danger');
+                    }
+                }).fail(function() {
+                    showToast('Lỗi khi gửi OTP', 'danger');
+                });
+            });
+
+            // Enable sign button when conditions met
+            $(document).on('change keyup', '#agreeTerms, #otpCode', function() {
+                const agreed = $('#agreeTerms').is(':checked');
+                const otpEntered = $('#otpCode').val().length === 6;
+                $('#btnSign').prop('disabled', !(agreed && otpEntered && otpSent));
+            });
+
+            // Sign document
+            $(document).on('click', '#btnSign', function() {
+                const otpCode = $('#otpCode').val();
+                const docId = $(this).data('document-id') || currentDocumentId;
+                
+                if (!docId) {
+                    showToast('Không tìm thấy tài liệu', 'danger');
+                    return;
+                }
+                
+                $.post('/ESign/SignDocument', { 
+                    documentId: docId,
+                    otpCode: otpCode 
+                }, function(response) {
+                    if (response.success) {
+                        showToast('Ký thành công! Bước 2 đã hoàn thành.', 'success');
+                        // Reload step content
+                        setTimeout(function() {
+                            loadStepContent(2);
+                        }, 1500);
+                    } else {
+                        showToast('Lỗi: ' + response.message, 'danger');
+                    }
+                }).fail(function() {
+                    showToast('Lỗi khi ký tài liệu', 'danger');
+                });
+            });
         });
     </script>
 }

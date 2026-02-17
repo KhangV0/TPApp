@@ -75,6 +75,9 @@ builder.Services.AddScoped<TPApp.Interfaces.IDashboardService, TPApp.Services.Da
 builder.Services.AddScoped<TPApp.Interfaces.IAccountService, TPApp.Services.AccountService>();
 builder.Services.AddScoped<TPApp.Interfaces.IProjectService, TPApp.Services.ProjectService>();
 
+// E-Sign Services
+builder.Services.AddScoped<TPApp.Interfaces.IESignGateway, TPApp.Services.ESignGateway>();
+
 // --- AI Semantic Matching Services ---
 builder.Services.AddMemoryCache();
 

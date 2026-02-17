@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering; // For ViewBag if needed
 using Microsoft.EntityFrameworkCore;
 using TPApp.Data;
 using TPApp.Entities;
+using TPApp.Authorization;
 
 namespace TPApp.Controllers
 {
@@ -60,6 +61,8 @@ namespace TPApp.Controllers
 
         // GET: /Proposal/Create?duAnId=5
         [HttpGet]
+        [RequireInvitedSeller]
+        [RequireProjectNdaSigned]
         public async Task<IActionResult> Create(int? duAnId)
         {
             if (duAnId == null) return NotFound("ProjectId is required");
@@ -70,6 +73,24 @@ namespace TPApp.Controllers
 
             if (member == null) return Forbid();
             if (member.Role == 1) return Forbid(); // Buyer cannot create
+
+            // SECURITY CHECK: Verify deadline
+            var rfq = await _context.RFQRequests
+                .FirstOrDefaultAsync(r => r.ProjectId == duAnId);
+            if (rfq != null && rfq.HanChotNopHoSo < DateTime.Now)
+            {
+                TempData["ErrorMessage"] = "Hạn chót nộp hồ sơ đã qua. Bạn không thể gửi báo giá cho dự án này.";
+                return RedirectToAction("InvitedProjects", "Seller");
+            }
+
+            // Check if already submitted
+            var existingProposal = await _context.ProposalSubmissions
+                .FirstOrDefaultAsync(p => p.ProjectId == duAnId && p.NguoiTao == userId);
+            if (existingProposal != null)
+            {
+                TempData["InfoMessage"] = "Bạn đã gửi báo giá cho dự án này rồi.";
+                return RedirectToAction("Index", new { duAnId = duAnId });
+            }
 
             var model = new ProposalSubmission
             {
@@ -106,6 +127,15 @@ namespace TPApp.Controllers
             {
                 try
                 {
+                    // SECURITY CHECK: Verify deadline again before saving
+                    var rfq = await _context.RFQRequests
+                        .FirstOrDefaultAsync(r => r.ProjectId == model.ProjectId);
+                    if (rfq != null && rfq.HanChotNopHoSo < DateTime.Now)
+                    {
+                        TempData["ErrorMessage"] = "Hạn chót nộp hồ sơ đã qua.";
+                        return RedirectToAction("InvitedProjects", "Seller");
+                    }
+
                     string uploadFolder = Path.Combine(_environment.WebRootPath, "uploads", "proposals");
                     if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
 
@@ -138,6 +168,10 @@ namespace TPApp.Controllers
                     // Complete Step 4
                     await _workflowService.CompleteStep(model.ProjectId.Value, 4);
 
+                    // Log proposal submission
+                    await LogProposalActionAsync(model.ProjectId.Value, userId, "SubmitProposal", 
+                        $"ProposalId: {model.Id}");
+
                     return RedirectToAction("Index", new { duAnId = model.ProjectId });
                 }
                 catch (Exception ex)
@@ -147,6 +181,23 @@ namespace TPApp.Controllers
             }
 
             return View(model);
+        }
+
+        // Helper: Log proposal actions for audit trail
+        private async Task LogProposalActionAsync(int projectId, int userId, string action, string? additionalData = null)
+        {
+            var log = new TPApp.Entities.ProjectAccessLog
+            {
+                ProjectId = projectId,
+                UserId = userId,
+                Action = action,
+                Timestamp = DateTime.Now,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = HttpContext.Request.Headers["User-Agent"].ToString(),
+                AdditionalData = additionalData
+            };
+            _context.ProjectAccessLogs.Add(log);
+            await _context.SaveChangesAsync();
         }
 
         // GET: /Proposal/Edit/5

@@ -23,6 +23,13 @@
                     <span class="badge bg-primary float-end">@Model.ProjectCount</span>
                 }
             </a>
+            @if (Model.IsSeller && Model.InvitationCount > 0)
+            {
+                <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Seller/InvitedProjects") ? "active" : "")" href="@Url.Action("InvitedProjects", "Seller")">
+                    <i class="fas fa-file-invoice me-2"></i> Dự án mời tham gia
+                    <span class="badge bg-danger float-end">@Model.InvitationCount</span>
+                </a>
+            }
             <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Account/Profile") ? "active" : "")" href="@Url.Action("Profile", "Account")">
                 <i class="fas fa-user me-2"></i> Thông tin cá nhân
             </a>

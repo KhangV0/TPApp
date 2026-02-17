@@ -73,6 +73,7 @@
                                     <i class="bi bi-speedometer2 me-2"></i>Dashboard
                                 </a>
                             </li>
+                            @await Component.InvokeAsync("SellerMenuItems")
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
@@ -167,8 +168,6 @@
                 </form>
 
 
-
-
                 @if (string.IsNullOrEmpty(userName))
                 {
                     <a href="#" 
@@ -197,6 +196,7 @@
                                     <i class="bi bi-speedometer2 me-2"></i>Dashboard
                                 </a>
                             </li>
+                            @await Component.InvokeAsync("SellerMenuItems")
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">

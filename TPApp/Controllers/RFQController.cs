@@ -107,7 +107,7 @@ namespace TPApp.Controllers
         // POST: /RFQ/SendToSuppliers/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendToSuppliers(int id)
+        public async Task<IActionResult> SendToSuppliers(int id, int[] selectedSellerIds)
         {
             var rfq = await _context.RFQRequests.FindAsync(id);
             if (rfq == null)
@@ -115,12 +115,56 @@ namespace TPApp.Controllers
                 return NotFound();
             }
 
-            rfq.DaGuiNhaCungUng = true;
-            rfq.StatusId = 2; // Sent status or similar
+            var userId = GetCurrentUserId();
+            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == rfq.ProjectId && m.UserId == userId);
+            if (!isMember) return Forbid();
+
+            // Create invitation records for each selected seller
+            if (selectedSellerIds != null && selectedSellerIds.Length > 0)
+            {
+                foreach (var sellerId in selectedSellerIds)
+                {
+                    // Check if invitation already exists
+                    var existingInvitation = await _context.RFQInvitations
+                        .FirstOrDefaultAsync(i => i.ProjectId == rfq.ProjectId && 
+                                                 i.RFQId == id && 
+                                                 i.SellerId == sellerId);
+
+                    if (existingInvitation == null)
+                    {
+                        var invitation = new Entities.RFQInvitation
+                        {
+                            ProjectId = rfq.ProjectId.Value,
+                            RFQId = id,
+                            SellerId = sellerId,
+                            InvitedDate = DateTime.Now,
+                            StatusId = 0, // Invited
+                            IsActive = true
+                        };
+                        _context.RFQInvitations.Add(invitation);
+
+                        // TODO: Send notification (email/in-app)
+                        // await _notificationService.SendRFQInvitation(sellerId, rfq);
+                    }
+                    else if (!existingInvitation.IsActive)
+                    {
+                        // Reactivate existing invitation
+                        existingInvitation.IsActive = true;
+                        existingInvitation.InvitedDate = DateTime.Now;
+                        existingInvitation.StatusId = 0; // Reset to Invited
+                    }
+                }
+            }
+
+            // Don't set DaGuiNhaCungUng flag - allow multiple sends
+            // rfq.DaGuiNhaCungUng = true;
+            rfq.StatusId = 2; // Sent status
             _context.Update(rfq);
             await _context.SaveChangesAsync();
 
-            return RedirectToAction(nameof(Details), new { id = id });
+            TempData["SuccessMessage"] = $"Đã gửi RFQ đến {selectedSellerIds?.Length ?? 0} nhà cung ứng.";
+
+            return RedirectToAction("Details", "Project", new { id = rfq.ProjectId });
         }
     }
 }

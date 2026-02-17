@@ -15,12 +15,18 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly Interfaces.IESignGateway _eSignGateway;
 
-        public ProjectController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService)
+        public ProjectController(
+            AppDbContext context, 
+            UserManager<ApplicationUser> userManager, 
+            Services.IWorkflowService workflowService,
+            Interfaces.IESignGateway eSignGateway)
         {
             _context = context;
             _userManager = userManager;
             _workflowService = workflowService;
+            _eSignGateway = eSignGateway;
         }
 
         // Helper method to get current user ID as int
@@ -76,6 +82,40 @@ namespace TPApp.Controllers
 
             if (member == null) return Forbid();
 
+            // SECURITY CHECK: For Sellers (Role=2), verify invitation and NDA
+            if (member.Role == 2)
+            {
+                // Check invitation
+                var invitation = await _context.RFQInvitations
+                    .FirstOrDefaultAsync(i => i.ProjectId == id &&
+                                             i.SellerId == userId &&
+                                             i.IsActive);
+                if (invitation == null)
+                {
+                    TempData["ErrorMessage"] = "Bạn chưa được mời tham gia dự án này.";
+                    return RedirectToAction("InvitedProjects", "Seller");
+                }
+
+                // Check NDA signature
+                var ndaSigned = await _eSignGateway.HasUserSignedProjectNda(id.Value, userId);
+                if (!ndaSigned)
+                {
+                    TempData["WarningMessage"] = "Bạn cần ký NDA trước khi xem chi tiết dự án.";
+                    return RedirectToAction("SignNda", "Project", new { projectId = id });
+                }
+
+                // Update invitation status to Viewed if first time
+                if (invitation.StatusId == 0)
+                {
+                    invitation.StatusId = 1; // Viewed
+                    invitation.ViewedDate = DateTime.Now;
+                    await _context.SaveChangesAsync();
+                }
+
+                // Log seller access
+                await LogProjectAccessAsync(id.Value, userId, "ViewProject");
+            }
+
             // Get step statuses
             var statuses = await GetProjectStepStatuses(id.Value);
 
@@ -111,6 +151,23 @@ namespace TPApp.Controllers
             };
 
             return View(viewModel);
+        }
+
+        // Helper: Log project access for audit trail
+        private async Task LogProjectAccessAsync(int projectId, int userId, string action, string? additionalData = null)
+        {
+            var log = new TPApp.Entities.ProjectAccessLog
+            {
+                ProjectId = projectId,
+                UserId = userId,
+                Action = action,
+                Timestamp = DateTime.Now,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = HttpContext.Request.Headers["User-Agent"].ToString(),
+                AdditionalData = additionalData
+            };
+            _context.ProjectAccessLogs.Add(log);
+            await _context.SaveChangesAsync();
         }
 
         // Helper: Get step statuses
@@ -239,6 +296,62 @@ namespace TPApp.Controllers
             
             // Load step-specific data for inline display
             model.StepData = await LoadStepData(projectId, stepNumber);
+            
+            // Special handling for Step 2 (NDA) - Load E-Sign data
+            if (stepNumber == 2)
+            {
+                var eSignDoc = await _eSignGateway.GetProjectNdaAsync(projectId);
+                ViewBag.ESignDocument = eSignDoc;
+                
+                if (eSignDoc != null)
+                {
+                    var signatures = await _eSignGateway.GetDocumentSignaturesAsync(eSignDoc.Id);
+                    ViewBag.Signatures = signatures;
+                }
+            }
+            
+            // Special handling for Step 3 (RFQ) - Load available suppliers
+            if (stepNumber == 3)
+            {
+                var availableSuppliers = await _context.NhaCungUngs
+                    .Where(n => n.IsActivated == true && n.UserId != null)
+                    .Select(n => new
+                    {
+                        n.CungUngId,
+                        n.UserId,
+                        n.FullName,
+                        n.Email,
+                        n.Phone,
+                        n.DiaChi
+                    })
+                    .ToListAsync();
+                ViewBag.AvailableSuppliers = availableSuppliers;
+                
+                // Load invited suppliers for this RFQ
+                var rfqData = model.StepData as RFQRequest;
+                if (rfqData != null)
+                {
+                    var invitedSuppliers = await _context.RFQInvitations
+                        .Where(i => i.RFQId == rfqData.Id && i.IsActive)
+                        .Join(_context.NhaCungUngs,
+                            inv => inv.SellerId,
+                            ncc => ncc.UserId,
+                            (inv, ncc) => new
+                            {
+                                inv.Id,
+                                inv.SellerId,
+                                inv.InvitedDate,
+                                inv.StatusId,
+                                inv.ViewedDate,
+                                inv.ResponseDate,
+                                ncc.FullName,
+                                ncc.Email,
+                                ncc.Phone
+                            })
+                        .ToListAsync();
+                    ViewBag.InvitedSuppliers = invitedSuppliers;
+                }
+            }
             
             // Return appropriate partial view
             return PartialView($"Steps/_Step{stepNumber}", model);

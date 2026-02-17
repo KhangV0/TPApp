@@ -1,0 +1,13 @@
+<li>
+    <a class="dropdown-item" href="/Project/Index">
+        <i class="bi bi-folder me-2"></i>Dự án của tôi
+    </a>
+</li>
+@if (ViewBag.IsSeller)
+{
+    <li>
+        <a class="dropdown-item" href="/Seller/InvitedProjects">
+            <i class="bi bi-file-earmark-text me-2"></i>Dự án mời tham gia
+        </a>
+    </li>
+}

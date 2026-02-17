@@ -127,12 +127,28 @@ namespace TPApp.Services
 
             var projectCount = await _projectService.GetProjectCountAsync(userId);
 
+            // Check if user is a seller
+            var isSeller = await _context.NhaCungUngs.AnyAsync(n => n.UserId == userId);
+
+            // Count pending invitations for sellers
+            var invitationCount = 0;
+            if (isSeller)
+            {
+                invitationCount = await _context.RFQInvitations
+                    .Where(i => i.SellerId == userId && 
+                               i.IsActive && 
+                               (i.StatusId == 0 || i.StatusId == 1)) // Invited or Viewed
+                    .CountAsync();
+            }
+
             return new AccountSidebarVm
             {
                 FullName = user.FullName ?? user.UserName ?? "User",
                 Email = user.Email ?? "",
                 AvatarUrl = string.IsNullOrEmpty(user.Img) ? "/images/default-avatar.png" : user.Img,
-                ProjectCount = projectCount
+                ProjectCount = projectCount,
+                InvitationCount = invitationCount,
+                IsSeller = isSeller
             };
         }
     }

@@ -116,8 +116,23 @@ namespace TPApp.Data
         public DbSet<AcceptanceReport> AcceptanceReports { get; set; } = null!;
         public DbSet<LiquidationReport> LiquidationReports { get; set; } = null!;
 
+
+        // State Machine Entities (Enterprise Workflow)
+        public DbSet<ProjectWorkflowState> ProjectWorkflowStates { get; set; } = null!;
+        public DbSet<ProjectStepState> ProjectStepStates { get; set; } = null!;
+        public DbSet<WorkflowTransitionLog> WorkflowTransitionLogs { get; set; } = null!;
+
+        // E-Sign System Entities
+        public DbSet<TPApp.Entities.ESign.ESignDocument> ESignDocuments { get; set; } = null!;
+        public DbSet<TPApp.Entities.ESign.ESignSignature> ESignSignatures { get; set; } = null!;
+        public DbSet<TPApp.Entities.ESign.ESignAuditLog> ESignAuditLogs { get; set; } = null!;
+
         // AI Semantic Matching
         public DbSet<TPApp.Domain.Entities.SanPhamEmbedding> SanPhamEmbeddings { get; set; } = null!;
         public DbSet<TPApp.Domain.Entities.AISearchLog> AISearchLogs { get; set; } = null!;
+
+        // RFQ Invitation System
+        public DbSet<RFQInvitation> RFQInvitations { get; set; } = null!;
+        public DbSet<ProjectAccessLog> ProjectAccessLogs { get; set; } = null!;
     }
 }

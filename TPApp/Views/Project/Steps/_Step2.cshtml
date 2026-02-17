@@ -2,38 +2,244 @@
 
 @{
     var nda = Model.StepData as TPApp.Entities.NDAAgreement;
+    var eSignDoc = ViewBag.ESignDocument as TPApp.Entities.ESign.ESignDocument;
+    var signatures = ViewBag.Signatures as List<TPApp.Entities.ESign.ESignSignature>;
 }
 
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-            <i class="fas fa-file-signature"></i> Bước 2: Thỏa thuận Bảo mật (NDA)
+            <i class="fas fa-file-signature"></i> Bước 2: Thỏa thuận Bảo mật (NDA) - Chữ ký điện tử
         </h5>
-        @if (nda != null)
-        {
-            <button class="btn btn-light btn-sm edit-step-btn" data-step="2" data-project-id="@Model.ProjectId">
-                <i class="fas fa-edit"></i> Chỉnh sửa
-            </button>
-        }
     </div>
     <div class="card-body">
+        
+        @* E-Sign Section *@
+        @if (eSignDoc != null)
+        {
+            <div class="esign-section mb-4">
+                <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-shield-alt"></i> Tài liệu chữ ký điện tử</h6>
+                
+                <dl class="row">
+                    <dt class="col-sm-3">Tên tài liệu:</dt>
+                    <dd class="col-sm-9"><strong>@eSignDoc.DocumentName</strong></dd>
+
+                    <dt class="col-sm-3">Trạng thái:</dt>
+                    <dd class="col-sm-9">
+                        @switch (eSignDoc.Status)
+                        {
+                            case 0:
+                                <span class="badge bg-secondary"><i class="fas fa-file"></i> Nháp</span>
+                                break;
+                            case 1:
+                                <span class="badge bg-warning"><i class="fas fa-clock"></i> Chờ ký</span>
+                                break;
+                            case 2:
+                                <span class="badge bg-success"><i class="fas fa-check-circle"></i> Đã ký</span>
+                                break;
+                            case 3:
+                                <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Từ chối</span>
+                                break;
+                        }
+                    </dd>
+
+                    @if (!string.IsNullOrEmpty(eSignDoc.FilePath))
+                    {
+                        <dt class="col-sm-3">File:</dt>
+                        <dd class="col-sm-9">
+                            <a href="@eSignDoc.FilePath" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download"></i> Tải xuống NDA
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-3">Mã hash (SHA256):</dt>
+                        <dd class="col-sm-9"><code class="small">@eSignDoc.FileHash</code></dd>
+                    }
+
+                    @if (eSignDoc.SignedAt.HasValue)
+                    {
+                        <dt class="col-sm-3">Ngày ký:</dt>
+                        <dd class="col-sm-9">@eSignDoc.SignedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</dd>
+                    }
+                </dl>
+
+                @* Signatures List *@
+                @if (signatures != null && signatures.Any())
+                {
+                    <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="fas fa-pen-fancy"></i> Danh sách chữ ký</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Người ký</th>
+                                    <th>Vai trò</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày ký</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var sig in signatures)
+                                {
+                                    <tr>
+                                        <td>User #@sig.SignerUserId</td>
+                                        <td>@sig.SignerRole</td>
+                                        <td>
+                                            @if (sig.Status == 1)
+                                            {
+                                                <span class="badge bg-success">Đã ký</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning">Chờ ký</span>
+                                            }
+                                        </td>
+                                        <td>@(sig.SignedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                        <td><small>@sig.IpAddress</small></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                @* Sign Button *@
+                @if (eSignDoc.Status != 2)
+                {
+                    <div class="mt-4 p-3 bg-light border rounded">
+                        <h6 class="mb-3"><i class="fas fa-signature"></i> Ký tài liệu điện tử</h6>
+                        
+                        <div id="esign-form">
+                            <div class="mb-3">
+                                <label class="form-label">Số điện thoại (nhận OTP):</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="phoneNumber" placeholder="0912345678" />
+                                    <button class="btn btn-outline-primary" type="button" id="btnSendOtp">
+                                        <i class="fas fa-paper-plane"></i> Gửi OTP
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mb-3" id="otpSection" style="display:none;">
+                                <label class="form-label">Mã OTP:</label>
+                                <input type="text" class="form-control" id="otpCode" placeholder="Nhập 6 số" maxlength="6" />
+                                <small class="text-muted">Mã OTP đã được gửi đến số điện thoại của bạn</small>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="agreeTerms" />
+                                <label class="form-check-label" for="agreeTerms">
+                                    Tôi đã đọc và đồng ý với các điều khoản trong thỏa thuận NDA
+                                </label>
+                            </div>
+
+                            <button class="btn btn-success" id="btnSign" data-document-id="@eSignDoc.Id" disabled>
+                                <i class="fas fa-pen-nib"></i> Ký tài liệu
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            @* No E-Sign document yet - Show combined NDA + upload form *@
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Tạo Phiếu Thỏa thuận Bảo mật và tải lên file PDF</strong>
+            </div>
+
+            <div class="p-4 bg-light border rounded">
+                <h6 class="mb-3"><i class="fas fa-file-contract"></i> Thông tin Phiếu Thỏa thuận Bảo mật</h6>
+                <form id="createNdaForm" enctype="multipart/form-data">
+                    <input type="hidden" id="projectId" value="@Model.ProjectId" />
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Bên A (Bên bán) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="benA" name="benA"/>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Bên B (Bên Tư vấn) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="benB" name="benB"/>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Loại NDA <span class="text-danger">*</span></label>
+                            <select class="form-select" id="loaiNDA" name="loaiNDA" required>
+                                <option value="">-- Chọn loại --</option>
+                                <option value="1">Mẫu chuẩn của Sàn</option>
+                                <option value="2">Tải lên mẫu riêng</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Thời hạn bảo mật <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="thoiHanBaoMat" name="thoiHanBaoMat" required 
+                                   placeholder="VD: 2 năm, 36 tháng..." />
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <h6 class="mb-3"><i class="fas fa-upload"></i> Tải lên file PDF</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Chọn file PDF <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="ndaFile" name="ndaFile" accept=".pdf" required />
+                        <small class="text-muted">File PDF chứa nội dung thỏa thuận bảo mật</small>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="daDongY" name="daDongY" required />
+                        <label class="form-check-label" for="daDongY">
+                            Tôi đã đọc và đồng ý với các điều khoản bảo mật <span class="text-danger">*</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Tạo Phiếu NDA và Tải lên File
+                    </button>
+                </form>
+            </div>
+        }
+
+        @* NDA Agreement Information *@
         @if (nda != null)
         {
+            <hr class="my-4" />
+            <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-file-contract"></i> Thông tin Phiếu Thỏa thuận Bảo mật</h6>
             <dl class="row">
-                <dt class="col-sm-3">Bên A:</dt>
+                <dt class="col-sm-3">Bên A (Bên bán):</dt>
                 <dd class="col-sm-9"><strong>@nda.BenA</strong></dd>
 
-                <dt class="col-sm-3">Bên B:</dt>
+                <dt class="col-sm-3">Bên B (Bên Tư vấn):</dt>
                 <dd class="col-sm-9"><strong>@nda.BenB</strong></dd>
 
                 <dt class="col-sm-3">Loại NDA:</dt>
-                <dd class="col-sm-9">@nda.LoaiNDA</dd>
+                <dd class="col-sm-9">
+                    <span class="badge bg-info">@nda.LoaiNDA</span>
+                    <small class="text-muted ms-2">(Mẫu chuẩn của Sàn / Tải lên mẫu riêng: file @nda.LoaiNDA)</small>
+                </dd>
 
                 <dt class="col-sm-3">Thời hạn bảo mật:</dt>
                 <dd class="col-sm-9">@nda.ThoiHanBaoMat</dd>
 
-                <dt class="col-sm-3">Xác nhận ký số:</dt>
-                <dd class="col-sm-9">@(nda.XacNhanKySo ?? "Chưa cập nhật")</dd>
+                <dt class="col-sm-3">Xác nhận ký số (E-Sign /OTP):</dt>
+                <dd class="col-sm-9">
+                    @if (!string.IsNullOrEmpty(nda.XacNhanKySo))
+                    {
+                        <code>@nda.XacNhanKySo</code>
+                    }
+                    else if (eSignDoc != null && eSignDoc.Status == 2)
+                    {
+                        <span class="badge bg-success"><i class="fas fa-check-circle"></i> Đã ký điện tử</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Chưa xác nhận</span>
+                    }
+                </dd>
 
                 <dt class="col-sm-3">Đã đồng ý điều khoản:</dt>
                 <dd class="col-sm-9">
@@ -47,18 +253,6 @@
                     }
                 </dd>
 
-                <dt class="col-sm-3">Trạng thái:</dt>
-                <dd class="col-sm-9">
-                    @if (Model.Steps[1].StatusId > 0)
-                    {
-                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã hoàn thành</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning"><i class="fas fa-clock"></i> Chưa hoàn thành</span>
-                    }
-                </dd>
-
                 <dt class="col-sm-3">Ngày tạo:</dt>
                 <dd class="col-sm-9">@nda.NgayTao.ToString("dd/MM/yyyy HH:mm")</dd>
 
@@ -69,26 +263,23 @@
                 }
             </dl>
         }
-        else
+        else if (eSignDoc == null)
         {
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> 
-                <strong>Mô tả:</strong> Ký kết thỏa thuận bảo mật giữa các bên
+            <div class="alert alert-warning mt-3">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Chưa có thông tin phiếu thỏa thuận bảo mật. Vui lòng tải lên tài liệu NDA để bắt đầu.
             </div>
-            <p class="text-muted">Chưa có dữ liệu cho bước này.</p>
         }
     </div>
     <div class="card-footer">
         <button class="btn btn-secondary step-nav-btn" data-step="1">
             <i class="fas fa-arrow-left"></i> Quay lại bước trước
         </button>
-        @if (Model.StepNumber < 11 && Model.Steps[Model.StepNumber].IsAccessible)
+        @if (eSignDoc != null && eSignDoc.Status == 2)
         {
-            <button class="btn btn-primary step-nav-btn" data-step="@(Model.StepNumber + 1)">
-                Tiếp tục bước @(Model.StepNumber + 1) <i class="fas fa-arrow-right"></i>
+            <button class="btn btn-primary step-nav-btn" data-step="3">
+                Tiếp tục bước 3 <i class="fas fa-arrow-right"></i>
             </button>
         }
     </div>
 </div>
-
-

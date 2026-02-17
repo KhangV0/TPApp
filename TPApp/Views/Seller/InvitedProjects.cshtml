@@ -1,0 +1,207 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model List<TPApp.ViewModel.SellerInvitationVm>
+
+@{
+    ViewData["Title"] = "Dự án được mời";
+    
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            @await Html.PartialAsync("_AccountSidebar", sidebarData)
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show">
+            <i class="fas fa-info-circle"></i> @TempData["InfoMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0"><i class="fas fa-envelope-open-text"></i> Dự án được mời tham gia</h5>
+                    <span class="badge bg-primary">Tổng: @Model.Count lời mời</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>Chưa có lời mời nào</strong><br />
+                    Hiện tại bạn chưa được mời tham gia dự án nào. Vui lòng kiểm tra lại sau.
+                </div>
+            }
+            else
+            {
+                <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">@item.Project.ProjectName</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5">Mã RFQ:</dt>
+                                <dd class="col-sm-7"><code>@item.RFQ.MaRFQ</code></dd>
+
+                                <dt class="col-sm-5">Ngày mời:</dt>
+                                <dd class="col-sm-7">@item.Invitation.InvitedDate.ToString("dd/MM/yyyy")</dd>
+
+                                <dt class="col-sm-5">Hạn nộp:</dt>
+                                <dd class="col-sm-7">
+                                    <span class="badge @(item.DeadlinePassed ? "bg-danger" : "bg-warning")">
+                                        <i class="fas fa-calendar-alt"></i> @item.RFQ.HanChotNopHoSo.ToString("dd/MM/yyyy")
+                                    </span>
+                                </dd>
+
+                                @if (!item.DeadlinePassed && item.DaysUntilDeadline >= 0)
+                                {
+                                    <dt class="col-sm-5">Còn lại:</dt>
+                                    <dd class="col-sm-7">
+                                        <strong class="text-danger">@item.DaysUntilDeadline ngày</strong>
+                                    </dd>
+                                }
+
+                                <dt class="col-sm-5">Trạng thái:</dt>
+                                <dd class="col-sm-7">
+                                    <span class="badge @item.StatusBadgeClass">@item.StatusText</span>
+                                </dd>
+
+                                <dt class="col-sm-5">NDA:</dt>
+                                <dd class="col-sm-7">
+                                    @if (item.NdaSigned)
+                                    {
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã ký</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning"><i class="fas fa-exclamation-triangle"></i> Chưa ký</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="card-footer bg-light">
+                            @if (item.Invitation.StatusId == 0 || item.Invitation.StatusId == 1)
+                            {
+                                <div class="d-grid gap-2">
+                                    @if (!item.NdaSigned)
+                                    {
+                                        <a href="/Project/SignNda?projectId=@item.Project.Id" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-file-signature"></i> Ký NDA
+                                        </a>
+                                    }
+                                    else if (item.CanSubmitProposal)
+                                    {
+                                        <form method="post" asp-action="AcceptInvitation" asp-route-id="@item.Invitation.Id" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                                <i class="fas fa-check"></i> Chấp nhận & Xem chi tiết
+                                            </button>
+                                        </form>
+                                    }
+                                    else if (item.DeadlinePassed)
+                                    {
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            <i class="fas fa-clock"></i> Đã hết hạn
+                                        </button>
+                                    }
+                                </div>
+
+                                @if (item.Invitation.StatusId == 0)
+                                {
+                                    <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2" 
+                                            data-bs-toggle="modal" data-bs-target="#declineModal@(item.Invitation.Id)">
+                                        <i class="fas fa-times"></i> Từ chối
+                                    </button>
+
+                                    <!-- Decline Modal -->
+                                    <div class="modal fade" id="declineModal@(item.Invitation.Id)" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form method="post" asp-action="DeclineInvitation" asp-route-id="@item.Invitation.Id">
+                                                    @Html.AntiForgeryToken()
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Từ chối lời mời</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Bạn có chắc chắn muốn từ chối lời mời tham gia dự án <strong>@item.Project.ProjectName</strong>?</p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Lý do (không bắt buộc):</label>
+                                                            <textarea name="reason" class="form-control" rows="3" 
+                                                                      placeholder="Nhập lý do từ chối..."></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                        <button type="submit" class="btn btn-danger">Xác nhận từ chối</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else if (item.Invitation.StatusId == 2)
+                            {
+                                <a href="/Project/Details/@item.Project.Id" class="btn btn-primary btn-sm w-100">
+                                    <i class="fas fa-eye"></i> Xem chi tiết dự án
+                                </a>
+                                @if (item.CanSubmitProposal)
+                                {
+                                    <a href="/Proposal/Create?duAnId=@item.Project.Id" class="btn btn-success btn-sm w-100 mt-2">
+                                        <i class="fas fa-paper-plane"></i> Gửi báo giá
+                                    </a>
+                                }
+                                else if (item.ProposalSubmitted)
+                                {
+                                    <a href="/Proposal/Index?duAnId=@item.Project.Id" class="btn btn-info btn-sm w-100 mt-2">
+                                        <i class="fas fa-file-alt"></i> Xem báo giá đã gửi
+                                    </a>
+                                }
+                            }
+                            else if (item.Invitation.StatusId == 3)
+                            {
+                                <button class="btn btn-secondary btn-sm w-100" disabled>
+                                    <i class="fas fa-ban"></i> Đã từ chối
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+                </div>
+            }
+        </div>
+    </div><!-- End card -->
+</div><!-- End Main Content -->
+    </div><!-- End row -->
+</div><!-- End container-fluid -->
