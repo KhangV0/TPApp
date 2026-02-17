@@ -39,8 +39,8 @@ namespace TPApp.Services
                     .Where(ps => ps.ProjectId == p.Id && ps.StatusId == 2)
                     .CountAsync();
 
-                // Calculate progress (11 total steps)
-                var progress = (int)Math.Round((completedSteps / 11.0) * 100);
+                // Calculate progress (14 total steps)
+                var progress = (int)Math.Round((completedSteps / 14.0) * 100);
 
                 // Get current step (first incomplete step where StatusId != 2)
                 var currentStep = await _context.ProjectSteps
@@ -49,7 +49,7 @@ namespace TPApp.Services
                     .Select(ps => ps.StepNumber)
                     .FirstOrDefaultAsync();
 
-                if (currentStep == 0) currentStep = 11; // All completed
+                if (currentStep == 0) currentStep = 14; // All completed
 
                 result.Add(new MyProjectVm
                 {

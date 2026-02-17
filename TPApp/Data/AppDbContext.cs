@@ -105,10 +105,14 @@ namespace TPApp.Data
         public DbSet<RFQRequest> RFQRequests { get; set; } = null!;
         public DbSet<ProposalSubmission> ProposalSubmissions { get; set; } = null!;
         public DbSet<NegotiationForm> NegotiationForms { get; set; } = null!;
+        public DbSet<LegalReviewForm> LegalReviewForms { get; set; } = null!;
         public DbSet<EContract> EContracts { get; set; } = null!;
         public DbSet<AdvancePaymentConfirmation> AdvancePaymentConfirmations { get; set; } = null!;
+        public DbSet<PilotTestReport> PilotTestReports { get; set; } = null!;
         public DbSet<ImplementationLog> ImplementationLogs { get; set; } = null!;
         public DbSet<HandoverReport> HandoverReports { get; set; } = null!;
+        public DbSet<TrainingHandover> TrainingHandovers { get; set; } = null!;
+        public DbSet<TechnicalDocHandover> TechnicalDocHandovers { get; set; } = null!;
         public DbSet<AcceptanceReport> AcceptanceReports { get; set; } = null!;
         public DbSet<LiquidationReport> LiquidationReports { get; set; } = null!;
 

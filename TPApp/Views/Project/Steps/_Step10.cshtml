@@ -1,33 +1,60 @@
 @model TPApp.ViewModel.StepContentVm
 
 @{
-    var acceptance = Model.StepData as TPApp.Entities.AcceptanceReport;
+    var handover = Model.StepData as TPApp.Entities.HandoverReport;
 }
 
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-clipboard-check"></i> Bước 10: Nghiệm thu</h5>
-        @if (acceptance != null)
+        <h5 class="mb-0"><i class="fas fa-handshake"></i> Bước 9: Bàn giao</h5>
+        @if (handover != null)
         {
-            <button class="btn btn-light btn-sm edit-step-btn" data-step="10" data-project-id="@Model.ProjectId">
+            <button class="btn btn-light btn-sm edit-step-btn" data-step="9" data-project-id="@Model.ProjectId">
                 <i class="fas fa-edit"></i> Chỉnh sửa
             </button>
         }
     </div>
     <div class="card-body">
-        @if (acceptance != null)
+        @if (handover != null)
         {
             <dl class="row">
-                <dt class="col-sm-3">Ngày nghiệm thu:</dt>
-                <dd class="col-sm-9"><strong>@acceptance.NgayNghiemThu.ToString("dd/MM/yyyy")</strong></dd>
-
-                <dt class="col-sm-3">Kết luận:</dt>
-                <dd class="col-sm-9">@(acceptance.KetLuanNghiemThu ?? "Chưa có kết luận")</dd>
-
-                <dt class="col-sm-3">Trạng thái ký:</dt>
+                <dt class="col-sm-3">Đã hoàn thành đào tạo:</dt>
                 <dd class="col-sm-9">
-                    <span class="badge bg-success">@acceptance.TrangThaiKy</span>
+                    @if (handover.DaHoanThanhDaoTao)
+                    {
+                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã hoàn thành</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning"><i class="fas fa-times"></i> Chưa hoàn thành</span>
+                    }
                 </dd>
+
+                <dt class="col-sm-3">Đánh giá:</dt>
+                <dd class="col-sm-9">
+                    @if (handover.DanhGiaSao.HasValue)
+                    {
+                        for (int i = 1; i <= 5; i++)
+                        {
+                            if (i <= handover.DanhGiaSao.Value)
+                            {
+                                <i class="fas fa-star text-warning"></i>
+                            }
+                            else
+                            {
+                                <i class="far fa-star text-warning"></i>
+                            }
+                        }
+                        <span class="ms-2">(@handover.DanhGiaSao.Value/5)</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Chưa đánh giá</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-3">Nhận xét:</dt>
+                <dd class="col-sm-9">@(handover.NhanXet ?? "Chưa có nhận xét")</dd>
             </dl>
         }
         else
@@ -47,3 +74,4 @@
         }
     </div>
 </div>
+

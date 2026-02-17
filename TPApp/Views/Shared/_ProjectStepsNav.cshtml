@@ -2,7 +2,7 @@
 
 @{
     var completedCount = Model.Count(s => s.StatusId > 0);
-    var progressPercent = (int)Math.Round((completedCount / 11.0) * 100);
+    var progressPercent = (int)Math.Round((completedCount / 14.0) * 100);
 }
 
 <div class="project-steps-nav mb-4">
@@ -52,7 +52,7 @@
             <!-- Progress Text -->
             <div class="text-center mt-3">
                 <small class="text-muted">
-                    <i class="fas fa-tasks"></i> Hoàn thành: <strong>@completedCount/11</strong> bước (@progressPercent%)
+                    <i class="fas fa-tasks"></i> Hoàn thành: <strong>@completedCount/14</strong> bước (@progressPercent%)
                 </small>
             </div>
         </div>

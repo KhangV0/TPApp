@@ -84,14 +84,14 @@ namespace TPApp.Controllers
 
             // Calculate current step (first incomplete step)
             var currentStep = 1;
-            for (int i = 0; i < 11; i++)
+            for (int i = 0; i < 14; i++)
             {
                 if (steps[i].StatusId == 0)
                 {
                     currentStep = i + 1;
                     break;
                 }
-                if (i == 10) currentStep = 11; // All completed
+                if (i == 13) currentStep = 14; // All completed
             }
 
             // Mark current step
@@ -99,7 +99,7 @@ namespace TPApp.Controllers
 
             // Calculate progress
             var completedCount = statuses.Values.Count(s => s > 0);
-            var progressPercent = (int)Math.Round((completedCount / 11.0) * 100);
+            var progressPercent = (int)Math.Round((completedCount / 14.0) * 100);
 
             var viewModel = new TPApp.ViewModel.ProjectDetailWithStepsVm
             {
@@ -133,17 +133,26 @@ namespace TPApp.Controllers
             var negotiation = await _context.NegotiationForms.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["Negotiation"] = negotiation?.StatusId ?? 0;
 
+            var legalReview = await _context.LegalReviewForms.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            statuses["LegalReview"] = legalReview?.StatusId ?? 0;
+
             var contract = await _context.EContracts.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["EContract"] = contract?.StatusId ?? 0;
 
             var payment = await _context.AdvancePaymentConfirmations.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["AdvancePayment"] = payment?.StatusId ?? 0;
 
-            var log = await _context.ImplementationLogs.FirstOrDefaultAsync(x => x.ProjectId == projectId);
-            statuses["ImplementationLog"] = log?.StatusId ?? 0;
+            var pilotTest = await _context.PilotTestReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            statuses["PilotTest"] = pilotTest?.StatusId ?? 0;
 
             var handover = await _context.HandoverReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["Handover"] = handover?.StatusId ?? 0;
+
+            var training = await _context.TrainingHandovers.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            statuses["Training"] = training?.StatusId ?? 0;
+
+            var techDoc = await _context.TechnicalDocHandovers.FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            statuses["TechDoc"] = techDoc?.StatusId ?? 0;
 
             var acceptance = await _context.AcceptanceReports.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["Acceptance"] = acceptance?.StatusId ?? 0;
@@ -159,17 +168,20 @@ namespace TPApp.Controllers
         {
             var steps = new List<TPApp.ViewModel.ProjectStepNavVm>
             {
-                new() { StepNumber = 1, StepName = "Yêu cầu chuyển giao", StatusId = statuses["TechTransfer"], ControllerName = "TechTransfer", ActionName = "Details", IsAccessible = true },
-                new() { StepNumber = 2, StepName = "Thỏa thuận NDA", StatusId = statuses["NDA"], ControllerName = "NDA", ActionName = "Create", IsAccessible = statuses["TechTransfer"] > 0 },
-                new() { StepNumber = 3, StepName = "Yêu cầu báo giá", StatusId = statuses["RFQ"], ControllerName = "RFQ", ActionName = "Create", IsAccessible = statuses["NDA"] > 0 },
-                new() { StepNumber = 4, StepName = "Nộp hồ sơ", StatusId = statuses["Proposal"], ControllerName = "Proposal", ActionName = "Index", IsAccessible = statuses["RFQ"] > 0 },
-                new() { StepNumber = 5, StepName = "Đàm phán", StatusId = statuses["Negotiation"], ControllerName = "Negotiation", ActionName = "Create", IsAccessible = statuses["Proposal"] > 0 },
-                new() { StepNumber = 6, StepName = "Ký hợp đồng", StatusId = statuses["EContract"], ControllerName = "EContract", ActionName = "Create", IsAccessible = statuses["Negotiation"] > 0 },
-                new() { StepNumber = 7, StepName = "Xác nhận tạm ứng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["EContract"] > 0 },
-                new() { StepNumber = 8, StepName = "Nhật ký triển khai", StatusId = statuses["ImplementationLog"], ControllerName = "ImplementationLog", ActionName = "Create", IsAccessible = statuses["AdvancePayment"] > 0 },
-                new() { StepNumber = 9, StepName = "Bàn giao", StatusId = statuses["Handover"], ControllerName = "Handover", ActionName = "Create", IsAccessible = statuses["ImplementationLog"] > 0 },
-                new() { StepNumber = 10, StepName = "Nghiệm thu", StatusId = statuses["Acceptance"], ControllerName = "Acceptance", ActionName = "Create", IsAccessible = statuses["Handover"] > 0 },
-                new() { StepNumber = 11, StepName = "Thanh lý", StatusId = statuses["Liquidation"], ControllerName = "Liquidation", ActionName = "Create", IsAccessible = statuses["Acceptance"] > 0 }
+                new() { StepNumber = 1, StepName = "Yêu cầu chuyển giao công nghệ", StatusId = statuses["TechTransfer"], ControllerName = "TechTransfer", ActionName = "Details", IsAccessible = true },
+                new() { StepNumber = 2, StepName = "Thỏa thuận bảo mật (NDA)", StatusId = statuses["NDA"], ControllerName = "NDA", ActionName = "Create", IsAccessible = statuses["TechTransfer"] > 0 },
+                new() { StepNumber = 3, StepName = "Yêu cầu báo giá (RFQ)", StatusId = statuses["RFQ"], ControllerName = "RFQ", ActionName = "Create", IsAccessible = statuses["NDA"] > 0 },
+                new() { StepNumber = 4, StepName = "Nộp hồ sơ đề xuất", StatusId = statuses["Proposal"], ControllerName = "Proposal", ActionName = "Index", IsAccessible = statuses["RFQ"] > 0 },
+                new() { StepNumber = 5, StepName = "Đàm phán thương mại", StatusId = statuses["Negotiation"], ControllerName = "Negotiation", ActionName = "Create", IsAccessible = statuses["Proposal"] > 0 },
+                new() { StepNumber = 6, StepName = "Kiểm tra pháp lý", StatusId = statuses["LegalReview"], ControllerName = "LegalReview", ActionName = "Create", IsAccessible = statuses["Negotiation"] > 0 },
+                new() { StepNumber = 7, StepName = "Ký hợp đồng điện tử", StatusId = statuses["EContract"], ControllerName = "EContract", ActionName = "Create", IsAccessible = statuses["LegalReview"] > 0 },
+                new() { StepNumber = 8, StepName = "Xác nhận tạm ứng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["EContract"] > 0 },
+                new() { StepNumber = 9, StepName = "Thử nghiệm Pilot", StatusId = statuses["PilotTest"], ControllerName = "PilotTest", ActionName = "Create", IsAccessible = statuses["AdvancePayment"] > 0 },
+                new() { StepNumber = 10, StepName = "Bàn giao & triển khai thiết bị", StatusId = statuses["Handover"], ControllerName = "Handover", ActionName = "Create", IsAccessible = statuses["PilotTest"] > 0 },
+                new() { StepNumber = 11, StepName = "Đào tạo & chuyển giao vận hành", StatusId = statuses["Training"], ControllerName = "Training", ActionName = "Create", IsAccessible = statuses["Handover"] > 0 },
+                new() { StepNumber = 12, StepName = "Bàn giao hồ sơ kỹ thuật", StatusId = statuses["TechDoc"], ControllerName = "TechDoc", ActionName = "Create", IsAccessible = statuses["Training"] > 0 },
+                new() { StepNumber = 13, StepName = "Nghiệm thu", StatusId = statuses["Acceptance"], ControllerName = "Acceptance", ActionName = "Create", IsAccessible = statuses["TechDoc"] > 0 },
+                new() { StepNumber = 14, StepName = "Thanh lý hợp đồng", StatusId = statuses["Liquidation"], ControllerName = "Liquidation", ActionName = "Create", IsAccessible = statuses["Acceptance"] > 0 }
             };
 
             return steps;
@@ -188,7 +200,7 @@ namespace TPApp.Controllers
             if (member == null) return Forbid();
             
             // Validate step number
-            if (stepNumber < 1 || stepNumber > 11) return BadRequest("Invalid step number");
+            if (stepNumber < 1 || stepNumber > 14) return BadRequest("Invalid step number");
             
             // Get step statuses
             var statuses = await GetProjectStepStatuses(projectId);
@@ -196,14 +208,14 @@ namespace TPApp.Controllers
             
             // Determine current step (first incomplete)
             var currentStep = 1;
-            for (int i = 0; i < 11; i++)
+            for (int i = 0; i < 14; i++)
             {
                 if (steps[i].StatusId == 0)
                 {
                     currentStep = i + 1;
                     break;
                 }
-                if (i == 10) currentStep = 11; // All complete
+                if (i == 13) currentStep = 14; // All complete
             }
             
             // Validate access - can't skip ahead
@@ -242,12 +254,15 @@ namespace TPApp.Controllers
                 3 => await _context.RFQRequests.FirstOrDefaultAsync(x => x.ProjectId == projectId),
                 4 => await _context.ProposalSubmissions.FirstOrDefaultAsync(x => x.ProjectId == projectId),
                 5 => await _context.NegotiationForms.FirstOrDefaultAsync(x => x.ProjectId == projectId),
-                6 => await _context.EContracts.FirstOrDefaultAsync(x => x.ProjectId == projectId),
-                7 => await _context.AdvancePaymentConfirmations.FirstOrDefaultAsync(x => x.ProjectId == projectId),
-                8 => await _context.ImplementationLogs.FirstOrDefaultAsync(x => x.ProjectId == projectId),
-                9 => await _context.HandoverReports.FirstOrDefaultAsync(x => x.ProjectId == projectId),
-                10 => await _context.AcceptanceReports.FirstOrDefaultAsync(x => x.ProjectId == projectId),
-                11 => await _context.LiquidationReports.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                6 => await _context.LegalReviewForms.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                7 => await _context.EContracts.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                8 => await _context.AdvancePaymentConfirmations.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                9 => await _context.PilotTestReports.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                10 => await _context.HandoverReports.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                11 => await _context.TrainingHandovers.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                12 => await _context.TechnicalDocHandovers.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                13 => await _context.AcceptanceReports.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                14 => await _context.LiquidationReports.FirstOrDefaultAsync(x => x.ProjectId == projectId),
                 _ => null
             };
         }
@@ -276,12 +291,15 @@ namespace TPApp.Controllers
                     3 => await UpdateRFQData(projectId, formData, userId),
                     4 => await UpdateProposalData(projectId, formData, userId),
                     5 => await UpdateNegotiationData(projectId, formData, userId),
-                    6 => await UpdateEContractData(projectId, formData, userId),
-                    7 => await UpdateAdvancePaymentData(projectId, formData, userId),
-                    8 => await UpdateImplementationData(projectId, formData, userId),
-                    9 => await UpdateHandoverData(projectId, formData, userId),
-                    10 => await UpdateAcceptanceData(projectId, formData, userId),
-                    11 => await UpdateLiquidationData(projectId, formData, userId),
+                    6 => false, // TODO: Implement UpdateLegalReviewData
+                    7 => await UpdateEContractData(projectId, formData, userId),
+                    8 => await UpdateAdvancePaymentData(projectId, formData, userId),
+                    9 => false, // TODO: Implement UpdatePilotTestData
+                    10 => await UpdateHandoverData(projectId, formData, userId),
+                    11 => false, // TODO: Implement UpdateTrainingData
+                    12 => false, // TODO: Implement UpdateTechDocData
+                    13 => await UpdateAcceptanceData(projectId, formData, userId),
+                    14 => await UpdateLiquidationData(projectId, formData, userId),
                     _ => false
                 };
                 

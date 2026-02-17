@@ -181,11 +181,11 @@ namespace TPApp.Services
 
                 // Calculate progress
                 int completedSteps = steps.Count(s => s.StatusId == (int)StepStatus.Completed);
-                int progressPercent = steps.Any() ? (int)Math.Round((completedSteps / 11.0) * 100) : 0;
+                int progressPercent = steps.Any() ? (int)Math.Round((completedSteps / 14.0) * 100) : 0;
 
                 // Build steps summary for visualization
                 var stepsSummary = new List<StepMiniVm>();
-                for (int i = 1; i <= 11; i++)
+                for (int i = 1; i <= 14; i++)
                 {
                     var step = steps.FirstOrDefault(s => s.StepNumber == i);
                     stepsSummary.Add(new StepMiniVm
@@ -226,11 +226,11 @@ namespace TPApp.Services
             int inProgressProjects = projectItems.Count(p => 
                 p.StepsSummary.Any(s => s.StatusId == (int)StepStatus.InProgress));
             
-            // Completed: projects where step 11 is Completed OR all steps are Completed
+            // Completed: projects where step 14 is Completed OR all steps are Completed
             int completedProjects = projectItems.Count(p =>
             {
-                var step11 = p.StepsSummary.FirstOrDefault(s => s.StepNumber == 11);
-                return step11?.StatusId == (int)StepStatus.Completed ||
+                var step14 = p.StepsSummary.FirstOrDefault(s => s.StepNumber == 14);
+                return step14?.StatusId == (int)StepStatus.Completed ||
                        p.StepsSummary.All(s => s.StatusId == (int)StepStatus.Completed);
             });
             

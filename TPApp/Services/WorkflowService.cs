@@ -30,12 +30,15 @@ namespace TPApp.Services
                 new ProjectStep { ProjectId = projectId, StepNumber = 3, StepName = "Yêu cầu báo giá (RFQ)", StatusId = 0 },
                 new ProjectStep { ProjectId = projectId, StepNumber = 4, StepName = "Nộp hồ sơ đề xuất", StatusId = 0 },
                 new ProjectStep { ProjectId = projectId, StepNumber = 5, StepName = "Đàm phán thương mại", StatusId = 0 },
-                new ProjectStep { ProjectId = projectId, StepNumber = 6, StepName = "Ký hợp đồng điện tử", StatusId = 0 },
-                new ProjectStep { ProjectId = projectId, StepNumber = 7, StepName = "Xác nhận tạm ứng", StatusId = 0 },
-                new ProjectStep { ProjectId = projectId, StepNumber = 8, StepName = "Nhật ký triển khai", StatusId = 0 },
-                new ProjectStep { ProjectId = projectId, StepNumber = 9, StepName = "Biên bản bàn giao", StatusId = 0 },
-                new ProjectStep { ProjectId = projectId, StepNumber = 10, StepName = "Biên bản nghiệm thu", StatusId = 0 },
-                new ProjectStep { ProjectId = projectId, StepNumber = 11, StepName = "Thanh lý hợp đồng", StatusId = 0 }
+                new ProjectStep { ProjectId = projectId, StepNumber = 6, StepName = "Kiểm tra pháp lý", StatusId = 0 },
+                new ProjectStep { ProjectId = projectId, StepNumber = 7, StepName = "Ký hợp đồng điện tử", StatusId = 0 },
+                new ProjectStep { ProjectId = projectId, StepNumber = 8, StepName = "Xác nhận tạm ứng", StatusId = 0 },
+                new ProjectStep { ProjectId = projectId, StepNumber = 9, StepName = "Thử nghiệm Pilot", StatusId = 0 },
+                new ProjectStep { ProjectId = projectId, StepNumber = 10, StepName = "Bàn giao & triển khai thiết bị", StatusId = 0 },
+                new ProjectStep { ProjectId = projectId, StepNumber = 11, StepName = "Đào tạo & chuyển giao vận hành", StatusId = 0 },
+                new ProjectStep { ProjectId = projectId, StepNumber = 12, StepName = "Bàn giao hồ sơ kỹ thuật", StatusId = 0 },
+                new ProjectStep { ProjectId = projectId, StepNumber = 13, StepName = "Nghiệm thu", StatusId = 0 },
+                new ProjectStep { ProjectId = projectId, StepNumber = 14, StepName = "Thanh lý hợp đồng", StatusId = 0 }
             };
 
             await _context.ProjectSteps.AddRangeAsync(steps);

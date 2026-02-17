@@ -24,8 +24,15 @@
         <div class="col-md-9 col-lg-10">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="fas fa-folder"></i> Danh sách dự án</h5>
-                    <span class="badge bg-primary">Tổng: @Model.Count dự án</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0"><i class="fas fa-folder"></i> Danh sách dự án</h5>
+                            <span class="badge bg-primary">Tổng: @Model.Count dự án</span>
+                        </div>
+                        <a href="@Url.Action("Create", "TechTransfer")" class="btn btn-success">
+                            <i class="fas fa-plus-circle"></i> Đăng yêu cầu chuyển giao công nghệ
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if (Model.Count == 0)
@@ -74,7 +81,7 @@
                                                 }
                                             </td>
                                             <td>
-                                                <span class="badge bg-warning text-dark">Bước @project.CurrentStep/11</span>
+                                                <span class="badge bg-warning text-dark">Bước @project.CurrentStep/14</span>
                                             </td>
                                             <td>
                                                 @switch (project.StatusId)
