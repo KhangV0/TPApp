@@ -43,6 +43,10 @@ namespace TPApp.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectMember> ProjectMembers { get; set; }
         public DbSet<ProjectStep> ProjectSteps { get; set; }
+        
+        // Permission System
+        public DbSet<StepPermission> StepPermissions { get; set; }
+        public DbSet<ProjectConsultant> ProjectConsultants { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

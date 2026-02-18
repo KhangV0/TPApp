@@ -30,5 +30,10 @@ namespace TPApp.Entities
         public int? ModifiedBy { get; set; } // int to match database UserId
         
         public DateTime? ModifiedDate { get; set; }
+
+        // Seller Workflow
+        public int? SelectedSellerId { get; set; }
+        
+        public DateTime? SelectedDate { get; set; }
     }
 }

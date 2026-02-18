@@ -42,7 +42,9 @@ namespace TPApp.Services
         {
             return await _context.ESignDocuments
                 .Include(d => d.Signatures)
-                .FirstOrDefaultAsync(d => d.ProjectId == projectId && d.DocType == 1); // 1 = ProjectNDA
+                .Where(d => d.ProjectId == projectId && d.DocType == 1) // 1 = ProjectNDA
+                .OrderByDescending(d => d.Id) // Get latest document
+                .FirstOrDefaultAsync();
         }
 
         public async Task<ESignDocument> CreateDocumentAsync(int projectId, int docType, string documentName, int createdBy)

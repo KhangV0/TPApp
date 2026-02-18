@@ -76,45 +76,97 @@ namespace TPApp.Controllers
             if (id == null) return NotFound();
 
             var userId = GetCurrentUserId();
+            
+            // Try to get project member first
             var member = await _context.ProjectMembers
                 .Include(m => m.Project)
                 .FirstOrDefaultAsync(m => m.ProjectId == id && m.UserId == userId);
 
-            if (member == null) return Forbid();
+            Project? project = null;
+            int userRole = 0; // 0=Unknown, 1=Buyer, 2=Seller, 3=Consultant
 
-            // SECURITY CHECK: For Sellers (Role=2), verify invitation and NDA
-            if (member.Role == 2)
+            if (member != null)
             {
-                // Check invitation
+                // User is a project member
+                project = member.Project;
+                userRole = member.Role;
+
+                // SECURITY CHECK: For Sellers (Role=2), verify invitation and NDA
+                if (member.Role == 2)
+                {
+                    // Check invitation
+                    var invitation = await _context.RFQInvitations
+                        .FirstOrDefaultAsync(i => i.ProjectId == id &&
+                                                 i.SellerId == userId &&
+                                                 i.IsActive);
+                    if (invitation == null)
+                    {
+                        TempData["ErrorMessage"] = "Bạn chưa được mời tham gia dự án này.";
+                        return RedirectToAction("InvitedProjects", "Seller");
+                    }
+
+                    // Check NDA signature
+                    var ndaSigned = await _eSignGateway.HasUserSignedProjectNda(id.Value, userId);
+                    if (!ndaSigned)
+                    {
+                        TempData["WarningMessage"] = "Bạn cần ký NDA trước khi xem chi tiết dự án.";
+                        return RedirectToAction("SignNda", "Project", new { projectId = id });
+                    }
+
+                    // Update invitation status to Viewed if first time
+                    if (invitation.StatusId == 0)
+                    {
+                        invitation.StatusId = 1; // Viewed
+                        invitation.ViewedDate = DateTime.Now;
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Log seller access
+                    await LogProjectAccessAsync(id.Value, userId, "ViewProject");
+                }
+            }
+            else
+            {
+                // Not a project member - check if invited seller
                 var invitation = await _context.RFQInvitations
+                    .Include(i => i.Project)
                     .FirstOrDefaultAsync(i => i.ProjectId == id &&
                                              i.SellerId == userId &&
                                              i.IsActive);
-                if (invitation == null)
-                {
-                    TempData["ErrorMessage"] = "Bạn chưa được mời tham gia dự án này.";
-                    return RedirectToAction("InvitedProjects", "Seller");
-                }
 
-                // Check NDA signature
-                var ndaSigned = await _eSignGateway.HasUserSignedProjectNda(id.Value, userId);
-                if (!ndaSigned)
+                if (invitation != null)
                 {
-                    TempData["WarningMessage"] = "Bạn cần ký NDA trước khi xem chi tiết dự án.";
-                    return RedirectToAction("SignNda", "Project", new { projectId = id });
-                }
+                    // User is an invited seller
+                    project = invitation.Project;
+                    userRole = 2; // Seller
 
-                // Update invitation status to Viewed if first time
-                if (invitation.StatusId == 0)
+                    // Check NDA signature
+                    var ndaSigned = await _eSignGateway.HasUserSignedProjectNda(id.Value, userId);
+                    if (!ndaSigned)
+                    {
+                        TempData["WarningMessage"] = "Bạn cần ký NDA trước khi xem chi tiết dự án.";
+                        return RedirectToAction("SignNda", "Project", new { projectId = id });
+                    }
+
+                    // Update invitation status to Viewed if first time
+                    if (invitation.StatusId == 0)
+                    {
+                        invitation.StatusId = 1; // Viewed
+                        invitation.ViewedDate = DateTime.Now;
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // Log seller access
+                    await LogProjectAccessAsync(id.Value, userId, "ViewProject");
+                }
+                else
                 {
-                    invitation.StatusId = 1; // Viewed
-                    invitation.ViewedDate = DateTime.Now;
-                    await _context.SaveChangesAsync();
+                    // Not a member and not invited - deny access
+                    return Forbid();
                 }
-
-                // Log seller access
-                await LogProjectAccessAsync(id.Value, userId, "ViewProject");
             }
+
+            if (project == null) return NotFound();
 
             // Get step statuses
             var statuses = await GetProjectStepStatuses(id.Value);
@@ -143,14 +195,124 @@ namespace TPApp.Controllers
 
             var viewModel = new TPApp.ViewModel.ProjectDetailWithStepsVm
             {
-                Project = member.Project,
+                Project = project,
                 Steps = steps,
                 CurrentStep = currentStep,
-                UserRole = member.Role,
+                UserRole = userRole,
                 ProgressPercent = progressPercent
             };
 
             return View(viewModel);
+        }
+
+        // GET: /Project/SignNda?projectId=7
+        [HttpGet]
+        public async Task<IActionResult> SignNda(int projectId)
+        {
+            var userId = GetCurrentUserId();
+
+            // Guard 1: Check if user has invitation
+            var invitation = await _context.RFQInvitations
+                .Include(i => i.Project)
+                .Include(i => i.RFQRequest)
+                .FirstOrDefaultAsync(i => i.ProjectId == projectId && 
+                                         i.SellerId == userId && 
+                                         i.IsActive);
+
+            if (invitation == null)
+            {
+                TempData["ErrorMessage"] = "Bạn chưa được mời tham gia dự án này.";
+                return RedirectToAction("InvitedProjects", "Seller");
+            }
+
+            // Guard 2: Check if already signed
+            var alreadySigned = await _eSignGateway.HasUserSignedProjectNda(projectId, userId);
+            if (alreadySigned)
+            {
+                TempData["InfoMessage"] = "Bạn đã ký NDA cho dự án này rồi.";
+                return RedirectToAction("InvitedProjects", "Seller");
+            }
+
+            // Guard 3: Check deadline
+            if (invitation.RFQRequest?.HanChotNopHoSo < DateTime.Now)
+            {
+                TempData["ErrorMessage"] = "Hạn chót nộp hồ sơ đã qua. Không thể ký NDA.";
+                return RedirectToAction("InvitedProjects", "Seller");
+            }
+
+            // Pass data to view
+            ViewBag.ProjectId = projectId;
+            ViewBag.ProjectName = invitation.Project?.ProjectName;
+            ViewBag.Deadline = invitation.RFQRequest?.HanChotNopHoSo;
+
+            return View();
+        }
+
+        // POST: /Project/SignNda
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SignNda(int projectId, string agreementText)
+        {
+            var userId = GetCurrentUserId();
+
+            try
+            {
+                // Guard 1: Check invitation
+                var invitation = await _context.RFQInvitations
+                    .Include(i => i.RFQRequest)
+                    .FirstOrDefaultAsync(i => i.ProjectId == projectId && 
+                                             i.SellerId == userId && 
+                                             i.IsActive);
+
+                if (invitation == null)
+                {
+                    TempData["ErrorMessage"] = "Bạn chưa được mời tham gia dự án này.";
+                    return RedirectToAction("InvitedProjects", "Seller");
+                }
+
+                // Guard 2: Check if already signed
+                var alreadySigned = await _eSignGateway.HasUserSignedProjectNda(projectId, userId);
+                if (alreadySigned)
+                {
+                    TempData["InfoMessage"] = "Bạn đã ký NDA cho dự án này rồi.";
+                    return RedirectToAction("InvitedProjects", "Seller");
+                }
+
+                // Guard 3: Check deadline
+                if (invitation.RFQRequest?.HanChotNopHoSo < DateTime.Now)
+                {
+                    TempData["ErrorMessage"] = "Hạn chót nộp hồ sơ đã qua.";
+                    return RedirectToAction("InvitedProjects", "Seller");
+                }
+
+                // Create NDA document via E-Sign gateway
+                var document = await _eSignGateway.CreateDocumentAsync(
+                    projectId, 
+                    1, // DocType: 1 = NDA
+                    $"NDA - Project {projectId} - Seller {userId}",
+                    userId
+                );
+
+                // Sign the document
+                await _eSignGateway.SignDocumentAsync(
+                    document.Id,
+                    userId,
+                    "Seller",
+                    HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    HttpContext.Request.Headers["User-Agent"].ToString()
+                );
+
+                // Log the action
+                await LogProjectAccessAsync(projectId, userId, "SignNda", $"DocumentId: {document.Id}");
+
+                TempData["SuccessMessage"] = "Bạn đã ký NDA thành công! Bây giờ bạn có thể chấp nhận lời mời.";
+                return RedirectToAction("InvitedProjects", "Seller");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Có lỗi khi ký NDA: {ex.Message}";
+                return RedirectToAction("SignNda", new { projectId });
+            }
         }
 
         // Helper: Log project access for audit trail

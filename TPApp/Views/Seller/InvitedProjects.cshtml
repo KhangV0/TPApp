@@ -172,7 +172,7 @@
                             }
                             else if (item.Invitation.StatusId == 2)
                             {
-                                <a href="/Project/Details/@item.Project.Id" class="btn btn-primary btn-sm w-100">
+                                <a href="/Seller/ProjectDetails/@item.Project.Id" class="btn btn-primary btn-sm w-100">
                                     <i class="fas fa-eye"></i> Xem chi tiết dự án
                                 </a>
                                 @if (item.CanSubmitProposal)
@@ -188,10 +188,25 @@
                                     </a>
                                 }
                             }
-                            else if (item.Invitation.StatusId == 3)
+                            else if (item.Invitation.StatusId == 3) // ProposalSubmitted
+                            {
+                                <a href="/Seller/ViewMyProposal?projectId=@item.Project.Id" class="btn btn-success btn-sm w-100">
+                                    <i class="fas fa-check-circle"></i> Đã gửi báo giá
+                                </a>
+                                <a href="/Seller/ProjectDetails/@item.Project.Id" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                                    <i class="fas fa-eye"></i> Xem chi tiết dự án
+                                </a>
+                            }
+                            else if (item.Invitation.StatusId == 4) // Declined
                             {
                                 <button class="btn btn-secondary btn-sm w-100" disabled>
                                     <i class="fas fa-ban"></i> Đã từ chối
+                                </button>
+                            }
+                            else if (item.Invitation.StatusId == 5) // Expired
+                            {
+                                <button class="btn btn-warning btn-sm w-100" disabled>
+                                    <i class="fas fa-clock"></i> Đã hết hạn
                                 </button>
                             }
                         </div>

@@ -1,0 +1,93 @@
+@model dynamic
+
+@{
+    ViewData["Title"] = "Truy cập bị từ chối";
+    var projectId = ViewBag.ProjectId ?? 0;
+    var stepNumber = ViewBag.StepNumber ?? 0;
+    var reason = ViewBag.Reason ?? "Bạn không có quyền truy cập tài nguyên này";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="fas fa-lock text-danger" style="font-size: 80px;"></i>
+                    </div>
+                    
+                    <h2 class="text-danger mb-3">Truy cập bị từ chối</h2>
+                    
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>@reason</strong>
+                    </div>
+
+                    @if (stepNumber > 0)
+                    {
+                        <p class="text-muted mb-4">
+                            Bạn đang cố gắng truy cập <strong>Bước @stepNumber</strong> của dự án.
+                        </p>
+                    }
+
+                    <div class="mb-4">
+                        <h5 class="mb-3">Các bước tiếp theo:</h5>
+                        <ul class="list-unstyled text-start">
+                            @if (reason.Contains("NDA") || reason.Contains("ký"))
+                            {
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Hoàn thành ký NDA (Bước 2)
+                                </li>
+                            }
+                            @if (reason.Contains("mời") || reason.Contains("invitation"))
+                            {
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Chấp nhận lời mời tham gia dự án
+                                </li>
+                            }
+                            @if (reason.Contains("tư vấn") || reason.Contains("consultant"))
+                            {
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    Liên hệ quản trị viên để được phân công
+                                </li>
+                            }
+                            <li class="mb-2">
+                                <i class="fas fa-envelope text-primary me-2"></i>
+                                Liên hệ quản trị viên nếu bạn cho rằng đây là lỗi
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        @if (projectId > 0)
+                        {
+                            <a href="@Url.Action("Details", "Project", new { id = projectId })" class="btn btn-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Quay lại dự án
+                            </a>
+                        }
+                        <a href="@Url.Action("Index", "Dashboard")" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>Về Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+    }
+    
+    .fa-lock {
+        opacity: 0.8;
+    }
+    
+    .list-unstyled li {
+        padding: 8px 0;
+    }
+</style>

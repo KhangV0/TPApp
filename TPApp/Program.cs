@@ -78,6 +78,14 @@ builder.Services.AddScoped<TPApp.Interfaces.IProjectService, TPApp.Services.Proj
 // E-Sign Services
 builder.Services.AddScoped<TPApp.Interfaces.IESignGateway, TPApp.Services.ESignGateway>();
 
+// Permission System
+builder.Services.AddScoped<TPApp.Interfaces.IPermissionService, TPApp.Services.PermissionService>();
+
+// Seller Workflow Services
+builder.Services.AddScoped<TPApp.Interfaces.IInvitationService, TPApp.Services.InvitationService>();
+builder.Services.AddScoped<TPApp.Interfaces.IProposalService, TPApp.Services.ProposalService>();
+builder.Services.AddScoped<TPApp.Interfaces.ISelectionService, TPApp.Services.SelectionService>();
+
 // --- AI Semantic Matching Services ---
 builder.Services.AddMemoryCache();
 

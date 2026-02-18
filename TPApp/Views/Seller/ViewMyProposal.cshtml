@@ -1,0 +1,136 @@
+@model TPApp.Entities.ProposalSubmission
+
+@{
+    ViewData["Title"] = "Báo giá của tôi";
+    var projectId = ViewBag.ProjectId;
+    var projectName = ViewBag.ProjectName;
+    var proposalStatus = ViewBag.ProposalStatus;
+    var submittedDate = (DateTime?)ViewBag.SubmittedDate;
+}
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="InvitedProjects">Dự án được mời</a></li>
+            <li class="breadcrumb-item"><a asp-action="ProjectDetails" asp-route-id="@projectId">@projectName</a></li>
+            <li class="breadcrumb-item active">Báo giá của tôi</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-file-invoice"></i> Báo giá của tôi
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Dự án:</strong> @projectName</p>
+                    <p><strong>Trạng thái:</strong> <span class="badge bg-info">@proposalStatus</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Ngày gửi:</strong> @submittedDate?.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Mã báo giá:</strong> <code>#@Model.Id</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Proposal Details -->
+    <div class="row">
+        <!-- Technical Solution -->
+        <div class="col-md-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-pdf"></i> Giải pháp kỹ thuật</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>File:</strong></p>
+                    <a href="@Model.GiaiPhapKyThuat" class="btn btn-outline-primary" target="_blank">
+                        <i class="fas fa-download"></i> Tải xuống giải pháp kỹ thuật
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing & Timeline -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-dollar-sign"></i> Báo giá</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.BaoGiaSoBo.HasValue)
+                    {
+                        <h3 class="text-success">@Model.BaoGiaSoBo.Value.ToString("N0") VNĐ</h3>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Chưa có báo giá cụ thể</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-clock"></i> Thời gian triển khai</h5>
+                </div>
+                <div class="card-body">
+                    <h4>@Model.ThoiGianTrienKhai</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capability Profile -->
+        <div class="col-md-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-pdf"></i> Hồ sơ năng lực</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>File:</strong></p>
+                    <a href="@Model.HoSoNangLucDinhKem" class="btn btn-outline-info" target="_blank">
+                        <i class="fas fa-download"></i> Tải xuống hồ sơ năng lực
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2 mb-4">
+        <a asp-action="ProjectDetails" asp-route-id="@projectId" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại dự án
+        </a>
+        
+        @if (Model.StatusId == 1) // Submitted
+        {
+            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editProposalModal">
+                <i class="fas fa-edit"></i> Chỉnh sửa báo giá
+            </button>
+        }
+    </div>
+
+    <!-- Edit Proposal Modal (Optional - for future enhancement) -->
+    <div class="modal fade" id="editProposalModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chỉnh sửa báo giá</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tính năng chỉnh sửa báo giá sẽ được bổ sung trong phiên bản tiếp theo.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

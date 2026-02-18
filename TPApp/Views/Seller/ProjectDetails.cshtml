@@ -1,0 +1,307 @@
+@model TPApp.Entities.Project
+
+@{
+    ViewData["Title"] = "Chi tiết dự án";
+    var projectId = ViewBag.ProjectId;
+    var projectName = ViewBag.ProjectName;
+    var invitationStatus = (int)ViewBag.InvitationStatus;
+    var invitationStatusName = ViewBag.InvitationStatusName;
+    var ndaSigned = (bool)ViewBag.NdaSigned;
+    var hasProposal = (bool)ViewBag.HasProposal;
+    var proposalStatus = ViewBag.ProposalStatus;
+    var rfqDeadline = ViewBag.RfqDeadline;
+    var rfqDescription = ViewBag.RfqDescription;
+}
+
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="InvitedProjects">Dự án được mời</a></li>
+            <li class="breadcrumb-item active">@projectName</li>
+        </ol>
+    </nav>
+
+    <!-- Project Header -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-project-diagram"></i> @projectName
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Mã dự án:</strong> @Model.ProjectCode</p>
+                    <p><strong>Mô tả:</strong> @Model.Description</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Hạn chót nộp hồ sơ:</strong> 
+                        <span class="badge bg-warning">@rfqDeadline?.ToString("dd/MM/yyyy HH:mm")</span>
+                    </p>
+                    <p><strong>Trạng thái lời mời:</strong> 
+                        <span class="badge @GetStatusBadgeClass(invitationStatus)">@invitationStatusName</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Status -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-tasks"></i> Quy trình tham gia</h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <!-- Step 1: NDA -->
+                <div class="col-md-3">
+                    <div class="workflow-step @(ndaSigned ? "completed" : "")">
+                        <div class="step-icon">
+                            <i class="fas fa-file-signature fa-2x"></i>
+                        </div>
+                        <h6>Ký NDA</h6>
+                        @if (ndaSigned)
+                        {
+                            <span class="badge bg-success">✓ Đã ký</span>
+                        }
+                        else
+                        {
+                            <a asp-controller="Project" asp-action="SignNda" asp-route-projectId="@projectId" 
+                               class="btn btn-sm btn-primary">Ký ngay</a>
+                        }
+                    </div>
+                </div>
+
+                <!-- Step 2: Accept -->
+                <div class="col-md-3">
+                    <div class="workflow-step @(invitationStatus >= 2 ? "completed" : "")">
+                        <div class="step-icon">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                        <h6>Chấp nhận tham gia</h6>
+                        @if (invitationStatus >= 2)
+                        {
+                            <span class="badge bg-success">✓ Đã chấp nhận</span>
+                        }
+                        else if (ndaSigned && invitationStatus < 2)
+                        {
+                            <form asp-action="AcceptInvitation" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@projectId" />
+                                <button type="submit" class="btn btn-sm btn-success">Chấp nhận</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Chờ ký NDA</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Step 3: Submit Proposal -->
+                <div class="col-md-3">
+                    <div class="workflow-step @(hasProposal ? "completed" : "")">
+                        <div class="step-icon">
+                            <i class="fas fa-file-invoice fa-2x"></i>
+                        </div>
+                        <h6>Gửi báo giá</h6>
+                        @if (hasProposal)
+                        {
+                            <span class="badge bg-success">✓ Đã gửi</span>
+                        }
+                        else if (invitationStatus == 2)
+                        {
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#submitProposalModal">
+                                Gửi báo giá
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Chờ chấp nhận</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Step 4: Selection -->
+                <div class="col-md-3">
+                    <div class="workflow-step @(proposalStatus == 2 ? "completed" : "")">
+                        <div class="step-icon">
+                            <i class="fas fa-trophy fa-2x"></i>
+                        </div>
+                        <h6>Được chọn</h6>
+                        @if (proposalStatus == 2)
+                        {
+                            <span class="badge bg-success">✓ Đã được chọn</span>
+                        }
+                        else if (proposalStatus == 3)
+                        {
+                            <span class="badge bg-danger">✗ Không được chọn</span>
+                        }
+                        else if (hasProposal)
+                        {
+                            <span class="badge bg-warning">⏳ Chờ buyer chọn</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Chờ gửi báo giá</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RFQ Details -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Yêu cầu báo giá (RFQ)</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Mô tả yêu cầu:</strong></p>
+            <div class="border rounded p-3 bg-light">
+                @Html.Raw(rfqDescription?.Replace("\n", "<br>"))
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2 mb-4">
+        <a asp-action="InvitedProjects" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+        
+        @if (hasProposal)
+        {
+            <a asp-controller="Seller" asp-action="ViewMyProposal" asp-route-projectId="@projectId" 
+               class="btn btn-info">
+                <i class="fas fa-eye"></i> Xem báo giá của tôi
+            </a>
+        }
+    </div>
+
+    <!-- Submit Proposal Modal -->
+    <div class="modal fade" id="submitProposalModal" tabindex="-1" aria-labelledby="submitProposalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form asp-controller="Seller" asp-action="SubmitProposal" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="projectId" value="@projectId" />
+                    
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="submitProposalModalLabel">
+                            <i class="fas fa-file-invoice"></i> Gửi Báo Giá
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Vui lòng điền đầy đủ thông tin và tải lên các file yêu cầu.
+                        </div>
+
+                        <!-- Technical Solution File -->
+                        <div class="mb-3">
+                            <label for="technicalSolution" class="form-label">
+                                <i class="fas fa-file-pdf text-danger"></i> 
+                                Giải pháp kỹ thuật <span class="text-danger">*</span>
+                            </label>
+                            <input type="file" class="form-control" id="technicalSolution" name="technicalSolution" 
+                                   accept=".pdf,.doc,.docx" required>
+                            <small class="form-text text-muted">Định dạng: PDF, DOC, DOCX (Tối đa 10MB)</small>
+                        </div>
+
+                        <!-- Preliminary Price -->
+                        <div class="mb-3">
+                            <label for="preliminaryPrice" class="form-label">
+                                <i class="fas fa-dollar-sign text-success"></i> 
+                                Báo giá sơ bộ (VNĐ)
+                            </label>
+                            <input type="number" class="form-control" id="preliminaryPrice" name="preliminaryPrice" 
+                                   placeholder="Nhập số tiền..." step="1000" min="0">
+                            <small class="form-text text-muted">Để trống nếu chưa có báo giá cụ thể</small>
+                        </div>
+
+                        <!-- Implementation Time -->
+                        <div class="mb-3">
+                            <label for="implementationTime" class="form-label">
+                                <i class="fas fa-clock text-warning"></i> 
+                                Thời gian triển khai <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="implementationTime" name="implementationTime" 
+                                   placeholder="Ví dụ: 3 tháng, 90 ngày..." required>
+                            <small class="form-text text-muted">Thời gian dự kiến hoàn thành dự án</small>
+                        </div>
+
+                        <!-- Capability Profile File -->
+                        <div class="mb-3">
+                            <label for="capabilityProfile" class="form-label">
+                                <i class="fas fa-file-pdf text-danger"></i> 
+                                Hồ sơ năng lực <span class="text-danger">*</span>
+                            </label>
+                            <input type="file" class="form-control" id="capabilityProfile" name="capabilityProfile" 
+                                   accept=".pdf,.doc,.docx" required>
+                            <small class="form-text text-muted">Định dạng: PDF, DOC, DOCX (Tối đa 10MB)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Hủy
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Gửi báo giá
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .workflow-step {
+            padding: 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+
+        .workflow-step.completed {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+
+        .workflow-step .step-icon {
+            margin-bottom: 10px;
+            color: #6c757d;
+        }
+
+        .workflow-step.completed .step-icon {
+            color: #28a745;
+        }
+
+        .workflow-step h6 {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+}
+
+@functions {
+    string GetStatusBadgeClass(int status)
+    {
+        return status switch
+        {
+            0 => "bg-secondary",
+            1 => "bg-info",
+            2 => "bg-success",
+            3 => "bg-primary",
+            4 => "bg-danger",
+            5 => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}

@@ -1,0 +1,87 @@
+@{
+    ViewData["Title"] = "Ký NDA";
+    var projectId = ViewBag.ProjectId;
+    var projectName = ViewBag.ProjectName;
+    var deadline = ViewBag.Deadline;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-signature"></i> Ký thỏa thuận bảo mật (NDA)
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Dự án:</strong> @projectName<br>
+                        <strong>Hạn chót:</strong> @deadline?.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+
+                    <div class="nda-content p-4 border rounded bg-light mb-4" style="max-height: 400px; overflow-y: auto;">
+                        <h5 class="text-center mb-4">THỎA THUẬN BẢO MẬT THÔNG TIN</h5>
+                        
+                        <p><strong>1. MỤC ĐÍCH</strong></p>
+                        <p>Thỏa thuận này nhằm bảo vệ thông tin bí mật được trao đổi giữa các bên trong quá trình tham gia dự án chuyển giao công nghệ.</p>
+
+                        <p><strong>2. ĐỊNH NGHĨA THÔNG TIN BÍ MẬT</strong></p>
+                        <p>Thông tin bí mật bao gồm nhưng không giới hạn:</p>
+                        <ul>
+                            <li>Thông tin kỹ thuật, công nghệ</li>
+                            <li>Thông tin kinh doanh, tài chính</li>
+                            <li>Kế hoạch, chiến lược phát triển</li>
+                            <li>Thông tin khách hàng, đối tác</li>
+                        </ul>
+
+                        <p><strong>3. NGHĨA VỤ BẢO MẬT</strong></p>
+                        <p>Bên nhận thông tin cam kết:</p>
+                        <ul>
+                            <li>Không tiết lộ thông tin cho bên thứ ba</li>
+                            <li>Chỉ sử dụng thông tin cho mục đích dự án</li>
+                            <li>Bảo vệ thông tin với mức độ bảo mật cao nhất</li>
+                            <li>Trả lại hoặc hủy thông tin khi kết thúc dự án</li>
+                        </ul>
+
+                        <p><strong>4. THỜI HẠN</strong></p>
+                        <p>Thỏa thuận này có hiệu lực kể từ ngày ký và kéo dài trong suốt thời gian thực hiện dự án cộng thêm 5 năm sau khi kết thúc.</p>
+
+                        <p><strong>5. TRÁCH NHIỆM</strong></p>
+                        <p>Bên vi phạm thỏa thuận phải chịu trách nhiệm bồi thường thiệt hại theo quy định pháp luật.</p>
+                    </div>
+
+                    <form asp-action="SignNda" method="post">
+                        <input type="hidden" name="projectId" value="@projectId" />
+                        <input type="hidden" name="agreementText" value="NDA Agreement Accepted" />
+                        
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="agreeCheck" required>
+                            <label class="form-check-label" for="agreeCheck">
+                                <strong>Tôi đã đọc và đồng ý với các điều khoản trong thỏa thuận bảo mật này</strong>
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="signButton" disabled>
+                                <i class="fas fa-signature"></i> Ký thỏa thuận
+                            </button>
+                            <a asp-action="InvitedProjects" asp-controller="Seller" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('agreeCheck').addEventListener('change', function() {
+            document.getElementById('signButton').disabled = !this.checked;
+        });
+    </script>
+}

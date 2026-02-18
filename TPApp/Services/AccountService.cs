@@ -137,7 +137,8 @@ namespace TPApp.Services
                 invitationCount = await _context.RFQInvitations
                     .Where(i => i.SellerId == userId && 
                                i.IsActive && 
-                               (i.StatusId == 0 || i.StatusId == 1)) // Invited or Viewed
+                               i.StatusId != 4 && // Not Declined
+                               i.StatusId != 5)   // Not Expired
                     .CountAsync();
             }
 
