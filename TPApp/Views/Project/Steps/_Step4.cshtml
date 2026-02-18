@@ -1,5 +1,9 @@
 @model TPApp.ViewModel.StepContentVm
 @using System.IO
+@using Microsoft.EntityFrameworkCore
+@inject TPApp.Interfaces.IProposalService ProposalService
+@inject TPApp.Interfaces.IScoringService ScoringService
+@inject TPApp.Data.AppDbContext Context
 
 @{
     var proposal = Model.StepData as TPApp.Entities.ProposalSubmission;
@@ -10,7 +14,7 @@
         <h5 class="mb-0">
             <i class="fas fa-folder-open"></i> Bước 4: Nộp Hồ sơ Đề xuất
         </h5>
-        @if (proposal != null)
+        @if (proposal != null && Model.UserRole == 2)
         {
             <button class="btn btn-light btn-sm edit-step-btn" data-step="4" data-project-id="@Model.ProjectId">
                 <i class="fas fa-edit"></i> Chỉnh sửa
@@ -18,7 +22,302 @@
         }
     </div>
     <div class="card-body">
-        @if (proposal != null)
+        @* BUYER VIEW: Show comparison table *@
+        @if (Model.UserRole == 1)
+        {
+            var proposals = await Context.ProposalSubmissions
+                .Include(p => p.Seller)
+                .Where(p => p.ProjectId == Model.ProjectId && p.StatusId == 1)
+                .ToListAsync();
+
+            <h6 class="mb-3"><i class="fas fa-list"></i> Bảng so sánh báo giá</h6>
+
+            @if (!proposals.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Chưa có báo giá nào được gửi.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Seller</th>
+                                <th>Giá</th>
+                                <th>Thời gian</th>
+                                <th>Điểm TB</th>
+                                <th>Comments của Consultants</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in proposals)
+                            {
+                                var scores = await ScoringService.GetProposalScoresAsync(item.Id);
+                                var avgScore = await ScoringService.GetAverageScoreAsync(item.Id);
+                                var isSelected = Model.Project.SelectedSellerId == item.NguoiTao;
+
+                                <tr class="@(isSelected ? "table-success" : "")">
+                                    <td>
+                                        <strong>@(item.Seller?.FullName ?? "Unknown")</strong>
+                                        @if (isSelected)
+                                        {
+                                            <span class="badge bg-success ms-2">
+                                                <i class="fas fa-check"></i> Đã chọn
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.BaoGiaSoBo.HasValue)
+                                        {
+                                            <strong class="text-primary">@item.BaoGiaSoBo.Value.ToString("N0")</strong>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@item.ThoiGianTrienKhai</td>
+                                    <td>
+                                        @if (avgScore > 0)
+                                        {
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-star"></i> @avgScore.ToString("F1")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa chấm</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (scores != null && scores.Any())
+                                        {
+                                            <div class="consultant-comments">
+                                                @foreach (var score in scores)
+                                                {
+                                                    <div class="mb-2 p-2 border-start border-3 border-primary bg-light">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-user"></i> <strong>@(score.Consultant?.FullName ?? "Consultant")</strong>
+                                                        </small>
+                                                        <div class="mt-1">
+                                                            @if (!string.IsNullOrEmpty(score.Comments))
+                                                            {
+                                                                <small>@score.Comments</small>
+                                                            }
+                                                            else
+                                                            {
+                                                                <small class="text-muted fst-italic">Không có comment</small>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa có đánh giá</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!isSelected && Model.Project.SelectedSellerId == null)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-success" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#selectModal@(item.Id)">
+                                                <i class="fas fa-check-circle"></i> Chọn
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+
+                                @* Select Modal *@
+                                <div class="modal fade" id="selectModal@(item.Id)" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form method="post" asp-controller="ProposalList" asp-action="SelectSeller">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                                                <input type="hidden" name="proposalId" value="@item.Id" />
+                                                
+                                                <div class="modal-header bg-success text-white">
+                                                    <h5 class="modal-title">Xác nhận chọn nhà cung ứng</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Bạn có chắc chắn muốn chọn <strong>@(item.Seller?.FullName ?? "Unknown")</strong> làm nhà cung ứng?</p>
+                                                    <div class="alert alert-warning">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        <strong>Lưu ý:</strong> Hành động này sẽ:
+                                                        <ul class="mb-0 mt-2">
+                                                            <li>Chuyển dự án sang Bước 5</li>
+                                                            <li>Từ chối tất cả báo giá khác</li>
+                                                            <li>Không thể hoàn tác</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="fas fa-check-circle"></i> Xác nhận chọn
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+        @* CONSULTANT VIEW: Show proposal cards with scoring *@
+        else if (Model.UserRole == 3)
+        {
+            var proposals = await Context.ProposalSubmissions
+                .Include(p => p.Seller)
+                .Where(p => p.ProjectId == Model.ProjectId && p.StatusId == 1)
+                .ToListAsync();
+
+            <h6 class="mb-3"><i class="fas fa-star"></i> Đánh giá báo giá</h6>
+
+            @if (!proposals.Any())
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Chưa có báo giá nào để đánh giá.
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var item in proposals)
+                    {
+                        var consultantScore = await ScoringService.GetConsultantScoreAsync(item.Id, User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier) != null ? int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value) : 0);
+                        var avgScore = await ScoringService.GetAverageScoreAsync(item.Id);
+
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-building"></i> Proposal Card
+                                        <button type="button" class="btn btn-sm btn-outline-secondary float-end" onclick="navigator.clipboard.writeText('pgzql')">
+                                            <i class="fas fa-copy"></i> Copy code
+                                        </button>
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Seller:</strong> @(item.Seller?.FullName ?? "ABC Company")</p>
+                                    <p class="mb-2">
+                                        <strong>Giá:</strong> 
+                                        @if (item.BaoGiaSoBo.HasValue)
+                                        {
+                                            <span class="text-danger">@item.BaoGiaSoBo.Value.ToString("N0") VNĐ</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa cung cấp</span>
+                                        }
+                                    </p>
+                                    <p class="mb-3"><strong>Thời gian:</strong> @item.ThoiGianTrienKhai</p>
+
+                                    <div class="mb-3">
+                                        <a href="@item.GiaiPhapKyThuat" class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-download"></i> Download Technical
+                                        </a>
+                                        <a href="@item.HoSoNangLucDinhKem" class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-download"></i> Download Capability
+                                        </a>
+                                    </div>
+
+                                    <hr />
+
+                                    <h6 class="text-muted mb-2">ĐÁNH GIÁ CỦA BẠN (Consultant)</h6>
+
+                                    <form class="scoringForm" method="post" asp-controller="Scoring" asp-action="ScoreProposal" data-proposal-id="@item.Id">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ProposalId" value="@item.Id" />
+                                        <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+
+                                        <div class="mb-3">
+                                            <label class="form-label small">Technical Score</label>
+                                            <div class="star-rating" data-field="TechnicalScore">
+                                                @for (int i = 1; i <= 10; i++)
+                                                {
+                                                    var isChecked = (consultantScore?.TechnicalScore ?? 0) >= i;
+                                                    <i class="@(isChecked ? "fas" : "far") fa-star" data-value="@i"></i>
+                                                }
+                                            </div>
+                                            <input type="hidden" name="TechnicalScore" value="@(consultantScore?.TechnicalScore ?? 0)" required />
+                                            <small class="text-muted">Score: <span class="score-display">@(consultantScore?.TechnicalScore ?? 0)</span>/10</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small">Price Score</label>
+                                            <div class="star-rating" data-field="PriceScore">
+                                                @for (int i = 1; i <= 10; i++)
+                                                {
+                                                    var isChecked = (consultantScore?.PriceScore ?? 0) >= i;
+                                                    <i class="@(isChecked ? "fas" : "far") fa-star" data-value="@i"></i>
+                                                }
+                                            </div>
+                                            <input type="hidden" name="PriceScore" value="@(consultantScore?.PriceScore ?? 0)" required />
+                                            <small class="text-muted">Score: <span class="score-display">@(consultantScore?.PriceScore ?? 0)</span>/10</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small">Timeline Score</label>
+                                            <div class="star-rating" data-field="TimelineScore">
+                                                @for (int i = 1; i <= 10; i++)
+                                                {
+                                                    var isChecked = (consultantScore?.TimelineScore ?? 0) >= i;
+                                                    <i class="@(isChecked ? "fas" : "far") fa-star" data-value="@i"></i>
+                                                }
+                                            </div>
+                                            <input type="hidden" name="TimelineScore" value="@(consultantScore?.TimelineScore ?? 0)" required />
+                                            <small class="text-muted">Score: <span class="score-display">@(consultantScore?.TimelineScore ?? 0)</span>/10</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small">Overall Score</label>
+                                            <div class="star-rating" data-field="OverallScore">
+                                                @for (int i = 1; i <= 10; i++)
+                                                {
+                                                    var isChecked = (consultantScore?.OverallScore ?? 0) >= i;
+                                                    <i class="@(isChecked ? "fas" : "far") fa-star" data-value="@i"></i>
+                                                }
+                                            </div>
+                                            <input type="hidden" name="OverallScore" value="@(consultantScore?.OverallScore ?? 0)" required />
+                                            <small class="text-muted">Score: <span class="score-display">@(consultantScore?.OverallScore ?? 0)</span>/10</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small text-danger">Comment</label>
+                                            <textarea name="Comments" class="form-control form-control-sm" rows="2">@(consultantScore?.Comments ?? "")</textarea>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-sm btn-warning w-100">
+                                            <i class="fas fa-save"></i> Lưu đánh giá
+                                        </button>
+                                    </form>
+
+                                    @if (consultantScore != null)
+                                    {
+                                        <div class="alert alert-success mt-2 mb-0 small">
+                                            <i class="fas fa-check"></i> Bạn đã chấm điểm proposal này
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        @* SELLER VIEW: Show their own proposal *@
+        else if (proposal != null)
         {
             <dl class="row">
                 <dt class="col-sm-3">Giải pháp kỹ thuật:</dt>
@@ -94,4 +393,168 @@
     </div>
 </div>
 
+<style>
+    .star-rating {
+        display: inline-flex;
+        gap: 4px;
+        cursor: pointer;
+        font-size: 1.5rem;
+    }
+    
+    .star-rating i {
+        color: #ffc107;
+        transition: all 0.2s ease;
+    }
+    
+    .star-rating i:hover {
+        transform: scale(1.2);
+    }
+    
+    .star-rating i.far {
+        color: #ddd;
+    }
+    
+    .star-rating i.fas {
+        color: #ffc107;
+    }
+</style>
 
+<script>
+    // Handle star rating clicks
+    $(document).ready(function() {
+        // Star rating click handler
+        $(document).on('click', '.star-rating i', function() {
+            var star = $(this);
+            var rating = star.data('value');
+            var container = star.parent('.star-rating');
+            var fieldName = container.data('field');
+            var form = container.closest('form');
+            
+            // Update hidden input
+            form.find('input[name="' + fieldName + '"]').val(rating);
+            
+            // Update score display
+            container.next('input').next('small').find('.score-display').text(rating);
+            
+            // Update stars visual
+            container.find('i').each(function() {
+                var starValue = $(this).data('value');
+                if (starValue <= rating) {
+                    $(this).removeClass('far').addClass('fas');
+                } else {
+                    $(this).removeClass('fas').addClass('far');
+                }
+            });
+        });
+        
+        // Star rating hover effect
+        $(document).on('mouseenter', '.star-rating i', function() {
+            var star = $(this);
+            var hoverValue = star.data('value');
+            var container = star.parent('.star-rating');
+            
+            container.find('i').each(function() {
+                var starValue = $(this).data('value');
+                if (starValue <= hoverValue) {
+                    $(this).addClass('fas').removeClass('far');
+                } else {
+                    $(this).addClass('far').removeClass('fas');
+                }
+            });
+        });
+        
+        // Star rating mouse leave - restore saved rating
+        $(document).on('mouseleave', '.star-rating', function() {
+            var container = $(this);
+            var fieldName = container.data('field');
+            var form = container.closest('form');
+            var savedRating = parseFloat(form.find('input[name="' + fieldName + '"]').val()) || 0;
+            
+            container.find('i').each(function() {
+                var starValue = $(this).data('value');
+                if (starValue <= savedRating) {
+                    $(this).addClass('fas').removeClass('far');
+                } else {
+                    $(this).addClass('far').removeClass('fas');
+                }
+            });
+        });
+    
+        // Handle scoring form submission via AJAX
+        $(document).on('submit', '.scoringForm', function(e) {
+            e.preventDefault();
+            
+            var form = $(this);
+            var submitBtn = form.find('button[type="submit"]');
+            var originalBtnText = submitBtn.html();
+            var proposalId = form.data('proposal-id');
+            
+            // Disable button and show loading
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang lưu...');
+            
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        var alertHtml = '<div class="alert alert-success alert-dismissible fade show mt-2" role="alert">' +
+                            '<i class="fas fa-check-circle"></i> ' + response.message +
+                            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                            '</div>';
+                        
+                        // Remove existing alerts
+                        form.find('.alert').remove();
+                        
+                        // Insert alert after submit button
+                        submitBtn.after(alertHtml);
+                        
+                        // Auto-dismiss after 3 seconds
+                        setTimeout(function() {
+                            form.find('.alert').fadeOut(function() {
+                                $(this).remove();
+                            });
+                        }, 3000);
+                        
+                        // Re-enable button
+                        submitBtn.prop('disabled', false).html(originalBtnText);
+                    } else {
+                        // Show error message
+                        var alertHtml = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">' +
+                            '<i class="fas fa-exclamation-circle"></i> ' + response.message +
+                            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                            '</div>';
+                        
+                        // Remove existing alerts
+                        form.find('.alert').remove();
+                        
+                        // Insert alert after submit button
+                        submitBtn.after(alertHtml);
+                        
+                        // Re-enable button
+                        submitBtn.prop('disabled', false).html(originalBtnText);
+                    }
+                },
+                error: function() {
+                    var alertHtml = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">' +
+                        '<i class="fas fa-exclamation-circle"></i> Đã xảy ra lỗi. Vui lòng thử lại.' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>';
+                    
+                    // Remove existing alerts
+                    form.find('.alert').remove();
+                    
+                    // Insert alert after submit button
+                    submitBtn.after(alertHtml);
+                    
+                    // Re-enable button
+                    submitBtn.prop('disabled', false).html(originalBtnText);
+                }
+            });
+        });
+    });
+</script>

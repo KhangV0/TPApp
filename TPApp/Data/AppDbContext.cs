@@ -108,6 +108,7 @@ namespace TPApp.Data
         public DbSet<NDAAgreement> NDAAgreements { get; set; } = null!;
         public DbSet<RFQRequest> RFQRequests { get; set; } = null!;
         public DbSet<ProposalSubmission> ProposalSubmissions { get; set; } = null!;
+        public DbSet<ProposalScore> ProposalScores { get; set; } = null!;
         public DbSet<NegotiationForm> NegotiationForms { get; set; } = null!;
         public DbSet<LegalReviewForm> LegalReviewForms { get; set; } = null!;
         public DbSet<EContract> EContracts { get; set; } = null!;

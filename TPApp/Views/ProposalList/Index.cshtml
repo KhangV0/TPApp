@@ -1,0 +1,241 @@
+@model TPApp.ViewModel.ProposalListVm
+@{
+    ViewData["Title"] = "Danh sách báo giá";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-invoice"></i> Danh sách báo giá - @Model.ProjectName
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!Model.Proposals.Any())
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Chưa có báo giá nào được gửi.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nhà cung ứng</th>
+                                        <th>Báo giá sơ bộ</th>
+                                        <th>Thời gian triển khai</th>
+                                        <th>Điểm TB</th>
+                                        <th>Ngày nộp</th>
+                                        <th>Trạng thái</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Proposals)
+                                    {
+                                        <tr class="@(item.IsSelected ? "table-success" : "")">
+                                            <td>
+                                                <strong>@item.SellerName</strong>
+                                                @if (item.IsSelected)
+                                                {
+                                                    <span class="badge bg-success ms-2">
+                                                        <i class="fas fa-check"></i> Đã chọn
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (item.Proposal.BaoGiaSoBo.HasValue)
+                                                {
+                                                    <strong class="text-primary">@item.Proposal.BaoGiaSoBo.Value.ToString("N0") VNĐ</strong>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Chưa cung cấp</span>
+                                                }
+                                            </td>
+                                            <td>@item.Proposal.ThoiGianTrienKhai</td>
+                                            <td>
+                                                @if (item.AverageScore > 0)
+                                                {
+                                                    <span class="badge bg-info">
+                                                        <i class="fas fa-star"></i> @item.AverageScore.ToString("F1")/10
+                                                    </span>
+                                                    <br />
+                                                    <small class="text-muted">(@item.Scores.Count chuyên gia)</small>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Chưa chấm</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <small>@item.Proposal.SubmittedDate?.ToString("dd/MM/yyyy HH:mm")</small>
+                                            </td>
+                                            <td>
+                                                @switch (item.Proposal.StatusId)
+                                                {
+                                                    case 1:
+                                                        <span class="badge bg-primary">Đã nộp</span>
+                                                        break;
+                                                    case 2:
+                                                        <span class="badge bg-success">Đã chọn</span>
+                                                        break;
+                                                    case 3:
+                                                        <span class="badge bg-secondary">Bị từ chối</span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="@Url.Action("Details", "ProposalList", new { id = item.Proposal.Id })" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i> Xem
+                                                    </a>
+                                                    
+                                                    @if (Model.IsConsultant && !item.IsSelected)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#scoreModal@(item.Proposal.Id)">
+                                                            <i class="fas fa-star"></i> Chấm điểm
+                                                        </button>
+                                                    }
+                                                    
+                                                    @if (Model.IsOwner && !item.IsSelected && Model.SelectedProposalId == null)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-success" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#selectModal@(item.Proposal.Id)">
+                                                            <i class="fas fa-check-circle"></i> Chọn
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        @* Score Modal *@
+                                        @if (Model.IsConsultant)
+                                        {
+                                            <div class="modal fade" id="scoreModal@(item.Proposal.Id)" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <form method="post" asp-controller="Scoring" asp-action="ScoreProposal">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="ProposalId" value="@item.Proposal.Id" />
+                                                            <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
+                                                            
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Chấm điểm báo giá - @item.SellerName</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Điểm kỹ thuật (0-10)</label>
+                                                                    <input type="number" name="TechnicalScore" class="form-control" 
+                                                                           min="0" max="10" step="0.1" required />
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Điểm giá cả (0-10)</label>
+                                                                    <input type="number" name="PriceScore" class="form-control" 
+                                                                           min="0" max="10" step="0.1" required />
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Điểm thời gian (0-10)</label>
+                                                                    <input type="number" name="TimelineScore" class="form-control" 
+                                                                           min="0" max="10" step="0.1" required />
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Điểm tổng thể (0-10)</label>
+                                                                    <input type="number" name="OverallScore" class="form-control" 
+                                                                           min="0" max="10" step="0.1" required />
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Nhận xét</label>
+                                                                    <textarea name="Comments" class="form-control" rows="3"></textarea>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                                <button type="submit" class="btn btn-warning">
+                                                                    <i class="fas fa-save"></i> Lưu điểm
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @* Select Modal *@
+                                        @if (Model.IsOwner)
+                                        {
+                                            <div class="modal fade" id="selectModal@(item.Proposal.Id)" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <form method="post" asp-controller="ProposalList" asp-action="SelectSeller">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                                                            <input type="hidden" name="proposalId" value="@item.Proposal.Id" />
+                                                            
+                                                            <div class="modal-header bg-success text-white">
+                                                                <h5 class="modal-title">Xác nhận chọn nhà cung ứng</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <p>Bạn có chắc chắn muốn chọn <strong>@item.SellerName</strong> làm nhà cung ứng cho dự án này?</p>
+                                                                <div class="alert alert-warning">
+                                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                                    <strong>Lưu ý:</strong> Hành động này sẽ:
+                                                                    <ul class="mb-0 mt-2">
+                                                                        <li>Chuyển dự án sang Bước 5</li>
+                                                                        <li>Từ chối tất cả báo giá khác</li>
+                                                                        <li>Không thể hoàn tác</li>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                                <button type="submit" class="btn btn-success">
+                                                                    <i class="fas fa-check-circle"></i> Xác nhận chọn
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                    <div class="mt-3">
+                        <a href="@Url.Action("Details", "Project", new { id = Model.ProjectId })" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại dự án
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

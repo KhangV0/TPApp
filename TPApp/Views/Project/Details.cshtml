@@ -13,11 +13,17 @@
                 <i class="fas fa-code"></i> @Model.Project.ProjectCode
             </p>
         </div>
-        <div>
+        <div class="d-flex align-items-center gap-2">
             <span class="badge bg-secondary fs-6">
                 <i class="fas fa-user"></i> 
                 @(Model.UserRole == 1 ? "Buyer" : Model.UserRole == 2 ? "Seller" : "Consultant")
             </span>
+            @if (Model.UserRole == 1)
+            {
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#memberManagementModal">
+                    <i class="fas fa-users"></i> Thành viên dự án
+                </button>
+            }
         </div>
     </div>
 
@@ -41,6 +47,26 @@
 
 <!-- Include Edit Modal -->
 @await Html.PartialAsync("_StepEditModal")
+
+<!-- Member Management Modal -->
+<div class="modal fade" id="memberManagementModal" tabindex="-1" aria-labelledby="memberManagementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="memberManagementModalLabel">
+                    <i class="fas fa-users"></i> Quản lý thành viên dự án
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="memberManagementModalBody">
+                <div class="text-center p-5">
+                    <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+                    <p class="mt-3">Đang tải...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
@@ -82,6 +108,40 @@
             $('#saveStepBtn').on('click', function() {
                 saveStepData();
             });
+
+            // Handle member management modal
+            $('#memberManagementModal').on('show.bs.modal', function (e) {
+                loadMemberManagementContent();
+            });
+
+            // Handle reload content event
+            $('#memberManagementModal').on('reload-content', function() {
+                loadMemberManagementContent();
+            });
+
+            // Function to load member management content
+            function loadMemberManagementContent() {
+                $('#memberManagementModalBody').html('<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-3x text-primary"></i><p class="mt-3">Đang tải...</p></div>');
+                
+                $.get('/ProjectMembers/Index', { projectId: currentProjectId }, function(data) {
+                    $('#memberManagementModalBody').html(data);
+                    
+                    // Initialize Select2 after content loaded
+                    setTimeout(function() {
+                        if ($('#userIdSelect').length) {
+                            $('#userIdSelect').select2({
+                                theme: 'bootstrap-5',
+                                placeholder: '-- Tìm kiếm người dùng --',
+                                allowClear: true,
+                                width: '100%',
+                                dropdownParent: $('#memberManagementModal')
+                            });
+                        }
+                    }, 100);
+                }).fail(function() {
+                    $('#memberManagementModalBody').html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Lỗi tải nội dung. Vui lòng thử lại.</div>');
+                });
+            }
 
             // Function to load step content
             function loadStepContent(step) {

@@ -116,22 +116,36 @@
                                         <td><small>@invited.InvitedDate.ToString("dd/MM/yyyy HH:mm")</small></td>
                                         <td>
                                             @{
-                                                var statusText = invited.StatusId switch
+                                                // Check if seller has submitted proposal
+                                                var hasProposal = invited.HasProposal;
+                                                
+                                                string statusText;
+                                                string badgeClass;
+                                                
+                                                if (hasProposal)
                                                 {
-                                                    0 => "Chờ phản hồi",
-                                                    1 => "Đã xem",
-                                                    2 => "Đã chấp nhận",
-                                                    3 => "Đã từ chối",
-                                                    _ => "Không xác định"
-                                                };
-                                                var badgeClass = invited.StatusId switch
+                                                    statusText = "Đã gửi báo giá";
+                                                    badgeClass = "bg-success";
+                                                }
+                                                else
                                                 {
-                                                    0 => "bg-warning",
-                                                    1 => "bg-info",
-                                                    2 => "bg-success",
-                                                    3 => "bg-secondary",
-                                                    _ => "bg-light"
-                                                };
+                                                    statusText = invited.StatusId switch
+                                                    {
+                                                        0 => "Chờ phản hồi",
+                                                        1 => "Đã xem",
+                                                        2 => "Đã chấp nhận",
+                                                        3 => "Đã từ chối",
+                                                        _ => "Không xác định"
+                                                    };
+                                                    badgeClass = invited.StatusId switch
+                                                    {
+                                                        0 => "bg-warning",
+                                                        1 => "bg-info",
+                                                        2 => "bg-success",
+                                                        3 => "bg-secondary",
+                                                        _ => "bg-light"
+                                                    };
+                                                }
                                             }
                                             <span class="badge @badgeClass">@statusText</span>
                                         </td>

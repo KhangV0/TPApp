@@ -490,30 +490,47 @@ namespace TPApp.Controllers
                 ViewBag.AvailableSuppliers = availableSuppliers;
                 
                 // Load invited suppliers for this RFQ
-                var rfqData = model.StepData as RFQRequest;
-                if (rfqData != null)
-                {
-                    var invitedSuppliers = await _context.RFQInvitations
-                        .Where(i => i.RFQId == rfqData.Id && i.IsActive)
-                        .Join(_context.NhaCungUngs,
-                            inv => inv.SellerId,
-                            ncc => ncc.UserId,
-                            (inv, ncc) => new
-                            {
-                                inv.Id,
-                                inv.SellerId,
-                                inv.InvitedDate,
-                                inv.StatusId,
-                                inv.ViewedDate,
-                                inv.ResponseDate,
-                                ncc.FullName,
-                                ncc.Email,
-                                ncc.Phone
-                            })
-                        .ToListAsync();
-                    ViewBag.InvitedSuppliers = invitedSuppliers;
-                }
-            }
+        var rfqData = model.StepData as RFQRequest;
+        if (rfqData != null)
+        {
+            var invitedSuppliers = await _context.RFQInvitations
+                .Where(i => i.RFQId == rfqData.Id && i.IsActive)
+                .Join(_context.NhaCungUngs,
+                    inv => inv.SellerId,
+                    ncc => ncc.UserId,
+                    (inv, ncc) => new
+                    {
+                        inv.Id,
+                        inv.SellerId,
+                        inv.InvitedDate,
+                        inv.StatusId,
+                        inv.ViewedDate,
+                        inv.ResponseDate,
+                        ncc.FullName,
+                        ncc.Email,
+                        ncc.Phone
+                    })
+                .ToListAsync();
+            
+            // Check if each seller has submitted a proposal
+            var invitedWithProposals = invitedSuppliers.Select(inv => new
+            {
+                inv.Id,
+                inv.SellerId,
+                inv.InvitedDate,
+                inv.StatusId,
+                inv.ViewedDate,
+                inv.ResponseDate,
+                inv.FullName,
+                inv.Email,
+                inv.Phone,
+                HasProposal = _context.ProposalSubmissions
+                    .Any(p => p.ProjectId == projectId && p.NguoiTao == inv.SellerId)
+            }).ToList();
+            
+            ViewBag.InvitedSuppliers = invitedWithProposals;
+        }
+    }
             
             // Return appropriate partial view
             return PartialView($"Steps/_Step{stepNumber}", model);

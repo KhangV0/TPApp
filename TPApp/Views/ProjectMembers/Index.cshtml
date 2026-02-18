@@ -1,0 +1,172 @@
+@model List<TPApp.ViewModel.ProjectMemberDto>
+@{
+    Layout = null;
+    var projectId = (int)ViewBag.ProjectId;
+    var isBuyer = (bool)ViewBag.IsBuyer;
+    var availableConsultants = (List<TPApp.ViewModel.UserSelectDto>)ViewBag.AvailableConsultants;
+}
+
+@* Alert Messages *@
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* Section 1: Member List *@
+<h5 class="mb-3"><i class="fas fa-list"></i> Danh sách thành viên</h5>
+<div class="table-responsive">
+    <table class="table table-hover table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in Model)
+            {
+                <tr>
+                    <td><strong>@member.UserName</strong></td>
+                    <td>@member.Email</td>
+                    <td>
+                        @if (member.Role == 1)
+                        {
+                            <span class="badge bg-primary">@member.RoleName</span>
+                        }
+                        else if (member.Role == 2)
+                        {
+                            <span class="badge bg-success">@member.RoleName</span>
+                        }
+                        else if (member.Role == 3)
+                        {
+                            <span class="badge bg-warning">@member.RoleName</span>
+                        }
+                    </td>
+                    <td>
+                        @if (isBuyer && member.Role == 3)
+                        {
+                            <form method="post" asp-controller="ProjectMembers" asp-action="RemoveMember" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="projectId" value="@projectId" />
+                                <input type="hidden" name="userId" value="@member.UserId" />
+                                <button type="submit" class="btn btn-sm btn-danger" 
+                                        onclick="return confirm('Bạn có chắc chắn muốn xóa thành viên này?')">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* Section 2: Add Consultant Form *@
+@if (isBuyer && availableConsultants.Any())
+{
+    <hr class="my-4" />
+    <h5 class="mb-3"><i class="fas fa-user-plus"></i> Thêm Consultant</h5>
+    <form id="addConsultantForm" method="post" asp-controller="ProjectMembers" asp-action="AddConsultant" class="row g-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="projectId" value="@projectId" />
+        
+        <div class="col-md-8">
+            <label for="userId" class="form-label">Chọn Consultant</label>
+            <select name="userId" id="userIdSelect" class="form-select" required>
+                <option value="">-- Chọn người dùng --</option>
+                @foreach (var user in availableConsultants)
+                {
+                    <option value="@user.UserId">@user.FullName (@user.Email)</option>
+                }
+            </select>
+        </div>
+        
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-plus-circle"></i> Thêm Consultant
+            </button>
+        </div>
+    </form>
+}
+else if (isBuyer && !availableConsultants.Any())
+{
+    <hr class="my-4" />
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Không có người dùng nào để thêm vào dự án.
+    </div>
+}
+
+<script>
+    // Handle add consultant form submission via AJAX
+    $(document).ready(function() {
+        $('#addConsultantForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            var form = $(this);
+            var submitBtn = form.find('button[type="submit"]');
+            var originalBtnText = submitBtn.html();
+            
+            // Disable button and show loading
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang xử lý...');
+            
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                            '<i class="fas fa-check-circle"></i> ' + response.message +
+                            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                            '</div>';
+                        
+                        // Trigger modal reload event
+                        $('#memberManagementModal').trigger('reload-content');
+                    } else {
+                        // Show error message
+                        var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                            '<i class="fas fa-exclamation-circle"></i> ' + response.message +
+                            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                            '</div>';
+                        
+                        // Insert alert before form
+                        $('#addConsultantForm').before(alertHtml);
+                        
+                        // Re-enable button
+                        submitBtn.prop('disabled', false).html(originalBtnText);
+                    }
+                },
+                error: function() {
+                    var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                        '<i class="fas fa-exclamation-circle"></i> Đã xảy ra lỗi. Vui lòng thử lại.' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>';
+                    
+                    $('#addConsultantForm').before(alertHtml);
+                    submitBtn.prop('disabled', false).html(originalBtnText);
+                }
+            });
+        });
+    });
+</script>

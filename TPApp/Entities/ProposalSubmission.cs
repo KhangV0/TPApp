@@ -37,5 +37,12 @@ namespace TPApp.Entities
         public int? NguoiSua { get; set; } // int to match Users.UserId
 
         public DateTime? NgaySua { get; set; }
+
+        // Navigation properties
+        [ForeignKey("NguoiTao")]
+        public ApplicationUser? Seller { get; set; }
+
+        [ForeignKey("ProjectId")]
+        public Project? Project { get; set; }
     }
 }
