@@ -491,18 +491,22 @@ namespace TPApp.Controllers
             // Special handling for Step 3 (RFQ) - Load available suppliers
             if (stepNumber == 3)
             {
-                var availableSuppliers = await _context.NhaCungUngs
-                    .Where(n => n.IsActivated == true && n.UserId != null)
-                    .Select(n => new
+                var availableSuppliers = await (
+                    from n in _context.NhaCungUngs
+                    join u in _context.Users on n.UserId equals u.Id into userJoin
+                    from u in userJoin.DefaultIfEmpty()
+                    where n.IsActivated == true && n.UserId != null
+                    select new
                     {
                         n.CungUngId,
                         n.UserId,
                         n.FullName,
                         n.Email,
                         n.Phone,
-                        n.DiaChi
-                    })
-                    .ToListAsync();
+                        n.DiaChi,
+                        UserName = u != null ? u.UserName : null
+                    }
+                ).ToListAsync();
                 ViewBag.AvailableSuppliers = availableSuppliers;
                 
                 // Load invited suppliers for this RFQ
@@ -548,6 +552,38 @@ namespace TPApp.Controllers
         }
     }
             
+            // Special handling for Step 5 (Negotiation) - Access control + Auto-create
+            if (stepNumber == 5)
+            {
+                var project5 = await _context.Projects.FindAsync(projectId);
+                bool isBuyer5 = project5?.CreatedBy == userId;
+                bool isSelectedSeller5 = project5?.SelectedSellerId != null && project5.SelectedSellerId == userId;
+
+                if (!isBuyer5 && !isSelectedSeller5)
+                    return Forbid();
+
+                // Auto-create NegotiationForm draft if not exists
+                var existingNeg = await _context.NegotiationForms
+                    .FirstOrDefaultAsync(x => x.ProjectId == projectId);
+                if (existingNeg == null && project5?.SelectedSellerId != null)
+                {
+                    var draft = new TPApp.Entities.NegotiationForm
+                    {
+                        ProjectId = projectId,
+                        SellerId = project5.SelectedSellerId.Value,
+                        StatusId = 1, // Draft
+                        NguoiTao = userId,
+                        NgayTao = DateTime.Now,
+                        DieuKhoanThanhToan = "",
+                        HinhThucKy = ""
+                    };
+                    _context.NegotiationForms.Add(draft);
+                    await _context.SaveChangesAsync();
+                    // Reload StepData after auto-create
+                    model.StepData = draft;
+                }
+            }
+
             // Return appropriate partial view
             return PartialView($"Steps/_Step{stepNumber}", model);
         }

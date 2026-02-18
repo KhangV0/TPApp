@@ -87,6 +87,7 @@ builder.Services.AddScoped<TPApp.Interfaces.IProposalService, TPApp.Services.Pro
 builder.Services.AddScoped<TPApp.Interfaces.ISelectionService, TPApp.Services.SelectionService>();
 builder.Services.AddScoped<TPApp.Interfaces.IScoringService, TPApp.Services.ScoringService>();
 builder.Services.AddScoped<TPApp.Interfaces.IProjectMemberService, TPApp.Services.ProjectMemberService>();
+builder.Services.AddScoped<TPApp.Interfaces.IOtpEmailService, TPApp.Services.OtpEmailService>();
 
 // --- AI Semantic Matching Services ---
 builder.Services.AddMemoryCache();

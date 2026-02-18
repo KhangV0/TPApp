@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TPApp.Data;
 using TPApp.Entities;
+using TPApp.Enums;
+using TPApp.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace TPApp.Controllers
@@ -14,137 +16,279 @@ namespace TPApp.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly IOtpEmailService _otpEmailService;
 
-        public NegotiationController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment, Services.IWorkflowService workflowService)
+        public NegotiationController(
+            AppDbContext context,
+            UserManager<ApplicationUser> userManager,
+            IWebHostEnvironment environment,
+            Services.IWorkflowService workflowService,
+            IOtpEmailService otpEmailService)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
             _workflowService = workflowService;
+            _otpEmailService = otpEmailService;
         }
 
-        // Helper method to get current user ID as int
         private int GetCurrentUserId()
         {
-            var userIdString = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
-            {
+            var s = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(s) || !int.TryParse(s, out int id))
                 throw new UnauthorizedAccessException("Invalid user ID");
-            }
-            return userId;
+            return id;
         }
 
-        // GET: /Negotiation/Create?projectId=5
-        [HttpGet]
-        public async Task<IActionResult> Create(int? projectId)
+        /// <summary>Returns (canAccess, isBuyer, isSeller) for current user on this project.</summary>
+        private async Task<(bool canAccess, bool isBuyer, bool isSeller)> GetAccessAsync(int projectId, int userId)
         {
-             if (projectId == null) return NotFound("Project Id is required");
+            var project = await _context.Projects.FindAsync(projectId);
+            if (project == null) return (false, false, false);
+            bool isBuyer  = project.CreatedBy == userId;
+            bool isSeller = project.SelectedSellerId == userId;
+            return (isBuyer || isSeller, isBuyer, isSeller);
+        }
 
+        // ─────────────────────────────────────────────────────────────────────
+        // GET /Negotiation/Edit?projectId=5
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> Edit(int? projectId)
+        {
+            if (projectId == null) return NotFound();
             var userId = GetCurrentUserId();
-            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == projectId && m.UserId == userId);
-            if (!isMember) return Forbid();
-
-            // Check Workflow Access (Step 5)
+            var (canAccess, _, _) = await GetAccessAsync(projectId.Value, userId);
+            if (!canAccess) return Forbid();
             if (!await _workflowService.CanAccessStep(projectId.Value, 5)) return Forbid();
 
-            var existing = await _context.NegotiationForms.FirstOrDefaultAsync(x => x.ProjectId == projectId);
-            if (existing != null) return RedirectToAction("Details", "Project", new { id = projectId });
+            var negotiation = await _context.NegotiationForms
+                .FirstOrDefaultAsync(x => x.ProjectId == projectId);
+            if (negotiation == null) return NotFound("Chưa có biên bản thương lượng.");
+            if (negotiation.StatusId == (int)NegotiationStatus.Completed)
+                return BadRequest("Bước thương lượng đã hoàn tất, không thể chỉnh sửa.");
 
-            return View(new NegotiationForm { ProjectId = projectId });
+            return View(negotiation);
         }
 
-        // POST: /Negotiation/Create
+        // ─────────────────────────────────────────────────────────────────────
+        // POST /Negotiation/Edit
+        // ─────────────────────────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(NegotiationForm model, IFormFile? BienBanFile)
+        public async Task<IActionResult> Edit(NegotiationForm model, IFormFile? BienBanFile)
         {
             var userId = GetCurrentUserId();
-            var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
-            if (!isMember) return Forbid();
+            var (canAccess, _, _) = await GetAccessAsync(model.ProjectId ?? 0, userId);
+            if (!canAccess) return Forbid();
 
-            // Validate File if "Upload file" is selected
-            if (model.HinhThucKy == "Upload file")
-            {
-                if (BienBanFile == null || BienBanFile.Length == 0)
-                {
-                    ModelState.AddModelError("BienBanThuongLuongFile", "Vui lòng tải lên biên bản thương lượng.");
-                }
-            }
-            
-            // Remove ModelState error because we manually handle the file path
+            var negotiation = await _context.NegotiationForms
+                .FirstOrDefaultAsync(x => x.Id == model.Id && x.ProjectId == model.ProjectId);
+            if (negotiation == null) return NotFound();
+            if (negotiation.StatusId == (int)NegotiationStatus.Completed)
+                return BadRequest("Bước thương lượng đã hoàn tất, không thể chỉnh sửa.");
+
             ModelState.Remove("BienBanThuongLuongFile");
+            ModelState.Remove("SellerId");
+            ModelState.Remove("DieuKhoanThanhToan");
+            ModelState.Remove("HinhThucKy");
 
-            if (ModelState.IsValid)
+            // Handle file upload
+            if (BienBanFile != null && BienBanFile.Length > 0)
             {
+                var allowed = new[] { ".pdf", ".doc", ".docx" };
+                var ext = Path.GetExtension(BienBanFile.FileName).ToLower();
+                if (!allowed.Contains(ext))
+                { ModelState.AddModelError("BienBanThuongLuongFile", "Chỉ chấp nhận .pdf, .doc, .docx"); return View(model); }
+                if (BienBanFile.Length > 20 * 1024 * 1024)
+                { ModelState.AddModelError("BienBanThuongLuongFile", "File không quá 20MB."); return View(model); }
+
+                string folder = Path.Combine(_environment.WebRootPath, "uploads", "negotiations");
+                Directory.CreateDirectory(folder);
+                string fname = $"{Guid.NewGuid()}_{BienBanFile.FileName}";
+                using var stream = new FileStream(Path.Combine(folder, fname), FileMode.Create);
+                await BienBanFile.CopyToAsync(stream);
+                negotiation.BienBanThuongLuongFile = $"/uploads/negotiations/{fname}";
+            }
+
+            negotiation.GiaChotCuoiCung   = model.GiaChotCuoiCung;
+            negotiation.DieuKhoanThanhToan = model.DieuKhoanThanhToan;
+            negotiation.HinhThucKy         = model.HinhThucKy;
+            negotiation.NguoiSua           = userId;
+            negotiation.NgaySua            = DateTime.Now;
+
+            if (model.HinhThucKy == "E-Sign" || model.HinhThucKy == "OTP")
+                negotiation.DaKySo = true;
+
+            // Advance to WaitingSignature when price is set
+            if (negotiation.GiaChotCuoiCung.HasValue &&
+                negotiation.StatusId < (int)NegotiationStatus.WaitingSignature)
+            {
+                negotiation.StatusId = (int)NegotiationStatus.WaitingSignature;
+            }
+
+            await _context.SaveChangesAsync();
+            return Redirect($"/Project/Details/{model.ProjectId}");
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // POST /Negotiation/RequestOtp  (AJAX)
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> RequestOtp([FromBody] RequestOtpDto dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var (canAccess, isBuyer, isSeller) = await GetAccessAsync(dto.ProjectId, userId);
+                if (!canAccess) return Json(new { success = false, message = "Không có quyền truy cập." });
+
+                var negotiation = await _context.NegotiationForms
+                    .FirstOrDefaultAsync(x => x.ProjectId == dto.ProjectId);
+                if (negotiation == null)
+                    return Json(new { success = false, message = "Chưa có biên bản thương lượng." });
+
+                if (negotiation.StatusId == (int)NegotiationStatus.Completed)
+                    return Json(new { success = false, message = "Bước thương lượng đã hoàn tất." });
+
+                if (negotiation.StatusId < (int)NegotiationStatus.WaitingSignature)
+                    return Json(new { success = false, message = "Cần thống nhất giá trước khi ký." });
+
+                // Guard: already signed
+                if (isSeller && negotiation.SellerSigned)
+                    return Json(new { success = false, message = "Seller đã ký rồi." });
+                if (isBuyer && negotiation.BuyerSigned)
+                    return Json(new { success = false, message = "Buyer đã ký rồi." });
+
+                // Generate 6-digit OTP
+                var otp = new Random().Next(100000, 999999).ToString();
+                var expire = DateTime.Now.AddMinutes(5);
+
+                if (isSeller) { negotiation.SellerOtpCode = otp; negotiation.SellerOtpExpire = expire; }
+                if (isBuyer)  { negotiation.BuyerOtpCode  = otp; negotiation.BuyerOtpExpire  = expire; }
+                await _context.SaveChangesAsync();
+
+                // Get user email
+                var user = await _context.Users.FindAsync(userId);
+                var email    = user?.Email ?? "";
+                var fullName = user?.FullName ?? user?.UserName ?? "Người dùng";
+                var role     = isBuyer ? "Buyer" : "Seller";
+
+                await _otpEmailService.SendOtpAsync(email, fullName, otp, role, dto.ProjectId);
+
+                return Json(new { success = true, message = $"OTP đã gửi đến {email}. Có hiệu lực 5 phút." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // POST /Negotiation/VerifyOtp  (AJAX)
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var (canAccess, isBuyer, isSeller) = await GetAccessAsync(dto.ProjectId, userId);
+                if (!canAccess) return Json(new { success = false, message = "Không có quyền truy cập." });
+
+                var negotiation = await _context.NegotiationForms
+                    .FirstOrDefaultAsync(x => x.ProjectId == dto.ProjectId);
+                if (negotiation == null)
+                    return Json(new { success = false, message = "Không tìm thấy biên bản." });
+
+                if (negotiation.StatusId == (int)NegotiationStatus.Completed)
+                    return Json(new { success = false, message = "Bước thương lượng đã hoàn tất." });
+
+                // Validate OTP
+                string? storedOtp    = isSeller ? negotiation.SellerOtpCode   : negotiation.BuyerOtpCode;
+                DateTime? storedExp  = isSeller ? negotiation.SellerOtpExpire : negotiation.BuyerOtpExpire;
+
+                if (string.IsNullOrEmpty(storedOtp))
+                    return Json(new { success = false, message = "Chưa có OTP. Vui lòng yêu cầu OTP trước." });
+
+                if (DateTime.Now > storedExp)
+                {
+                    // Clear expired OTP
+                    if (isSeller) { negotiation.SellerOtpCode = null; negotiation.SellerOtpExpire = null; }
+                    if (isBuyer)  { negotiation.BuyerOtpCode  = null; negotiation.BuyerOtpExpire  = null; }
+                    await _context.SaveChangesAsync();
+                    return Json(new { success = false, message = "OTP đã hết hạn. Vui lòng yêu cầu OTP mới." });
+                }
+
+                if (storedOtp != dto.Otp.Trim())
+                    return Json(new { success = false, message = "OTP không đúng. Vui lòng kiểm tra lại." });
+
+                // OTP valid → sign
+                using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    // Handle File Upload
-                    if (BienBanFile != null && BienBanFile.Length > 0)
+                    var now = DateTime.Now;
+                    if (isSeller)
                     {
-                         // Validate extension
-                        var allowedExtensions = new[] { ".pdf", ".doc", ".docx" };
-                        var extension = Path.GetExtension(BienBanFile.FileName).ToLower();
-                        if (!allowedExtensions.Contains(extension))
-                        {
-                            ModelState.AddModelError("BienBanThuongLuongFile", "Chỉ chấp nhận file .pdf, .doc, .docx");
-                            return View(model);
-                        }
+                        negotiation.SellerSigned    = true;
+                        negotiation.SellerSignedAt  = now;
+                        negotiation.SellerOtpCode   = null;
+                        negotiation.SellerOtpExpire = null;
+                    }
+                    if (isBuyer)
+                    {
+                        negotiation.BuyerSigned    = true;
+                        negotiation.BuyerSignedAt  = now;
+                        negotiation.BuyerOtpCode   = null;
+                        negotiation.BuyerOtpExpire = null;
+                    }
+                    negotiation.NguoiSua = userId;
+                    negotiation.NgaySua  = now;
 
-                        // Validate Size (20MB)
-                        if (BienBanFile.Length > 20 * 1024 * 1024)
-                        {
-                            ModelState.AddModelError("BienBanThuongLuongFile", "File không được quá 20MB.");
-                            return View(model);
-                        }
-
-                        string uploadFolder = Path.Combine(_environment.WebRootPath, "uploads", "negotiations");
-                        if (!Directory.Exists(uploadFolder))
-                        {
-                            Directory.CreateDirectory(uploadFolder);
-                        }
-
-                        string uniqueFileName = $"{Guid.NewGuid()}_{BienBanFile.FileName}";
-                        string filePath = Path.Combine(uploadFolder, uniqueFileName);
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await BienBanFile.CopyToAsync(stream);
-                        }
-                        model.BienBanThuongLuongFile = $"/uploads/negotiations/{uniqueFileName}";
+                    bool bothSigned = negotiation.SellerSigned && negotiation.BuyerSigned;
+                    if (bothSigned)
+                    {
+                        negotiation.StatusId = (int)NegotiationStatus.Completed;
+                        await _context.SaveChangesAsync();
+                        await _workflowService.CompleteStep(dto.ProjectId, 5);
+                    }
+                    else
+                    {
+                        negotiation.StatusId = (int)NegotiationStatus.PartiallySigned;
+                        await _context.SaveChangesAsync();
                     }
 
-                    // Auto-sign logic
-                    if (model.HinhThucKy == "E-Sign" || model.HinhThucKy == "OTP")
-                    {
-                        model.DaKySo = true;
-                    }
+                    await transaction.CommitAsync();
 
-                    // Set Metadata
-                    model.NguoiTao = userId;
-                    model.NgayTao = DateTime.Now;
-                    model.StatusId = 1;
+                    string msg = bothSigned
+                        ? "Cả hai bên đã ký! Bước 5 hoàn tất. Bước 6 đã được mở."
+                        : (isSeller ? "Seller đã ký." : "Buyer đã ký.") + " Đang chờ bên còn lại ký.";
 
-                    _context.NegotiationForms.Add(model);
-                    await _context.SaveChangesAsync();
-
-                    // Complete Step 5
-                    await _workflowService.CompleteStep(model.ProjectId.Value, 5);
-
-                    return RedirectToAction("Details", "Project", new { id = model.ProjectId });
+                    return Json(new { success = true, completed = bothSigned, message = msg });
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "Đã xảy ra lỗi: " + ex.Message);
+                    await transaction.RollbackAsync();
+                    return Json(new { success = false, message = "Lỗi khi ký: " + ex.Message });
                 }
             }
-
-            return View(model);
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
         }
 
-        // GET: /Negotiation/Success
+        // Legacy redirect
         [HttpGet]
-        public IActionResult Success()
-        {
-            return View();
-        }
+        public IActionResult Create(int? projectId) => RedirectToAction("Edit", new { projectId });
+
+        [HttpGet]
+        public IActionResult Success() => View();
     }
+
+    // ─── DTOs ───────────────────────────────────────────────────────────────
+    public class RequestOtpDto { public int ProjectId { get; set; } }
+    public class VerifyOtpDto  { public int ProjectId { get; set; } public string Otp { get; set; } = ""; }
 }

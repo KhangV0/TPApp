@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TPApp.Enums;
 
 namespace TPApp.Entities
 {
@@ -14,27 +15,43 @@ namespace TPApp.Entities
 
         public int? ProjectId { get; set; }
 
+        public int SellerId { get; set; } // Selected seller (no FK)
+
         public decimal? GiaChotCuoiCung { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng nhập điều khoản thanh toán")]
-        public string DieuKhoanThanhToan { get; set; } = null!;
+        // Nullable for auto-created draft records
+        public string? DieuKhoanThanhToan { get; set; }
 
-        public string? BienBanThuongLuongFile { get; set; } // File path
+        public string? BienBanThuongLuongFile { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng chọn hình thức ký")]
         [StringLength(50)]
-        public string HinhThucKy { get; set; } = null!; // "Upload file", "E-Sign", "OTP"
+        public string? HinhThucKy { get; set; }
 
         public bool DaKySo { get; set; } = false;
 
-        public int StatusId { get; set; } = 1;
+        // Two-party signature flags
+        public bool SellerSigned { get; set; } = false;
+        public bool BuyerSigned  { get; set; } = false;
 
-        public int? NguoiTao { get; set; } // int to match Users.UserId
+        // OTP fields
+        [StringLength(10)]
+        public string? SellerOtpCode    { get; set; }
+        public DateTime? SellerOtpExpire { get; set; }
 
+        [StringLength(10)]
+        public string? BuyerOtpCode     { get; set; }
+        public DateTime? BuyerOtpExpire  { get; set; }
+
+        // Signature timestamps
+        public DateTime? SellerSignedAt { get; set; }
+        public DateTime? BuyerSignedAt  { get; set; }
+
+        // StatusId: 1=Draft, 2=PriceAgreed, 3=WaitingSignature, 4=PartiallySigned, 5=Completed
+        public int StatusId { get; set; } = (int)NegotiationStatus.Draft;
+
+        public int? NguoiTao { get; set; }
         public DateTime NgayTao { get; set; } = DateTime.Now;
-
-        public int? NguoiSua { get; set; } // int to match Users.UserId
-
+        public int? NguoiSua { get; set; }
         public DateTime? NgaySua { get; set; }
     }
 }
