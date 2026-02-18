@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TPApp.Data;
+using TPApp.Entities;
 using TPApp.Enums;
 using TPApp.Interfaces;
 
@@ -28,33 +29,27 @@ namespace TPApp.Services
                 return false;
             }
 
-            // Guard 2: Proposal must exist and be submitted
+            // Guard 2: Proposal must exist and belong to this project
             var proposal = await _context.ProposalSubmissions.FindAsync(proposalId);
-            if (proposal == null || 
-                proposal.ProjectId != projectId || 
-                proposal.StatusId != (int)ProposalStatus.Submitted)
+            if (proposal == null || proposal.ProjectId != projectId)
             {
                 return false;
             }
 
-            // Guard 3: Step 4 must be in progress
-            var step4 = await _context.ProjectStepStates
-                .FirstOrDefaultAsync(s => s.ProjectId == projectId && s.StepNumber == 4);
-
-            if (step4 == null || step4.Status != 1) // 1 = InProgress
+            // Guard 3: Proposal must be in Submitted status (not already selected/rejected)
+            if (proposal.StatusId != (int)ProposalStatus.Submitted)
             {
                 return false;
             }
 
-            // Guard 4: Seller must have valid accepted invitation
+            // Guard 4: Seller must have a valid invitation for this project
             var sellerId = proposal.NguoiTao;
             if (sellerId == null) return false;
 
             var invitation = await _context.RFQInvitations
                 .FirstOrDefaultAsync(i => i.ProjectId == projectId && 
                                          i.SellerId == sellerId && 
-                                         i.IsActive &&
-                                         i.StatusId == (int)RFQInvitationStatus.ProposalSubmitted);
+                                         i.IsActive);
 
             if (invitation == null)
             {
@@ -104,12 +99,68 @@ namespace TPApp.Services
                 other.StatusId = (int)ProposalStatus.Rejected;
             }
 
+            // 4. Clean up ProjectMembers - only selected seller remains active
+            // Deactivate all Seller role members
+            var sellerMembers = await _context.ProjectMembers
+                .Where(m => m.ProjectId == projectId && m.Role == 2) // Role 2 = Seller
+                .ToListAsync();
+
+            foreach (var member in sellerMembers)
+            {
+                member.IsActive = false;
+            }
+
+            // Add or reactivate selected seller as ProjectMember
+            var selectedSellerMember = sellerMembers.FirstOrDefault(m => m.UserId == sellerId);
+            if (selectedSellerMember != null)
+            {
+                // Reactivate if exists
+                selectedSellerMember.IsActive = true;
+            }
+            else
+            {
+                // Add new member
+                _context.ProjectMembers.Add(new ProjectMember
+                {
+                    ProjectId = projectId,
+                    UserId = sellerId,
+                    Role = 2, // Seller
+                    JoinedDate = DateTime.Now,
+                    IsActive = true
+                });
+            }
+
             await _context.SaveChangesAsync();
 
-            // 4. Transition workflow to Step 5 (Negotiation)
-            // TODO: Implement workflow transition methods in IWorkflowService
-            // await _workflowService.CompleteStepAsync(projectId, 4, buyerUserId);
-            // await _workflowService.StartStepAsync(projectId, 5, buyerUserId);
+            // 5. Transition workflow: Complete Step 4, Start Step 5
+            var step4 = await _context.ProjectSteps
+                .FirstOrDefaultAsync(s => s.ProjectId == projectId && s.StepNumber == 4);
+            if (step4 != null)
+            {
+                step4.StatusId = 2; // Completed
+                step4.CompletedDate = DateTime.Now;
+            }
+
+            var step5 = await _context.ProjectSteps
+                .FirstOrDefaultAsync(s => s.ProjectId == projectId && s.StepNumber == 5);
+            if (step5 != null)
+            {
+                step5.StatusId = 1; // InProgress
+            }
+            else
+            {
+                // Create Step 5 if it doesn't exist
+                _context.ProjectSteps.Add(new ProjectStep
+                {
+                    ProjectId = projectId,
+                    StepNumber = 5,
+                    StepName = "Đàm phán hợp đồng",
+                    StatusId = 1, // InProgress
+                    CreatedDate = DateTime.Now
+                });
+            }
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task<int?> GetSelectedSellerIdAsync(int projectId)

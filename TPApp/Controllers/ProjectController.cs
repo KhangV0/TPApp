@@ -414,9 +414,25 @@ namespace TPApp.Controllers
             var userId = GetCurrentUserId();
             var member = await _context.ProjectMembers
                 .Include(m => m.Project)
-                .FirstOrDefaultAsync(m => m.ProjectId == projectId && m.UserId == userId);
+                .FirstOrDefaultAsync(m => m.ProjectId == projectId && m.UserId == userId && m.IsActive);
             
-            if (member == null) return Forbid();
+            // Fallback: if not in ProjectMembers, check if user is project creator (buyer)
+            if (member == null)
+            {
+                var project = await _context.Projects
+                    .FirstOrDefaultAsync(p => p.Id == projectId && p.CreatedBy == userId);
+                if (project == null) return Forbid();
+                
+                // Treat project creator as buyer (Role=1)
+                member = new TPApp.Entities.ProjectMember
+                {
+                    ProjectId = projectId,
+                    UserId = userId,
+                    Role = 1, // Buyer
+                    IsActive = true,
+                    Project = project
+                };
+            }
             
             // Validate step number
             if (stepNumber < 1 || stepNumber > 14) return BadRequest("Invalid step number");
@@ -457,7 +473,7 @@ namespace TPApp.Controllers
             };
             
             // Load step-specific data for inline display
-            model.StepData = await LoadStepData(projectId, stepNumber);
+            model.StepData = await LoadStepData(projectId, stepNumber, userId, member.Role);
             
             // Special handling for Step 2 (NDA) - Load E-Sign data
             if (stepNumber == 2)
@@ -537,14 +553,17 @@ namespace TPApp.Controllers
         }
 
         // Helper: Load step-specific data
-        private async Task<object?> LoadStepData(int projectId, int stepNumber)
+        private async Task<object?> LoadStepData(int projectId, int stepNumber, int userId = 0, int userRole = 0)
         {
             return stepNumber switch
             {
                 1 => await _context.TechTransferRequests.FirstOrDefaultAsync(x => x.ProjectId == projectId),
                 2 => await _context.NDAAgreements.FirstOrDefaultAsync(x => x.ProjectId == projectId),
                 3 => await _context.RFQRequests.FirstOrDefaultAsync(x => x.ProjectId == projectId),
-                4 => await _context.ProposalSubmissions.FirstOrDefaultAsync(x => x.ProjectId == projectId),
+                // Step 4: For sellers (Role=2), load THEIR OWN proposal. For buyers/consultants, load first.
+                4 => userRole == 2
+                    ? await _context.ProposalSubmissions.FirstOrDefaultAsync(x => x.ProjectId == projectId && x.NguoiTao == userId)
+                    : await _context.ProposalSubmissions.FirstOrDefaultAsync(x => x.ProjectId == projectId),
                 5 => await _context.NegotiationForms.FirstOrDefaultAsync(x => x.ProjectId == projectId),
                 6 => await _context.LegalReviewForms.FirstOrDefaultAsync(x => x.ProjectId == projectId),
                 7 => await _context.EContracts.FirstOrDefaultAsync(x => x.ProjectId == projectId),

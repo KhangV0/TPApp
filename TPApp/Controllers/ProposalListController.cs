@@ -120,7 +120,7 @@ namespace TPApp.Controllers
                 _logger.LogInformation("User {UserId} selected proposal {ProposalId} for project {ProjectId}", userId, proposalId, projectId);
 
                 TempData["SuccessMessage"] = "Đã chọn nhà cung ứng thành công!";
-                return RedirectToAction("Step", "Project", new { id = projectId, step = 5 });
+        return Redirect($"/Project/Details/{projectId}");
             }
             catch (InvalidOperationException ex)
             {

@@ -20,6 +20,8 @@
 
 
     <link rel="stylesheet" href="~/TPApp.styles.css" asp-append-version="true" />
+    @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+    <meta name="__RequestVerificationToken" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
 
 </head>
 <body>

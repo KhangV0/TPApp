@@ -27,8 +27,9 @@
         {
             var proposals = await Context.ProposalSubmissions
                 .Include(p => p.Seller)
-                .Where(p => p.ProjectId == Model.ProjectId && p.StatusId == 1)
+                .Where(p => p.ProjectId == Model.ProjectId && p.StatusId != 0) // Show all non-draft proposals
                 .ToListAsync();
+
 
             <h6 class="mb-3"><i class="fas fa-list"></i> Bảng so sánh báo giá</h6>
 
@@ -137,34 +138,31 @@
                                 <div class="modal fade" id="selectModal@(item.Id)" tabindex="-1">
                                     <div class="modal-dialog">
                                         <div class="modal-content">
-                                            <form method="post" asp-controller="ProposalList" asp-action="SelectSeller">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="projectId" value="@Model.ProjectId" />
-                                                <input type="hidden" name="proposalId" value="@item.Id" />
-                                                
-                                                <div class="modal-header bg-success text-white">
-                                                    <h5 class="modal-title">Xác nhận chọn nhà cung ứng</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            <div class="modal-header bg-success text-white">
+                                                <h5 class="modal-title">Xác nhận chọn nhà cung ứng</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Bạn có chắc chắn muốn chọn <strong>@(item.Seller?.FullName ?? "Unknown")</strong> làm nhà cung ứng?</p>
+                                                <div class="alert alert-warning">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    <strong>Lưu ý:</strong> Hành động này sẽ:
+                                                    <ul class="mb-0 mt-2">
+                                                        <li>Chuyển dự án sang Bước 5</li>
+                                                        <li>Từ chối tất cả báo giá khác</li>
+                                                        <li>Không thể hoàn tác</li>
+                                                    </ul>
                                                 </div>
-                                                <div class="modal-body">
-                                                    <p>Bạn có chắc chắn muốn chọn <strong>@(item.Seller?.FullName ?? "Unknown")</strong> làm nhà cung ứng?</p>
-                                                    <div class="alert alert-warning">
-                                                        <i class="fas fa-exclamation-triangle"></i>
-                                                        <strong>Lưu ý:</strong> Hành động này sẽ:
-                                                        <ul class="mb-0 mt-2">
-                                                            <li>Chuyển dự án sang Bước 5</li>
-                                                            <li>Từ chối tất cả báo giá khác</li>
-                                                            <li>Không thể hoàn tác</li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                                    <button type="submit" class="btn btn-success">
-                                                        <i class="fas fa-check-circle"></i> Xác nhận chọn
-                                                    </button>
-                                                </div>
-                                            </form>
+                                                <div id="selectError@(item.Id)" class="alert alert-danger d-none"></div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                                <button type="button" class="btn btn-success" 
+                                                        id="confirmSelectBtn@(item.Id)"
+                                                        onclick="confirmSelectSeller(@Model.ProjectId, @item.Id, this)">
+                                                    <i class="fas fa-check-circle"></i> Xác nhận chọn
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -557,4 +555,55 @@
             });
         });
     });
+
+    // Select seller via AJAX (bypasses antiforgery token issue in partial views)
+    function confirmSelectSeller(projectId, proposalId, btn) {
+        // Disable button and show loading
+        btn.disabled = true;
+        var originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xử lý...';
+
+        // Get antiforgery token from the page
+        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                 || document.querySelector('meta[name="__RequestVerificationToken"]')?.getAttribute('content')
+                 || '';
+
+        // Build form data
+        var formData = new FormData();
+        formData.append('projectId', projectId);
+        formData.append('proposalId', proposalId);
+        formData.append('__RequestVerificationToken', token);
+
+        fetch('/ProposalList/SelectSeller', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(response) {
+            if (response.redirected) {
+                // Follow the redirect
+                window.location.href = response.url;
+            } else if (response.ok) {
+                window.location.reload();
+            } else {
+                // Show error in modal
+                var errorDiv = document.getElementById('selectError' + proposalId);
+                if (errorDiv) {
+                    errorDiv.textContent = 'Không thể chọn nhà cung ứng. Vui lòng thử lại.';
+                    errorDiv.classList.remove('d-none');
+                }
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        })
+        .catch(function(err) {
+            console.error('SelectSeller error:', err);
+            var errorDiv = document.getElementById('selectError' + proposalId);
+            if (errorDiv) {
+                errorDiv.textContent = 'Đã xảy ra lỗi kết nối. Vui lòng thử lại.';
+                errorDiv.classList.remove('d-none');
+            }
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        });
+    }
 </script>
