@@ -1,0 +1,349 @@
+@model TPApp.Entities.ProjectContract
+@using TPApp.Entities
+@using TPApp.Enums
+@{
+    ViewData["Title"] = "Kiểm tra pháp lý – Hợp đồng";
+    var projectId  = (int)ViewBag.ProjectId;
+    var userRole   = (int)ViewBag.UserRole;        // 1=Buyer, 2=Seller, 3=Consultant
+    var approvals  = ViewBag.Approvals as List<ContractApproval> ?? new();
+    var versions   = ViewBag.Versions  as List<ProjectContract>  ?? new();
+    var auditLogs  = ViewBag.AuditLogs as List<ContractAuditLog> ?? new();
+    bool allApproved = (bool)(ViewBag.AllApproved ?? false);
+    bool isBuyer   = userRole == 1;
+    bool isSeller  = userRole == 2;
+    bool canEdit   = isBuyer || isSeller;
+    bool isLocked  = Model?.StatusId >= (int)ContractStatus.ReadyToSign;
+
+    string StatusLabel(int s) => s switch {
+        0 => "Bản nháp", 1 => "Đang review", 2 => "Đã sửa",
+        3 => "ReadyToSign", 4 => "Đang ký", 5 => "Đã ký đầy đủ", _ => "Lưu trữ"
+    };
+    string StatusClass(int s) => s switch {
+        0 => "bg-secondary", 1 => "bg-info", 2 => "bg-warning text-dark",
+        3 => "bg-primary", 4 => "bg-warning text-dark", 5 => "bg-success", _ => "bg-dark"
+    };
+    string ApprovalLabel(int s) => s switch {
+        1 => "✅ Đã duyệt", 2 => "❌ Từ chối", _ => "⏳ Chờ"
+    };
+    string RoleName(int r) => r switch { 1 => "Buyer", 2 => "Seller", 3 => "Tư vấn", _ => "?" };
+}
+
+<div class="container-fluid py-4" id="contract-dashboard">
+    @if (TempData["Success"] != null)
+    { <div class="alert alert-success alert-dismissible"><button type="button" class="btn-close" data-bs-dismiss="alert"></button>@TempData["Success"]</div> }
+    @if (TempData["Error"] != null)
+    { <div class="alert alert-danger alert-dismissible"><button type="button" class="btn-close" data-bs-dismiss="alert"></button>@TempData["Error"]</div> }
+
+    <!-- ── Header ── -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="flex-grow-1">
+            <h4 class="fw-bold mb-0">
+                <i class="fas fa-file-contract text-primary me-2"></i>Bước 6 – Kiểm tra pháp lý & Hợp đồng
+            </h4>
+            <small class="text-muted">Dự án #@projectId</small>
+        </div>
+        @if (Model != null)
+        {
+            <span class="badge @StatusClass(Model.StatusId) fs-6">@StatusLabel(Model.StatusId)</span>
+        }
+    </div>
+
+    @if (Model == null)
+    {
+        <!-- No contract yet -->
+        <div class="card border-0 shadow-sm text-center py-5">
+            <div class="card-body">
+                <i class="fas fa-file-circle-plus fa-4x text-muted mb-3"></i>
+                <h5>Chưa có hợp đồng nào</h5>
+                <p class="text-muted mb-4">Tạo bản nháp tự động từ kết quả đàm phán hoặc upload file hợp đồng.</p>
+                @if (canEdit)
+                {
+                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                        <button class="btn btn-primary" onclick="createAutoContract()">
+                            <i class="fas fa-magic me-1"></i> Tạo tự động
+                        </button>
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                            <i class="fas fa-upload me-1"></i> Upload hợp đồng
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <!-- ── Left: Contract preview ── -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+                        <i class="fas fa-file-alt text-primary"></i>
+                        <strong>Phiên bản @Model.VersionNumber</strong>
+                        <span class="badge @StatusClass(Model.StatusId) ms-2">@StatusLabel(Model.StatusId)</span>
+                        <div class="ms-auto d-flex gap-2">
+                            @if (!string.IsNullOrEmpty(Model.OriginalFilePath))
+                            {
+                                <a href="/Contract/Download/@Model.Id/original" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>Tải gốc
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.SignedFilePath))
+                            {
+                                <a href="/Contract/Download/@Model.Id/signed" class="btn btn-sm btn-success">
+                                    <i class="fas fa-file-signature me-1"></i>Tải bản ký
+                                </a>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body p-0" style="min-height:400px;overflow:auto">
+                        @if (!string.IsNullOrEmpty(Model.HtmlContent))
+                        {
+                            <div class="p-3">@Html.Raw(Model.HtmlContent)</div>
+                        }
+                        else if (!string.IsNullOrEmpty(Model.OriginalFilePath))
+                        {
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100 py-5 text-muted">
+                                <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
+                                <p>@System.IO.Path.GetFileName(Model.OriginalFilePath)</p>
+                                <a href="/Contract/Download/@Model.Id/original" target="_blank" class="btn btn-outline-danger">
+                                    <i class="fas fa-eye me-1"></i> Xem file
+                                </a>
+                            </div>
+                        }
+                    </div>
+                    @if (!isLocked && canEdit)
+                    {
+                        <div class="card-footer bg-light border-top">
+                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                                <i class="fas fa-redo me-1"></i>Upload phiên bản mới
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- ── Right: Approvals + Actions ── -->
+            <div class="col-lg-5">
+                <!-- Approval Cards -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-white border-bottom">
+                        <strong><i class="fas fa-users-check text-success me-2"></i>Phê duyệt (3 bên)</strong>
+                    </div>
+                    <div class="card-body">
+                        @foreach (int r in new[] { 1, 2, 3 })
+                        {
+                            var ap = approvals.FirstOrDefault(a => a.Role == r);
+                            var statusIcon  = ap?.StatusId == 1 ? "text-success" : ap?.StatusId == 2 ? "text-danger" : "text-muted";
+                            <div class="d-flex align-items-start gap-2 mb-3 pb-2 border-bottom">
+                                <i class="fas fa-user-circle fa-2x @statusIcon mt-1"></i>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">@RoleName(r)</div>
+                                    <div class="small text-muted">
+                                        @(ap != null ? ApprovalLabel(ap.StatusId) : "⏳ Chờ phê duyệt")
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(ap?.Comment))
+                                    {<div class="small fst-italic text-secondary mt-1">💬 @ap.Comment</div>}
+                                    @if (ap?.DecisionAt != null)
+                                    {<div class="small text-muted">@ap.DecisionAt.Value.ToLocalTime().ToString("dd/MM HH:mm")</div>}
+                                </div>
+                                @if (!isLocked && userRole == r)
+                                {
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-success" onclick="submitApproval(@Model.Id, @projectId, true)">✓</button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="submitApproval(@Model.Id, @projectId, false)">✗</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                @if (!isLocked && isBuyer && allApproved)
+                {
+                    <div class="card border-0 shadow-sm border-primary mb-3">
+                        <div class="card-body text-center">
+                            <p class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Tất cả các bên đã duyệt!</p>
+                            <button class="btn btn-primary w-100 py-2" onclick="setReadyToSign(@Model.Id)">
+                                <i class="fas fa-lock me-1"></i>Chốt hợp đồng – ReadyToSign
+                            </button>
+                            <small class="text-muted d-block mt-2">Sau khi chốt, hợp đồng sẽ không thể chỉnh sửa</small>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.StatusId == (int)ContractStatus.ReadyToSign || Model.StatusId >= (int)ContractStatus.SigningInProgress)
+                {
+                    <div class="card border-0 shadow-sm border-success">
+                        <div class="card-body text-center">
+                            <p class="fw-bold text-primary"><i class="fas fa-signature me-1"></i>Sẵn sàng ký số</p>
+                            <a href="/Signing/Index?projectId=@projectId" class="btn btn-success w-100 py-2">
+                                <i class="fas fa-arrow-right me-1"></i>Đến Bước 7 – Ký hợp đồng
+                            </a>
+                        </div>
+                    </div>
+                }
+
+                <!-- Version History -->
+                @if (versions.Count > 1)
+                {
+                    <div class="card border-0 shadow-sm mt-3">
+                        <div class="card-header bg-white border-bottom">
+                            <small class="fw-bold"><i class="fas fa-history me-1"></i>Lịch sử phiên bản</small>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            @foreach (var v in versions.Take(5))
+                            {
+                                <div class="list-group-item list-group-item-action py-2">
+                                    <div class="d-flex justify-content-between">
+                                        <small><strong>v@v.VersionNumber</strong> @(v.IsActive ? "✅": "🗄️")</small>
+                                        <span class="badge @StatusClass(v.StatusId)">@StatusLabel(v.StatusId)</span>
+                                    </div>
+                                    <small class="text-muted">@v.CreatedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Audit Log -->
+        @if (auditLogs.Any())
+        {
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-bottom">
+                    <a data-bs-toggle="collapse" href="#auditCollapse" class="text-decoration-none">
+                        <i class="fas fa-shield-alt text-muted me-1"></i><strong>Nhật ký kiểm toán</strong>
+                        <i class="fas fa-chevron-down ms-2 small"></i>
+                    </a>
+                </div>
+                <div id="auditCollapse" class="collapse">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light"><tr><th>Thời gian</th><th>Hành động</th><th>Entity</th><th>Actor</th></tr></thead>
+                            <tbody>
+                                @foreach (var log in auditLogs)
+                                {
+                                    <tr>
+                                        <td class="text-nowrap small">@log.CreatedDate.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                                        <td><span class="badge bg-light text-dark">@log.Action</span></td>
+                                        <td class="small text-muted">@log.EntityName #@log.EntityId</td>
+                                        <td class="small">@(log.ActorUserId?.ToString() ?? "System")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="/Contract/Upload" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="projectId" value="@projectId" />
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-upload me-1"></i>Upload hợp đồng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">File hợp đồng <small class="text-muted">(.pdf / .docx, tối đa 25MB)</small></label>
+                        <input type="file" class="form-control" name="contractFile" accept=".pdf,.docx" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i>Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject comment modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Lý do từ chối</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <textarea id="rejectComment" class="form-control" rows="3" placeholder="Nhập lý do yêu cầu chỉnh sửa..."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button class="btn btn-danger" id="confirmRejectBtn">Xác nhận từ chối</button>
+        </div>
+    </div></div>
+</div>
+
+@section Scripts {
+<script>
+    const projectId = @projectId;
+    let rejectContractId = 0;
+
+    async function createAutoContract() {
+        const r = await fetch('/Contract/CreateAuto', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ projectId })
+        });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'danger');
+        if (d.success) setTimeout(() => location.reload(), 1000);
+    }
+
+    function submitApproval(contractId, projectId, approved) {
+        if (!approved) {
+            rejectContractId = contractId;
+            new bootstrap.Modal(document.getElementById('rejectModal')).show();
+            return;
+        }
+        doApproval(contractId, projectId, '', approved);
+    }
+
+    document.getElementById('confirmRejectBtn')?.addEventListener('click', () => {
+        const comment = document.getElementById('rejectComment').value;
+        bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+        doApproval(rejectContractId, projectId, comment, false);
+    });
+
+    async function doApproval(contractId, projectId, comment, approved) {
+        const url = approved ? '/Contract/Approve' : '/Contract/Reject';
+        const r = await fetch(url, {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ contractId, projectId, comment })
+        });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'danger');
+        if (d.success) setTimeout(() => location.reload(), 1200);
+    }
+
+    async function setReadyToSign(contractId) {
+        if (!confirm('Xác nhận chốt hợp đồng? Sau đó không thể chỉnh sửa.')) return;
+        const r = await fetch('/Contract/SetReadyToSign', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ contractId })
+        });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'danger');
+        if (d.success) setTimeout(() => location.reload(), 1500);
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+        t.style = 'z-index:9999;min-width:280px';
+        t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 4000);
+    }
+</script>
+}

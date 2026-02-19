@@ -10,13 +10,16 @@ namespace TPApp.Controllers
     {
         private readonly IProjectMemberService _memberService;
         private readonly ILogger<ProjectMembersController> _logger;
+        private readonly Services.INotificationQueueService _notifQueue;
 
         public ProjectMembersController(
             IProjectMemberService memberService,
-            ILogger<ProjectMembersController> logger)
+            ILogger<ProjectMembersController> logger,
+            Services.INotificationQueueService notifQueue)
         {
             _memberService = memberService;
             _logger = logger;
+            _notifQueue = notifQueue;
         }
 
         private int GetCurrentUserId()
@@ -55,6 +58,11 @@ namespace TPApp.Controllers
             try
             {
                 await _memberService.AddConsultantAsync(projectId, userId, currentUserId);
+
+                // Notify consultant: added to project
+                await _notifQueue.QueueAsync(userId, projectId,
+                    "💼 Bạn được thêm vào dự án",
+                    $"Bạn được mời tham gia dự án #{projectId} với vai trò Tư vấn viên. Hãy đăng nhập để xem chi tiết.");
 
                 _logger.LogInformation("User {CurrentUserId} added consultant {UserId} to project {ProjectId}", currentUserId, userId, projectId);
 

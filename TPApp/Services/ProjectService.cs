@@ -42,14 +42,33 @@ namespace TPApp.Services
                 // Calculate progress (14 total steps)
                 var progress = (int)Math.Round((completedSteps / 14.0) * 100);
 
-                // Get current step (first incomplete step where StatusId != 2)
-                var currentStep = await _context.ProjectSteps
-                    .Where(ps => ps.ProjectId == p.Id && ps.StatusId != 2)
+                // Get current step: step after the last Completed one (StatusId == 2 in DB)
+                var allSteps = await _context.ProjectSteps
+                    .Where(ps => ps.ProjectId == p.Id)
                     .OrderBy(ps => ps.StepNumber)
-                    .Select(ps => ps.StepNumber)
-                    .FirstOrDefaultAsync();
+                    .Select(ps => new { ps.StepNumber, ps.StatusId })
+                    .ToListAsync();
 
-                if (currentStep == 0) currentStep = 14; // All completed
+                int currentStep;
+                if (!allSteps.Any())
+                {
+                    currentStep = 1;
+                }
+                else
+                {
+                    var lastCompleted = allSteps
+                        .Where(s => s.StatusId == 2) // 2 = Completed in DB
+                        .OrderByDescending(s => s.StepNumber)
+                        .FirstOrDefault();
+
+                    if (lastCompleted == null)
+                        currentStep = allSteps.First().StepNumber;
+                    else
+                    {
+                        var next = allSteps.FirstOrDefault(s => s.StepNumber > lastCompleted.StepNumber);
+                        currentStep = next?.StepNumber ?? lastCompleted.StepNumber;
+                    }
+                }
 
                 result.Add(new MyProjectVm
                 {

@@ -1,0 +1,276 @@
+@model TPApp.Entities.ProjectContract
+@using TPApp.Entities
+@using TPApp.Interfaces
+@{
+    ViewData["Title"] = "Ký số hợp đồng";
+    var projectId  = (int)ViewBag.ProjectId;
+    bool isBuyer   = (bool)(ViewBag.IsBuyer  ?? false);
+    bool isSeller  = (bool)(ViewBag.IsSeller ?? false);
+    var status     = ViewBag.Status as ContractSigningStatusDto ?? new ContractSigningStatusDto();
+    var provider   = (string)(ViewBag.Provider ?? "VNPT");
+    var auditLogs  = ViewBag.AuditLogs as List<ContractAuditLog> ?? new();
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold mb-0"><i class="fas fa-signature text-success me-2"></i>Bước 7 – Ký số hợp đồng</h4>
+            <small class="text-muted">Dự án #@projectId – Hợp đồng v@(Model?.VersionNumber)</small>
+        </div>
+        @if (status.FullySigned)
+        {<span class="badge bg-success fs-6 ms-auto"><i class="fas fa-check me-1"></i>Đã ký đầy đủ</span>}
+        else
+        {<span class="badge bg-warning text-dark fs-6 ms-auto"><i class="fas fa-clock me-1"></i>Đang chờ ký</span>}
+    </div>
+
+    <!-- Legal disclaimer -->
+    <div class="alert alert-info d-flex gap-2 mb-4">
+        <i class="fas fa-balance-scale fs-4"></i>
+        <div>
+            <strong>Thông báo pháp lý – Luật Giao dịch điện tử 2023</strong><br/>
+            Hợp đồng điện tử có giá trị pháp lý tương đương văn bản giấy sau khi cả 2 bên ký số theo quy định.
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="legalAck" required />
+                <label class="form-check-label fw-semibold" for="legalAck">
+                    Tôi xác nhận đã đọc và đồng ý với điều khoản pháp lý trên
+                </label>
+            </div>
+        </div>
+    </div>
+
+    @if (status.FullySigned)
+    {
+        <!-- Both signed -->
+        <div class="card border-0 shadow-sm border-success mb-4">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h4 class="text-success fw-bold">Hợp đồng đã được ký đầy đủ!</h4>
+                <p class="text-muted">Buyer ký lúc: @(status.BuyerSignedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—") &nbsp;|&nbsp;
+                   Seller ký lúc: @(status.SellerSignedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")</p>
+                @if (Model?.StatusId == 5 && !string.IsNullOrEmpty(Model.SignedFilePath))
+                {
+                    <a href="/Contract/Download/@Model!.Id/signed" class="btn btn-success btn-lg mt-2">
+                        <i class="fas fa-download me-1"></i>Tải hợp đồng đã ký
+                    </a>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <!-- ── Buyer OTP eSign ── -->
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm @(status.BuyerSigned ? "border-success" : "")">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+                        <i class="fas fa-user text-primary"></i>
+                        <strong>Buyer – Ký e-Sign OTP</strong>
+                        @if (status.BuyerSigned)
+                        {<span class="badge bg-success ms-auto">✓ Đã ký @status.BuyerSignedAt?.ToLocalTime().ToString("dd/MM HH:mm")</span>}
+                    </div>
+                    <div class="card-body">
+                        @if (status.BuyerSigned)
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                                <p class="text-success fw-bold">Buyer đã ký thành công</p>
+                            </div>
+                        }
+                        else if (isBuyer)
+                        {
+                            <p class="text-muted small">OTP sẽ được gửi đến số điện thoại đã đăng ký của bạn.</p>
+                            <div id="buyerStep1">
+                                <button class="btn btn-primary w-100 py-2" onclick="startBuyerOtp()" id="buyerStartBtn">
+                                    <i class="fas fa-mobile-alt me-1"></i>Nhận mã OTP & Ký điện tử
+                                </button>
+                            </div>
+                            <div id="buyerStep2" class="d-none">
+                                <label class="form-label fw-semibold">Nhập mã OTP</label>
+                                <div class="input-group mb-2">
+                                    <input type="text" id="otpInput" class="form-control form-control-lg text-center"
+                                           placeholder="000000" maxlength="6" inputmode="numeric" />
+                                    <button class="btn btn-outline-secondary" onclick="startBuyerOtp()">Gửi lại</button>
+                                </div>
+                                <div id="otpTimer" class="text-muted small text-center mb-3"></div>
+                                <button class="btn btn-success w-100 py-2" onclick="confirmBuyerOtp()">
+                                    <i class="fas fa-lock me-1"></i>Xác nhận & Ký
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <p>Đang chờ Buyer ký…</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Seller CA Sign ── -->
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm @(status.SellerSigned ? "border-success" : "")">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+                        <i class="fas fa-building text-warning"></i>
+                        <strong>Seller – Ký CA (@provider)</strong>
+                        @if (status.SellerSigned)
+                        {<span class="badge bg-success ms-auto">✓ Đã ký @status.SellerSignedAt?.ToLocalTime().ToString("dd/MM HH:mm")</span>}
+                    </div>
+                    <div class="card-body">
+                        @if (status.SellerSigned)
+                        {
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                                <p class="text-success fw-bold">Seller đã ký CA thành công</p>
+                            </div>
+                        }
+                        else if (isSeller)
+                        {
+                            <p class="text-muted small">Hệ thống sẽ gửi yêu cầu ký đến provider <strong>@provider</strong>.
+                               Bạn sẽ nhận thông báo qua ứng dụng CA để xác nhận.</p>
+                            <button class="btn btn-warning w-100 py-2" onclick="startSellerCA()">
+                                <i class="fas fa-certificate me-1"></i>Gửi yêu cầu ký CA
+                            </button>
+                            <div id="sellerStatus" class="mt-3 d-none"></div>
+                            <hr class="my-3" />
+                            <details class="small text-muted">
+                                <summary>Ký bằng USB Token (bridge)</summary>
+                                <p class="mt-2">Tính năng ký qua USB Token yêu cầu cài đặt ứng dụng TechPort Bridge trên máy tính.
+                                   <a href="#" class="text-primary">Tải về tại đây</a></p>
+                            </details>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <p>Đang chờ Seller ký…</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Audit -->
+    @if (auditLogs.Any())
+    {
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white border-bottom">
+                <a data-bs-toggle="collapse" href="#signingAudit" class="text-decoration-none text-dark">
+                    <i class="fas fa-shield-alt text-muted me-1"></i><strong>Nhật ký ký số</strong>
+                    <i class="fas fa-chevron-down ms-2 small"></i>
+                </a>
+            </div>
+            <div id="signingAudit" class="collapse">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light"><tr><th>Thời gian</th><th>Hành động</th><th>Actor</th></tr></thead>
+                        <tbody>
+                            @foreach (var log in auditLogs)
+                            {
+                                <tr>
+                                    <td class="small text-nowrap">@log.CreatedDate.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                                    <td><span class="badge bg-light text-dark">@log.Action</span></td>
+                                    <td class="small">@(log.ActorUserId?.ToString() ?? "System")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    const contractId = @(Model?.Id ?? 0);
+    let buyerRequestId = 0;
+    let otpTimer;
+
+    function checkLegalAck() {
+        if (!document.getElementById('legalAck').checked) {
+            showToast('Vui lòng xác nhận điều khoản pháp lý trước.', 'warning');
+            return false;
+        }
+        return true;
+    }
+
+    async function startBuyerOtp() {
+        if (!checkLegalAck()) return;
+        const r = await fetch('/Signing/BuyerStart', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ contractId })
+        });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'info' : 'danger');
+        if (d.success) {
+            buyerRequestId = d.requestId;
+            document.getElementById('buyerStep1').classList.add('d-none');
+            document.getElementById('buyerStep2').classList.remove('d-none');
+            startOtpTimer(300);
+        }
+    }
+
+    function startOtpTimer(seconds) {
+        clearInterval(otpTimer);
+        const el = document.getElementById('otpTimer');
+        otpTimer = setInterval(() => {
+            seconds--;
+            const m = Math.floor(seconds / 60), s = seconds % 60;
+            el.textContent = `OTP hết hạn sau: ${m}:${s.toString().padStart(2,'0')}`;
+            if (seconds <= 0) { clearInterval(otpTimer); el.textContent = 'OTP đã hết hạn. Vui lòng gửi lại.'; }
+        }, 1000);
+    }
+
+    async function confirmBuyerOtp() {
+        const otp = document.getElementById('otpInput').value.trim();
+        if (!otp) { showToast('Vui lòng nhập mã OTP.', 'warning'); return; }
+        const r = await fetch('/Signing/BuyerConfirm', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ requestId: buyerRequestId, otpCode: otp })
+        });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'danger');
+        if (d.success) setTimeout(() => location.reload(), 1500);
+    }
+
+    async function startSellerCA() {
+        if (!checkLegalAck()) return;
+        const r = await fetch('/Signing/SellerStart', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ contractId })
+        });
+        const d = await r.json();
+        showToast(d.message, d.success ? 'success' : 'danger');
+        if (d.success) {
+            const el = document.getElementById('sellerStatus');
+            el.classList.remove('d-none');
+            el.innerHTML = `<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-1"></i>
+                Đã gửi yêu cầu ký CA. Đang chờ xác nhận từ provider... <br/>
+                <small class="text-muted">RequestRef: ${d.requestId}</small></div>`;
+            // Poll every 10s
+            setInterval(pollStatus, 10000);
+        }
+    }
+
+    async function pollStatus() {
+        const r = await fetch(`/Signing/Status?contractId=${contractId}`);
+        const d = await r.json();
+        if (d.fullySigned) { showToast('🎉 Cả hai bên đã ký!', 'success'); setTimeout(() => location.reload(), 2000); }
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+        t.style = 'z-index:9999;min-width:280px';
+        t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 5000);
+    }
+</script>
+}

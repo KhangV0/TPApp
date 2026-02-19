@@ -7,7 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
+builder.Services.AddMemoryCache();
 builder.Services.AddScoped<TPApp.Services.IWorkflowService, TPApp.Services.WorkflowService>();
+builder.Services.AddScoped<TPApp.Services.INotificationQueueService, TPApp.Services.NotificationQueueService>();
 
 // Cho phép lấy HttpContext trong Razor
 builder.Services.AddHttpContextAccessor();
@@ -88,6 +91,21 @@ builder.Services.AddScoped<TPApp.Interfaces.ISelectionService, TPApp.Services.Se
 builder.Services.AddScoped<TPApp.Interfaces.IScoringService, TPApp.Services.ScoringService>();
 builder.Services.AddScoped<TPApp.Interfaces.IProjectMemberService, TPApp.Services.ProjectMemberService>();
 builder.Services.AddScoped<TPApp.Interfaces.IOtpEmailService, TPApp.Services.OtpEmailService>();
+builder.Services.AddScoped<TPApp.Interfaces.ILegalReviewService, TPApp.Services.LegalReviewService>();
+
+// Step 6+7: Contract & Digital Signing Services
+builder.Services.AddScoped<TPApp.Interfaces.IHashService,              TPApp.Services.HashService>();
+builder.Services.AddScoped<TPApp.Interfaces.IContractAuditService,     TPApp.Services.ContractAuditService>();
+builder.Services.AddScoped<TPApp.Interfaces.IContractApprovalService,  TPApp.Services.ContractApprovalService>();
+builder.Services.AddScoped<TPApp.Interfaces.IContractService,          TPApp.Services.ContractService>();
+builder.Services.AddScoped<TPApp.Interfaces.IContractSigningService,   TPApp.Services.ContractSigningService>();
+
+// CA signing provider adapters (resolved by name via factory)
+builder.Services.AddScoped<TPApp.Interfaces.ISigningProvider, TPApp.Services.Signing.VnptSigningProvider>();
+builder.Services.AddScoped<TPApp.Interfaces.ISigningProvider, TPApp.Services.Signing.FptSigningProvider>();
+builder.Services.AddScoped<TPApp.Interfaces.ISigningProvider, TPApp.Services.Signing.ViettelSigningProvider>();
+builder.Services.AddScoped<TPApp.Services.ISigningProviderFactory, TPApp.Services.SigningProviderFactory>();
+
 
 // --- AI Semantic Matching Services ---
 builder.Services.AddMemoryCache();
@@ -104,6 +122,14 @@ builder.Services.AddScoped<TPApp.Application.Services.ISearchService, TPApp.Appl
 
 // Background service
 builder.Services.AddHostedService<TPApp.BackgroundServices.ProductEmbeddingUpdaterService>();
+
+// --- Notification System ---
+builder.Services.AddScoped<TPApp.Interfaces.ISystemParameterService, TPApp.Services.SystemParameterService>();
+builder.Services.AddScoped<TPApp.Interfaces.IEmailSender, TPApp.Services.GmailEmailSender>();
+builder.Services.AddScoped<TPApp.Interfaces.ISmsSender, TPApp.Services.StubSmsSender>(); // Twilio replaced with stub — add Twilio back when SMS is needed
+builder.Services.AddScoped<TPApp.Interfaces.INotificationProcessor, TPApp.Services.NotificationProcessor>();
+builder.Services.AddHostedService<TPApp.BackgroundServices.NotificationWorker>();
+
 
 var app = builder.Build();
 
@@ -126,6 +152,8 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// SignalR Hub
+app.MapHub<TPApp.Hubs.NotificationHub>("/notificationHub");
 
 
 // --- Custom Routes (Moved from Controllers) ---

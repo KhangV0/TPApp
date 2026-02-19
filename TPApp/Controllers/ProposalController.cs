@@ -16,13 +16,15 @@ namespace TPApp.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly Services.INotificationQueueService _notifQueue;
 
-        public ProposalController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment, Services.IWorkflowService workflowService)
+        public ProposalController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment, Services.IWorkflowService workflowService, Services.INotificationQueueService notifQueue)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
             _workflowService = workflowService;
+            _notifQueue = notifQueue;
         }
 
         // Helper method to get current user ID as int
@@ -168,8 +170,17 @@ namespace TPApp.Controllers
                     // Complete Step 4
                     await _workflowService.CompleteStep(model.ProjectId.Value, 4);
 
+                    // Notify buyer: seller submitted a proposal
+                    var project = await _context.Projects.FindAsync(model.ProjectId.Value);
+                    if (project != null && project.CreatedBy.HasValue)
+                    {
+                        await _notifQueue.QueueAsync(project.CreatedBy.Value, model.ProjectId,
+                            "📄 Hồ sơ đề xuất mới",
+                            $"Nhà cung ứng vừa nộp hồ sơ báo giá cho dự án #{model.ProjectId}. Hãy vào xem xét và chọn nhà cung ứng phù hợp.");
+                    }
+
                     // Log proposal submission
-                    await LogProposalActionAsync(model.ProjectId.Value, userId, "SubmitProposal", 
+                    await LogProposalActionAsync(model.ProjectId.Value, userId, "SubmitProposal",
                         $"ProposalId: {model.Id}");
 
                     return RedirectToAction("Index", new { duAnId = model.ProjectId });

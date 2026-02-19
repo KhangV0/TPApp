@@ -233,7 +233,7 @@
                     const checkboxes = document.querySelectorAll('.seller-checkbox:checked:not([disabled])');
                     if (checkboxes.length === 0) {
                         e.preventDefault();
-                        alert('Vui lòng chọn ít nhất một nhà cung ứng!');
+                        showToast('warning', 'Vui lòng chọn ít nhất một nhà cung ứng!');
                         return false;
                     }
                 });

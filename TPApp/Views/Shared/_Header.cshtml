@@ -56,6 +56,27 @@
                 }
                 else
                 {
+                    @* ── Bell (mobile) ── *@
+                    if (!string.IsNullOrEmpty(userName))
+                    {
+                        <div class="dropdown tp-notification me-1">
+                            <a class="nav-link position-relative tp-bell-btn" href="#"
+                               id="tpBellMobile" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell" style="font-size:20px;"></i>
+                                <span id="tpBadgeMobile" class="badge bg-danger tp-badge d-none">0</span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end tp-dropdown">
+                                <div class="tp-header d-flex justify-content-between align-items-center px-3 py-2">
+                                    <strong>Thông báo</strong>
+                                    <button id="tpMarkAllMobile" class="btn btn-sm btn-link p-0" onclick="tpMarkAllRead()">Đã đọc hết</button>
+                                </div>
+                                <div id="tpListMobile" class="tp-list"></div>
+                                <div class="tp-footer text-center py-2 border-top">
+                                    <a href="/Notifications" class="text-primary small">Xem tất cả</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
                     <div class="dropdown">
                         <a href="#"
                            class="hp-user-avatar-btn dropdown-toggle"
@@ -209,6 +230,30 @@
                         </ul>
                     </div>
                 }
+
+                @* ── Bell (desktop) ── *@
+                @if (!string.IsNullOrEmpty(userName))
+                {
+                    <div class="dropdown tp-notification">
+                        <a class="nav-link position-relative tp-bell-btn" href="#"
+                           id="tpBell" data-bs-toggle="dropdown" aria-expanded="false"
+                           title="Thông báo">
+                            <i class="bi bi-bell" style="font-size:20px;"></i>
+                            <span id="tpBadge" class="badge bg-danger tp-badge d-none">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end tp-dropdown">
+                            <div class="tp-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                                <strong>🔔 Thông báo</strong>
+                                <button class="btn btn-sm btn-link p-0 text-muted" onclick="tpMarkAllRead()">Đã đọc hết</button>
+                            </div>
+                            <div id="tpList" class="tp-list"></div>
+                            <div class="tp-footer text-center py-2 border-top">
+                                <a href="/Notifications" class="text-primary small">Xem tất cả</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+
                 <!-- Language Selector -->
                 <a class="hp-lang-btn" href="https://techport.vn/en/index.html" title="English">
                     <img src="@($"{MainDomain}image/united-states.png")" width="20" alt="EN">

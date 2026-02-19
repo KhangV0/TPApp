@@ -11,11 +11,17 @@
     bool alreadySigned = (isSeller && (negotiation?.SellerSigned ?? false))
                       || (isBuyer  && (negotiation?.BuyerSigned  ?? false));
 
-    bool canRequestOtp = negotiation != null
+    bool canSign = negotiation != null
         && negotiation.StatusId >= (int)NegotiationStatus.WaitingSignature
         && !isCompleted
         && !alreadySigned
         && (isBuyer || isSeller);
+
+    var hinhThucKy = negotiation?.HinhThucKy ?? "OTP";
+
+    bool canEdit = negotiation != null
+        && !isCompleted
+        && negotiation.StatusId < (int)NegotiationStatus.WaitingSignature;
 }
 
 @* OTP Modal *@
@@ -27,7 +33,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center">
-                <p class="text-muted small mb-3">Mã OTP đã được gửi đến email của bạn.<br/>Có hiệu lực trong <strong id="otpCountdown" class="text-danger">5:00</strong></p>
+                <p class="text-muted small mb-3" id="otpSentMessage">Mã OTP đã được gửi.<br/>Có hiệu lực trong <strong id="otpCountdown" class="text-danger">5:00</strong></p>
                 <input type="text" id="otpInput" class="form-control form-control-lg text-center fw-bold"
                        maxlength="6" placeholder="_ _ _ _ _ _" style="letter-spacing:6px;font-size:1.5rem"/>
                 <div id="otpError" class="text-danger small mt-2 d-none"></div>
@@ -45,11 +51,12 @@
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-handshake"></i> Bước 5: Đàm phán Thương mại</h5>
-        @if (negotiation != null && !isCompleted)
+        @if (isBuyer && !isCompleted)
         {
-            <a href="/Negotiation/Edit?projectId=@Model.ProjectId" class="btn btn-light btn-sm">
-                <i class="fas fa-edit"></i> Chỉnh sửa
-            </a>
+            <button class="btn btn-sm btn-light" type="button"
+                    data-bs-toggle="modal" data-bs-target="#editNegotiationModal">
+                <i class="fas fa-pen me-1"></i> Chỉnh sửa
+            </button>
         }
     </div>
     <div class="card-body">
@@ -71,15 +78,59 @@
                 <span class="badge @badgeClass fs-6"><i class="fas @badgeIcon me-1"></i>@badgeText</span>
             </div>
 
-            @if (negotiation.StatusId == (int)NegotiationStatus.Draft)
+            @if (canEdit)
             {
-                <div class="alert alert-info">
+                @* ── Inline form for editing negotiation ── *@
+                <div class="alert alert-info mb-3">
                     <i class="fas fa-info-circle"></i>
-                    <strong>Đang chờ thương lượng.</strong> Vui lòng điền thông tin giá và điều khoản.
-                    <a href="/Negotiation/Edit?projectId=@Model.ProjectId" class="btn btn-sm btn-primary ms-2">
-                        <i class="fas fa-edit"></i> Bắt đầu điền thông tin
-                    </a>
+                    <strong>Đang chờ thương lượng.</strong> Vui lòng điền thông tin giá và điều khoản bên dưới.
                 </div>
+
+                <form id="negotiationInlineForm" enctype="multipart/form-data">
+                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Giá chốt cuối cùng (VNĐ)</label>
+                            <input type="number" name="giaChotCuoiCung" class="form-control" placeholder="Nhập số tiền..." value="@(negotiation.GiaChotCuoiCung?.ToString() ?? "")" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Điều khoản thanh toán</label>
+                            <textarea name="dieuKhoanThanhToan" class="form-control" rows="3" placeholder="Ví dụ: Thanh toán 30% khi ký hợp đồng, 70% khi nghiệm thu...">@(negotiation.DieuKhoanThanhToan ?? "")</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hình thức ký <span class="text-danger">*</span></label>
+                            <select name="hinhThucKy" class="form-select" id="inlineHinhThucKySelect">
+                                <option value="">-- Chọn hình thức --</option>
+                                @{
+                                    var htk = negotiation.HinhThucKy ?? "";
+                                }
+                                <option value="Upload file" selected="@(htk == "Upload file")">Upload file</option>
+                                <option value="E-Sign" selected="@(htk == "E-Sign")">E-Sign</option>
+                                <option value="OTP" selected="@(htk == "OTP")">OTP</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="inlineUploadArea">
+                            <label class="form-label">Biên bản thương lượng (File đính kèm)</label>
+                            @if (!string.IsNullOrEmpty(negotiation.BienBanThuongLuongFile))
+                            {
+                                <div class="mb-2">
+                                    <i class="fas fa-file-pdf text-danger"></i>
+                                    <a href="@negotiation.BienBanThuongLuongFile" target="_blank">
+                                        @System.IO.Path.GetFileName(negotiation.BienBanThuongLuongFile)
+                                    </a>
+                                    <small class="text-muted">(Upload mới để thay thế)</small>
+                                </div>
+                            }
+                            <input type="file" name="bienBanFile" class="form-control" accept=".pdf,.doc,.docx" />
+                            <small class="text-muted">Chấp nhận: .pdf, .doc, .docx (Tối đa 20MB)</small>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-primary" id="btnSaveNegotiation" onclick="saveNegotiationInline()">
+                            <i class="fas fa-save me-1"></i> Lưu kết quả thương thảo
+                        </button>
+                    </div>
+                </form>
             }
             else
             {
@@ -121,7 +172,6 @@
                     <dd class="col-sm-9">@negotiation.NgayTao.ToString("dd/MM/yyyy HH:mm")</dd>
                 </dl>
 
-                @* Two-party signature status *@
                 <hr />
                 <h6 class="mb-3"><i class="fas fa-signature me-1"></i> Trạng thái chữ ký</h6>
                 <div class="row g-3 mb-3">
@@ -177,12 +227,80 @@
                     </div>
                 </div>
 
-                @* Sign button *@
-                @if (canRequestOtp)
+                @* Sign section — depends on HinhThucKy *@
+                @if (canSign)
                 {
-                    <button type="button" class="btn btn-primary" onclick="requestOtp(this)">
-                        <i class="fas fa-pen-nib me-1"></i> Ký xác nhận (OTP)
-                    </button>
+                    @if (hinhThucKy == "OTP")
+                    {
+                        @* ── OTP signing ── *@
+                        <div class="card border-primary mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3"><i class="fas fa-shield-alt me-1"></i> Ký xác nhận bằng OTP</h6>
+                                <div class="d-flex gap-3 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="otpChannel" id="channelEmail" value="email" checked />
+                                        <label class="form-check-label" for="channelEmail">
+                                            <i class="fas fa-envelope me-1"></i> Email
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="otpChannel" id="channelSms" value="sms" />
+                                        <label class="form-check-label" for="channelSms">
+                                            <i class="fas fa-sms me-1"></i> SMS
+                                        </label>
+                                    </div>
+                                </div>
+                                <div id="smsPhoneSection" class="mb-3" style="display:none;">
+                                    <label class="form-label small">Số điện thoại nhận OTP:</label>
+                                    <input type="tel" class="form-control" id="otpPhoneNumber" placeholder="0912345678" />
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="requestOtp(this)">
+                                    <i class="fas fa-pen-nib me-1"></i> Gửi OTP & Ký xác nhận
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else if (hinhThucKy == "E-Sign")
+                    {
+                        @* ── E-Sign (digital signature) ── *@
+                        <div class="card border-info mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3"><i class="fas fa-file-signature me-1"></i> Ký xác nhận bằng Chữ ký số (E-Sign)</h6>
+                                <p class="text-muted small">Sử dụng chữ ký số để xác nhận biên bản thương lượng. Hệ thống sẽ tạo tài liệu E-Sign và gửi đến bạn.</p>
+                                <button type="button" class="btn btn-info text-white" onclick="requestESign(this)">
+                                    <i class="fas fa-file-signature me-1"></i> Tạo & Ký chữ ký số
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else if (hinhThucKy == "Upload file")
+                    {
+                        @* ── Confirm uploaded file ── *@
+                        <div class="card border-warning mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3"><i class="fas fa-file-check me-1"></i> Xác nhận biên bản thương lượng</h6>
+                                @if (!string.IsNullOrEmpty(negotiation.BienBanThuongLuongFile))
+                                {
+                                    <div class="alert alert-light border mb-3">
+                                        <i class="fas fa-file-pdf text-danger me-2"></i>
+                                        <a href="@negotiation.BienBanThuongLuongFile" target="_blank" class="fw-bold">
+                                            @System.IO.Path.GetFileName(negotiation.BienBanThuongLuongFile)
+                                        </a>
+                                        <small class="text-muted d-block mt-1">Xem lại file biên bản trước khi xác nhận</small>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning mb-3">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> Chưa có file biên bản được tải lên.
+                                    </div>
+                                }
+                                <button type="button" class="btn btn-success" onclick="confirmUploadFile(this)" @(string.IsNullOrEmpty(negotiation.BienBanThuongLuongFile) ? "disabled" : "")>
+                                    <i class="fas fa-check-circle me-1"></i> Xác nhận
+                                </button>
+                            </div>
+                        </div>
+                    }
                 }
                 else if (!isCompleted && alreadySigned)
                 {
@@ -222,13 +340,98 @@
     const projectId = @Model.ProjectId;
     let otpCountdownTimer = null;
 
+    // Local showToast: delegates to parent page's showToast if available, else self-creates
+    function showToast(type, message) {
+        if (typeof window.showToast === 'function' && window.showToast !== showToast) {
+            window.showToast(type, message);
+            return;
+        }
+        var bgMap = { success: 'bg-success', danger: 'bg-danger', error: 'bg-danger', warning: 'bg-warning', info: 'bg-info' };
+        var bg = bgMap[type] || 'bg-secondary';
+        var textClass = (type === 'warning') ? 'text-dark' : 'text-white';
+        var toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;min-width:260px';
+        toast.innerHTML = '<div class="toast show ' + bg + ' ' + textClass + '" role="alert"><div class="toast-body"><i class="fas fa-info-circle me-1"></i>' + message + '</div></div>';
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.style.opacity='0'; toast.style.transition='opacity .4s'; setTimeout(function(){toast.remove();},400); }, 3000);
+    }
+
     function getAntiForgeryToken() {
         return document.querySelector('meta[name="__RequestVerificationToken"]')?.content ?? '';
     }
 
+    // ── Save inline negotiation form ─────────────────────────────────────────
+    async function saveNegotiationInline() {
+        const form = document.getElementById('negotiationInlineForm');
+        if (!form) return;
+
+        const hinhThucKy = form.querySelector('[name="hinhThucKy"]')?.value;
+        if (!hinhThucKy) {
+            showToast('warning', 'Vui lòng chọn hình thức ký');
+            return;
+        }
+
+        const giaChotCuoiCung = form.querySelector('[name="giaChotCuoiCung"]')?.value;
+        if (!giaChotCuoiCung) {
+            showToast('warning', 'Vui lòng nhập giá chốt cuối cùng');
+            return;
+        }
+
+        const btn = document.getElementById('btnSaveNegotiation');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang lưu...';
+
+        const formData = new FormData(form);
+
+        try {
+            const res = await fetch('/Negotiation/SaveInline', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('success', data.message);
+                // Close the modal if open
+                const modalEl = document.getElementById('editNegotiationModal');
+                if (modalEl) {
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                }
+                setTimeout(function() { location.reload(); }, 1500);
+            } else {
+                showToast('danger', data.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Lỗi kết nối: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-1"></i> Lưu thay đổi';
+        }
+    }
+
+    // ── Toggle upload area in inline form ────────────────────────────────────
+    (function() {
+        const sel = document.getElementById('inlineHinhThucKySelect');
+        const area = document.getElementById('inlineUploadArea');
+        if (sel && area) {
+            function toggle() { area.style.display = sel.value === 'Upload file' ? '' : 'none'; }
+            toggle();
+            sel.addEventListener('change', toggle);
+        }
+    })();
+
     // ── Request OTP ──────────────────────────────────────────────────────────
     async function requestOtp(btnEl) {
         const btn = btnEl;
+        const channel = document.querySelector('input[name="otpChannel"]:checked')?.value || 'email';
+        const phoneNumber = document.getElementById('otpPhoneNumber')?.value || '';
+
+        if (channel === 'sms' && !phoneNumber) {
+            showToast('warning', 'Vui lòng nhập số điện thoại nhận OTP');
+            return;
+        }
+
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
 
@@ -236,7 +439,7 @@
             const res = await fetch('/Negotiation/RequestOtp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ projectId })
+                body: JSON.stringify({ projectId, channel, phoneNumber })
             });
             const data = await res.json();
 
@@ -244,18 +447,28 @@
                 document.getElementById('otpInput').value = '';
                 document.getElementById('otpError').classList.add('d-none');
                 document.getElementById('btnVerifyOtp').disabled = false;
+                document.getElementById('otpSentMessage').innerHTML = 
+                    data.message + '<br/>Có hiệu lực trong <strong id="otpCountdown" class="text-danger">5:00</strong>';
                 startCountdown(300);
                 new bootstrap.Modal(document.getElementById('otpModal')).show();
             } else {
-                alert('❌ ' + data.message);
+                showToast('danger', data.message);
             }
         } catch (e) {
-            alert('Lỗi kết nối: ' + e.message);
+            showToast('danger', 'Lỗi kết nối: ' + e.message);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-pen-nib me-1"></i> Ký xác nhận (OTP)';
+            btn.innerHTML = '<i class="fas fa-pen-nib me-1"></i> Gửi OTP & Ký xác nhận';
         }
     }
+
+    // ── Toggle SMS phone input ──────────────────────────────────────────────
+    document.querySelectorAll('input[name="otpChannel"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const smsSection = document.getElementById('smsPhoneSection');
+            if (smsSection) smsSection.style.display = this.value === 'sms' ? 'block' : 'none';
+        });
+    });
 
     // ── Countdown timer ───────────────────────────────────────────────────────
     function startCountdown(seconds) {
@@ -306,8 +519,8 @@
             if (data.success) {
                 clearInterval(otpCountdownTimer);
                 bootstrap.Modal.getInstance(document.getElementById('otpModal'))?.hide();
-                alert('✅ ' + data.message);
-                location.reload();
+                showToast('success', data.message);
+                setTimeout(function() { location.reload(); }, 1500);
             } else {
                 errEl.textContent = data.message;
                 errEl.classList.remove('d-none');
@@ -326,5 +539,136 @@
     document.getElementById('otpInput')?.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') verifyOtp();
     });
+
+    // ── E-Sign flow ──────────────────────────────────────────────────────────
+    async function requestESign(btnEl) {
+        const btn = btnEl;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang tạo tài liệu E-Sign...';
+
+        try {
+            const res = await fetch('/Negotiation/RequestESign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('success', data.message);
+                setTimeout(function() { location.reload(); }, 1500);
+            } else {
+                showToast('danger', data.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Lỗi kết nối: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-file-signature me-1"></i> Tạo & Ký chữ ký số';
+        }
+    }
+
+    // ── Confirm uploaded file flow ────────────────────────────────────────────
+    async function confirmUploadFile(btnEl) {
+        const btn = btnEl;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xác nhận...';
+
+        try {
+            const res = await fetch('/Negotiation/ConfirmUploadFile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('success', data.message);
+                setTimeout(function() { location.reload(); }, 1500);
+            } else {
+                showToast('danger', data.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Lỗi kết nối: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Xác nhận';
+        }
+    }
 </script>
+
+@* ── Edit Negotiation Modal (Buyer only) ─────────────────────────────── *@
+@if (isBuyer && !isCompleted && negotiation != null)
+{
+    <div class="modal fade" id="editNegotiationModal" tabindex="-1" aria-labelledby="editNegotiationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="editNegotiationModalLabel">
+                        <i class="fas fa-pen me-2"></i> Chỉnh sửa thông tin thương lượng
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (negotiation.SellerSigned || negotiation.BuyerSigned)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Lưu ý:</strong> Đã có bên ký xác nhận. Nếu lưu thay đổi, chữ ký sẽ bị reset và cả hai bên phải ký lại.
+                        </div>
+                    }
+                    <form id="negotiationInlineForm" enctype="multipart/form-data">
+                        <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Giá chốt cuối cùng (VNĐ)</label>
+                                <input type="number" name="giaChotCuoiCung" class="form-control"
+                                       placeholder="Nhập số tiền..."
+                                       value="@(negotiation.GiaChotCuoiCung?.ToString() ?? "")" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Điều khoản thanh toán</label>
+                                <textarea name="dieuKhoanThanhToan" class="form-control" rows="4"
+                                          placeholder="VD: Thanh toán 30% khi ký hợp đồng, 70% khi nghiệm thu...">@(negotiation.DieuKhoanThanhToan ?? "")</textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Hình thức ký <span class="text-danger">*</span></label>
+                                <select name="hinhThucKy" class="form-select" id="inlineHinhThucKySelect">
+                                    <option value="">-- Chọn hình thức --</option>
+                                    @{ var htk2 = negotiation.HinhThucKy ?? ""; }
+                                    <option value="Upload file" selected="@(htk2 == "Upload file")">Upload file</option>
+                                    <option value="E-Sign" selected="@(htk2 == "E-Sign")">E-Sign</option>
+                                    <option value="OTP" selected="@(htk2 == "OTP")">OTP</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="inlineUploadArea">
+                                <label class="form-label fw-semibold">Biên bản thương lượng (File)</label>
+                                @if (!string.IsNullOrEmpty(negotiation.BienBanThuongLuongFile))
+                                {
+                                    <div class="mb-2">
+                                        <i class="fas fa-file-pdf text-danger"></i>
+                                        <a href="@negotiation.BienBanThuongLuongFile" target="_blank">
+                                            @System.IO.Path.GetFileName(negotiation.BienBanThuongLuongFile)
+                                        </a>
+                                        <small class="text-muted">(Upload mới để thay thế)</small>
+                                    </div>
+                                }
+                                <input type="file" name="bienBanFile" class="form-control" accept=".pdf,.doc,.docx" />
+                                <small class="text-muted">Chấp nhận: .pdf, .doc, .docx (Tối đa 20MB)</small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Huỷ
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btnSaveNegotiation" onclick="saveNegotiationInline()">
+                        <i class="fas fa-save me-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 

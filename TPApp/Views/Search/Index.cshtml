@@ -1,6 +1,8 @@
 @model TPApp.ViewModel.SearchViewModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     ViewData["Title"] = $"Tìm kiếm: {Model.Query}";
+    var MainDomain = Configuration["AppSettings:MainDomain"] ?? "https://localhost:7232/";
 }
 
 <style>
@@ -73,7 +75,11 @@
         @if (!string.IsNullOrWhiteSpace(Model.Query))
         {
             <p class="text-muted">
-                Tìm thấy @(Model.SearchResults?.Count ?? 0) kết quả
+                Tìm thấy <strong>@Model.NormalResultCount</strong> kết quả
+                @if (Model.AIResultCount > 0)
+                {
+                    <text> và <strong>@Model.AIResultCount</strong> kết quả theo gợi ý thông minh (AI)</text>
+                }
             </p>
         }
     </div>
@@ -87,10 +93,7 @@
                    href="/search?q=@Uri.EscapeDataString(Model.Query)&mode=normal">
                     <i class="bi bi-search me-2"></i>
                     Tìm kiếm thông thường
-                    @if (Model.SearchResults != null && Model.SearchResults.Any())
-                    {
-                        <span class="badge bg-primary ms-2">@Model.SearchResults.Count</span>
-                    }
+                    <span class="badge bg-primary ms-2">@Model.NormalResultCount</span>
                 </a>
             </li>
             <li class="nav-item" role="presentation">
@@ -98,10 +101,7 @@
                    href="/search?q=@Uri.EscapeDataString(Model.Query)&mode=ai">
                     <i class="bi bi-stars me-2"></i>
                     Gợi ý thông minh (AI)
-                    @if (Model.AISearchResults != null && Model.AISearchResults.Any())
-                    {
-                        <span class="badge bg-primary ms-2">@Model.AISearchResults.Sum(g => g.Products.Count)</span>
-                    }
+                    <span class="badge bg-success ms-2">@Model.AIResultCount</span>
                 </a>
             </li>
         </ul>
@@ -126,7 +126,7 @@
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div class="flex-grow-1">
                                 <h5 class="card-title mb-2">
-                                    <a href="@company.CompanyUrl" class="text-primary text-decoration-none">
+                                    <a href="@($"{MainDomain}{company.CompanyUrl}")" class="text-primary text-decoration-none">
                                         @company.CompanyName
                                     </a>
                                 </h5>
@@ -153,7 +153,7 @@
                                 @foreach (var product in company.Products)
                                 {
                                     <li class="d-flex justify-content-between align-items-center py-2 border-bottom product-item">
-                                        <a href="@product.ProductUrl" class="text-decoration-none text-dark flex-grow-1">
+                                        <a href="@($"{MainDomain}{product.ProductUrl}")" class="text-decoration-none text-dark flex-grow-1">
                                             @product.ProductName
                                         </a>
                                         <span class="text-muted ms-3 relevance-score">
@@ -174,7 +174,11 @@
         <div class="list-group">
             @foreach (var result in Model.SearchResults)
             {
-                <a href="@result.Url" class="list-group-item list-group-item-action">
+                var rawUrl = result.Url ?? "";
+                var urlPath = (rawUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || rawUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    ? new Uri(rawUrl).PathAndQuery.TrimStart('/')
+                    : rawUrl.TrimStart('/');
+                <a href="@($"{MainDomain}{urlPath}")" class="list-group-item list-group-item-action">
                     <div class="d-flex w-100 justify-content-between align-items-start">
                         <div class="flex-grow-1">
                             <h6 class="mb-1">@Html.Raw(result.Title)</h6>
@@ -196,7 +200,7 @@
                         </div>
                         @if (!string.IsNullOrEmpty(result.ImageUrl))
                         {
-                            <img src="@result.ImageUrl" alt="@result.Title" class="ms-3" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" />
+                            <img src="@Html.CookedImageURL("254-170", result.ImageUrl)" alt="@result.Title" class="ms-3" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" />
                         }
                     </div>
                 </a>

@@ -1,118 +1,153 @@
 @model TPApp.ViewModel.StepContentVm
-@using System.IO
+@using TPApp.Entities
 
 @{
-    var contract = Model.StepData as TPApp.Entities.EContract;
+    int projectId = Model.ProjectId;
+
+    // Tìm contract active cho project này
+    var contract = Model.StepData as ProjectContract;
+
+    bool isLocked = Model.Steps.Count >= 7 && !Model.Steps[6].IsAccessible;
 }
 
-<div class="card shadow-sm">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-gradient d-flex justify-content-between align-items-center"
+         style="background: linear-gradient(135deg,#1a3c6e,#2563eb); color:#fff">
         <h5 class="mb-0">
-            <i class="fas fa-file-contract"></i> Bước 6: Ký Hợp đồng Điện tử
+            <i class="fas fa-signature me-2"></i>Bước 7: Ký số hợp đồng (CA / e-Sign OTP)
         </h5>
-        @if (contract != null)
+        @if (contract != null && contract.StatusId >= 5)
         {
-            <button class="btn btn-light btn-sm edit-step-btn" data-step="6" data-project-id="@Model.ProjectId">
-                <i class="fas fa-edit"></i> Chỉnh sửa
-            </button>
+            <span class="badge bg-success fs-6">
+                <i class="fas fa-check-double me-1"></i>Đã ký đầy đủ
+            </span>
         }
     </div>
+
     <div class="card-body">
-        @if (contract != null)
+
+        @if (isLocked)
         {
-            <dl class="row">
-                <dt class="col-sm-3">Số hợp đồng:</dt>
-                <dd class="col-sm-9"><strong class="text-primary">@contract.SoHopDong</strong></dd>
+            <div class="alert alert-warning d-flex gap-2 align-items-start">
+                <i class="fas fa-lock fa-2x mt-1"></i>
+                <div>
+                    <strong>Bước này chưa được mở khóa.</strong><br/>
+                    Vui lòng hoàn thành Bước 6 (Kiểm tra pháp lý – tất cả 3 bên đã duyệt và chốt ReadyToSign).
+                </div>
+            </div>
+        }
+        else if (contract == null)
+        {
+            <div class="alert alert-info d-flex gap-2 align-items-center">
+                <i class="fas fa-info-circle fa-2x"></i>
+                <div>
+                    <strong>Hợp đồng chưa được chuẩn bị.</strong><br/>
+                    Quay về Bước 6, tạo / upload hợp đồng và đảm bảo tất cả các bên đã phê duyệt trước khi ký.
+                </div>
+            </div>
 
-                <dt class="col-sm-3">File hợp đồng:</dt>
-                <dd class="col-sm-9">
-                    @if (!string.IsNullOrEmpty(contract.FileHopDong))
-                    {
-                        <i class="fas fa-file-pdf text-danger"></i> 
-                        <strong>@System.IO.Path.GetFileName(contract.FileHopDong)</strong>
-                    }
-                    else
-                    {
-                        <span class="text-muted">Chưa có file</span>
-                    }
-                </dd>
-
-                <dt class="col-sm-3">Người ký bên A:</dt>
-                <dd class="col-sm-9">
-                    @if (!string.IsNullOrEmpty(contract.NguoiKyBenA))
-                    {
-                        <strong>@contract.NguoiKyBenA</strong>
-                    }
-                    else
-                    {
-                        <span class="text-muted">Chưa cập nhật</span>
-                    }
-                </dd>
-
-                <dt class="col-sm-3">Người ký bên B:</dt>
-                <dd class="col-sm-9">
-                    @if (!string.IsNullOrEmpty(contract.NguoiKyBenB))
-                    {
-                        <strong>@contract.NguoiKyBenB</strong>
-                    }
-                    else
-                    {
-                        <span class="text-muted">Chưa cập nhật</span>
-                    }
-                </dd>
-
-                <dt class="col-sm-3">Trạng thái ký:</dt>
-                <dd class="col-sm-9">
-                    @if (contract.TrangThaiKy == "Đã hoàn tất")
-                    {
-                        <span class="badge bg-success"><i class="fas fa-check-double"></i> @contract.TrangThaiKy</span>
-                    }
-                    else if (contract.TrangThaiKy == "Đã ký 1 bên")
-                    {
-                        <span class="badge bg-warning"><i class="fas fa-check"></i> @contract.TrangThaiKy</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary"><i class="fas fa-clock"></i> @contract.TrangThaiKy</span>
-                    }
-                </dd>
-
-                <dt class="col-sm-3">Trạng thái:</dt>
-                <dd class="col-sm-9">
-                    @if (Model.Steps[5].StatusId > 0)
-                    {
-                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã hoàn thành</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning"><i class="fas fa-clock"></i> Chưa hoàn thành</span>
-                    }
-                </dd>
-
-                <dt class="col-sm-3">Ngày tạo:</dt>
-                <dd class="col-sm-9">@contract.NgayTao.ToString("dd/MM/yyyy HH:mm")</dd>
-
-                @if (contract.NgaySua.HasValue)
-                {
-                    <dt class="col-sm-3">Ngày cập nhật:</dt>
-                    <dd class="col-sm-9">@contract.NgaySua.Value.ToString("dd/MM/yyyy HH:mm")</dd>
-                }
-            </dl>
+            <a href="/Contract/Index?projectId=@projectId" class="btn btn-outline-primary mt-2">
+                <i class="fas fa-arrow-left me-1"></i>Quay về Bước 6
+            </a>
         }
         else
         {
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> 
-                <strong>Mô tả:</strong> Ký kết hợp đồng điện tử giữa các bên
+            <!-- Contract summary -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-primary mb-2"><i class="fas fa-file-contract me-1"></i>Thông tin hợp đồng</h6>
+                            <dl class="row mb-0 small">
+                                <dt class="col-5">Tiêu đề:</dt>
+                                <dd class="col-7 fw-semibold">@contract.Title</dd>
+                                <dt class="col-5">Phiên bản:</dt>
+                                <dd class="col-7">v@contract.VersionNumber</dd>
+                                <dt class="col-5">Trạng thái:</dt>
+                                <dd class="col-7">
+                                    @{
+                                        var (lbl, cls) = contract.StatusId switch {
+                                            3 => ("ReadyToSign", "bg-primary"),
+                                            4 => ("Đang ký", "bg-warning text-dark"),
+                                            5 => ("Đã ký đầy đủ","bg-success"),
+                                            _ => ("Đang xử lý","bg-secondary")
+                                        };
+                                    }
+                                    <span class="badge @cls">@lbl</span>
+                                </dd>
+                                @if (contract.ReadyToSignAt.HasValue)
+                                {
+                                    <dt class="col-5">ReadyToSign:</dt>
+                                    <dd class="col-7">@contract.ReadyToSignAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                                }
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-success mb-2"><i class="fas fa-shield-alt me-1"></i>Tính toàn vẹn</h6>
+                            <dl class="row mb-0 small">
+                                @if (!string.IsNullOrEmpty(contract.Sha256Original))
+                                {
+                                    <dt class="col-5">SHA-256 gốc:</dt>
+                                    <dd class="col-7 font-monospace text-truncate" title="@contract.Sha256Original">
+                                        @contract.Sha256Original[..16]…
+                                    </dd>
+                                }
+                                @if (!string.IsNullOrEmpty(contract.Sha256Signed))
+                                {
+                                    <dt class="col-5">SHA-256 ký:</dt>
+                                    <dd class="col-7 font-monospace text-truncate" title="@contract.Sha256Signed">
+                                        @contract.Sha256Signed[..16]…
+                                    </dd>
+                                }
+                            </dl>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <p class="text-muted">Chưa có dữ liệu cho bước này.</p>
+
+            <!-- Main CTA -->
+            @if (contract.StatusId == 5)
+            {
+                <div class="alert alert-success d-flex align-items-center gap-3">
+                    <i class="fas fa-check-circle fa-3x"></i>
+                    <div>
+                        <strong class="d-block fs-5">Hợp đồng đã được ký số đầy đủ!</strong>
+                        Cả Buyer và Seller đã ký số thành công. Quy trình pháp lý hoàn tất.
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(contract.SignedFilePath))
+                {
+                    <a href="/Contract/Download/@contract.Id/signed" class="btn btn-success">
+                        <i class="fas fa-download me-1"></i>Tải hợp đồng đã ký
+                    </a>
+                }
+            }
+            else
+            {
+                <div class="d-grid gap-2">
+                    <a href="/Signing/Index?projectId=@projectId"
+                       class="btn btn-primary btn-lg py-3">
+                        <i class="fas fa-signature me-2"></i>
+                        Đến trang Ký số hợp đồng
+                        <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                    <small class="text-muted text-center">
+                        Buyer ký qua OTP · Seller ký qua CA (VNPT / FPT / Viettel) · Tuân theo Luật GDĐT 2023
+                    </small>
+                </div>
+            }
         }
     </div>
-    <div class="card-footer">
-        <button class="btn btn-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
+
+    <div class="card-footer bg-white d-flex justify-content-between">
+        <button class="btn btn-outline-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
             <i class="fas fa-arrow-left"></i> Quay lại bước trước
         </button>
-        @if (Model.StepNumber < 11 && Model.Steps[Model.StepNumber].IsAccessible)
+        @if (Model.StepNumber < 11 && Model.Steps.Count > Model.StepNumber && Model.Steps[Model.StepNumber].IsAccessible)
         {
             <button class="btn btn-primary step-nav-btn" data-step="@(Model.StepNumber + 1)">
                 Tiếp tục bước @(Model.StepNumber + 1) <i class="fas fa-arrow-right"></i>
@@ -120,4 +155,3 @@
         }
     </div>
 </div>
-

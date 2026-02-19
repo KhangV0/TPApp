@@ -281,6 +281,7 @@ namespace TPApp.Application.Services
                         p.NCUId,
                         p.Name,
                         p.URL,
+                        p.TypeId,
                         p.Rating,
                         p.Viewed
                     })
@@ -336,7 +337,7 @@ namespace TPApp.Application.Services
                             {
                                 ProductId = product.ID,
                                 ProductName = product.Name ?? string.Empty,
-                                ProductUrl = product.URL ?? $"/san-pham/{product.ID}",
+                                ProductUrl = $"2-cong-nghe-thiet-bi/{product.TypeId}/{Controllers.ProductController.MakeURLFriendly(product.Name)}-{product.ID}.html",
                                 RelevancePercentage = CalculateRelevancePercentage(searchItem, keyword)
                             };
                         }).ToList();
@@ -345,7 +346,7 @@ namespace TPApp.Application.Services
                         {
                             CompanyId = company.CungUngId,
                             CompanyName = company.FullName ?? "Không rõ",
-                            CompanyUrl = $"/nha-cung-ung/{company.QueryString ?? company.CungUngId.ToString()}",
+                            CompanyUrl = $"8-dich-vu-cung-ung/{company.QueryString}-{company.CungUngId}.html",
                             MatchPercentage = CalculateMatchPercentage(productList),
                             Rating = company.Rating ?? 0,
                             ViewCount = company.Viewed ?? 0,

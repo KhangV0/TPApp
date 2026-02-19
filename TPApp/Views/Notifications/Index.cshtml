@@ -1,0 +1,141 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model List<TPApp.Entities.Notification>
+@{
+    ViewData["Title"] = "Thông báo";
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+    var unreadCount = Model.Count(n => !n.IsRead);
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            @await Html.PartialAsync("_AccountSidebar", sidebarData)
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <div class="container-fluid py-2">
+
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="mb-1"><i class="bi bi-bell-fill text-primary me-2"></i>Thông báo của tôi</h4>
+                        <p class="text-muted mb-0">
+                            @if (unreadCount > 0)
+                            {
+                                <span class="badge bg-danger me-1">@unreadCount</span>
+                            }
+                            Tổng @Model.Count thông báo
+                        </p>
+                    </div>
+                    @if (unreadCount > 0)
+                    {
+                        <form asp-action="MarkAllRead" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-check2-all me-1"></i>Đánh dấu tất cả đã đọc
+                            </button>
+                        </form>
+                    }
+                </div>
+
+                <!-- Notifications List -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        @if (Model.Any())
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var n in Model)
+                                {
+                                    <li class="list-group-item px-4 py-3 @(!n.IsRead ? "notif-unread" : "")">
+                                        <div class="d-flex align-items-start gap-3">
+                                            <!-- Icon -->
+                                            <div class="notif-icon @(!n.IsRead ? "notif-icon-unread" : "notif-icon-read")">
+                                                <i class="bi bi-bell@(!n.IsRead ? "-fill" : "")"></i>
+                                            </div>
+
+                                            <!-- Content -->
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <p class="mb-1 @(!n.IsRead ? "fw-semibold" : "")">@n.Title</p>
+                                                        <p class="text-muted mb-1 small">@n.Content</p>
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-clock me-1"></i>
+                                                            @n.CreatedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                        </small>
+                                                    </div>
+                                                    <div class="d-flex gap-2 ms-3 flex-shrink-0">
+                                                        @if (n.ProjectId.HasValue)
+                                                        {
+                                                            <a href="/Project/Details/@n.ProjectId"
+                                                               class="btn btn-sm btn-outline-primary">
+                                                                <i class="bi bi-eye"></i> Xem dự án
+                                                            </a>
+                                                        }
+                                                        @if (!n.IsRead)
+                                                        {
+                                                            <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" class="d-inline">
+                                                                @Html.AntiForgeryToken()
+                                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Đánh dấu đã đọc">
+                                                                    <i class="bi bi-check2"></i>
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-bell-slash fs-1 text-muted"></i>
+                                <p class="text-muted mt-3">Bạn chưa có thông báo nào.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div><!-- End Main Content -->
+    </div><!-- End row -->
+</div><!-- End container-fluid -->
+
+<style>
+    .notif-unread {
+        background-color: #f0f7ff;
+        border-left: 3px solid #0d6efd;
+    }
+
+    .notif-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .notif-icon-unread {
+        background-color: #dbeafe;
+        color: #0d6efd;
+    }
+
+    .notif-icon-read {
+        background-color: #f3f4f6;
+        color: #9ca3af;
+    }
+</style>

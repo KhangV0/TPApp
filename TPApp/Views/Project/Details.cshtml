@@ -916,14 +916,20 @@
 
             // Function to show toast notification
             function showToast(type, message) {
-                var bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
-                var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+                var typeMap = {
+                    'success': { bg: 'bg-success', icon: 'fa-check-circle', textClass: 'text-white' },
+                    'warning': { bg: 'bg-warning', icon: 'fa-exclamation-triangle', textClass: 'text-dark' },
+                    'danger':  { bg: 'bg-danger',  icon: 'fa-exclamation-circle', textClass: 'text-white' },
+                    'error':   { bg: 'bg-danger',  icon: 'fa-exclamation-circle', textClass: 'text-white' },
+                    'info':    { bg: 'bg-info',    icon: 'fa-info-circle', textClass: 'text-white' }
+                };
+                var config = typeMap[type] || typeMap['info'];
                 
                 var toast = $(`
                     <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-                        <div class="toast show ${bgClass} text-white" role="alert">
+                        <div class="toast show ${config.bg} ${config.textClass}" role="alert">
                             <div class="toast-body">
-                                <i class="fas ${icon}"></i> ${message}
+                                <i class="fas ${config.icon}"></i> ${message}
                             </div>
                         </div>
                     </div>
@@ -952,12 +958,12 @@
 
                 // Validate
                 if (!$('#ndaFile')[0].files[0]) {
-                    showToast('Vui lòng chọn file PDF', 'warning');
+                    showToast('warning', 'Vui lòng chọn file PDF');
                     return;
                 }
 
                 if (!$('#daDongY').is(':checked')) {
-                    showToast('Bạn phải đồng ý với điều khoản', 'warning');
+                    showToast('warning', 'Bạn phải đồng ý với điều khoản');
                     return;
                 }
 
@@ -969,14 +975,14 @@
                     contentType: false,
                     success: function(response) {
                         if (response.success) {
-                            showToast('Tạo Phiếu NDA và tải lên file thành công!', 'success');
+                            showToast('success', 'Tạo Phiếu NDA và tải lên file thành công!');
                             currentDocumentId = response.documentId;
                             // Reload step content
                             setTimeout(function() {
                                 loadStepContent(2);
                             }, 1500);
                         } else {
-                            showToast('Lỗi: ' + response.message, 'danger');
+                            showToast('danger', 'Lỗi: ' + response.message);
                         }
                     },
                     error: function(xhr) {
@@ -984,7 +990,7 @@
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMsg = xhr.responseJSON.message;
                         }
-                        showToast(errorMsg, 'danger');
+                        showToast('danger', errorMsg);
                     }
                 });
             });
@@ -993,7 +999,7 @@
             $(document).on('click', '#btnSendOtp', function() {
                 const phone = $('#phoneNumber').val();
                 if (!phone) {
-                    showToast('Vui lòng nhập số điện thoại', 'warning');
+                    showToast('warning', 'Vui lòng nhập số điện thoại');
                     return;
                 }
 
@@ -1001,12 +1007,12 @@
                     if (response.success) {
                         otpSent = true;
                         $('#otpSection').show();
-                        showToast('OTP đã được gửi! (Test mode: ' + response.otp + ')', 'success');
+                        showToast('success', 'OTP đã được gửi! (Test mode: ' + response.otp + ')');
                     } else {
-                        showToast('Lỗi: ' + response.message, 'danger');
+                        showToast('danger', 'Lỗi: ' + response.message);
                     }
                 }).fail(function() {
-                    showToast('Lỗi khi gửi OTP', 'danger');
+                    showToast('danger', 'Lỗi khi gửi OTP');
                 });
             });
 
@@ -1023,7 +1029,7 @@
                 const docId = $(this).data('document-id') || currentDocumentId;
                 
                 if (!docId) {
-                    showToast('Không tìm thấy tài liệu', 'danger');
+                    showToast('danger', 'Không tìm thấy tài liệu');
                     return;
                 }
                 
@@ -1032,16 +1038,16 @@
                     otpCode: otpCode 
                 }, function(response) {
                     if (response.success) {
-                        showToast('Ký thành công! Bước 2 đã hoàn thành.', 'success');
-                        // Reload step content
+                        showToast('success', 'Ký thành công! Đang chuyển sang bước 3...');
+                        // Reload page to step 3 — updates both nav bar and content
                         setTimeout(function() {
-                            loadStepContent(2);
+                            window.location.href = '/Project/Details/' + currentProjectId + '?step=3';
                         }, 1500);
                     } else {
-                        showToast('Lỗi: ' + response.message, 'danger');
+                        showToast('danger', 'Lỗi: ' + response.message);
                     }
                 }).fail(function() {
-                    showToast('Lỗi khi ký tài liệu', 'danger');
+                    showToast('danger', 'Lỗi khi ký tài liệu');
                 });
             });
         });

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TPApp.Data;
@@ -14,12 +14,14 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly Services.INotificationQueueService _notifQueue;
 
-        public TechTransferController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService)
+        public TechTransferController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService, Services.INotificationQueueService notifQueue)
         {
             _context = context;
             _userManager = userManager;
             _workflowService = workflowService;
+            _notifQueue = notifQueue;
         }
 
         // Helper method to get current user ID as int
@@ -90,6 +92,11 @@ namespace TPApp.Controllers
                         // 4. Initialize and Complete Step 1
                         await _workflowService.InitializeProjectSteps(project.Id);
                         await _workflowService.CompleteStep(project.Id, 1);
+
+                         // Notify buyer: project created, proceed to Step 2
+                         await _notifQueue.QueueAsync(userId, project.Id,
+                             " Dự án đã được tạo",
+                             $"Yêu cầu chuyển giao '{model.TenCongNghe}' đã ghi nhận thành công. Tiến hành bước 2: Ký NDA.");
 
                         transaction.Commit();
 
@@ -185,17 +192,17 @@ namespace TPApp.Controllers
         {
             var steps = new List<TPApp.ViewModel.ProjectStepNavVm>
             {
-                new() { StepNumber = 1, StepName = "Yêu cầu chuyển giao", StatusId = statuses["TechTransfer"], ControllerName = "TechTransfer", ActionName = "Details", IsAccessible = true },
-                new() { StepNumber = 2, StepName = "Thỏa thuận NDA", StatusId = statuses["NDA"], ControllerName = "NDA", ActionName = "Create", IsAccessible = statuses["TechTransfer"] > 0 },
-                new() { StepNumber = 3, StepName = "Yêu cầu báo giá", StatusId = statuses["RFQ"], ControllerName = "RFQ", ActionName = "Create", IsAccessible = statuses["NDA"] > 0 },
-                new() { StepNumber = 4, StepName = "Nộp hồ sơ", StatusId = statuses["Proposal"], ControllerName = "Proposal", ActionName = "Index", IsAccessible = statuses["RFQ"] > 0 },
-                new() { StepNumber = 5, StepName = "Đàm phán", StatusId = statuses["Negotiation"], ControllerName = "Negotiation", ActionName = "Create", IsAccessible = statuses["Proposal"] > 0 },
-                new() { StepNumber = 6, StepName = "Ký hợp đồng", StatusId = statuses["EContract"], ControllerName = "EContract", ActionName = "Create", IsAccessible = statuses["Negotiation"] > 0 },
-                new() { StepNumber = 7, StepName = "Xác nhận tạm ứng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["EContract"] > 0 },
-                new() { StepNumber = 8, StepName = "Nhật ký triển khai", StatusId = statuses["ImplementationLog"], ControllerName = "ImplementationLog", ActionName = "Create", IsAccessible = statuses["AdvancePayment"] > 0 },
-                new() { StepNumber = 9, StepName = "Bàn giao", StatusId = statuses["Handover"], ControllerName = "Handover", ActionName = "Create", IsAccessible = statuses["ImplementationLog"] > 0 },
-                new() { StepNumber = 10, StepName = "Nghiệm thu", StatusId = statuses["Acceptance"], ControllerName = "Acceptance", ActionName = "Create", IsAccessible = statuses["Handover"] > 0 },
-                new() { StepNumber = 11, StepName = "Thanh lý", StatusId = statuses["Liquidation"], ControllerName = "Liquidation", ActionName = "Create", IsAccessible = statuses["Acceptance"] > 0 }
+                new() { StepNumber = 1, StepName = "YÃªu cáº§u chuyá»ƒn giao", StatusId = statuses["TechTransfer"], ControllerName = "TechTransfer", ActionName = "Details", IsAccessible = true },
+                new() { StepNumber = 2, StepName = "Thá»a thuáº­n NDA", StatusId = statuses["NDA"], ControllerName = "NDA", ActionName = "Create", IsAccessible = statuses["TechTransfer"] > 0 },
+                new() { StepNumber = 3, StepName = "YÃªu cáº§u bÃ¡o giÃ¡", StatusId = statuses["RFQ"], ControllerName = "RFQ", ActionName = "Create", IsAccessible = statuses["NDA"] > 0 },
+                new() { StepNumber = 4, StepName = "Ná»™p há»“ sÆ¡", StatusId = statuses["Proposal"], ControllerName = "Proposal", ActionName = "Index", IsAccessible = statuses["RFQ"] > 0 },
+                new() { StepNumber = 5, StepName = "ÄÃ m phÃ¡n", StatusId = statuses["Negotiation"], ControllerName = "Negotiation", ActionName = "Create", IsAccessible = statuses["Proposal"] > 0 },
+                new() { StepNumber = 6, StepName = "KÃ½ há»£p Ä‘á»“ng", StatusId = statuses["EContract"], ControllerName = "EContract", ActionName = "Create", IsAccessible = statuses["Negotiation"] > 0 },
+                new() { StepNumber = 7, StepName = "XÃ¡c nháº­n táº¡m á»©ng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["EContract"] > 0 },
+                new() { StepNumber = 8, StepName = "Nháº­t kÃ½ triá»ƒn khai", StatusId = statuses["ImplementationLog"], ControllerName = "ImplementationLog", ActionName = "Create", IsAccessible = statuses["AdvancePayment"] > 0 },
+                new() { StepNumber = 9, StepName = "BÃ n giao", StatusId = statuses["Handover"], ControllerName = "Handover", ActionName = "Create", IsAccessible = statuses["ImplementationLog"] > 0 },
+                new() { StepNumber = 10, StepName = "Nghiá»‡m thu", StatusId = statuses["Acceptance"], ControllerName = "Acceptance", ActionName = "Create", IsAccessible = statuses["Handover"] > 0 },
+                new() { StepNumber = 11, StepName = "Thanh lÃ½", StatusId = statuses["Liquidation"], ControllerName = "Liquidation", ActionName = "Create", IsAccessible = statuses["Acceptance"] > 0 }
             };
 
             return steps;
@@ -210,3 +217,4 @@ namespace TPApp.Controllers
     }
 // #endif
 }
+

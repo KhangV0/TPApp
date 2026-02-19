@@ -13,12 +13,14 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly Services.INotificationQueueService _notifQueue;
 
-        public NDAController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService)
+        public NDAController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService, Services.INotificationQueueService notifQueue)
         {
             _context = context;
             _userManager = userManager;
             _workflowService = workflowService;
+            _notifQueue = notifQueue;
         }
 
         // Helper method to get current user ID as int
@@ -77,6 +79,11 @@ namespace TPApp.Controllers
 
                 // Complete Step 2
                 await _workflowService.CompleteStep(model.ProjectId.Value, 2);
+
+                // Notify buyer: NDA signed, proceed to Step 3
+                await _notifQueue.QueueAsync(userId, model.ProjectId,
+                    "NDA đã hoàn tất",
+                    "Thỏa thuận bảo mật đã ký thành công. Tiến hành bước 3: Tạo yêu cầu báo giá (RFQ).");
 
                 return RedirectToAction("Details", "Project", new { id = model.ProjectId });
             }

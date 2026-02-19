@@ -137,5 +137,122 @@
     @await Html.PartialAsync("_LoginModal")
     @await Html.PartialAsync("_RegisterModal")
 
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <!-- SignalR -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+        <script>
+        (function () {
+            const userId = '@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value';
+            if (!userId) return;
+
+            const badge    = document.getElementById('tpBadge');
+            const badgeMob = document.getElementById('tpBadgeMobile');
+            const list     = document.getElementById('tpList');
+            const listMob  = document.getElementById('tpListMobile');
+
+            function setBadge(n) {
+                [badge, badgeMob].forEach(b => {
+                    if (!b) return;
+                    if (n > 0) { b.textContent = n > 99 ? '99+' : n; b.classList.remove('d-none'); }
+                    else       { b.textContent = '0'; b.classList.add('d-none'); }
+                });
+            }
+
+            function buildItem(n) {
+                const time = new Date(n.createdDate).toLocaleString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' });
+                return `<div class="tp-item ${n.isRead ? '' : 'unread'}" data-id="${n.id}" data-project="${n.projectId || ''}" onclick="tpClickItem(this)">
+                    <div class="tp-item-title">${n.title || 'Thông báo'}</div>
+                    <div class="tp-item-body text-muted small">${(n.content || '').substring(0, 80)}${(n.content||'').length > 80 ? '…' : ''}</div>
+                    <div class="tp-item-time" style="font-size:11px;color:#aaa">${time}</div>
+                </div>`;
+            }
+
+            function prependItem(n) {
+                [list, listMob].forEach(l => {
+                    if (!l) return;
+                    const empty = l.querySelector('.tp-empty');
+                    if (empty) empty.remove();
+                    l.insertAdjacentHTML('afterbegin', buildItem(n));
+                });
+            }
+
+            // Load initial state
+            fetch('/api/notifications/unread-count').then(r => r.json()).then(d => setBadge(d.count)).catch(() => {});
+            fetch('/api/notifications/latest?take=10').then(r => r.json()).then(items => {
+                [list, listMob].forEach(l => { if (l) l.innerHTML = ''; });
+                if (!items.length) {
+                    [list, listMob].forEach(l => { if (l) l.innerHTML = '<div class="tp-empty text-center text-muted py-3 small">Không có thông báo</div>'; });
+                    return;
+                }
+                items.forEach(n => { [list, listMob].forEach(l => { if (l) l.insertAdjacentHTML('beforeend', buildItem(n)); }); });
+            }).catch(() => {});
+
+            // SignalR
+            const conn = new signalR.HubConnectionBuilder()
+                .withUrl('/notificationHub')
+                .withAutomaticReconnect()
+                .build();
+
+            conn.on('ReceiveNotification', function (n) {
+                const cur = parseInt(badge?.textContent || '0') || 0;
+                setBadge(cur + 1);
+                prependItem({ ...n, isRead: false });
+            });
+
+            conn.start().then(() => conn.invoke('JoinUserGroup', userId)).catch(e => console.warn('[SignalR]', e));
+
+            // ── Polling fallback (30s) — catches DB-inserted or external notifications ──
+            let lastKnownCount = 0;
+
+            function reloadList() {
+                fetch('/api/notifications/latest?take=10').then(r => r.json()).then(items => {
+                    [list, listMob].forEach(l => { if (l) l.innerHTML = ''; });
+                    if (!items.length) {
+                        [list, listMob].forEach(l => { if (l) l.innerHTML = '<div class="tp-empty text-center text-muted py-3 small">Không có thông báo</div>'; });
+                        return;
+                    }
+                    items.forEach(n => { [list, listMob].forEach(l => { if (l) l.insertAdjacentHTML('beforeend', buildItem(n)); }); });
+                }).catch(() => {});
+            }
+
+            function pollUnread() {
+                fetch('/api/notifications/unread-count').then(r => r.json()).then(d => {
+                    if (d.count !== lastKnownCount) {
+                        lastKnownCount = d.count;
+                        setBadge(d.count);
+                        reloadList(); // refresh list when count changes
+                    }
+                }).catch(() => {});
+            }
+
+            // Init lastKnownCount after first load
+            fetch('/api/notifications/unread-count').then(r => r.json()).then(d => {
+                lastKnownCount = d.count;
+            }).catch(() => {});
+
+            setInterval(pollUnread, 30000); // poll every 30s
+
+            // Click item → mark read + redirect
+            window.tpClickItem = function(el) {
+                const id = el.dataset.id, project = el.dataset.project;
+                el.classList.remove('unread');
+                const token = document.querySelector('meta[name="__RequestVerificationToken"]')?.content || '';
+                fetch(`/api/notifications/mark-read/${id}`, { method: 'POST', headers: { 'RequestVerificationToken': token } })
+                    .then(() => { const c = parseInt(badge?.textContent||'0')||0; setBadge(Math.max(0,c-1)); });
+                if (project) window.location.href = `/Project/Details/${project}`;
+            };
+
+            // Mark all read
+            window.tpMarkAllRead = function() {
+                const token = document.querySelector('meta[name="__RequestVerificationToken"]')?.content || '';
+                fetch('/api/notifications/mark-all-read', { method: 'POST', headers: { 'RequestVerificationToken': token } })
+                    .then(() => { setBadge(0); document.querySelectorAll('.tp-item.unread').forEach(el => el.classList.remove('unread')); });
+            };
+        })();
+        </script>
+    }
+
 </body>
 </html>

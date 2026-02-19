@@ -108,79 +108,53 @@ namespace TPApp.Services
                     ? stepsByProject[project.Id] 
                     : new List<StepDto>();
 
-                // Determine current step
-                // Logic: Find first InProgress step, or if none, check completion status
-                var currentStep = steps.FirstOrDefault(s => s.StatusId == (int)StepStatus.InProgress);
-                
+                // Determine current step: step after the last Completed one (StatusId == 5)
                 int currentStepNumber;
                 string currentStepName;
                 string currentStepStatus;
 
-                if (currentStep != null)
+                if (!steps.Any())
                 {
-                    // There's an InProgress step
-                    currentStepNumber = currentStep.StepNumber;
-                    currentStepName = currentStep.StepName;
-                    currentStepStatus = "InProgress";
+                    currentStepNumber = 1;
+                    currentStepName   = "Bước 1";
+                    currentStepStatus = "NotStarted";
                 }
                 else
                 {
-                    // No InProgress step - check if all completed or all not started
-                    var allCompleted = steps.All(s => s.StatusId == (int)StepStatus.Completed);
-                    var allNotStarted = steps.All(s => s.StatusId == (int)StepStatus.NotStarted);
+                    var lastCompleted = steps
+                        .Where(s => s.StatusId == 2) // 2 = Completed in DB
+                        .OrderByDescending(s => s.StepNumber)
+                        .FirstOrDefault();
 
-                    if (allCompleted && steps.Any())
+                    if (lastCompleted == null)
                     {
-                        // Project completed - show last step
-                        var lastStep = steps.OrderByDescending(s => s.StepNumber).First();
-                        currentStepNumber = lastStep.StepNumber;
-                        currentStepName = lastStep.StepName;
-                        currentStepStatus = "Completed";
-                    }
-                    else if (allNotStarted || !steps.Any())
-                    {
-                        // Not started - show step 1 or default
-                        var firstStep = steps.FirstOrDefault();
-                        currentStepNumber = firstStep?.StepNumber ?? 1;
-                        currentStepName = firstStep?.StepName ?? "Bước 1";
+                        // Nothing completed yet → show step 1
+                        var first = steps.OrderBy(s => s.StepNumber).First();
+                        currentStepNumber = first.StepNumber;
+                        currentStepName   = first.StepName;
                         currentStepStatus = "NotStarted";
                     }
                     else
                     {
-                        // Mixed status - find first NotStarted after last Completed
-                        var lastCompleted = steps
-                            .Where(s => s.StatusId == (int)StepStatus.Completed)
-                            .OrderByDescending(s => s.StepNumber)
-                            .FirstOrDefault();
-                        
-                        if (lastCompleted != null)
+                        var next = steps.FirstOrDefault(s => s.StepNumber > lastCompleted.StepNumber);
+                        if (next != null)
                         {
-                            var nextStep = steps.FirstOrDefault(s => s.StepNumber > lastCompleted.StepNumber);
-                            if (nextStep != null)
-                            {
-                                currentStepNumber = nextStep.StepNumber;
-                                currentStepName = nextStep.StepName;
-                                currentStepStatus = nextStep.StatusId == (int)StepStatus.Completed ? "Completed" : "NotStarted";
-                            }
-                            else
-                            {
-                                currentStepNumber = lastCompleted.StepNumber;
-                                currentStepName = lastCompleted.StepName;
-                                currentStepStatus = "Completed";
-                            }
+                            currentStepNumber = next.StepNumber;
+                            currentStepName   = next.StepName;
+                            currentStepStatus = "NotStarted";
                         }
                         else
                         {
-                            var firstStep = steps.First();
-                            currentStepNumber = firstStep.StepNumber;
-                            currentStepName = firstStep.StepName;
-                            currentStepStatus = "NotStarted";
+                            // All steps completed
+                            currentStepNumber = lastCompleted.StepNumber;
+                            currentStepName   = lastCompleted.StepName;
+                            currentStepStatus = "Completed";
                         }
                     }
                 }
 
                 // Calculate progress
-                int completedSteps = steps.Count(s => s.StatusId == (int)StepStatus.Completed);
+                int completedSteps = steps.Count(s => s.StatusId == 2); // 2 = Completed in DB
                 int progressPercent = steps.Any() ? (int)Math.Round((completedSteps / 14.0) * 100) : 0;
 
                 // Build steps summary for visualization
@@ -222,16 +196,17 @@ namespace TPApp.Services
             // Calculate statistics
             int totalProjects = projectItems.Count;
             
-            // InProgress: projects with at least one InProgress step
-            int inProgressProjects = projectItems.Count(p => 
-                p.StepsSummary.Any(s => s.StatusId == (int)StepStatus.InProgress));
+            // InProgress: projects with at least one step not yet Completed (StatusId != 2) and not all NotStarted
+            int inProgressProjects = projectItems.Count(p =>
+                p.StepsSummary.Any(s => s.StatusId == 1) || // StatusId=1 = InProgress in DB
+                (p.StepsSummary.Any(s => s.StatusId == 2) && p.StepsSummary.Any(s => s.StatusId == 0)));
             
-            // Completed: projects where step 14 is Completed OR all steps are Completed
+            // Completed: projects where step 14 is Completed (StatusId == 2)
             int completedProjects = projectItems.Count(p =>
             {
                 var step14 = p.StepsSummary.FirstOrDefault(s => s.StepNumber == 14);
-                return step14?.StatusId == (int)StepStatus.Completed ||
-                       p.StepsSummary.All(s => s.StatusId == (int)StepStatus.Completed);
+                return step14?.StatusId == 2 ||
+                       p.StepsSummary.All(s => s.StatusId == 2);
             });
             
             // WaitingForMe: Simplified logic - projects with InProgress steps where user is active member

@@ -17,19 +17,22 @@ namespace TPApp.Controllers
         private readonly IESignGateway _eSignGateway;
         private readonly IInvitationService _invitationService;
         private readonly IProposalService _proposalService;
+        private readonly Services.INotificationQueueService _notifQueue;
 
         public SellerController(
             AppDbContext context,
             UserManager<ApplicationUser> userManager,
             IESignGateway eSignGateway,
             IInvitationService invitationService,
-            IProposalService proposalService)
+            IProposalService proposalService,
+            Services.INotificationQueueService notifQueue)
         {
             _context = context;
             _userManager = userManager;
             _eSignGateway = eSignGateway;
             _invitationService = invitationService;
             _proposalService = proposalService;
+            _notifQueue = notifQueue;
         }
 
         // Helper method to get current user ID as int
@@ -322,6 +325,28 @@ namespace TPApp.Controllers
                 };
 
                 await _proposalService.SubmitProposalAsync(projectId, userId, dto);
+
+                // Notify buyer: seller submitted a proposal
+                var project = await _context.Projects.FindAsync(projectId);
+                if (project != null && project.CreatedBy.HasValue)
+                {
+                    await _notifQueue.QueueAsync(project.CreatedBy.Value, projectId,
+                        "📄 Hồ sơ đề xuất mới",
+                        $"Nhà cung ứng vừa nộp hồ sơ báo giá cho dự án #{projectId}. Hãy vào xem xét và chọn nhà cung ứng phù hợp.");
+                }
+
+                // Notify all consultants in the project to evaluate the proposal
+                var consultantIds = await _context.ProjectMembers
+                    .Where(pm => pm.ProjectId == projectId && pm.Role == 3 && pm.IsActive)
+                    .Select(pm => pm.UserId)
+                    .ToListAsync();
+
+                foreach (var consultantId in consultantIds)
+                {
+                    await _notifQueue.QueueAsync(consultantId, projectId,
+                        "📋 Hồ sơ mới cần đánh giá",
+                        $"Nhà cung ứng vừa nộp hồ sơ báo giá cho dự án #{projectId}. Hãy vào đánh giá hồ sơ đề xuất.");
+                }
 
                 // Log submission
                 await LogAccessAsync(projectId, "SubmitProposal", $"Price: {preliminaryPrice}, Time: {implementationTime}");

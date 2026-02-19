@@ -13,12 +13,14 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly Services.INotificationQueueService _notifQueue;
 
-        public RFQController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService)
+        public RFQController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService, Services.INotificationQueueService notifQueue)
         {
             _context = context;
             _userManager = userManager;
             _workflowService = workflowService;
+            _notifQueue = notifQueue;
         }
 
         // Helper method to get current user ID as int
@@ -73,6 +75,11 @@ namespace TPApp.Controllers
 
                 // Complete Step 3
                 await _workflowService.CompleteStep(model.ProjectId.Value, 3);
+
+                // Notify buyer: RFQ created
+                await _notifQueue.QueueAsync(userId, model.ProjectId,
+                    "RFQ đã tạo",
+                    "Yêu cầu báo giá đã tạo thành công. Hãy mời nhà cung ứng nộp hồ sơ.");
 
                 return RedirectToAction("Details", "Project", new { id = model.ProjectId });
             }
@@ -143,8 +150,10 @@ namespace TPApp.Controllers
                         };
                         _context.RFQInvitations.Add(invitation);
 
-                        // TODO: Send notification (email/in-app)
-                        // await _notificationService.SendRFQInvitation(sellerId, rfq);
+                        // Notify seller: invited to submit proposal (no projectId — seller has no access yet)
+                        await _notifQueue.QueueAsync(sellerId, null,
+                            "📨 Bạn được mời nộp hồ sơ báo giá",
+                            $"Bạn được mời nộp hồ sơ báo giá. Hãy vào mục 'Dự án được mời' để xem chi tiết và nộp hồ sơ trước hạn.");
                     }
                     else if (!existingInvitation.IsActive)
                     {

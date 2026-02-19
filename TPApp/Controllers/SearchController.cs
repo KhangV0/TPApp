@@ -68,14 +68,21 @@ namespace TPApp.Controllers
                     TypeName = null // Get all types (no filter)
                 };
 
-                // Route to appropriate search mode
-                if (viewModel.Mode == "ai" && _featureFlags.EnableAISearch == 1)
+                // Always run BOTH searches so we can show counts on both tabs
+                // Run normal search
+                await PerformNormalSearchAsync(viewModel, options);
+
+                // Run AI search if enabled
+                if (_featureFlags.EnableAISearch == 1)
                 {
-                    await PerformAISearchAsync(viewModel, options);
-                }
-                else
-                {
-                    await PerformNormalSearchAsync(viewModel, options);
+                    try
+                    {
+                        await PerformAISearchAsync(viewModel, options);
+                    }
+                    catch (Exception aiEx)
+                    {
+                        _logger.LogWarning(aiEx, "AI search failed, normal results still available");
+                    }
                 }
 
                 // Get trending searches for sidebar
@@ -167,6 +174,7 @@ namespace TPApp.Controllers
             }).ToList();
 
             viewModel.TotalResults = result.TotalCount;
+            viewModel.NormalResultCount = viewModel.SearchResults.Count;
             viewModel.CurrentPage = result.PageNumber;
             viewModel.TotalPages = result.TotalPages;
 
@@ -193,13 +201,13 @@ namespace TPApp.Controllers
             // Get grouped AI results
             viewModel.AISearchResults = await _searchService.SearchAIGroupedAsync(viewModel.Query, options);
 
-            viewModel.TotalResults = viewModel.AISearchResults.Sum(g => g.Products.Count);
+            viewModel.AIResultCount = viewModel.AISearchResults.Sum(g => g.Products.Count);
             viewModel.CurrentPage = options.PageNumber;
-            viewModel.TotalPages = (int)Math.Ceiling(viewModel.TotalResults / (double)options.PageSize);
+            viewModel.TotalPages = (int)Math.Ceiling(viewModel.AIResultCount / (double)options.PageSize);
 
             _logger.LogInformation("AI search found {Companies} companies with {Total} products", 
                 viewModel.AISearchResults.Count,
-                viewModel.TotalResults);
+                viewModel.AIResultCount);
         }
     }
 }

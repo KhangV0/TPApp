@@ -111,6 +111,15 @@ namespace TPApp.Data
         public DbSet<ProposalScore> ProposalScores { get; set; } = null!;
         public DbSet<NegotiationForm> NegotiationForms { get; set; } = null!;
         public DbSet<LegalReviewForm> LegalReviewForms { get; set; } = null!;
+        public DbSet<ContractComment> ContractComments { get; set; } = null!;
+
+        // Step 6+7: Contract versioning & digital signing
+        public DbSet<ProjectContract> ProjectContracts { get; set; } = null!;
+        public DbSet<ContractApproval> ContractApprovals { get; set; } = null!;
+        public DbSet<ContractSignatureRequest> ContractSignatureRequests { get; set; } = null!;
+        public DbSet<ContractSignature> ContractSignatures { get; set; } = null!;
+        public DbSet<ContractAuditLog> ContractAuditLogs { get; set; } = null!;
+
         public DbSet<EContract> EContracts { get; set; } = null!;
         public DbSet<AdvancePaymentConfirmation> AdvancePaymentConfirmations { get; set; } = null!;
         public DbSet<PilotTestReport> PilotTestReports { get; set; } = null!;
@@ -139,5 +148,9 @@ namespace TPApp.Data
         // RFQ Invitation System
         public DbSet<RFQInvitation> RFQInvitations { get; set; } = null!;
         public DbSet<ProjectAccessLog> ProjectAccessLogs { get; set; } = null!;
+
+        // Notification System
+        public DbSet<Notification> Notifications { get; set; } = null!;
+        public DbSet<SystemParameter> SystemParameters { get; set; } = null!;
     }
 }

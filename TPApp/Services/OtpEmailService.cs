@@ -1,39 +1,36 @@
-using System.Net;
-using System.Net.Mail;
+using TPApp.Configuration;
 using TPApp.Interfaces;
 
 namespace TPApp.Services
 {
     public class OtpEmailService : IOtpEmailService
     {
-        private readonly IConfiguration _config;
+        private readonly ISystemParameterService _params;
+        private readonly IEmailSender _emailSender;
         private readonly ILogger<OtpEmailService> _logger;
 
-        public OtpEmailService(IConfiguration config, ILogger<OtpEmailService> logger)
+        public OtpEmailService(
+            ISystemParameterService @params,
+            IEmailSender emailSender,
+            ILogger<OtpEmailService> logger)
         {
-            _config = config;
-            _logger = logger;
+            _params      = @params;
+            _emailSender = emailSender;
+            _logger      = logger;
         }
 
         public async Task SendOtpAsync(string toEmail, string fullName, string otp, string role, int projectId)
         {
-            bool mockMode = _config.GetValue<bool>("Email:MockMode", true);
+            // MockMode: read from SYS_PARAMETERS (NOTIFICATION_ENABLE_EMAIL = 0 means mock/disabled)
+            bool enableEmail = await _params.GetBoolAsync(ParameterKeys.NotificationEnableEmail, true);
 
-            if (mockMode)
+            if (!enableEmail)
             {
-                // DEV MODE: log OTP to console instead of sending email
                 _logger.LogInformation(
                     "=== [OTP MOCK] ===\n  To: {Email}\n  Name: {Name}\n  Role: {Role}\n  Project: {ProjectId}\n  OTP: {Otp}\n  Expires: {Expire}",
                     toEmail, fullName, role, projectId, otp, DateTime.Now.AddMinutes(5).ToString("HH:mm:ss"));
                 return;
             }
-
-            // PRODUCTION: send real email
-            var host     = _config["Email:SmtpHost"] ?? "smtp.gmail.com";
-            var port     = _config.GetValue<int>("Email:SmtpPort", 587);
-            var username = _config["Email:Username"] ?? "";
-            var password = _config["Email:Password"] ?? "";
-            var from     = _config["Email:From"] ?? "noreply@techport.vn";
 
             var subject = $"[TechPort] Mã OTP ký biên bản thương lượng - Dự án #{projectId}";
             var body = $@"
@@ -54,14 +51,7 @@ namespace TPApp.Services
   </div>
 </div>";
 
-            using var client = new SmtpClient(host, port)
-            {
-                Credentials = new NetworkCredential(username, password),
-                EnableSsl = true
-            };
-
-            var mail = new MailMessage(from, toEmail, subject, body) { IsBodyHtml = true };
-            await client.SendMailAsync(mail);
+            await _emailSender.SendAsync(toEmail, subject, body, isHtml: true);
         }
     }
 }

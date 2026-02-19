@@ -139,6 +139,7 @@ namespace TPApp.Controllers
                     if (ndaAgreement != null)
                     {
                         ndaAgreement.XacNhanKySo = "Đã ký điện tử";
+                        ndaAgreement.DaDongY = true;
                         ndaAgreement.NgaySua = DateTime.Now;
                         ndaAgreement.NguoiSua = userId;
                     }

@@ -6,6 +6,13 @@
     var signatures = ViewBag.Signatures as List<TPApp.Entities.ESign.ESignSignature>;
 }
 
+<style>
+    .form-control::placeholder {
+        color: #ccc;
+        opacity: 1;
+    }
+</style>
+
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
@@ -243,7 +250,7 @@
 
                 <dt class="col-sm-3">Đã đồng ý điều khoản:</dt>
                 <dd class="col-sm-9">
-                    @if (nda.DaDongY)
+                    @if (nda.DaDongY || (eSignDoc != null && eSignDoc.Status == 2))
                     {
                         <span class="badge bg-success"><i class="fas fa-check"></i> Đã đồng ý</span>
                     }

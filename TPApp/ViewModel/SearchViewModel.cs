@@ -30,9 +30,19 @@ namespace TPApp.ViewModel
         public List<AISearchResultGroup> AISearchResults { get; set; } = new List<AISearchResultGroup>();
 
         /// <summary>
-        /// Total number of results found
+        /// Total number of results found (for pagination of active mode)
         /// </summary>
         public int TotalResults { get; set; }
+
+        /// <summary>
+        /// Count of normal search results
+        /// </summary>
+        public int NormalResultCount { get; set; }
+
+        /// <summary>
+        /// Count of AI search results
+        /// </summary>
+        public int AIResultCount { get; set; }
 
         /// <summary>
         /// Current page number (1-indexed)
