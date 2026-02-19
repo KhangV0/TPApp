@@ -83,26 +83,26 @@
             <section class="yc-stats" style="margin-top: 20px;">
                 <div class="container text-center">
                     <h2 class="mb-5 fw-bold">
-                        Thúc đẩy nền kinh tế tầm thấp <br />
-                        thông qua Công nghệ
+                        Thúc đẩy hoạt động đổi mới sáng tạo <br />
+                        và chuyển giao công nghệ
                     </h2>
 
                     <div class="row">
                         <div class="col-md-3">
-                            <div class="yc-stat-number">10+</div>
-                            <div class="yc-stat-label">Năm kinh nghiệm trong ngành</div>
+                            <div class="yc-stat-number">300+</div>
+                            <div class="yc-stat-label">công nghệ sẵn sàng chuyển giao</div>
                         </div>
                         <div class="col-md-3">
-                            <div class="yc-stat-number">30+</div>
-                            <div class="yc-stat-label">Sản phẩm đa dạng</div>
+                            <div class="yc-stat-number">500+</div>
+                            <div class="yc-stat-label">máy móc, thiết bị</div>
                         </div>
                         <div class="col-md-3">
                             <div class="yc-stat-number">100+</div>
-                            <div class="yc-stat-label">Công nghệ được cấp bằng sáng chế</div>
+                            <div class="yc-stat-label">chuyên gia tư vấn</div>
                         </div>
                         <div class="col-md-3">
-                            <div class="yc-stat-number">1000+</div>
-                            <div class="yc-stat-label">Dịch vụ chuyên nghiệp</div>
+                            <div class="yc-stat-number">100+</div>
+                            <div class="yc-stat-label">sáng chế</div>
                         </div>
                     </div>
 
@@ -111,38 +111,6 @@
                     </div>
                 </div>
             </section>
-
-            <!-- COL 3-->
-            @foreach (var item in Model.Col3)
-            {
-                <div class="col-lg-6 col-md-6">
-                    <div class="yc-card">
-
-                        <img src="@item.ImageUrl"
-                             alt="@item.Title"
-                             onerror="this.src='/image/yeucaucongnghe.jpg'">
-
-                        <div class="yc-overlay"></div>
-
-                        <div class="yc-content">
-
-                            <div class="yc-meta">
-                                <span><i class="bi bi-eye"></i> @item.Viewed</span>
-                                <span><i class="bi bi-star"></i> 4.9/5</span>
-                            </div>
-
-                            <div class="yc-name">
-                                @item.Title
-                            </div>
-
-                            <a href="@item.Link" class="yc-btn">
-                                Xem thêm »
-                            </a>
-                        </div>
-
-                    </div>
-                </div>
-            }
 
         </div>
     </div>
