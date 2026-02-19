@@ -853,6 +853,22 @@ body {
     #left_column {
         margin-bottom: 20px;
     }
+    .detailTab img {
+        width: 100% !important;
+        margin: 5px auto !important;
+    }
+    #product {
+        padding: 0 !important;
+    }
+    .ui-tabViewNav {
+        padding: 0 10px !important;
+    }
+    .ui-tabViewNav li {
+        list-style: none;
+    }
+    .popular-tabs {
+        height: 440px;
+    }
 }
 
 /* ----- Khối chung ----- */
@@ -2895,6 +2911,9 @@ span .fieldRequired {
 
 
 @media (max-width: 768px) {
+    .hp-footer {
+        margin-bottom:30px;
+    }
     .sidebar-floating {
         position: fixed;
         bottom: 0;
@@ -2915,7 +2934,7 @@ span .fieldRequired {
             background: none;
             border: none;
             box-shadow: none;
-            display: block;
+            display: flex !important;
             margin: 10px auto;
             border-radius: 0px;
         }
@@ -4066,46 +4085,75 @@ header {
 
 @media print {
     /* Ẩn sidebar */
-    .col-sm-3
+    .col-sm-3 {
+        display: none !important;
+    }
 
-{
-    display: none !important;
+    /* Cho nội dung full width */
+    .col-sm-9 {
+        width: 100% !important;
+    }
+
+    /* Ẩn các nút không cần khi in */
+    button, .btn {
+        display: none !important;
+    }
+
+    /* Ẩn carousel nhỏ */
+    .owl-carousel {
+        display: none !important;
+    }
+
+
+    .main-logo {
+        height: 42px;
+    }
+
+    .category-pill {
+        padding: 6px 14px;
+        border-radius: 20px;
+        text-decoration: none;
+        color: #000;
+        font-weight: 500;
+    }
+
+        .category-pill:hover {
+            background: #f2f2f2;
+        }
+
+    .megamenu {
+        width: 600px;
+    }
 }
 
-/* Cho nội dung full width */
-.col-sm-9 {
-    width: 100% !important;
+.product-name {
+    font-size: 14px !important;
+    overflow: visible !important;
+}
+.product-container img {
+    height: 150px !important;
+    object-fit: cover;
+}
+.carousel-control-prev,
+.carousel-control-next {
+    background: none !important;
 }
 
-/* Ẩn các nút không cần khi in */
-button, .btn {
-    display: none !important;
+.carousel-control-prev span,
+.carousel-control-next span {
+    font-size: 30px !important;
 }
 
-/* Ẩn carousel nhỏ */
-.owl-carousel {
-    display: none !important;
+.owl-stage-outer {
+    position: relative;
 }
-
-
-.main-logo {
-    height: 42px;
+.owl-nav {
+    position: absolute;
+    top : -50px;
+    right: 0;
 }
-
-.category-pill {
-    padding: 6px 14px;
-    border-radius: 20px;
-    text-decoration: none;
-    color: #000;
-    font-weight: 500;
+.owl-nav span {
+    font-size: 30px !important;
+    margin-left: 30px;
+    color: red;
 }
-
-.category-pill:hover {
-    background: #f2f2f2;
-}
-
-.megamenu {
-    width: 600px;
-}
-
-

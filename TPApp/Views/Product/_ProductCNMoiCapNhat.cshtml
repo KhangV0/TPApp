@@ -8,21 +8,21 @@
             <a href="cong-nghe-thiet-bi-2.html">CÔNG NGHỆ MỚI CẬP NHẬT</a>
         </h2>
 
-        <div id="carouselTechCombined"
-             class="carousel slide over-flow"
+        <!-- ================= PC CAROUSEL (4 ITEM) ================= -->
+        <div id="carouselTechPC"
+             class="carousel slide over-flow d-none d-lg-block"
              data-bs-ride="carousel">
 
             <div class="carousel-inner">
                 @{
-                    var chunkSize = 4; // Display 4 items per slide
-                    var chunks = Model.Chunk(chunkSize).ToList();
+                    var pcChunks = Model.Chunk(4).ToList();
                 }
 
-                @for (int i = 0; i < chunks.Count; i++)
+                @for (int i = 0; i < pcChunks.Count; i++)
                 {
                     <div class="carousel-item @(i == 0 ? "active" : "")">
                         <div class="row">
-                            @foreach (var p in chunks[i])
+                            @foreach (var p in pcChunks[i])
                             {
                                 string imgUrl;
                                 if (string.IsNullOrEmpty(p.QuyTrinhHinhAnh))
@@ -36,13 +36,12 @@
                                 }
                                 else
                                 {
-                                    // Use static method
                                     imgUrl = TPApp.Controllers.ProductController.CookedImageURL("254-170", p.QuyTrinhHinhAnh, Html.MainDomain());
                                 }
-                                
+
                                 var detailUrl = $"{Html.MainDomain()}2-cong-nghe-thiet-bi/{p.TypeId}/{ProductController.MakeURLFriendly(p.Name)}-{p.ID}.html";
 
-                                <div class="col-sm-3 col-6">
+                                <div class="col-lg-3">
                                     <div class="product-container" style="margin-bottom: 20px;">
                                         <div class="left-block">
                                             <a href="@detailUrl">
@@ -61,7 +60,7 @@
                                             <h5 class="product-name" style="height: 40px; overflow: hidden;">
                                                 <a href="@detailUrl" title="@p.Name">@p.Name</a>
                                             </h5>
-                                             <div class="content_price">
+                                            <div class="content_price">
                                                 <span class="price product-price">
                                                     @if (p.OriginalPrice > 0)
                                                     {
@@ -69,7 +68,7 @@
                                                     }
                                                     else
                                                     {
-                                                       <span>Liên hệ</span>
+                                                        <span>Liên hệ</span>
                                                     }
                                                 </span>
                                             </div>
@@ -84,7 +83,7 @@
 
             <button class="carousel-control-prev"
                     type="button"
-                    data-bs-target="#carouselTechCombined"
+                    data-bs-target="#carouselTechPC"
                     data-bs-slide="prev"
                     style="width: 5%; background: rgba(0,0,0,0.2);">
                 <span class="carousel-control-prev-icon"></span>
@@ -92,12 +91,103 @@
 
             <button class="carousel-control-next"
                     type="button"
-                    data-bs-target="#carouselTechCombined"
+                    data-bs-target="#carouselTechPC"
                     data-bs-slide="next"
                     style="width: 5%; background: rgba(0,0,0,0.2);">
                 <span class="carousel-control-next-icon"></span>
             </button>
-
         </div>
+
+
+        <!-- ================= MOBILE CAROUSEL (2 ITEM) ================= -->
+        <div id="carouselTechMobile"
+             class="carousel slide over-flow d-lg-none"
+             data-bs-ride="carousel">
+
+            <div class="carousel-inner">
+                @{
+                    var mobileChunks = Model.Chunk(2).ToList();
+                }
+
+                @for (int i = 0; i < mobileChunks.Count; i++)
+                {
+                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                        <div class="row">
+                            @foreach (var p in mobileChunks[i])
+                            {
+                                string imgUrl;
+                                if (string.IsNullOrEmpty(p.QuyTrinhHinhAnh))
+                                {
+                                    imgUrl = p.TypeId switch
+                                    {
+                                        2 => $"{Html.MainDomain()}images/sangche.png",
+                                        3 => $"{Html.MainDomain()}images/research.jpg",
+                                        _ => $"{Html.MainDomain()}images/research.jpg"
+                                    };
+                                }
+                                else
+                                {
+                                    imgUrl = TPApp.Controllers.ProductController.CookedImageURL("254-170", p.QuyTrinhHinhAnh, Html.MainDomain());
+                                }
+
+                                var detailUrl = $"{Html.MainDomain()}2-cong-nghe-thiet-bi/{p.TypeId}/{ProductController.MakeURLFriendly(p.Name)}-{p.ID}.html";
+
+                                <div class="col-6">
+                                    <div class="product-container" style="margin-bottom: 20px;">
+                                        <div class="left-block">
+                                            <a href="@detailUrl">
+                                                <img src="@imgUrl" class="img-responsive ProductListImage" alt="@p.Name" style="width:100%; height:auto;" />
+                                            </a>
+                                            @if (p.TypeId == 2)
+                                            {
+                                                <div class="label_sc"></div>
+                                            }
+                                            else if (p.TypeId == 3)
+                                            {
+                                                <div class="label_nc"></div>
+                                            }
+                                        </div>
+                                        <div class="right-block">
+                                            <h5 class="product-name" style="height: 40px; overflow: hidden;">
+                                                <a href="@detailUrl" title="@p.Name">@p.Name</a>
+                                            </h5>
+                                            <div class="content_price">
+                                                <span class="price product-price">
+                                                    @if (p.OriginalPrice > 0)
+                                                    {
+                                                        @ProductController.FormatCurrencyOto((decimal?)p.OriginalPrice, p.Currency)
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>Liên hệ</span>
+                                                    }
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <button class="carousel-control-prev"
+                    type="button"
+                    data-bs-target="#carouselTechMobile"
+                    data-bs-slide="prev"
+                    style="width: 5%; background: rgba(0,0,0,0.2);">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+
+            <button class="carousel-control-next"
+                    type="button"
+                    data-bs-target="#carouselTechMobile"
+                    data-bs-slide="next"
+                    style="width: 5%; background: rgba(0,0,0,0.2);">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+
     </div>
 </div>
