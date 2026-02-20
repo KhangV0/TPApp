@@ -22,9 +22,10 @@
         else if (proj.SelectedSellerId == userId) userRole = 2; // Seller
         else
         {
-            bool isCons = await DbCtx.ProjectConsultants
-                .AnyAsync(c => c.ProjectId == projectId && c.ConsultantId == userId && c.IsActive);
-            if (isCons) userRole = 3;
+            // Use ProjectMembers (same as controller) to detect consultant
+            var member = await DbCtx.ProjectMembers
+                .FirstOrDefaultAsync(m => m.ProjectId == projectId && m.UserId == userId && m.Role == 3);
+            if (member != null) userRole = 3;
         }
     }
 

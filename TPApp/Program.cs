@@ -91,6 +91,7 @@ builder.Services.AddScoped<TPApp.Interfaces.ISelectionService, TPApp.Services.Se
 builder.Services.AddScoped<TPApp.Interfaces.IScoringService, TPApp.Services.ScoringService>();
 builder.Services.AddScoped<TPApp.Interfaces.IProjectMemberService, TPApp.Services.ProjectMemberService>();
 builder.Services.AddScoped<TPApp.Interfaces.IOtpEmailService, TPApp.Services.OtpEmailService>();
+builder.Services.AddScoped<TPApp.Interfaces.ISmsSender, TPApp.Services.StubSmsSender>();
 builder.Services.AddScoped<TPApp.Interfaces.ILegalReviewService, TPApp.Services.LegalReviewService>();
 
 // Step 6+7: Contract & Digital Signing Services
@@ -99,6 +100,7 @@ builder.Services.AddScoped<TPApp.Interfaces.IContractAuditService,     TPApp.Ser
 builder.Services.AddScoped<TPApp.Interfaces.IContractApprovalService,  TPApp.Services.ContractApprovalService>();
 builder.Services.AddScoped<TPApp.Interfaces.IContractService,          TPApp.Services.ContractService>();
 builder.Services.AddScoped<TPApp.Interfaces.IContractSigningService,   TPApp.Services.ContractSigningService>();
+builder.Services.AddScoped<TPApp.Interfaces.IVerificationService,      TPApp.Services.VerificationService>();
 
 // CA signing provider adapters (resolved by name via factory)
 builder.Services.AddScoped<TPApp.Interfaces.ISigningProvider, TPApp.Services.Signing.VnptSigningProvider>();

@@ -93,7 +93,11 @@
             $(document).on('click', '.step-nav-btn', function(e) {
                 e.preventDefault();
                 var step = $(this).data('step');
-                $(`.step-link[data-step="${step}"]`).click();
+                loadStepContent(step);
+                // Update URL without full page reload
+                var url = new URL(window.location);
+                url.searchParams.set('step', step);
+                window.history.pushState({}, '', url);
             });
 
             // Handle edit button clicks
@@ -995,61 +999,7 @@
                 });
             });
 
-            // Send OTP
-            $(document).on('click', '#btnSendOtp', function() {
-                const phone = $('#phoneNumber').val();
-                if (!phone) {
-                    showToast('warning', 'Vui lòng nhập số điện thoại');
-                    return;
-                }
-
-                $.post('/ESign/SendOtp', { phoneNumber: phone }, function(response) {
-                    if (response.success) {
-                        otpSent = true;
-                        $('#otpSection').show();
-                        showToast('success', 'OTP đã được gửi! (Test mode: ' + response.otp + ')');
-                    } else {
-                        showToast('danger', 'Lỗi: ' + response.message);
-                    }
-                }).fail(function() {
-                    showToast('danger', 'Lỗi khi gửi OTP');
-                });
-            });
-
-            // Enable sign button when conditions met
-            $(document).on('change keyup', '#agreeTerms, #otpCode', function() {
-                const agreed = $('#agreeTerms').is(':checked');
-                const otpEntered = $('#otpCode').val().length === 6;
-                $('#btnSign').prop('disabled', !(agreed && otpEntered && otpSent));
-            });
-
-            // Sign document
-            $(document).on('click', '#btnSign', function() {
-                const otpCode = $('#otpCode').val();
-                const docId = $(this).data('document-id') || currentDocumentId;
-                
-                if (!docId) {
-                    showToast('danger', 'Không tìm thấy tài liệu');
-                    return;
-                }
-                
-                $.post('/ESign/SignDocument', { 
-                    documentId: docId,
-                    otpCode: otpCode 
-                }, function(response) {
-                    if (response.success) {
-                        showToast('success', 'Ký thành công! Đang chuyển sang bước 3...');
-                        // Reload page to step 3 — updates both nav bar and content
-                        setTimeout(function() {
-                            window.location.href = '/Project/Details/' + currentProjectId + '?step=3';
-                        }, 1500);
-                    } else {
-                        showToast('danger', 'Lỗi: ' + response.message);
-                    }
-                }).fail(function() {
-                    showToast('danger', 'Lỗi khi ký tài liệu');
-                });
-            });
+            // Step 2 NDA signing is now handled by inline script in _Step2.cshtml
         });
     </script>
 }

@@ -110,27 +110,36 @@
                     </div>
                 }
 
-                @* Sign Button *@
+                @* Sign Button + OTP Channel selection *@
                 @if (eSignDoc.Status != 2)
                 {
                     <div class="mt-4 p-3 bg-light border rounded">
                         <h6 class="mb-3"><i class="fas fa-signature"></i> Ký tài liệu điện tử</h6>
                         
                         <div id="esign-form">
+                            <!-- Channel selection -->
                             <div class="mb-3">
-                                <label class="form-label">Số điện thoại (nhận OTP):</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="phoneNumber" placeholder="0912345678" />
-                                    <button class="btn btn-outline-primary" type="button" id="btnSendOtp">
-                                        <i class="fas fa-paper-plane"></i> Gửi OTP
-                                    </button>
+                                <label class="form-label fw-bold">Chọn kênh nhận OTP:</label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="ndaOtpChannel" id="ndaChannelEmail" value="email" checked>
+                                        <label class="form-check-label" for="ndaChannelEmail">
+                                            <i class="fas fa-envelope me-1 text-primary"></i> Email
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="ndaOtpChannel" id="ndaChannelSms" value="sms">
+                                        <label class="form-check-label" for="ndaChannelSms">
+                                            <i class="fas fa-sms me-1 text-success"></i> SMS
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3" id="otpSection" style="display:none;">
-                                <label class="form-label">Mã OTP:</label>
-                                <input type="text" class="form-control" id="otpCode" placeholder="Nhập 6 số" maxlength="6" />
-                                <small class="text-muted">Mã OTP đã được gửi đến số điện thoại của bạn</small>
+                            <!-- SMS phone input (hidden by default) -->
+                            <div class="mb-3" id="ndaSmsPhoneSection" style="display:none;">
+                                <label class="form-label">Số điện thoại nhận OTP:</label>
+                                <input type="text" class="form-control" id="ndaOtpPhoneNumber" placeholder="0912345678" />
                             </div>
 
                             <div class="mb-3 form-check">
@@ -140,9 +149,37 @@
                                 </label>
                             </div>
 
-                            <button class="btn btn-success" id="btnSign" data-document-id="@eSignDoc.Id" disabled>
-                                <i class="fas fa-pen-nib"></i> Ký tài liệu
+                            <button class="btn btn-success" id="btnRequestNdaOtp" data-document-id="@eSignDoc.Id"
+                                    onclick="ndaRequestOtp(this)">
+                                <i class="fas fa-pen-nib me-1"></i> Gửi OTP & Ký xác nhận
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- OTP Verification Modal -->
+                    <div class="modal fade" id="ndaOtpModal" tabindex="-1" data-bs-backdrop="static">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Xác nhận OTP</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="ndaOtpSentMessage" class="alert alert-info"></div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">Nhập mã OTP (6 số):</label>
+                                        <input type="text" class="form-control form-control-lg text-center tracking-widest"
+                                               id="ndaOtpInput" maxlength="6" placeholder="______" autocomplete="off" />
+                                    </div>
+                                    <div id="ndaOtpError" class="text-danger small d-none"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <button class="btn btn-success" id="btnVerifyNdaOtp" onclick="ndaVerifyOtp()">
+                                        <i class="fas fa-check me-1"></i> Xác nhận & Ký
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 }
@@ -290,3 +327,164 @@
         }
     </div>
 </div>
+
+<script>
+(function() {
+    var projectId = @Model.ProjectId;
+    var ndaCountdownTimer = null;
+
+    // ── Channel toggle ──────────────────────────────────────────────────────
+    document.querySelectorAll('input[name="ndaOtpChannel"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            var smsSection = document.getElementById('ndaSmsPhoneSection');
+            if (smsSection) smsSection.style.display = this.value === 'sms' ? 'block' : 'none';
+        });
+    });
+
+    // ── Request OTP ─────────────────────────────────────────────────────────
+    window.ndaRequestOtp = async function(btnEl) {
+        var agree = document.getElementById('agreeTerms');
+        if (!agree || !agree.checked) {
+            alert('Vui lòng đồng ý với các điều khoản trước khi ký.');
+            return;
+        }
+
+        var channel = (document.querySelector('input[name="ndaOtpChannel"]:checked') || {}).value || 'email';
+        var phoneNumber = (document.getElementById('ndaOtpPhoneNumber') || {}).value || '';
+
+        if (channel === 'sms' && !phoneNumber) {
+            alert('Vui lòng nhập số điện thoại nhận OTP.');
+            return;
+        }
+
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
+
+        try {
+            var res = await fetch('/ESign/SendOtp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId: projectId, channel: channel, phoneNumber: phoneNumber })
+            });
+            var data = await res.json();
+
+            if (data.success) {
+                document.getElementById('ndaOtpInput').value = '';
+                document.getElementById('ndaOtpError').classList.add('d-none');
+                document.getElementById('btnVerifyNdaOtp').disabled = false;
+                document.getElementById('ndaOtpSentMessage').innerHTML =
+                    data.message + '<br/>Có hiệu lực trong <strong id="ndaOtpCountdown" class="text-danger">5:00</strong>';
+                ndaStartCountdown(300);
+                new bootstrap.Modal(document.getElementById('ndaOtpModal')).show();
+            } else {
+                alert(data.message);
+            }
+        } catch (e) {
+            alert('Lỗi kết nối: ' + e.message);
+        } finally {
+            btnEl.disabled = false;
+            btnEl.innerHTML = '<i class="fas fa-pen-nib me-1"></i> Gửi OTP & Ký xác nhận';
+        }
+    };
+
+    // ── Countdown timer ─────────────────────────────────────────────────────
+    function ndaStartCountdown(seconds) {
+        clearInterval(ndaCountdownTimer);
+        var el = document.getElementById('ndaOtpCountdown');
+        var remaining = seconds;
+
+        ndaCountdownTimer = setInterval(function() {
+            remaining--;
+            var m = Math.floor(remaining / 60);
+            var s = remaining % 60;
+            el.textContent = m + ':' + s.toString().padStart(2, '0');
+
+            if (remaining <= 0) {
+                clearInterval(ndaCountdownTimer);
+                el.textContent = 'Hết hạn';
+                document.getElementById('btnVerifyNdaOtp').disabled = true;
+                document.getElementById('ndaOtpError').textContent = 'OTP đã hết hạn. Vui lòng yêu cầu lại.';
+                document.getElementById('ndaOtpError').classList.remove('d-none');
+            }
+        }, 1000);
+    }
+
+    // ── Verify OTP & Sign ───────────────────────────────────────────────────
+    window.ndaVerifyOtp = async function() {
+        var otp = document.getElementById('ndaOtpInput').value.trim();
+        var errEl = document.getElementById('ndaOtpError');
+        errEl.classList.add('d-none');
+
+        if (otp.length !== 6) {
+            errEl.textContent = 'Mã OTP phải 6 chữ số.';
+            errEl.classList.remove('d-none');
+            return;
+        }
+
+        var docId = document.getElementById('btnRequestNdaOtp').getAttribute('data-document-id');
+        var btn = document.getElementById('btnVerifyNdaOtp');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xác nhận...';
+
+        try {
+            var res = await fetch('/ESign/SignDocument', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ documentId: parseInt(docId), otpCode: otp })
+            });
+            var data = await res.json();
+
+            if (data.success) {
+                clearInterval(ndaCountdownTimer);
+                bootstrap.Modal.getInstance(document.getElementById('ndaOtpModal'))?.hide();
+                alert('✅ ' + data.message);
+                // Redirect to step 3 after successful signing
+                window.location.href = '/Project/Details/' + projectId + '?step=3';
+            } else {
+                errEl.textContent = data.message;
+                errEl.classList.remove('d-none');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check me-1"></i> Xác nhận & Ký';
+            }
+        } catch (e) {
+            errEl.textContent = 'Lỗi kết nối: ' + e.message;
+            errEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i> Xác nhận & Ký';
+        }
+    };
+})();
+
+// ── Create NDA form submission ──────────────────────────────────────────────
+document.getElementById('createNdaForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var form = new FormData();
+    form.append('projectId', document.getElementById('projectId')?.value || '');
+    form.append('benA', document.getElementById('benA')?.value || '');
+    form.append('benB', document.getElementById('benB')?.value || '');
+    form.append('loaiNDA', document.getElementById('loaiNDA')?.value || '');
+    form.append('thoiHanBaoMat', document.getElementById('thoiHanBaoMat')?.value || '');
+    form.append('daDongY', document.getElementById('daDongY')?.checked ? 'true' : 'false');
+
+    var fileInput = document.getElementById('ndaFile');
+    if (fileInput && fileInput.files.length > 0) {
+        form.append('ndaFile', fileInput.files[0]);
+    } else {
+        alert('Vui lòng chọn file PDF.');
+        return;
+    }
+
+    try {
+        var res = await fetch('/ESign/UploadNda', { method: 'POST', body: form });
+        var data = await res.json();
+        if (data.success) {
+            alert('✅ ' + data.message);
+            location.reload();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    } catch(ex) {
+        alert('Lỗi: ' + ex.message);
+    }
+});
+</script>

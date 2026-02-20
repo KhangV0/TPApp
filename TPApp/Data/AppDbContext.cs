@@ -120,6 +120,10 @@ namespace TPApp.Data
         public DbSet<ContractSignature> ContractSignatures { get; set; } = null!;
         public DbSet<ContractAuditLog> ContractAuditLogs { get; set; } = null!;
 
+        // Profile verification
+        public DbSet<UserOtp> UserOtps { get; set; } = null!;
+        public DbSet<UserVerificationDoc> UserVerificationDocs { get; set; } = null!;
+
         public DbSet<EContract> EContracts { get; set; } = null!;
         public DbSet<AdvancePaymentConfirmation> AdvancePaymentConfirmations { get; set; } = null!;
         public DbSet<PilotTestReport> PilotTestReports { get; set; } = null!;

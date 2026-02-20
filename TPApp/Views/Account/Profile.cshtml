@@ -1,16 +1,28 @@
 @using TPApp.Interfaces
 @using Microsoft.AspNetCore.Identity
 @using TPApp.Entities
+@using TPApp.ViewModel
 @inject IAccountService AccountService
 @inject UserManager<ApplicationUser> UserManager
 
 @model TPApp.ViewModel.ProfileVm
 
 @{
-    ViewData["Title"] = "Thông tin cá nhân";
-    
+    ViewData["Title"] = "Thông tin cá nhân & Xác thực";
     var userId = int.Parse(UserManager.GetUserId(User)!);
     var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+
+    // Trust score
+    int trustScore = 0;
+    if (Model.FullName != null) trustScore += 20;
+    if (Model.EmailVerified)   trustScore += 25;
+    if (Model.PhoneVerified)   trustScore += 25;
+    bool hasDoc = Model.AccountTypeId == 1
+        ? Model.Docs.Any(d => d.DocType == 1) && Model.Docs.Any(d => d.DocType == 2)
+        : Model.Docs.Any(d => d.DocType == 3);
+    if (hasDoc) trustScore += 30;
+
+    string trustColor = trustScore >= 80 ? "success" : trustScore >= 50 ? "warning" : "danger";
 }
 
 <div class="container-fluid py-4">
@@ -22,105 +34,326 @@
 
         <!-- Main Content -->
         <div class="col-md-9 col-lg-10">
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="fas fa-user"></i> Thông tin cá nhân</h5>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Trust Score Banner -->
+            <div class="card shadow-sm mb-4 border-0 bg-gradient" style="background:linear-gradient(135deg,#1a73e8,#0d47a1)">
+                <div class="card-body text-white py-3 px-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold mb-1">Độ tin cậy tài khoản · @trustScore%</div>
+                            <div class="progress" style="height:8px;background:rgba(255,255,255,.25)">
+                                <div class="progress-bar bg-@trustColor" style="width:@trustScore%"></div>
+                            </div>
                         </div>
-                        
+                        <div class="text-center">
+                            @if (Model.VerificationLevel >= 3)
+                            {
+                                <span class="badge bg-success fs-6 px-3 py-2"><i class="fas fa-shield-alt"></i> Đã xác thực</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2"><i class="fas fa-exclamation-triangle"></i> Chưa xác thực</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Left: Basic Info -->
+                <div class="col-lg-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-user me-2"></i>Thông tin cơ bản</h5>
+                        </div>
                         <form asp-action="Profile" method="post" enctype="multipart/form-data">
                             @Html.AntiForgeryToken()
                             <div class="card-body">
-                                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none"></div>
 
-                                <div class="mb-3">
-                                    <label asp-for="UserName" class="form-label">Tên đăng nhập</label>
-                                    <input asp-for="UserName" class="form-control" readonly />
-                                    <small class="form-text text-muted">Tên đăng nhập không thể thay đổi</small>
+                                <!-- Avatar -->
+                                <div class="text-center mb-4">
+                                    <img src="@Model.AvatarUrl" alt="Avatar" class="rounded-circle shadow"
+                                         id="avatarPreview" style="width:110px;height:110px;object-fit:cover;border:3px solid #0d6efd">
+                                    <div class="mt-2">
+                                        <label class="btn btn-sm btn-outline-primary" for="avatarInput">
+                                            <i class="fas fa-camera"></i> Đổi ảnh
+                                        </label>
+                                        <input type="file" name="avatar" id="avatarInput" class="d-none" accept="image/*">
+                                    </div>
                                 </div>
 
+                                <div class="mb-3">
+                                    <label class="form-label">Tên đăng nhập</label>
+                                    <input asp-for="UserName" class="form-control" readonly>
+                                </div>
                                 <div class="mb-3">
                                     <label asp-for="FullName" class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                                    <input asp-for="FullName" class="form-control" placeholder="Nhập họ và tên" />
-                                    <span asp-validation-for="FullName" class="text-danger"></span>
+                                    <input asp-for="FullName" class="form-control" placeholder="Nhập họ và tên">
+                                    <span asp-validation-for="FullName" class="text-danger small"></span>
                                 </div>
-
                                 <div class="mb-3">
                                     <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
-                                    <input asp-for="Email" class="form-control" type="email" placeholder="Nhập email" />
-                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                    <input asp-for="Email" class="form-control" type="email" placeholder="Nhập email">
+                                    <span asp-validation-for="Email" class="text-danger small"></span>
                                 </div>
 
+                                <!-- Account Type -->
                                 <div class="mb-3">
-                                    <label class="form-label">Avatar</label>
-                                    <div class="mb-3 text-center">
-                                        <img src="@Model.AvatarUrl" alt="Avatar" class="rounded-circle" id="avatarPreview" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #0d6efd;">
+                                    <label class="form-label">Loại tài khoản</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" asp-for="AccountTypeId" value="1" id="typePersonal">
+                                            <label class="form-check-label" for="typePersonal"><i class="fas fa-user text-primary"></i> Cá nhân</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" asp-for="AccountTypeId" value="2" id="typeBusiness">
+                                            <label class="form-check-label" for="typeBusiness"><i class="fas fa-building text-info"></i> Doanh nghiệp</label>
+                                        </div>
                                     </div>
-                                    <input type="file" name="avatar" class="form-control" id="avatarInput" accept="image/jpeg,image/png,image/jpg">
-                                    <small class="form-text text-muted">Chỉ chấp nhận JPG, JPEG, PNG. Tối đa 2MB.</small>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Đăng nhập lần cuối</label>
-                                            <input type="text" class="form-control" value="@(Model.LastLogin?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có")" readonly />
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Ngày tạo tài khoản</label>
-                                            <input type="text" class="form-control" value="@(Model.Created?.ToString("dd/MM/yyyy") ?? "N/A")" readonly />
-                                        </div>
-                                    </div>
+                                <div class="row text-muted small">
+                                    <div class="col-6">Đăng nhập cuối: @(Model.LastLogin?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa có")</div>
+                                    <div class="col-6">Ngày tạo: @(Model.Created?.ToString("dd/MM/yyyy") ?? "N/A")</div>
                                 </div>
                             </div>
-
                             <div class="card-footer">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> Lưu thay đổi
-                                </button>
-                                <a href="@Url.Action("Index", "Dashboard")" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Hủy
-                                </a>
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Lưu thay đổi</button>
+                                <a href="@Url.Action("ChangePassword","Account")" class="btn btn-outline-secondary ms-2"><i class="fas fa-key me-1"></i>Đổi mật khẩu</a>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div class="col-lg-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-info text-white">
-                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Hướng dẫn</h6>
+                <!-- Right: Verification -->
+                <div class="col-lg-6">
+
+                    <!-- Phone Verification -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span class="fw-semibold">Số điện thoại</span>
+                            @if (Model.PhoneVerified)
+                            {
+                                <span class="badge bg-success ms-auto"><i class="fas fa-check-circle"></i> Đã xác thực</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary ms-auto">Chưa xác thực</span>
+                            }
                         </div>
                         <div class="card-body">
-                            <ul class="list-unstyled">
-                                <li class="mb-2"><i class="fas fa-check text-success"></i> Cập nhật thông tin cá nhân</li>
-                                <li class="mb-2"><i class="fas fa-check text-success"></i> Upload avatar (tối đa 2MB)</li>
-                                <li class="mb-2"><i class="fas fa-check text-success"></i> Ảnh tự động resize 300x300px</li>
-                                <li><i class="fas fa-check text-success"></i> <a href="@Url.Action("ChangePassword", "Account")">Đổi mật khẩu</a></li>
-                            </ul>
+                            <div class="input-group mb-2">
+                                <input type="tel" id="phoneInput" class="form-control"
+                                       placeholder="Nhập số điện thoại" value="@Model.PhoneNumber">
+                                <button class="btn btn-outline-primary" onclick="pv_savePhone()">Lưu SĐT</button>
+                            </div>
+                            @if (!Model.PhoneVerified)
+                            {
+                                <button class="btn btn-sm btn-primary mt-1" id="btnSendPhoneOtp"
+                                        onclick="pv_sendPhoneOtp()" @(!string.IsNullOrEmpty(Model.PhoneNumber) ? "" : "disabled")>
+                                    <i class="fas fa-paper-plane"></i> Gửi mã OTP qua SMS
+                                </button>
+                                <div id="phoneOtpBox" class="mt-2 d-none">
+                                    <div class="input-group">
+                                        <input type="text" id="phoneOtpInput" class="form-control" placeholder="Nhập mã 6 số" maxlength="6">
+                                        <button class="btn btn-success" onclick="pv_verifyPhoneOtp()">Xác nhận</button>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     </div>
-                </div>
-            </div>
-        </div><!-- End Main Content -->
-    </div><!-- End row -->
-</div><!-- End container-fluid -->
 
-@section Scripts {
-    <script>
-        document.getElementById('avatarInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('avatarPreview').src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
+                    <!-- Email Verification -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-envelope"></i>
+                            <span class="fw-semibold">Email</span>
+                            @if (Model.EmailVerified)
+                            {
+                                <span class="badge bg-success ms-auto"><i class="fas fa-check-circle"></i> Đã xác thực</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary ms-auto">Chưa xác thực</span>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-2">Email: <strong>@Model.Email</strong></p>
+                            @if (!Model.EmailVerified)
+                            {
+                                <button class="btn btn-sm btn-primary" id="btnSendEmailOtp"
+                                        onclick="pv_sendEmailOtp()">
+                                    <i class="fas fa-paper-plane"></i> Gửi mã OTP xác thực Email
+                                </button>
+                                <div id="emailOtpBox" class="mt-2 d-none">
+                                    <div class="input-group">
+                                        <input type="text" id="emailOtpInput" class="form-control" placeholder="Nhập mã 6 số" maxlength="6">
+                                        <button class="btn btn-success" onclick="pv_verifyEmailOtp()">Xác nhận</button>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-success small"><i class="fas fa-check-circle"></i> Email đã được xác thực</div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Document Upload -->
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+                            <i class="fas fa-id-card"></i>
+                            <span class="fw-semibold">Tài liệu xác minh</span>
+                        </div>
+                        <div class="card-body">
+                            @{
+                                // Personal: CCCD front + back
+                                // Business: Business license
+                                bool isBusiness = Model.AccountTypeId == 2;
+                            }
+
+                            @if (!isBusiness)
+                            {
+                                <!-- CCCD Front -->
+                                @await Html.PartialAsync("_DocUpload", new ViewDataDictionary(ViewData) {
+                                    { "DocType", 1 }, { "Label", "CCCD / CMND Mặt trước" },
+                                    { "Doc", Model.Docs.FirstOrDefault(d => d.DocType == 1) },
+                                    { "Icon", "fas fa-id-card" }
+                                })
+                                <!-- CCCD Back -->
+                                @await Html.PartialAsync("_DocUpload", new ViewDataDictionary(ViewData) {
+                                    { "DocType", 2 }, { "Label", "CCCD / CMND Mặt sau" },
+                                    { "Doc", Model.Docs.FirstOrDefault(d => d.DocType == 2) },
+                                    { "Icon", "fas fa-id-card-alt" }
+                                })
+                            }
+                            else
+                            {
+                                <!-- Business License -->
+                                @await Html.PartialAsync("_DocUpload", new ViewDataDictionary(ViewData) {
+                                    { "DocType", 3 }, { "Label", "Giấy phép kinh doanh" },
+                                    { "Doc", Model.Docs.FirstOrDefault(d => d.DocType == 3) },
+                                    { "Icon", "fas fa-file-contract" }
+                                })
+                            }
+                        </div>
+                    </div>
+
+                </div><!-- /col-lg-6 -->
+            </div><!-- /row -->
+
+        </div><!-- /Main Content -->
+    </div>
+</div>
+
+<script>
+    // Avatar preview
+    document.getElementById('avatarInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = e => document.getElementById('avatarPreview').src = e.target.result;
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function pv_toast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+        t.style = 'z-index:9999;min-width:280px';
+        t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 4500);
+    }
+
+    async function pv_savePhone() {
+        const phone = document.getElementById('phoneInput').value.trim();
+        if (!phone) { pv_toast('Nhập SĐT trước.', 'warning'); return; }
+        const r = await fetch('/Account/UpdatePhone', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ phone })
         });
-    </script>
+        const d = await r.json();
+        pv_toast(d.message, d.success ? 'success' : 'danger');
+        if (d.success) document.getElementById('btnSendPhoneOtp')?.removeAttribute('disabled');
+    }
+
+    async function pv_sendPhoneOtp() {
+        const btn = document.getElementById('btnSendPhoneOtp');
+        btn.disabled = true; btn.textContent = 'Đang gửi...';
+        const r = await fetch('/Account/SendPhoneOtp', { method:'POST' });
+        const d = await r.json();
+        pv_toast(d.message, d.success ? 'info' : 'danger');
+        if (d.success) {
+            document.getElementById('phoneOtpBox').classList.remove('d-none');
+            pv_startCountdown(btn, 'Gửi lại OTP', 60);
+        } else btn.disabled = false;
+    }
+
+    async function pv_verifyPhoneOtp() {
+        const otp = document.getElementById('phoneOtpInput').value.trim();
+        const r = await fetch('/Account/VerifyPhoneOtp', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ otp })
+        });
+        const d = await r.json();
+        pv_toast(d.message, d.success ? 'success' : 'danger');
+        if (d.success) setTimeout(() => location.reload(), 1500);
+    }
+
+    async function pv_sendEmailOtp() {
+        const btn = document.getElementById('btnSendEmailOtp');
+        btn.disabled = true; btn.textContent = 'Đang gửi...';
+        const r = await fetch('/Account/SendEmailOtp', { method:'POST' });
+        const d = await r.json();
+        pv_toast(d.message, d.success ? 'info' : 'danger');
+        if (d.success) {
+            document.getElementById('emailOtpBox').classList.remove('d-none');
+            pv_startCountdown(btn, 'Gửi lại OTP', 60);
+        } else btn.disabled = false;
+    }
+
+    async function pv_verifyEmailOtp() {
+        const otp = document.getElementById('emailOtpInput').value.trim();
+        const r = await fetch('/Account/VerifyEmailOtp', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ otp })
+        });
+        const d = await r.json();
+        pv_toast(d.message, d.success ? 'success' : 'danger');
+        if (d.success) setTimeout(() => location.reload(), 1500);
+    }
+
+    function pv_startCountdown(btn, label, seconds) {
+        let s = seconds;
+        const iv = setInterval(() => {
+            btn.textContent = `Gửi lại sau ${s--}s`;
+            if (s < 0) {
+                clearInterval(iv);
+                btn.disabled = false;
+                btn.innerHTML = `<i class='fas fa-paper-plane'></i> ${label}`;
+            }
+        }, 1000);
+    }
+</script>
+@section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

@@ -12,15 +12,18 @@ namespace TPApp.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IAccountService _accountService;
+        private readonly IVerificationService _verify;
 
         public AccountController(
             UserManager<ApplicationUser> userManager, 
             SignInManager<ApplicationUser> signInManager,
-            IAccountService accountService)
+            IAccountService accountService,
+            IVerificationService verify)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
+            _userManager    = userManager;
+            _signInManager  = signInManager;
             _accountService = accountService;
+            _verify         = verify;
         }
 
         // GET: /Account/Register
@@ -334,5 +337,73 @@ namespace TPApp.Controllers
         {
             return View();
         }
+
+        // ─── POST /Account/UpdatePhone (AJAX) ──────────────────────────────────
+        [Authorize, HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UpdatePhone([FromBody] UpdatePhoneDto dto)
+        {
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+            if (string.IsNullOrWhiteSpace(dto.Phone))
+                return Json(new { success = false, message = "Số điện thoại không hợp lệ." });
+            var ok = await _verify.UpdatePhoneAsync(userId, dto.Phone.Trim());
+            return Json(new { success = ok, message = ok ? "✅ Đã cập nhật SĐT." : "Lỗi cập nhật." });
+        }
+
+        // ─── POST /Account/SendEmailOtp (AJAX) ─────────────────────────────────
+        [Authorize, HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SendEmailOtp()
+        {
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+            var ok = await _verify.SendEmailOtpAsync(userId);
+            return Json(new { success = ok, message = ok ? "📧 Mã OTP đã được gửi đến email của bạn." : "Không thể gửi OTP. Kiểm tra lại email." });
+        }
+
+        // ─── POST /Account/SendPhoneOtp (AJAX) ─────────────────────────────────
+        [Authorize, HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SendPhoneOtp()
+        {
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+            var ok = await _verify.SendPhoneOtpAsync(userId);
+            return Json(new { success = ok, message = ok ? "📱 Mã OTP đã được gửi đến số điện thoại." : "Không thể gửi OTP. Kiểm tra lại SĐT." });
+        }
+
+        // ─── POST /Account/VerifyEmailOtp (AJAX) ───────────────────────────────
+        [Authorize, HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> VerifyEmailOtp([FromBody] OtpDto dto)
+        {
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+            var (ok, msg) = await _verify.VerifyEmailOtpAsync(userId, dto.Otp);
+            return Json(new { success = ok, message = msg });
+        }
+
+        // ─── POST /Account/VerifyPhoneOtp (AJAX) ───────────────────────────────
+        [Authorize, HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> VerifyPhoneOtp([FromBody] OtpDto dto)
+        {
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+            var (ok, msg) = await _verify.VerifyPhoneOtpAsync(userId, dto.Otp);
+            return Json(new { success = ok, message = msg });
+        }
+
+        // ─── POST /Account/UploadDoc (form) ─────────────────────────────────────
+        [Authorize, HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadDoc(int docType, IFormFile? docFile,
+            [FromServices] IWebHostEnvironment env)
+        {
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+            if (docFile == null)
+            {
+                TempData["ErrorMessage"] = "Vui lòng chọn file.";
+                return RedirectToAction(nameof(Profile));
+            }
+            var (ok, msg) = await _verify.UploadDocAsync(userId, docType, docFile, env);
+            if (ok) TempData["SuccessMessage"] = msg;
+            else    TempData["ErrorMessage"]   = msg;
+            return RedirectToAction(nameof(Profile));
+        }
     }
 }
+
+// ─── DTOs (file-level, outside namespace scope) ──────────────────────────────
+public record UpdatePhoneDto(string Phone);
+public record OtpDto(string Otp);

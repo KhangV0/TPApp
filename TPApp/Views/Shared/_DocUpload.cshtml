@@ -1,0 +1,56 @@
+@using TPApp.ViewModel
+@{
+    int docType      = (int)(ViewData["DocType"] ?? 0);
+    string label     = (string)(ViewData["Label"] ?? "Tài liệu");
+    string icon      = (string)(ViewData["Icon"]  ?? "fas fa-file");
+    var doc          = ViewData["Doc"] as VerifyDocVm;
+    bool hasDoc      = doc != null;
+
+    string statusBadge = hasDoc
+        ? (doc!.ReviewStatus == 1 ? "<span class='badge bg-success'>Đã duyệt</span>"
+         : doc.ReviewStatus == 2  ? "<span class='badge bg-danger'>Bị từ chối</span>"
+         : "<span class='badge bg-warning text-dark'>Chờ xem xét</span>")
+        : "<span class='badge bg-secondary'>Chưa tải lên</span>";
+}
+
+<div class="border rounded p-3 mb-3">
+    <div class="d-flex align-items-center mb-2">
+        <i class="@icon text-warning me-2"></i>
+        <span class="fw-semibold small">@label</span>
+        <span class="ms-auto">@Html.Raw(statusBadge)</span>
+    </div>
+
+    @if (hasDoc)
+    {
+        var ext = System.IO.Path.GetExtension(doc!.FilePath).ToLowerInvariant();
+        <div class="text-muted small mb-2">
+            <i class="fas fa-paperclip"></i> @doc.FileName
+            <span class="ms-2">@doc.UploadedAt.ToString("dd/MM/yyyy HH:mm")</span>
+        </div>
+        @if (ext == ".pdf")
+        {
+            <a href="@doc.FilePath" target="_blank" class="btn btn-sm btn-outline-danger mb-2">
+                <i class="fas fa-file-pdf"></i> Xem PDF
+            </a>
+        }
+        else
+        {
+            <a href="@doc.FilePath" target="_blank">
+                <img src="@doc.FilePath" class="img-thumbnail mb-2" style="max-height:120px;max-width:100%">
+            </a>
+        }
+    }
+
+    <form asp-action="UploadDoc" asp-controller="Account" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="docType" value="@docType">
+        <div class="input-group input-group-sm">
+            <input type="file" name="docFile" class="form-control form-control-sm"
+                   accept=".jpg,.jpeg,.png,.pdf" required>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="fas fa-upload"></i> @(hasDoc ? "Cập nhật" : "Tải lên")
+            </button>
+        </div>
+        <div class="form-text">JPG, PNG hoặc PDF. Tối đa 5MB.</div>
+    </form>
+</div>

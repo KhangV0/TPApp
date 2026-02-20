@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TPApp.Interfaces;
+using TPApp.Data;
 
 namespace TPApp.Controllers
 {
@@ -8,14 +9,26 @@ namespace TPApp.Controllers
     {
         private readonly IESignGateway _eSignGateway;
         private readonly ILogger<ESignController> _logger;
+        private readonly AppDbContext _context;
+        private readonly IOtpEmailService _otpEmailService;
+        private readonly ISmsSender _smsSender;
 
-        public ESignController(IESignGateway eSignGateway, ILogger<ESignController> logger)
+        public ESignController(
+            IESignGateway eSignGateway,
+            ILogger<ESignController> logger,
+            AppDbContext context,
+            IOtpEmailService otpEmailService,
+            ISmsSender smsSender)
         {
             _eSignGateway = eSignGateway;
             _logger = logger;
+            _context = context;
+            _otpEmailService = otpEmailService;
+            _smsSender = smsSender;
         }
 
         [HttpPost]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> UploadNda(
             IFormFile ndaFile, 
             int projectId,
@@ -30,10 +43,8 @@ namespace TPApp.Controllers
                 if (ndaFile == null || ndaFile.Length == 0)
                     return Json(new { success = false, message = "File không hợp lệ" });
 
-                // Get current user ID
                 var userId = GetCurrentUserId();
 
-                // 1. Create NDAAgreement record first
                 var ndaAgreement = new TPApp.Entities.NDAAgreement
                 {
                     ProjectId = projectId,
@@ -42,26 +53,18 @@ namespace TPApp.Controllers
                     LoaiNDA = loaiNDA,
                     ThoiHanBaoMat = thoiHanBaoMat,
                     DaDongY = daDongY,
-                    XacNhanKySo = null, // Will be updated after E-Sign
-                    StatusId = 1, // Active
+                    XacNhanKySo = null,
+                    StatusId = 1,
                     NguoiTao = userId,
                     NgayTao = DateTime.Now
                 };
 
-                // Save to database (need DbContext)
-                var dbContext = HttpContext.RequestServices.GetRequiredService<TPApp.Data.AppDbContext>();
-                dbContext.NDAAgreements.Add(ndaAgreement);
-                await dbContext.SaveChangesAsync();
+                _context.NDAAgreements.Add(ndaAgreement);
+                await _context.SaveChangesAsync();
 
-                // 2. Create E-Sign document
                 var doc = await _eSignGateway.CreateDocumentAsync(
-                    projectId, 
-                    1, // DocType = 1 (ProjectNDA)
-                    $"NDA - {benA} & {benB}", 
-                    userId
-                );
+                    projectId, 1, $"NDA - {benA} & {benB}", userId);
 
-                // 3. Upload file
                 using var stream = ndaFile.OpenReadStream();
                 var hash = await _eSignGateway.UploadDocumentAsync(doc.Id, stream, ndaFile.FileName);
 
@@ -81,18 +84,42 @@ namespace TPApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendOtp(string phoneNumber)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SendOtp([FromBody] ESignOtpRequestDto dto)
         {
             try
             {
                 var userId = GetCurrentUserId();
-                var otp = await _eSignGateway.SendOtpAsync(userId, phoneNumber);
+                var user = await _context.Users.FindAsync(userId);
+                var email = user?.Email ?? "";
+                var phone = user?.PhoneNumber ?? dto?.PhoneNumber ?? "";
+                var fullName = user?.FullName ?? user?.UserName ?? "Người dùng";
+                var channel = dto?.Channel?.ToLower() ?? "email";
 
-                return Json(new { 
-                    success = true, 
-                    otp = otp, // Only in test mode
-                    message = "OTP đã được gửi"
-                });
+                // Generate 6-digit OTP and store via gateway
+                var otp = await _eSignGateway.SendOtpAsync(userId, phone.Length > 0 ? phone : "email");
+
+                if (channel == "sms")
+                {
+                    if (string.IsNullOrEmpty(phone))
+                        return Json(new { success = false, message = "Không tìm thấy số điện thoại. Vui lòng nhập." });
+
+                    var smsMessage = $"[Techport] Mã OTP ký NDA (Dự án #{dto?.ProjectId}): {otp}. Có hiệu lực 5 phút.";
+                    await _smsSender.SendAsync(phone, smsMessage);
+                    var maskedPhone = phone.Length > 4 ? new string('*', phone.Length - 4) + phone[^4..] : phone;
+                    return Json(new { success = true, channel = "sms",
+                        message = $"OTP đã gửi đến SMS {maskedPhone}. Có hiệu lực 5 phút." });
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(email))
+                        return Json(new { success = false, message = "Không tìm thấy email. Vui lòng liên hệ quản trị viên." });
+
+                    await _otpEmailService.SendOtpAsync(email, fullName, otp, "NDA Signer", dto?.ProjectId ?? 0);
+                    var maskedEmail = email.Length > 3 ? email[..3] + "***" + email[email.IndexOf('@')..] : email;
+                    return Json(new { success = true, channel = "email",
+                        message = $"OTP đã gửi đến {maskedEmail}. Có hiệu lực 5 phút." });
+                }
             }
             catch (Exception ex)
             {
@@ -102,38 +129,26 @@ namespace TPApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SignDocument(long documentId, string otpCode)
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SignDocument([FromBody] ESignSignDocDto dto)
         {
             try
             {
                 var userId = GetCurrentUserId();
                 
-                // For now, skip OTP verification in test mode
-                // In production, verify OTP first
-
-                // Get IP and User Agent
                 var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
                 var userAgent = Request.Headers["User-Agent"].ToString();
 
-                // Sign document
                 await _eSignGateway.SignDocumentAsync(
-                    documentId, 
-                    userId, 
-                    "Buyer", // Role
-                    ipAddress, 
-                    userAgent
-                );
+                    dto.DocumentId, userId, "Buyer", ipAddress, userAgent);
 
-                // Get document to find project ID
-                var dbContext = HttpContext.RequestServices.GetRequiredService<TPApp.Data.AppDbContext>();
-                var doc = await dbContext.ESignDocuments.FindAsync(documentId);
+                var doc = await _context.ESignDocuments.FindAsync(dto.DocumentId);
                 
                 if (doc != null && doc.ProjectId > 0)
                 {
                     var projectId = doc.ProjectId;
 
-                    // 1. Update NDAAgreement - mark as signed
-                    var ndaAgreement = await dbContext.NDAAgreements
+                    var ndaAgreement = await _context.NDAAgreements
                         .FirstOrDefaultAsync(n => n.ProjectId == projectId);
                     
                     if (ndaAgreement != null)
@@ -144,26 +159,24 @@ namespace TPApp.Controllers
                         ndaAgreement.NguoiSua = userId;
                     }
 
-                    // 2. Update ProjectSteps - Mark Step 2 as Completed (StatusId = 2)
-                    var step2 = await dbContext.ProjectSteps
+                    var step2 = await _context.ProjectSteps
                         .FirstOrDefaultAsync(ps => ps.ProjectId == projectId && ps.StepNumber == 2);
                     
                     if (step2 != null)
                     {
-                        step2.StatusId = 2; // Completed
+                        step2.StatusId = 2;
                         step2.CompletedDate = DateTime.Now;
                     }
 
-                    // 3. Unlock Step 3 (set StatusId = 1 if it's 0)
-                    var step3 = await dbContext.ProjectSteps
+                    var step3 = await _context.ProjectSteps
                         .FirstOrDefaultAsync(ps => ps.ProjectId == projectId && ps.StepNumber == 3);
                     
                     if (step3 != null && step3.StatusId == 0)
                     {
-                        step3.StatusId = 1; // Active/In Progress
+                        step3.StatusId = 1;
                     }
 
-                    await dbContext.SaveChangesAsync();
+                    await _context.SaveChangesAsync();
                 }
 
                 return Json(new { 
@@ -180,8 +193,6 @@ namespace TPApp.Controllers
 
         private int GetCurrentUserId()
         {
-            // TODO: Get from authentication
-            // For now, return a test user ID
             if (User.Identity?.IsAuthenticated == true)
             {
                 var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
@@ -190,9 +201,20 @@ namespace TPApp.Controllers
                     return userId;
                 }
             }
-            
-            // Fallback for testing
             return 1;
         }
+    }
+
+    public class ESignOtpRequestDto
+    {
+        public int ProjectId { get; set; }
+        public string? Channel { get; set; }
+        public string? PhoneNumber { get; set; }
+    }
+
+    public class ESignSignDocDto
+    {
+        public long DocumentId { get; set; }
+        public string OtpCode { get; set; } = "";
     }
 }

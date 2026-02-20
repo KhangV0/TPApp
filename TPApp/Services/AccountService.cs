@@ -35,14 +35,33 @@ namespace TPApp.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return null;
 
+            var docs = await _context.UserVerificationDocs
+                .Where(d => d.UserId == userId)
+                .OrderBy(d => d.DocType)
+                .Select(d => new VerifyDocVm
+                {
+                    Id           = d.Id,
+                    DocType      = d.DocType,
+                    FileName     = d.FileName,
+                    FilePath     = d.FilePath,
+                    UploadedAt   = d.UploadedAt,
+                    ReviewStatus = d.ReviewStatus
+                }).ToListAsync();
+
             return new ProfileVm
             {
-                UserName = user.UserName ?? "",
-                FullName = user.FullName,
-                Email = user.Email ?? "",
-                AvatarUrl = string.IsNullOrEmpty(user.Img) ? "/images/default-avatar.png" : user.Img,
-                LastLogin = user.LastLogin,
-                Created = user.Created
+                UserName          = user.UserName ?? "",
+                FullName          = user.FullName,
+                Email             = user.Email ?? "",
+                PhoneNumber       = user.PhoneNumber,
+                AvatarUrl         = string.IsNullOrEmpty(user.Img) ? "/images/default-avatar.png" : user.Img,
+                LastLogin         = user.LastLogin,
+                Created           = user.Created,
+                AccountTypeId     = user.AccountTypeId,
+                PhoneVerified     = user.PhoneVerified,
+                EmailVerified     = user.EmailVerified,
+                VerificationLevel = user.VerificationLevel,
+                Docs              = docs
             };
         }
 
@@ -51,9 +70,10 @@ namespace TPApp.Services
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return false;
 
-            user.FullName = model.FullName;
-            user.Email = model.Email;
+            user.FullName        = model.FullName;
+            user.Email           = model.Email;
             user.NormalizedEmail = model.Email.ToUpperInvariant();
+            user.AccountTypeId   = model.AccountTypeId;
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();

@@ -76,5 +76,13 @@ namespace TPApp.Entities
         public int? ParentId { get; set; }
 
         public int? SiteId { get; set; }
+
+        // ── Verification fields ──
+        public bool PhoneVerified { get; set; } = false;
+        public bool EmailVerified { get; set; } = false;
+        /// <summary>1 = Cá nhân, 2 = Doanh nghiệp</summary>
+        public int AccountTypeId { get; set; } = 1;
+        /// <summary>0=None, 1=Phone, 2=Email, 3=Full (docs uploaded)</summary>
+        public int VerificationLevel { get; set; } = 0;
     }
 }

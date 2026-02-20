@@ -47,8 +47,9 @@ namespace TPApp.Controllers
             if (proj == null) return (0, false);
             if (proj.CreatedBy == userId) return (1, true);         // Buyer
             if (proj.SelectedSellerId == userId) return (2, true);  // Seller
-            var isConsultant = await _context.ProjectConsultants
-                .AnyAsync(c => c.ProjectId == projectId && c.ConsultantId == userId && c.IsActive);
+            // Use ProjectMembers (consistent with ProjectController)
+            var isConsultant = await _context.ProjectMembers
+                .AnyAsync(m => m.ProjectId == projectId && m.UserId == userId && m.Role == 3);
             if (isConsultant) return (3, true); // Consultant
             return (0, false);
         }
