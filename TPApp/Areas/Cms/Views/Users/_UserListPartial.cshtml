@@ -1,0 +1,152 @@
+@model List<TPApp.Areas.Cms.Controllers.CmsUserListItem>
+@{
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var totalCount = (int)ViewBag.TotalCount;
+    var totalPages = (int)ViewBag.TotalPages;
+    var sortBy = (string?)ViewBag.SortBy ?? "";
+    var sortDir = (string?)ViewBag.SortDir ?? "";
+}
+
+@functions {
+    string SortIcon(string col, string currentSort, string currentDir)
+    {
+        if (!string.Equals(col, currentSort, StringComparison.OrdinalIgnoreCase))
+            return "<i class='fas fa-sort text-muted' style='opacity:.25'></i>";
+        return currentDir == "asc"
+            ? "<i class='fas fa-sort-up text-primary'></i>"
+            : "<i class='fas fa-sort-down text-primary'></i>";
+    }
+}
+
+<span id="partialTotalCount" class="d-none">@totalCount</span>
+<div class="table-responsive">
+    <table class="table table-hover table-striped table-bordered align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="text-center" style="width:36px">
+                    <input type="checkbox" class="form-check-input" id="chkAll" />
+                </th>
+                <th class="text-center text-uppercase small fw-bold" style="width:100px">Thao tác</th>
+                <th class="text-center text-uppercase small fw-bold" style="width:50px">STT</th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="username" role="button">
+                    Tên đăng nhập @Html.Raw(SortIcon("username", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="fullname" role="button">
+                    Họ tên @Html.Raw(SortIcon("fullname", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold d-none d-md-table-cell" data-sort="phone" role="button">
+                    Điện thoại @Html.Raw(SortIcon("phone", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="email" role="button">
+                    Email @Html.Raw(SortIcon("email", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="lastlogin" role="button">
+                    Đăng nhập cuối @Html.Raw(SortIcon("lastlogin", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="usertype" role="button">
+                    Loại @Html.Raw(SortIcon("usertype", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold d-none d-md-table-cell" data-sort="created" role="button">
+                    Ngày tạo @Html.Raw(SortIcon("created", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold text-center" data-sort="isactivated" role="button">
+                    Trạng thái @Html.Raw(SortIcon("isactivated", sortBy, sortDir))
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="11" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x d-block mb-2 text-muted"></i>
+                        Không tìm thấy dữ liệu.
+                    </td>
+                </tr>
+            }
+            @{ int stt = (page - 1) * pageSize; }
+            @foreach (var u in Model)
+            {
+                stt++;
+                <tr>
+                    <td class="text-center">
+                        <input type="checkbox" class="form-check-input chkRow" value="@u.UserId" />
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="#" class="btn btn-outline-primary btn-sm btn-edit" data-id="@u.UserId" title="Sửa">
+                                <i class="fas fa-pen-to-square"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-warning btn-sm btn-resetpwd" data-id="@u.UserId" title="Đổi mật khẩu">
+                                <i class="fas fa-key"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-danger btn-sm btn-del" data-id="@u.UserId" title="Xóa">
+                                <i class="fas fa-trash-can"></i>
+                            </a>
+                        </div>
+                    </td>
+                    <td class="text-center text-muted small">@stt</td>
+                    <td>
+                        <a href="#" class="fw-semibold text-decoration-none btn-edit" data-id="@u.UserId">@u.UserName</a>
+                    </td>
+                    <td>@u.FullName</td>
+                    <td class="d-none d-md-table-cell small">@u.Phone</td>
+                    <td class="small text-muted">@u.Email</td>
+                    <td class="small text-muted">@(u.LastLogin?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                    <td>@u.AccountTypeName</td>
+                    <td class="d-none d-md-table-cell small text-muted">@(u.Created?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                    <td class="text-center">
+                        @if (u.IsActivated)
+                        {
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i>Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="small text-muted">
+            Hiển thị <strong>@((page-1)*pageSize+1)</strong>–<strong>@Math.Min(page*pageSize, totalCount)</strong> / <strong>@totalCount</strong> bản ghi
+        </div>
+        <ul class="pagination pagination-sm mb-0">
+            @{
+                int startPage = Math.Max(1, page - 4);
+                int endPage = Math.Min(totalPages, page + 4);
+            }
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="1" title="Trang đầu"><i class="fas fa-angles-left"></i></a>
+            </li>
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@(page - 1)" title="Trang trước"><i class="fas fa-angle-left"></i></a>
+            </li>
+            @for (int p = startPage; p <= endPage; p++)
+            {
+                <li class="page-item @(p == page ? "active" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@p">@p</a>
+                </li>
+            }
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@(page + 1)" title="Trang sau"><i class="fas fa-angle-right"></i></a>
+            </li>
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@totalPages" title="Trang cuối"><i class="fas fa-angles-right"></i></a>
+            </li>
+        </ul>
+    </div>
+}
+else if (totalCount > 0)
+{
+    <div class="card-footer">
+        <div class="small text-muted">Tổng cộng <strong>@totalCount</strong> bản ghi</div>
+    </div>
+}

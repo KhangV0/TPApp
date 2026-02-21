@@ -140,6 +140,26 @@ namespace TPApp.Services
             return true;
         }
 
+        public async Task<bool> SetPasswordAsync(int userId, string newPassword)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return false;
+
+            // Reuse the same hasher as ChangePasswordAsync
+            user.PasswordHash = _passwordHasher.HashPassword(user, newPassword);
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public Task SetPasswordHashBeforeInsert(ApplicationUser user, string password)
+        {
+            user.PasswordHash = _passwordHasher.HashPassword(user, password);
+            return Task.CompletedTask;
+        }
+
         public async Task<AccountSidebarVm?> GetSidebarDataAsync(int userId)
         {
             var user = await _context.Users.FindAsync(userId);

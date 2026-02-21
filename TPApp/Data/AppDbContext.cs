@@ -156,5 +156,11 @@ namespace TPApp.Data
         // Notification System
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<SystemParameter> SystemParameters { get; set; } = null!;
+
+        // CMS Lookup Tables
+        public DbSet<CmsRole> CmsRoles { get; set; } = null!;
+        public DbSet<CmsUserRole> CmsUserRoles { get; set; } = null!;
+        public DbSet<RootSite> RootSites { get; set; } = null!;
+        public DbSet<VAccountType> VAccountTypes { get; set; } = null!;
     }
 }

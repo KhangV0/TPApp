@@ -32,6 +32,8 @@ namespace TPApp.Entities
 
         public int? Gender { get; set; }
 
+        public string? Phone { get; set; }
+
 
         public DateTime? DateOfBirth { get; set; }
 

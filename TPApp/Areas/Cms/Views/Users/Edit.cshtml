@@ -1,0 +1,113 @@
+@model TPApp.Areas.Cms.Controllers.CmsUserEditVm
+@{
+    ViewData["Title"] = "Sửa người dùng: " + Model.UserName;
+    var roles = (List<TPApp.Entities.CmsRole>)ViewBag.Roles;
+    var accountTypes = (List<TPApp.Entities.VAccountType>)ViewBag.AccountTypes;
+    var sites = (List<TPApp.Entities.RootSite>)ViewBag.Sites;
+    var stores = (IEnumerable<dynamic>)ViewBag.Stores;
+}
+
+<div class="card card-outline card-primary">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+                <a class="nav-link" asp-action="Index"><i class="fas fa-list"></i> Quản lý</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="#"><i class="fas fa-edit"></i> Sửa</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-action="ResetPassword" asp-route-id="@Model.UserId"><i class="fas fa-key"></i> Cập lại mật khẩu</a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <h4 class="mb-3"><strong>SỬA THÔNG TIN NGƯỜI DÙNG: @Model.UserName</strong></h4>
+
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="UserId" />
+            <input type="hidden" asp-for="UserName" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "block" : "none")"></div>
+
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Tên đăng nhập:</label>
+                <div class="col-md-6">
+                    <input class="form-control" value="@Model.UserName" readonly disabled />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Họ và Tên: <span class="text-danger">*</span></label>
+                <div class="col-md-6">
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Email: <span class="text-danger">*</span></label>
+                <div class="col-md-6">
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Vai trò:</label>
+                <div class="col-md-6">
+                    @foreach (var role in roles)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="SelectedRoleIds"
+                                   value="@role.RoleId" id="role_@role.RoleId"
+                                   @(Model.SelectedRoleIds?.Contains(role.RoleId) == true ? "checked" : "") />
+                            <label class="form-check-label" for="role_@role.RoleId">@role.Title</label>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Loại người dùng: <span class="text-danger">*</span></label>
+                <div class="col-md-6">
+                    <select asp-for="SelectedAccountTypeId" class="form-control">
+                        <option value="">-- Chọn --</option>
+                        @foreach (var at in accountTypes)
+                        {
+                            <option value="@at.Id" selected="@(Model.SelectedAccountTypeId == at.Id)">@at.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Sàn:</label>
+                <div class="col-md-6">
+                    <select asp-for="SelectedSiteId" class="form-control">
+                        @foreach (var s in sites)
+                        {
+                            <option value="@s.SiteId" selected="@(Model.SelectedSiteId == s.SiteId)">@s.SiteName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Kích hoạt:</label>
+                <div class="col-md-6">
+                    <div class="form-check mt-2">
+                        <input asp-for="IsActivated" class="form-check-input" />
+                        <label asp-for="IsActivated" class="form-check-label">Kích hoạt tài khoản</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 offset-md-3">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Lưu</button>
+                    <a asp-action="Index" class="btn btn-secondary"><i class="fas fa-times"></i> Hủy</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -72,6 +72,15 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+// --- CMS Authorization ---
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CmsAccess", policy =>
+        policy.Requirements.Add(new TPApp.Authorization.CmsAdminRequirement()));
+});
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, TPApp.Authorization.CmsAdminHandler>();
+builder.Services.AddScoped<TPApp.Interfaces.ICmsAccessService, TPApp.Services.CmsAccessService>();
+
 // --- Services ---
 builder.Services.AddScoped<TPApp.Interfaces.IProductService, TPApp.Services.ProductService>();
 builder.Services.AddScoped<TPApp.Interfaces.IDashboardService, TPApp.Services.DashboardService>();
@@ -157,6 +166,13 @@ app.UseAuthorization();
 // SignalR Hub
 app.MapHub<TPApp.Hubs.NotificationHub>("/notificationHub");
 
+
+// --- CMS Area Route (MUST be before all other routes) ---
+app.MapAreaControllerRoute(
+    name: "cms",
+    areaName: "Cms",
+    pattern: "cms/{controller=Dashboard}/{action=Index}/{id?}"
+);
 
 // --- Custom Routes (Moved from Controllers) ---
 

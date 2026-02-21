@@ -1,6 +1,7 @@
 ﻿@inject IHttpContextAccessor HttpContextAccessor
 @inject Microsoft.AspNetCore.Identity.UserManager<TPApp.Entities.ApplicationUser> UserManager
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject TPApp.Interfaces.ICmsAccessService CmsAccessService
 @{
 	var MainDomain = Configuration["AppSettings:MainDomain"] ?? "https://localhost:7232/";
 	var userName = HttpContextAccessor.HttpContext.Session.GetString("Username");
@@ -14,6 +15,7 @@
 			userAvatar = user.Img;
 		}
 	}
+	var canAccessCms = await CmsAccessService.CanAccessCmsAsync(ViewContext.HttpContext.User);
 }
 
 <header class="hp-header navbar navbar-expand-lg">
@@ -94,6 +96,14 @@
 									<i class="bi bi-speedometer2 me-2"></i>Dashboard
 								</a>
 							</li>
+							@if (canAccessCms)
+							{
+								<li>
+									<a class="dropdown-item text-primary fw-semibold" href="/cms">
+										<i class="bi bi-gear-wide-connected me-2"></i>CMS Admin
+									</a>
+								</li>
+							}
 							@await Component.InvokeAsync("SellerMenuItems")
 							<li><hr class="dropdown-divider"></li>
 							<li>
@@ -217,6 +227,14 @@
 									<i class="bi bi-speedometer2 me-2"></i>Dashboard
 								</a>
 							</li>
+							@if (canAccessCms)
+							{
+								<li>
+									<a class="dropdown-item text-primary fw-semibold" href="/cms">
+										<i class="bi bi-gear-wide-connected me-2"></i>CMS Admin
+									</a>
+								</li>
+							}
 							@await Component.InvokeAsync("SellerMenuItems")
 							<li><hr class="dropdown-divider"></li>
 							<li>

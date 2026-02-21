@@ -1,0 +1,81 @@
+@model TPApp.Areas.Cms.Controllers.CmsUserEditVm
+@{
+    var roles = (List<TPApp.Entities.CmsRole>)ViewBag.Roles;
+    var accountTypes = (List<TPApp.Entities.VAccountType>)ViewBag.AccountTypes;
+    var sites = (List<TPApp.Entities.RootSite>)ViewBag.Sites;
+}
+
+<form id="formEdit" asp-action="Edit" asp-area="Cms" asp-controller="Users" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="UserId" />
+    <div class="modal-body">
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger alert-sm py-1">
+                @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+            </div>
+        }
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Tên đăng nhập</label>
+                <input asp-for="UserName" class="form-control form-control-sm" readonly />
+            </div>
+            <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Email</label>
+                <input asp-for="Email" class="form-control form-control-sm" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Họ tên</label>
+                <input asp-for="FullName" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Loại tài khoản</label>
+                <select asp-for="SelectedAccountTypeId" class="form-control form-control-sm">
+                    <option value="">-- Chọn --</option>
+                    @foreach (var at in accountTypes)
+                    {
+                        <option value="@at.Id" selected="@(Model.SelectedAccountTypeId == at.Id)">@at.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Sàn</label>
+                <select asp-for="SelectedSiteId" class="form-control form-control-sm">
+                    <option value="">-- Chọn --</option>
+                    @foreach (var s in sites)
+                    {
+                        <option value="@s.SiteId" selected="@(Model.SelectedSiteId == s.SiteId)">@s.SiteName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6 mb-2 d-flex align-items-end">
+                <div class="form-check">
+                    <input asp-for="IsActivated" class="form-check-input" />
+                    <label class="form-check-label" asp-for="IsActivated">Kích hoạt</label>
+                </div>
+            </div>
+        </div>
+        <div class="mb-2">
+            <label class="form-label small fw-bold">Quyền (Roles)</label>
+            <div class="d-flex flex-wrap">
+                @foreach (var role in roles)
+                {
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" name="SelectedRoleIds"
+                               value="@role.RoleId" id="ed_role_@role.RoleId"
+                               @(Model.SelectedRoleIds?.Contains(role.RoleId) == true ? "checked" : "") />
+                        <label class="form-check-label" for="ed_role_@role.RoleId">@role.Title</label>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><i class="fas fa-times"></i> Đóng</button>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Cập nhật</button>
+    </div>
+</form>

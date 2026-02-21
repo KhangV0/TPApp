@@ -1,0 +1,353 @@
+@model List<TPApp.Areas.Cms.Controllers.CmsUserListItem>
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+}
+
+<!-- ─── Search Card ─── -->
+<div class="card card-outline card-primary shadow-sm mb-3">
+    <div class="card-header" id="searchCardHeader" style="cursor:pointer" title="Nhấn đúp để thu gọn/mở rộng">
+        <h3 class="card-title"><i class="fas fa-search me-1"></i> Tìm kiếm người dùng</h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse"><i class="fas fa-minus"></i></button>
+        </div>
+    </div>
+    <div class="card-body">
+        <form id="searchForm">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <!-- Col 1: Text inputs -->
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small mb-1">Tên đăng nhập</label>
+                        <input type="text" name="userName" value="@ViewBag.UserName" class="form-control form-control-sm" placeholder="Nhập tên đăng nhập..." />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small mb-1">Email</label>
+                        <input type="text" name="email" class="form-control form-control-sm" placeholder="Nhập email..." />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small mb-1">Họ và tên</label>
+                        <input type="text" name="fullName" class="form-control form-control-sm" placeholder="Nhập họ tên..." />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small mb-1">Điện thoại</label>
+                        <input type="text" name="phone" class="form-control form-control-sm" placeholder="Nhập số điện thoại..." />
+                    </div>
+                </div>
+                <!-- Col 2: Dropdowns + Dates -->
+                <div class="col-md-6">
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small mb-1">Loại người dùng</label>
+                        <select name="accountTypeId" class="form-select form-select-sm" asp-items="@((SelectList)ViewBag.AccountTypes)">
+                            <option value="">-- Tất cả --</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small mb-1">Sàn</label>
+                        <select name="siteId" id="selectSite" class="form-select form-select-sm" asp-items="@((SelectList)ViewBag.Sites)">
+                            <option value="">-- Tất cả --</option>
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">Ngày tạo từ</label>
+                            <input type="date" name="createdFrom" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">Ngày tạo đến</label>
+                            <input type="date" name="createdTo" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">Đăng nhập từ</label>
+                            <input type="date" name="lastLoginFrom" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small mb-1">Đăng nhập đến</label>
+                            <input type="date" name="lastLoginTo" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Active / Inactive toggle -->
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small mb-1 d-block">Trạng thái</label>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="isActivated" id="actAll" value="" checked autocomplete="off">
+                        <label class="btn btn-outline-secondary" for="actAll">Tất cả</label>
+                        <input type="radio" class="btn-check" name="isActivated" id="actYes" value="true" autocomplete="off">
+                        <label class="btn btn-outline-success" for="actYes"><i class="fas fa-check me-1"></i>Active</label>
+                        <input type="radio" class="btn-check" name="isActivated" id="actNo" value="false" autocomplete="off">
+                        <label class="btn btn-outline-danger" for="actNo"><i class="fas fa-ban me-1"></i>Inactive</label>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer bg-transparent">
+        <button type="button" class="btn btn-primary btn-sm me-2" id="btnSearch">
+            <i class="fas fa-search me-1"></i> Tìm kiếm
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnReset">
+            <i class="fas fa-undo me-1"></i> Đặt lại
+        </button>
+    </div>
+</div>
+
+<!-- ─── Result Card ─── -->
+<div class="card card-outline card-info shadow-sm">
+    <div class="card-header d-flex align-items-center flex-wrap gap-2">
+        <h3 class="card-title mb-0">
+            <i class="fas fa-users me-1"></i> Danh sách người dùng
+            <span class="badge bg-info ms-1" id="badgeTotal">@ViewBag.TotalCount</span>
+        </h3>
+        <div class="ms-auto d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm" id="btnCreate">
+                <i class="fas fa-plus me-1"></i> Thêm mới
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" id="btnBulkDelete" disabled>
+                <i class="fas fa-trash-alt me-1"></i> Xóa chọn
+            </button>
+        </div>
+    </div>
+
+    <!-- AJAX content area -->
+    <div id="userListContainer">
+        @await Html.PartialAsync("_UserListPartial", Model)
+    </div>
+</div>
+
+<!-- ─── Universal Bootstrap 5 Modal ─── -->
+<div class="modal fade" id="modalForm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitle">...</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="modalBody">
+                <!-- Partial view loaded via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$(function(){
+
+    // ── Double-click to toggle search card ──
+    $('#searchCardHeader').on('dblclick', function() {
+        $(this).find('[data-lte-toggle="card-collapse"]').trigger('click');
+    });
+
+    // ── Toastr config ──
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: 'toast-top-right',
+        timeOut: 3000,
+        showEasing: 'swing',
+        hideEasing: 'linear',
+        showMethod: 'fadeIn',
+        hideMethod: 'fadeOut'
+    };
+
+    var token = $('input[name="__RequestVerificationToken"]').val() || '';
+    var baseUrl = '@Url.Action("Index","Users",new{area="Cms"})';
+    var currentPage = 1;
+    var currentSortBy = '';
+    var currentSortDir = '';
+
+    // ── Select2 ──
+    $('#selectSite').select2({
+        theme: 'bootstrap-5',
+        placeholder: '-- Tất cả --',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // ──────────────────────────────────────────────
+    // AJAX: Load user list
+    // ──────────────────────────────────────────────
+    function loadUserList(page) {
+        currentPage = page || 1;
+        var params = $('#searchForm').serialize()
+            + '&page=' + currentPage
+            + '&sortBy=' + encodeURIComponent(currentSortBy)
+            + '&sortDir=' + encodeURIComponent(currentSortDir);
+        $('#userListContainer').css('opacity', '0.5');
+        $.ajax({
+            url: baseUrl,
+            data: params,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(html) {
+                $('#userListContainer').html(html).css('opacity', '1');
+                $('#chkAll').prop('checked', false);
+                $('#btnBulkDelete').prop('disabled', true);
+                // Update total count badge
+                var cnt = $('#partialTotalCount').text();
+                $('#badgeTotal').text(cnt);
+            },
+            error: function() {
+                toastr.error('Lỗi tải dữ liệu.');
+                $('#userListContainer').css('opacity', '1');
+            }
+        });
+    }
+
+    // ──────────────────────────────────────────────
+    // SORT (click header)
+    // ──────────────────────────────────────────────
+    $(document).on('click', '.sortable', function() {
+        var col = $(this).data('sort');
+        if (currentSortBy === col) {
+            currentSortDir = (currentSortDir === 'asc') ? 'desc' : 'asc';
+        } else {
+            currentSortBy = col;
+            currentSortDir = 'asc';
+        }
+        loadUserList(1);
+    });
+
+    // ──────────────────────────────────────────────
+    // SEARCH
+    // ──────────────────────────────────────────────
+    $('#searchForm').on('submit', function(e) { e.preventDefault(); loadUserList(1); });
+    $('#btnSearch').on('click', function() { loadUserList(1); });
+
+    // Reset
+    $('#btnReset').on('click', function() {
+        $('#searchForm')[0].reset();
+        $('#selectSite').val('').trigger('change');
+        currentSortBy = '';
+        currentSortDir = '';
+        loadUserList(1);
+    });
+
+    // ──────────────────────────────────────────────
+    // PAGINATION
+    // ──────────────────────────────────────────────
+    $(document).on('click', '.ajax-page', function(e) {
+        e.preventDefault();
+        if ($(this).closest('.page-item').hasClass('disabled') || $(this).closest('.page-item').hasClass('active')) return;
+        loadUserList($(this).data('page'));
+    });
+
+    // ──────────────────────────────────────────────
+    // Modal helpers
+    // ──────────────────────────────────────────────
+    function openModal(url, title, headerClass) {
+        $('#modalTitle').text(title);
+        $('#modalForm .modal-header').removeClass('bg-primary bg-info bg-warning').addClass(headerClass || 'bg-primary');
+        $('#modalBody').html('<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalForm')).show();
+        $.get(url, function(html) { $('#modalBody').html(html); })
+         .fail(function() { $('#modalBody').html('<div class="p-3 text-danger">Lỗi tải dữ liệu.</div>'); });
+    }
+
+    $(document).on('submit', '#modalBody form', function(e) {
+        e.preventDefault();
+        var $form = $(this);
+        var $btn = $form.find('button[type="submit"]');
+        var originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang xử lý...');
+        $.ajax({
+            url: $form.attr('action'),
+            method: 'POST',
+            data: $form.serialize(),
+            success: function(result) {
+                if (typeof result === 'object' && result.success) {
+                    var m = bootstrap.Modal.getInstance(document.getElementById('modalForm'));
+                    if (m) m.hide();
+                    toastr.success(result.message);
+                    loadUserList(currentPage);
+                } else {
+                    $('#modalBody').html(result);
+                }
+            },
+            error: function() {
+                toastr.error('Có lỗi xảy ra. Vui lòng thử lại.');
+                $btn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // ──────────────────────────────────────────────
+    // CREATE / EDIT / RESET PASSWORD
+    // ──────────────────────────────────────────────
+    $('#btnCreate').on('click', function() {
+        openModal('@Url.Action("Create","Users",new{area="Cms"})', 'Thêm người dùng mới', 'bg-primary');
+    });
+    $(document).on('click', '.btn-edit', function(e) {
+        e.preventDefault();
+        openModal('@Url.Action("Edit","Users",new{area="Cms"})/' + $(this).data('id'), 'Sửa người dùng', 'bg-info');
+    });
+    $(document).on('click', '.btn-resetpwd', function(e) {
+        e.preventDefault();
+        openModal('@Url.Action("ResetPassword","Users",new{area="Cms"})/' + $(this).data('id'), 'Cập nhật mật khẩu', 'bg-warning');
+    });
+
+    // ──────────────────────────────────────────────
+    // DELETE (single + bulk)
+    // ──────────────────────────────────────────────
+    $(document).on('click', '.btn-del', function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        Swal.fire({
+            title: 'Xác nhận xóa?',
+            text: 'Bạn chắc chắn muốn xóa người dùng #' + id + '?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Xóa',
+            cancelButtonText: 'Hủy'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.post('@Url.Action("Delete","Users",new{area="Cms"})', { id: id, __RequestVerificationToken: token }, function(r) {
+                    if (r.success) { toastr.success('Đã xóa người dùng thành công.'); loadUserList(currentPage); }
+                    else { toastr.error(r.message); }
+                });
+            }
+        });
+    });
+
+    // ── Checkbox + Bulk Delete ──
+    $(document).on('change', '#chkAll', function() { $('.chkRow').prop('checked', this.checked); toggleBulk(); });
+    $(document).on('change', '.chkRow', toggleBulk);
+    function toggleBulk() { $('#btnBulkDelete').prop('disabled', !$('.chkRow:checked').length); }
+
+    $('#btnBulkDelete').on('click', function() {
+        var ids = $('.chkRow:checked').map(function() { return $(this).val(); }).get();
+        if (!ids.length) return;
+        Swal.fire({
+            title: 'Xóa nhiều người dùng?',
+            text: 'Bạn chắc chắn muốn xóa ' + ids.length + ' người dùng đã chọn?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Xóa tất cả',
+            cancelButtonText: 'Hủy'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '@Url.Action("BulkDelete","Users",new{area="Cms"})',
+                    method: 'POST',
+                    data: { ids: ids, __RequestVerificationToken: token },
+                    traditional: true,
+                    success: function(r) {
+                        if (r.success) { toastr.success('Đã xóa ' + r.deleted + ' người dùng.'); loadUserList(currentPage); }
+                        else { toastr.error(r.message); }
+                    }
+                });
+            }
+        });
+    });
+
+});
+</script>
+}
