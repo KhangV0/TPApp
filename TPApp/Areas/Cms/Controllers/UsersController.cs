@@ -60,7 +60,7 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(
             string? userName, string? email, string? fullName, string? phone,
-            string? accountTypeId, bool? isActivated,
+            int? isAdmin, bool? isActivated,
             DateTime? lastLoginFrom, DateTime? lastLoginTo,
             DateTime? createdFrom, DateTime? createdTo,
             int? siteId, string? sortBy, string? sortDir,
@@ -80,8 +80,8 @@ namespace TPApp.Areas.Cms.Controllers
                 query = query.Where(u => u.FullName != null && u.FullName.Contains(fullName));
             if (!string.IsNullOrWhiteSpace(phone))
                 query = query.Where(u => u.Phone != null && u.Phone.Contains(phone));
-            if (!string.IsNullOrWhiteSpace(accountTypeId) && int.TryParse(accountTypeId, out int atId))
-                query = query.Where(u => u.UserTypeId == atId);
+            if (isAdmin.HasValue)
+                query = query.Where(u => u.IsAdmin == (isAdmin.Value == 1));
             if (isActivated.HasValue)
                 query = query.Where(u => u.IsActivated == isActivated.Value);
             if (siteId.HasValue)
@@ -107,7 +107,7 @@ namespace TPApp.Areas.Cms.Controllers
                 "phone"       => asc ? query.OrderBy(u => u.Phone)        : query.OrderByDescending(u => u.Phone),
                 "email"       => asc ? query.OrderBy(u => u.Email)        : query.OrderByDescending(u => u.Email),
                 "lastlogin"   => asc ? query.OrderBy(u => u.LastLogin)    : query.OrderByDescending(u => u.LastLogin),
-                "usertype"    => asc ? query.OrderBy(u => u.UserTypeId)   : query.OrderByDescending(u => u.UserTypeId),
+                "isadmin"     => asc ? query.OrderBy(u => u.IsAdmin)      : query.OrderByDescending(u => u.IsAdmin),
                 "created"     => asc ? query.OrderBy(u => u.Created)      : query.OrderByDescending(u => u.Created),
                 "isactivated" => asc ? query.OrderBy(u => u.IsActivated)  : query.OrderByDescending(u => u.IsActivated),
                 _             => query.OrderByDescending(u => u.Created)
@@ -126,7 +126,8 @@ namespace TPApp.Areas.Cms.Controllers
                     LastLogin = u.LastLogin,
                     Created = u.Created,
                     IsActivated = u.IsActivated ?? false,
-                    UserTypeId = u.UserTypeId
+                    UserTypeId = u.UserTypeId,
+                    IsAdmin = u.IsAdmin ?? false
                 })
                 .ToListAsync();
 
@@ -141,7 +142,7 @@ namespace TPApp.Areas.Cms.Controllers
                     : "Thành viên";
             }
 
-            ViewBag.AccountTypes = new SelectList(accountTypes, "Id", "Name", accountTypeId);
+            ViewBag.AccountTypes = accountTypes;
             ViewBag.Sites = new SelectList(
                 await _context.RootSites.AsNoTracking().ToListAsync(),
                 "SiteId", "SiteName", siteId);
@@ -152,7 +153,7 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.Email = email;
             ViewBag.FullName = fullName;
             ViewBag.Phone = phone;
-            ViewBag.AccountTypeId = accountTypeId;
+            ViewBag.IsAdmin = isAdmin;
             ViewBag.IsActivated = isActivated;
             ViewBag.LastLoginFrom = lastLoginFrom;
             ViewBag.LastLoginTo = lastLoginTo;
@@ -413,6 +414,7 @@ namespace TPApp.Areas.Cms.Controllers
         public bool IsActivated { get; set; }
         public int? UserTypeId { get; set; }
         public string AccountTypeName { get; set; } = "";
+        public bool IsAdmin { get; set; }
     }
 
     public class CmsUserCreateVm

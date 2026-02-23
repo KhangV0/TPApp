@@ -44,8 +44,8 @@
                 <th class="sortable text-uppercase small fw-bold" data-sort="lastlogin" role="button">
                     Đăng nhập cuối @Html.Raw(SortIcon("lastlogin", sortBy, sortDir))
                 </th>
-                <th class="sortable text-uppercase small fw-bold" data-sort="usertype" role="button">
-                    Loại @Html.Raw(SortIcon("usertype", sortBy, sortDir))
+                <th class="sortable text-uppercase small fw-bold text-center" data-sort="isadmin" role="button">
+                    Loại @Html.Raw(SortIcon("isadmin", sortBy, sortDir))
                 </th>
                 <th class="sortable text-uppercase small fw-bold d-none d-md-table-cell" data-sort="created" role="button">
                     Ngày tạo @Html.Raw(SortIcon("created", sortBy, sortDir))
@@ -94,7 +94,16 @@
                     <td class="d-none d-md-table-cell small">@u.Phone</td>
                     <td class="small text-muted">@u.Email</td>
                     <td class="small text-muted">@(u.LastLogin?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
-                    <td>@u.AccountTypeName</td>
+                    <td class="text-center">
+                        @if (u.IsAdmin)
+                        {
+                            <span class="badge bg-primary"><i class="fas fa-store me-1"></i>User Sàn</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-info"><i class="fas fa-user me-1"></i>User Thường</span>
+                        }
+                    </td>
                     <td class="d-none d-md-table-cell small text-muted">@(u.Created?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
                     <td class="text-center">
                         @if (u.IsActivated)

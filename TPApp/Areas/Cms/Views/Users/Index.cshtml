@@ -37,16 +37,21 @@
                 <!-- Col 2: Dropdowns + Dates -->
                 <div class="col-md-6">
                     <div class="mb-2">
-                        <label class="form-label fw-semibold small mb-1">Loại người dùng</label>
-                        <select name="accountTypeId" class="form-select form-select-sm" asp-items="@((SelectList)ViewBag.AccountTypes)">
-                            <option value="">-- Tất cả --</option>
-                        </select>
+                        <label class="form-label fw-semibold small mb-1 d-block">Loại người dùng</label>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" name="isAdmin" id="admAll" value="" checked autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="admAll">Tất cả</label>
+                            <input type="radio" class="btn-check" name="isAdmin" id="admYes" value="1" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="admYes"><i class="fas fa-store me-1"></i>User Sàn</label>
+                            <input type="radio" class="btn-check" name="isAdmin" id="admNo" value="0" autocomplete="off">
+                            <label class="btn btn-outline-info" for="admNo"><i class="fas fa-user me-1"></i>User Thường</label>
+                        </div>
                     </div>
                     <div class="mb-2">
                         <label class="form-label fw-semibold small mb-1">Sàn</label>
                         @{
                             var configSiteId = (int)(ViewBag.CurrentSiteId ?? 0);
-                            var siteDisabled = configSiteId > 0;
+                            var siteDisabled = configSiteId > 1;
                         }
                         @if (siteDisabled)
                         {
@@ -234,6 +239,10 @@ $(function(){
     // ──────────────────────────────────────────────
     $('#searchForm').on('submit', function(e) { e.preventDefault(); loadUserList(1); });
     $('#btnSearch').on('click', function() { loadUserList(1); });
+
+    // Auto-search on radio toggle change
+    $('input[name="isAdmin"], input[name="isActivated"]').on('change', function() { loadUserList(1); });
+    $('#selectSite').on('change', function() { loadUserList(1); });
 
     // Reset
     $('#btnReset').on('click', function() {

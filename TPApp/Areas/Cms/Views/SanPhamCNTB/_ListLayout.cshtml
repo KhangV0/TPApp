@@ -84,7 +84,7 @@
                             var configSiteId = (int)(ViewBag.CurrentSiteId ?? 0);
                         }
                         <select name="siteId" id="filterSiteId" class="form-select form-select-sm"
-                                @(configSiteId > 0 ? "disabled" : "")>
+                                @(configSiteId > 1 ? "disabled" : "")>
                             <option value="">-- Tất cả --</option>
                             @{
                                 var selSite = ViewBag.SiteId?.ToString() ?? ViewBag.CurrentSiteId?.ToString() ?? "";
