@@ -80,6 +80,7 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, TPApp.Authorization.CmsAdminHandler>();
 builder.Services.AddScoped<TPApp.Interfaces.ICmsAccessService, TPApp.Services.CmsAccessService>();
+builder.Services.AddScoped<TPApp.Interfaces.ICntbMasterService, TPApp.Services.CntbMasterService>();
 
 // --- Services ---
 builder.Services.AddScoped<TPApp.Interfaces.IProductService, TPApp.Services.ProductService>();

@@ -44,9 +44,26 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label fw-semibold small mb-1">Sàn</label>
-                        <select name="siteId" id="selectSite" class="form-select form-select-sm" asp-items="@((SelectList)ViewBag.Sites)">
-                            <option value="">-- Tất cả --</option>
-                        </select>
+                        @{
+                            var configSiteId = (int)(ViewBag.CurrentSiteId ?? 0);
+                            var siteDisabled = configSiteId > 0;
+                        }
+                        @if (siteDisabled)
+                        {
+                            <select name="siteId" id="selectSite" class="form-select form-select-sm" disabled>
+                                <option value="">-- Tất cả --</option>
+                                @foreach (var item in (SelectList)ViewBag.Sites)
+                                {
+                                    <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <select name="siteId" id="selectSite" class="form-select form-select-sm" asp-items="@((SelectList)ViewBag.Sites)">
+                                <option value="">-- Tất cả --</option>
+                            </select>
+                        }
                     </div>
                     <div class="row g-2 mb-2">
                         <div class="col-6">

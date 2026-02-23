@@ -89,12 +89,42 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a asp-area="Cms" asp-controller="CntbProducts" asp-action="Index"
-                           class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CntbProducts" ? "active" : "")">
+                    @{
+                        var cntbCtrl = ViewContext.RouteData.Values["controller"]?.ToString();
+                        var cntbAction = ViewContext.RouteData.Values["action"]?.ToString();
+                        bool isCntb = cntbCtrl == "SanPhamCNTB";
+                    }
+                    <li class="nav-item @(isCntb ? "menu-open" : "")">
+                        <a href="#" class="nav-link @(isCntb ? "active" : "")">
                             <i class="nav-icon fas fa-boxes-stacked"></i>
-                            <p>Sản phẩm CNTB</p>
+                            <p>
+                                Sản phẩm CNTB
+                                <i class="nav-arrow fas fa-angle-right"></i>
+                            </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-area="Cms" asp-controller="SanPhamCNTB" asp-action="CongNghe"
+                                   class="nav-link @(isCntb && cntbAction == "CongNghe" ? "active" : "")">
+                                    <i class="nav-icon fas fa-microchip"></i>
+                                    <p>Quản lý Công nghệ</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-area="Cms" asp-controller="SanPhamCNTB" asp-action="ThietBi"
+                                   class="nav-link @(isCntb && cntbAction == "ThietBi" ? "active" : "")">
+                                    <i class="nav-icon fas fa-cogs"></i>
+                                    <p>Quản lý Thiết bị</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-area="Cms" asp-controller="SanPhamCNTB" asp-action="SanPhamTriTue"
+                                   class="nav-link @(isCntb && cntbAction == "SanPhamTriTue" ? "active" : "")">
+                                    <i class="nav-icon fas fa-certificate"></i>
+                                    <p>Quản lý SP trí tuệ</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
 
                     <li class="nav-item">

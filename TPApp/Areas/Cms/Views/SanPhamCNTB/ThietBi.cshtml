@@ -1,0 +1,146 @@
+@model List<TPApp.Areas.Cms.Controllers.SanPhamCNTBListItem>
+@{
+    ViewData["Title"] = "Quản lý Thiết bị";
+    var actionName = "ThietBi";
+}
+
+@await Html.PartialAsync("_ListLayout", new ViewDataDictionary(ViewData) {
+    { "ActionName", actionName },
+    { "PageTitle", "Thiết bị" },
+    { "AddLabel", "Thêm thiết bị" }
+})
+
+@section Scripts {
+<script>
+$(function(){
+
+    // Select2 for filter dropdowns
+    $('#filterNcu').select2({ theme: 'bootstrap-5', placeholder: '-- Tìm nhà cung ứng --', allowClear: true, width: '100%' });
+    $('#filterXuatXu').select2({ theme: 'bootstrap-5', placeholder: '-- Tìm xuất xứ --', allowClear: true, width: '100%' });
+    $('#filterSiteId').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn sàn --', allowClear: true, width: '100%' });
+
+    toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
+
+    var token = $('input[name="__RequestVerificationToken"]').val() || '';
+    var baseUrl = '@Url.Action(actionName, "SanPhamCNTB", new { area = "Cms" })';
+    var currentPage = 1, currentSortBy = '', currentSortDir = '';
+
+    $('#searchCardHeader').on('dblclick', function() {
+        $(this).find('[data-lte-toggle="card-collapse"]').trigger('click');
+    });
+
+    function loadList(page) {
+        currentPage = page || 1;
+        var params = $('#searchForm').serialize()
+            + '&page=' + currentPage
+            + '&sortBy=' + encodeURIComponent(currentSortBy)
+            + '&sortDir=' + encodeURIComponent(currentSortDir);
+        $('#listContainer').css('opacity', '0.5');
+        $.ajax({
+            url: baseUrl, data: params,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(html) {
+                $('#listContainer').html(html).css('opacity', '1');
+                $('#chkAll').prop('checked', false);
+                $('#btnBulkDelete').prop('disabled', true);
+                var cnt = $('#partialTotalCount').text();
+                $('#badgeTotal').text(cnt);
+            },
+            error: function() {
+                toastr.error('Lỗi tải dữ liệu.');
+                $('#listContainer').css('opacity', '1');
+            }
+        });
+    }
+
+    $(document).on('click', '.sortable', function() {
+        var col = $(this).data('sort');
+        if (currentSortBy === col) currentSortDir = (currentSortDir === 'asc') ? 'desc' : 'asc';
+        else { currentSortBy = col; currentSortDir = 'asc'; }
+        loadList(1);
+    });
+
+    $('#searchForm').on('submit', function(e) { e.preventDefault(); loadList(1); });
+    $('#btnSearch').on('click', function() { loadList(1); });
+    $('#btnReset').on('click', function() {
+        $('#searchForm')[0].reset();
+        $('#filterNcu').val('').trigger('change');
+        $('#filterXuatXu').val('').trigger('change');
+        $('#filterSiteId').val('').trigger('change');
+        currentSortBy = ''; currentSortDir = '';
+        loadList(1);
+    });
+
+    $(document).on('click', '.ajax-page', function(e) {
+        e.preventDefault();
+        if ($(this).closest('.page-item').hasClass('disabled') || $(this).closest('.page-item').hasClass('active')) return;
+        loadList($(this).data('page'));
+    });
+
+    $(document).on('change', '#chkAll', function() { $('.chkRow:not(:disabled)').prop('checked', this.checked); toggleBulk(); });
+    $(document).on('change', '.chkRow', toggleBulk);
+    function toggleBulk() { $('#btnBulkDelete').prop('disabled', !$('.chkRow:checked').length); }
+
+    $(document).on('click', '.btn-del', function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        Swal.fire({
+            title: 'Xác nhận xóa?', text: 'Bạn chắc chắn muốn xóa sản phẩm #' + id + '?',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#d33', cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Xóa', cancelButtonText: 'Hủy'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.post('@Url.Action("Delete", "SanPhamCNTB", new { area = "Cms" })',
+                    { id: id, __RequestVerificationToken: token },
+                    function(r) {
+                        if (r.success) { toastr.success(r.message); loadList(currentPage); }
+                        else { toastr.error(r.message); }
+                    });
+            }
+        });
+    });
+
+    // Quick Config
+    $(document).on('click', '.btn-config', function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        $('#configModalBody').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
+        $('#configModal').modal('show');
+        $.get('@Url.Action("QuickConfig", "SanPhamCNTB", new { area = "Cms" })', { id: id }, function(html) {
+            $('#configModalBody').html(html);
+        });
+        $('#btnSaveConfig').off('click').on('click', function() {
+            var formData = $('#quickConfigForm').serialize() + '&__RequestVerificationToken=' + encodeURIComponent(token);
+            $.post('@Url.Action("QuickConfig", "SanPhamCNTB", new { area = "Cms" })', formData, function(r) {
+                if (r.success) { toastr.success(r.message); $('#configModal').modal('hide'); loadList(currentPage); }
+                else { toastr.error(r.message); }
+            });
+        });
+    });
+
+    $('#btnBulkDelete').on('click', function() {
+        var ids = $('.chkRow:checked').map(function() { return $(this).val(); }).get();
+        if (!ids.length) return;
+        Swal.fire({
+            title: 'Xóa nhiều sản phẩm?', text: 'Bạn chắc chắn xóa ' + ids.length + ' sản phẩm đã chọn?',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#d33', cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Xóa tất cả', cancelButtonText: 'Hủy'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                var promises = ids.map(function(id) {
+                    return $.post('@Url.Action("Delete", "SanPhamCNTB", new { area = "Cms" })',
+                        { id: id, __RequestVerificationToken: token });
+                });
+                $.when.apply($, promises).then(function() {
+                    toastr.success('Đã xóa ' + ids.length + ' sản phẩm.');
+                    loadList(currentPage);
+                });
+            }
+        });
+    });
+
+});
+</script>
+}

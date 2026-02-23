@@ -16,19 +16,44 @@ namespace TPApp.Areas.Cms.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IAccountService _accountService;
+        private readonly IConfiguration _configuration;
+        private const int LogFunctionId = 10; // Users
 
         public UsersController(
             AppDbContext context,
-            IAccountService accountService)
+            IAccountService accountService,
+            IConfiguration configuration)
         {
             _context = context;
             _accountService = accountService;
+            _configuration = configuration;
         }
 
         private int GetCurrentUserId()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier);
             return claim != null && int.TryParse(claim.Value, out int id) ? id : 0;
+        }
+
+        private int GetSiteId() =>
+            int.TryParse(_configuration["AppSettings:SiteId"], out var id) ? id : 1;
+
+        private async Task WriteLog(int eventId, string content)
+        {
+            _context.Logs.Add(new Log
+            {
+                FunctionID = LogFunctionId,
+                ActTime = DateTime.Now,
+                EventID = eventId,
+                Content = content,
+                ClientIP = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserName = User.Identity?.Name,
+                Domain = HttpContext.Request.Host.Value,
+                LanguageId = 1,
+                ParentId = 0,
+                SiteId = GetSiteId()
+            });
+            await _context.SaveChangesAsync();
         }
 
         // ─── INDEX (Search + Paged List) ───
@@ -41,6 +66,10 @@ namespace TPApp.Areas.Cms.Controllers
             int? siteId, string? sortBy, string? sortDir,
             int page = 1, int pageSize = 15)
         {
+            // Default to current site if no filter specified
+            if (!siteId.HasValue)
+                siteId = GetSiteId();
+
             var query = _context.Users.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(userName))
@@ -116,6 +145,7 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.Sites = new SelectList(
                 await _context.RootSites.AsNoTracking().ToListAsync(),
                 "SiteId", "SiteName", siteId);
+            ViewBag.CurrentSiteId = GetSiteId();
 
             // Preserve search params
             ViewBag.UserName = userName;
@@ -211,6 +241,7 @@ namespace TPApp.Areas.Cms.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            await WriteLog(1, $"Create User: {model.UserName} (ID={user.Id})");
             return Json(new { success = true, message = $"Đã tạo người dùng '{model.UserName}' thành công." });
         }
 
@@ -285,6 +316,7 @@ namespace TPApp.Areas.Cms.Controllers
 
             await _context.SaveChangesAsync();
 
+            await WriteLog(2, $"Update User: {user.UserName} (ID={model.UserId})");
             return Json(new { success = true, message = "Cập nhật người dùng thành công." });
         }
 
@@ -337,6 +369,7 @@ namespace TPApp.Areas.Cms.Controllers
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
+            await WriteLog(3, $"Delete User: {user.UserName} (ID={id})");
             return Json(new { success = true });
         }
 
@@ -354,6 +387,7 @@ namespace TPApp.Areas.Cms.Controllers
             _context.Users.RemoveRange(_context.Users.Where(u => ids.Contains(u.Id)));
             await _context.SaveChangesAsync();
 
+            await WriteLog(3, $"BulkDelete Users: {ids.Count} users (IDs={string.Join(",", ids)})");
             return Json(new { success = true, deleted = ids.Count });
         }
 

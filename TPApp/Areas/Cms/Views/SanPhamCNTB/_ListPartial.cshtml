@@ -1,0 +1,204 @@
+@model List<TPApp.Areas.Cms.Controllers.SanPhamCNTBListItem>
+@{
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var totalCount = (int)ViewBag.TotalCount;
+    var totalPages = (int)ViewBag.TotalPages;
+    var sortBy = (string?)ViewBag.SortBy ?? "";
+    var sortDir = (string?)ViewBag.SortDir ?? "";
+    var productType = (int)ViewBag.ProductType;
+    var currentSiteId = (int)(ViewBag.CurrentSiteId ?? 1);
+}
+
+@functions {
+    string SortIcon(string col, string currentSort, string currentDir)
+    {
+        if (!string.Equals(col, currentSort, StringComparison.OrdinalIgnoreCase))
+            return "<i class='fas fa-sort text-muted' style='opacity:.25'></i>";
+        return currentDir == "asc"
+            ? "<i class='fas fa-sort-up text-primary'></i>"
+            : "<i class='fas fa-sort-down text-primary'></i>";
+    }
+}
+
+<span id="partialTotalCount" class="d-none">@totalCount</span>
+<div class="table-responsive">
+    <table class="table table-hover table-striped table-bordered align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="text-center" style="width:36px">
+                    <input type="checkbox" class="form-check-input" id="chkAll" />
+                </th>
+                <th class="text-center text-uppercase small fw-bold" style="width:90px">Thao tác</th>
+                <th class="text-center text-uppercase small fw-bold" style="width:50px">STT</th>
+                <th class="text-center text-uppercase small fw-bold" style="width:70px">Ảnh</th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="code" role="button">
+                    Mã @Html.Raw(SortIcon("code", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="name" role="button">
+                    Tên sản phẩm @Html.Raw(SortIcon("name", sortBy, sortDir))
+                </th>
+                @if (productType == 3)
+                {
+                    <th class="text-uppercase small fw-bold d-none d-md-table-cell">Số bằng</th>
+                }
+                <th class="sortable text-uppercase small fw-bold text-center" data-sort="status" role="button">
+                    Trạng thái @Html.Raw(SortIcon("status", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold d-none d-md-table-cell" data-sort="creator" role="button">
+                    Người tạo @Html.Raw(SortIcon("creator", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold d-none d-md-table-cell" data-sort="lastupdate" role="button">
+                    LastUpdate @Html.Raw(SortIcon("lastupdate", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold d-none d-lg-table-cell text-center" data-sort="viewed" role="button">
+                    Lượt xem @Html.Raw(SortIcon("viewed", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold d-none d-md-table-cell" data-sort="created" role="button">
+                    Ngày xuất bản @Html.Raw(SortIcon("created", sortBy, sortDir))
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="11" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x d-block mb-2"></i>
+                        Không tìm thấy dữ liệu.
+                    </td>
+                </tr>
+            }
+            @{ int stt = (page - 1) * pageSize; }
+            @foreach (var p in Model)
+            {
+                stt++;
+                <tr>
+                    <td class="text-center">
+                    @{
+                        var isDiffSite = p.SiteId.HasValue && p.SiteId.Value != currentSiteId;
+                        var isPublished = p.StatusId == 3;
+                        var canDelete = !isPublished && !isDiffSite;
+                    }
+                        <input type="checkbox" class="form-check-input chkRow" value="@p.ID" @(canDelete ? "" : "disabled") />
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm" role="group">
+                        @if (!isDiffSite)
+                        {
+                            <a asp-action="Edit" asp-route-id="@p.ID" class="btn btn-outline-primary btn-sm" title="Sửa">
+                                <i class="fas fa-pen-to-square"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-secondary btn-sm" disabled title="Thuộc sàn khác">
+                                <i class="fas fa-pen-to-square"></i>
+                            </button>
+                        }
+                        @if (!isDiffSite)
+                        {
+                            <a href="#" class="btn btn-outline-warning btn-sm btn-config" data-id="@p.ID" title="Cấu hình">
+                                <i class="fas fa-gear"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-secondary btn-sm" disabled title="Thuộc sàn khác">
+                                <i class="fas fa-gear"></i>
+                            </button>
+                        }
+                        @if (canDelete)
+                        {
+                            <a href="#" class="btn btn-outline-danger btn-sm btn-del" data-id="@p.ID" title="Xóa">
+                                <i class="fas fa-trash-can"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-secondary btn-sm" disabled title="@(isPublished ? "Đang xuất bản" : "Thuộc sàn khác")">
+                                <i class="fas fa-lock"></i>
+                            </button>
+                        }
+                        </div>
+                    </td>
+                    <td class="text-center text-muted small">@stt</td>
+                    <td class="text-center">
+                        @if (!string.IsNullOrEmpty(p.ImageUrl))
+                        {
+                            <img src="@Html.CookedImageURL("108-84", p.ImageUrl)" alt="@p.Name" class="rounded" style="width:40px;height:40px;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <i class="fas fa-image text-muted"></i>
+                        }
+                    </td>
+                    <td class="small text-muted">@p.Code</td>
+                    <td>
+                        <a asp-action="Detail" asp-route-id="@p.ID" class="fw-semibold text-decoration-none">@p.Name</a>
+                    </td>
+                    @if (productType == 3)
+                    {
+                        <td class="d-none d-md-table-cell small">@(p.SoBang ?? "—")</td>
+                    }
+                    <td class="text-center">
+                        @{
+                            var badgeClass = p.StatusId switch
+                            {
+                                3 => "bg-success",   // Xuất bản
+                                2 => "bg-info",      // Duyệt
+                                1 => "bg-warning",   // Nháp
+                                4 => "bg-danger",    // Trả về
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@(p.StatusTitle ?? "—")</span>
+                    </td>
+                    <td class="d-none d-md-table-cell small text-muted">@(p.Creator ?? "—")</td>
+                    <td class="d-none d-md-table-cell small text-muted">@(p.LastUpdate?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                    <td class="d-none d-lg-table-cell text-center small text-muted">@p.Viewed</td>
+                    <td class="d-none d-md-table-cell small text-muted">@(p.Created?.ToString("dd/MM/yyyy") ?? "—")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="small text-muted">
+            Hiển thị <strong>@((page-1)*pageSize+1)</strong>–<strong>@Math.Min(page*pageSize, totalCount)</strong> / <strong>@totalCount</strong> bản ghi
+        </div>
+        <ul class="pagination pagination-sm mb-0">
+            @{
+                int startPage = Math.Max(1, page - 4);
+                int endPage = Math.Min(totalPages, page + 4);
+            }
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="1"><i class="fas fa-angles-left"></i></a>
+            </li>
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@(page - 1)"><i class="fas fa-angle-left"></i></a>
+            </li>
+            @for (int pg = startPage; pg <= endPage; pg++)
+            {
+                <li class="page-item @(pg == page ? "active" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@pg">@pg</a>
+                </li>
+            }
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@(page + 1)"><i class="fas fa-angle-right"></i></a>
+            </li>
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@totalPages"><i class="fas fa-angles-right"></i></a>
+            </li>
+        </ul>
+    </div>
+}
+else if (totalCount > 0)
+{
+    <div class="card-footer">
+        <div class="small text-muted">Tổng cộng <strong>@totalCount</strong> bản ghi</div>
+    </div>
+}

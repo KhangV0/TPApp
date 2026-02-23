@@ -24,6 +24,7 @@ namespace TPApp.Data
         public DbSet<SubMenuIdDto> SubMenuIds { get; set; }
 
         public DbSet<SanPhamCNTB> SanPhamCNTBs { get; set; }
+        public DbSet<Log> Logs { get; set; }
         public DbSet<Content> Contents { get; set; }
         public DbSet<ContentsYeuCau> ContentsYeuCaus { get; set; }
         public DbSet<Menu> Menus { get; set; }
@@ -162,5 +163,8 @@ namespace TPApp.Data
         public DbSet<CmsUserRole> CmsUserRoles { get; set; } = null!;
         public DbSet<RootSite> RootSites { get; set; } = null!;
         public DbSet<VAccountType> VAccountTypes { get; set; } = null!;
+        public DbSet<Status> Statuses { get; set; } = null!;
+        public DbSet<XuatXu> XuatXus { get; set; } = null!;
+        public DbSet<MucDo> MucDos { get; set; } = null!;
     }
 }

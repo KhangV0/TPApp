@@ -96,5 +96,26 @@ namespace TPApp.Entities
         public string? Keywords { get; set; }
 
         public int? SiteId { get; set; }
+
+        public int? TRLLevel { get; set; }
+        public string? TransferMethod { get; set; }
+        public string? TargetCustomer { get; set; }
+        public string? ApplicationNumber { get; set; }
+        public DateTime? AcceptedDate { get; set; }
+        public int? ClaimsCount { get; set; }
+        public string? DevelopmentStage { get; set; }
+        public string? CooperationGoal { get; set; }
+        public string? CooperationType { get; set; }
+
+        // ── Tab 6: Chuyển giao (CKEditor) ──
+        public string? GiaBanDuKien { get; set; }
+        public string? ChiPhiPhatSinh { get; set; }
+        public string? BaoHanhHoTro { get; set; }
+
+        // ── Tab 7: Chứng nhận & Tài liệu số ──
+        public string? BrochureUrl { get; set; }
+
+        /// <summary>1 = CongNghe, 2 = ThietBi, 3 = SanPhamTriTue</summary>
+        public int ProductType { get; set; } = 1;
     }
 }

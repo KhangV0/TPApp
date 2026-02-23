@@ -1,0 +1,41 @@
+@{
+    var statuses = (IEnumerable<dynamic>)ViewBag.Statuses;
+    var id = (int)ViewBag.ItemId;
+    var statusId = (int?)ViewBag.StatusId;
+    var bDate = (DateTime?)ViewBag.BEffectiveDate;
+    var eDate = (DateTime?)ViewBag.EEffectiveDate;
+    var keywords = (string?)ViewBag.Keywords ?? "";
+    var itemName = (string?)ViewBag.ItemName ?? "";
+}
+
+<form id="quickConfigForm">
+    <input type="hidden" name="id" value="@id" />
+    <div class="mb-2 text-muted small">
+        <i class="fas fa-tag me-1"></i> <strong>@itemName</strong>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-semibold small">Trạng thái</label>
+        <select name="statusId" class="form-select form-select-sm">
+            @foreach (var s in statuses)
+            {
+                <option value="@s.StatusId" selected="@(statusId == (int)s.StatusId)">@s.Title</option>
+            }
+        </select>
+    </div>
+    <div class="row g-2 mb-3">
+        <div class="col-6">
+            <label class="form-label fw-semibold small">Ngày có hiệu lực</label>
+            <input type="datetime-local" name="bEffectiveDate" class="form-control form-control-sm"
+                   value="@(bDate?.ToString("yyyy-MM-ddTHH:mm"))" />
+        </div>
+        <div class="col-6">
+            <label class="form-label fw-semibold small">Ngày hết hiệu lực</label>
+            <input type="datetime-local" name="eEffectiveDate" class="form-control form-control-sm"
+                   value="@(eDate?.ToString("yyyy-MM-ddTHH:mm"))" />
+        </div>
+    </div>
+    <div class="mb-2">
+        <label class="form-label fw-semibold small">Keywords</label>
+        <textarea name="keywords" class="form-control form-control-sm" rows="3" placeholder="Nhập từ khóa, cách nhau dấu phẩy">@keywords</textarea>
+    </div>
+</form>
