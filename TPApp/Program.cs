@@ -8,6 +8,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
+
+// Increase form value limits for CKEditor content with embedded images
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.ValueLengthLimit = 50 * 1024 * 1024;   // 50 MB per value
+    options.MultipartBodyLengthLimit = 50 * 1024 * 1024; // 50 MB total
+});
+
+// Increase Kestrel max request body size
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 50 * 1024 * 1024; // 50 MB
+});
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<TPApp.Services.IWorkflowService, TPApp.Services.WorkflowService>();
 builder.Services.AddScoped<TPApp.Services.INotificationQueueService, TPApp.Services.NotificationQueueService>();

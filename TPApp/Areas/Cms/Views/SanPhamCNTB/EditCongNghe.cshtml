@@ -120,6 +120,9 @@
                                 <label class="btn btn-outline-secondary btn-sm" for="loai4">Khác</label>
                             </div>
                         </div>
+                        <div class="mt-2" id="loaiDeTaiKhacBox" style="display:none;">
+                            <input asp-for="LoaiDeTaiKhac" class="form-control form-control-sm" placeholder="Nhập loại hình khác..." />
+                        </div>
                     </div>
 
                     <!-- 3. Thông tin liên hệ (auto-filled from NhaCungUng) -->
@@ -233,7 +236,7 @@
                             <input asp-for="ApplicationNumber" class="form-control" />
                         </div>
                         <div>
-                            <label class="form-label">Bí mật công nghệ</label>
+                            <label class="form-label">Bí mật công nghệ <small class="text-muted">(Sẵn sàng ký cam kết bảo mật NDA trong trường hợp chuyển giao độc quyền)</small></label>
                             <input asp-for="CoQuanChuTri" class="form-control" />
                         </div>
                     </div>
@@ -424,6 +427,9 @@
                                 </div>
                             }
                         </div>
+                        <div class="mt-2" id="transferMethodKhacBox" style="display:none;">
+                            <input asp-for="TransferMethodKhac" class="form-control form-control-sm" placeholder="Nhập hình thức chuyển giao khác..." />
+                        </div>
                     </div>
 
                     <!-- 14. Giá bán dự kiến — CKEditor -->
@@ -434,7 +440,7 @@
 
                     <!-- 15. Các chi phí phát sinh khác -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">15. Các chi phí phát sinh khác</label>
+                        <label class="form-label fw-semibold">15. Các chi phí phát sinh khác (Chi phí đào tạo, hướng dẫn kỹ thuật, bảo trì, bảo hành, vận chuyển, lắp đặt,…)</label>
                         <textarea asp-for="ChiPhiPhatSinh" id="editorChiPhi" class="form-control ck-editor-field-tab6" rows="20"></textarea>
                     </div>
 
@@ -465,18 +471,27 @@
                     <div class="mb-4">
                         <label class="form-label fw-semibold">17. Chứng nhận chất lượng</label>
                         <div class="row g-2">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="chkISO" name="ChungNhanISO" value="true" />
+                                    <input class="form-check-input" type="checkbox" id="chkISO" name="ChungNhanISO" value="true" @(Model.ChungNhanISO ? "checked" : "") />
                                     <label class="form-check-label" for="chkISO">ISO / CE / HACCP</label>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="chkQuatest" name="ChungNhanQuatest" value="true" />
+                                    <input class="form-check-input" type="checkbox" id="chkQuatest" name="ChungNhanQuatest" value="true" @(Model.ChungNhanQuatest ? "checked" : "") />
                                     <label class="form-check-label" for="chkQuatest">Phiếu kết quả kiểm nghiệm (Quatest)</label>
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="chkCNKhac" name="ChungNhanKhac" value="true" @(Model.ChungNhanKhac ? "checked" : "") />
+                                    <label class="form-check-label" for="chkCNKhac">Khác</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="cnKhacTextBox" class="mt-2" style="display:none;">
+                            <input type="text" class="form-control" id="ChungNhanKhacText" name="ChungNhanKhacText" value="@Model.ChungNhanKhacText" placeholder="Nhập chứng nhận khác..." />
                         </div>
                     </div>
 
@@ -556,9 +571,16 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js"></script>
 <script>
 $(function(){
+
+    // Toggle Khác text input for Chứng nhận chất lượng
+    $('#chkCNKhac').on('change', function(){
+        $('#cnKhacTextBox').toggle(this.checked);
+        if (!this.checked) $('#ChungNhanKhacText').val('');
+    });
+    if ($('#chkCNKhac').is(':checked')) $('#cnKhacTextBox').show();
 
     // Select2 searchable dropdown for NhaCungUng
     $('#NCUId').select2({
@@ -619,17 +641,28 @@ $(function(){
     // CKEditor 5 — lazy init for all rich text fields in Tab 3
     // ═══════════════════════════════════════
     var ckInstances = {};
+    var ckRemovePlugins = [
+        'ExportPdf','ExportWord','AIAssistant','CKBox','CKFinder','EasyImage',
+        'MultiLevelList','RealTimeCollaborativeComments','RealTimeCollaborativeTrackChanges',
+        'RealTimeCollaborativeRevisionHistory','PresenceList','Comments','TrackChanges',
+        'TrackChangesData','RevisionHistory','Pagination','WProofreader','MathType',
+        'SlashCommand','Template','DocumentOutline','FormatPainter','TableOfContents',
+        'PasteFromOfficeEnhanced','CaseChange'
+    ];
+    var ckToolbar = ['heading', '|', 'bold', 'italic', 'fontColor', 'fontBackgroundColor', '|',
+                     'link', 'bulletedList', 'numberedList', '|',
+                     'imageUpload', 'blockQuote', 'insertTable', 'undo', 'redo'];
 
     $('button[data-bs-target="#tab3"]').on('shown.bs.tab', function(){
         document.querySelectorAll('.ck-editor-field').forEach(function(el){
             if (ckInstances[el.id]) return;
-            ClassicEditor.create(el, {
+            CKEDITOR.ClassicEditor.create(el, {
                 simpleUpload: {
                     uploadUrl: '/cms/Upload/Upload',
                     withCredentials: true
                 },
-                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList',
-                          '|', 'imageUpload', 'blockQuote', 'insertTable', 'undo', 'redo']
+                toolbar: ckToolbar,
+                removePlugins: ckRemovePlugins
             }).then(function(editor){
                 ckInstances[el.id] = editor;
             }).catch(function(err){ console.error(err); });
@@ -640,10 +673,10 @@ $(function(){
     $('button[data-bs-target="#tab5"]').on('shown.bs.tab', function(){
         document.querySelectorAll('.ck-editor-field-tab5').forEach(function(el){
             if (ckInstances[el.id]) return;
-            ClassicEditor.create(el, {
+            CKEDITOR.ClassicEditor.create(el, {
                 simpleUpload: { uploadUrl: '/cms/Upload/Upload', withCredentials: true },
-                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList',
-                          '|', 'imageUpload', 'blockQuote', 'insertTable', 'undo', 'redo']
+                toolbar: ckToolbar,
+                removePlugins: ckRemovePlugins
             }).then(function(editor){
                 ckInstances[el.id] = editor;
             }).catch(function(err){ console.error(err); });
@@ -661,10 +694,10 @@ $(function(){
     $('button[data-bs-target="#tab6"]').on('shown.bs.tab', function(){
         document.querySelectorAll('.ck-editor-field-tab6').forEach(function(el){
             if (ckInstances[el.id]) return;
-            ClassicEditor.create(el, {
+            CKEDITOR.ClassicEditor.create(el, {
                 simpleUpload: { uploadUrl: '/cms/Upload/Upload', withCredentials: true },
-                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList',
-                          '|', 'imageUpload', 'blockQuote', 'insertTable', 'undo', 'redo']
+                toolbar: ckToolbar,
+                removePlugins: ckRemovePlugins
             }).then(function(editor){
                 ckInstances[el.id] = editor;
             }).catch(function(err){ console.error(err); });
@@ -787,6 +820,39 @@ $(function(){
     // Load on page init for Edit
     var initNcu = $('#NCUId').val();
     if (initNcu) loadNhaCungUng(initNcu);
+
+    // ═══════════════════════════════════════
+    // Toggle "Khác" text inputs
+    // ═══════════════════════════════════════
+    $('input[name="LoaiDeTai"]').on('change', function(){
+        if ($(this).val() == '4') {
+            $('#loaiDeTaiKhacBox').slideDown(200);
+        } else {
+            $('#loaiDeTaiKhacBox').slideUp(200);
+            $('#LoaiDeTaiKhac').val('');
+        }
+    });
+    if ($('input[name="LoaiDeTai"]:checked').val() == '4') {
+        $('#loaiDeTaiKhacBox').show();
+    }
+
+    $(document).on('change', '.chk-transfer', function(){
+        var khacChecked = false;
+        $('.chk-transfer').each(function(){
+            if ($(this).val().indexOf('Kh') === 0 && $(this).is(':checked')) khacChecked = true;
+        });
+        if (khacChecked) {
+            $('#transferMethodKhacBox').slideDown(200);
+        } else {
+            $('#transferMethodKhacBox').slideUp(200);
+            $('#TransferMethodKhac').val('');
+        }
+    });
+    var initKhacTransfer = false;
+    $('.chk-transfer').each(function(){
+        if ($(this).val().indexOf('Kh') === 0 && $(this).is(':checked')) initKhacTransfer = true;
+    });
+    if (initKhacTransfer) $('#transferMethodKhacBox').show();
 
 });
 </script>

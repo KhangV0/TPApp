@@ -71,40 +71,93 @@
                 <div class="tab-pane fade show active" id="tab1" role="tabpanel">
                     <h6 class="fw-bold text-primary mb-3"><i class="fas fa-building me-1"></i> I. Thông tin chủ sở hữu</h6>
 
-                    <!-- 1. Tên đơn vị/Cá nhân -->
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">1. Tên đơn vị / Cá nhân chủ sở hữu</label>
-                            <select asp-for="NCUId" class="form-select" asp-items="@((List<SelectListItem>)ViewBag.NhaCungUngList)">
-                                <option value="">-- Chọn nhà cung ứng --</option>
-                            </select>
+                    <!-- Owner type toggle -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Loại chủ sở hữu</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="OwnerType" id="ownerOrg" value="1"
+                                       @(Model.OwnerType != 2 ? "checked" : "") />
+                                <label class="form-check-label" for="ownerOrg"><i class="fas fa-building me-1"></i> Đơn vị / Tổ chức</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="OwnerType" id="ownerPerson" value="2"
+                                       @(Model.OwnerType == 2 ? "checked" : "") />
+                                <label class="form-check-label" for="ownerPerson"><i class="fas fa-user me-1"></i> Cá nhân</label>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 2. Thông tin liên hệ (auto-filled from NhaCungUng) -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">2. Thông tin liên hệ
-                            <span class="badge bg-info text-dark ms-1"><i class="fas fa-info-circle"></i> Tự động điền từ NCC</span>
-                        </label>
-                    </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-12">
-                            <label class="form-label">Địa chỉ</label>
-                            <input id="ncuDiaChi" class="form-control bg-light" readonly />
+                    <!-- ══ PANEL A: Đơn vị (from NhaCungUng) ══ -->
+                    <div id="panelOrg" @(Model.OwnerType == 2 ? "style=\"display:none;\"" : "")>
+                        <!-- 1. Tên đơn vị -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">1. Tên đơn vị chủ sở hữu</label>
+                                <select asp-for="NCUId" class="form-select" asp-items="@((List<SelectListItem>)ViewBag.NhaCungUngList)">
+                                    <option value="">-- Chọn nhà cung ứng --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 2. Thông tin liên hệ (auto-filled) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">2. Thông tin liên hệ
+                                <span class="badge bg-info text-dark ms-1"><i class="fas fa-info-circle"></i> Tự động điền từ NCC</span>
+                            </label>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Địa chỉ</label>
+                                <input id="ncuDiaChi" class="form-control bg-light" readonly />
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Người đại diện</label>
+                                <input id="ncuNguoiDaiDien" class="form-control bg-light" readonly />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Điện thoại</label>
+                                <input id="ncuPhone" class="form-control bg-light" readonly />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Email</label>
+                                <input id="ncuEmail" class="form-control bg-light" readonly />
+                            </div>
                         </div>
                     </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Người đại diện</label>
-                            <input id="ncuNguoiDaiDien" class="form-control bg-light" readonly />
+
+                    <!-- ══ PANEL B: Cá nhân (manual input) ══ -->
+                    <div id="panelPerson" @(Model.OwnerType != 2 ? "style=\"display:none;\"" : "")>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">1. Họ và tên chủ sở hữu</label>
+                                <input asp-for="HoTen" class="form-control" placeholder="Nhập họ tên..." />
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Điện thoại</label>
-                            <input id="ncuPhone" class="form-control bg-light" readonly />
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">2. Thông tin liên hệ</label>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Email</label>
-                            <input id="ncuEmail" class="form-control bg-light" readonly />
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Địa chỉ</label>
+                                <input asp-for="DiaChi" class="form-control" placeholder="Nhập địa chỉ..." />
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Điện thoại</label>
+                                <input asp-for="Phone" class="form-control" placeholder="Nhập SĐT..." />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Email</label>
+                                <input asp-for="OwnerEmail" class="form-control" placeholder="Nhập email..." />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Website</label>
+                                <input asp-for="WebUrl" class="form-control" placeholder="https://..." />
+                            </div>
                         </div>
                     </div>
 
@@ -145,6 +198,9 @@
                                        @(Model.LoaiDeTai == 4 ? "checked" : "") />
                                 <label class="btn btn-outline-secondary btn-sm" for="loai4">Khác</label>
                             </div>
+                        </div>
+                        <div class="mt-2" id="loaiDeTaiKhacBox" style="display:none;">
+                            <input asp-for="LoaiDeTaiKhac" class="form-control form-control-sm" placeholder="Nhập loại hình khác..." />
                         </div>
                     </div>
 
@@ -289,6 +345,9 @@
                                 </div>
                             }
                         </div>
+                        <div class="mt-2" id="goalKhacBox" style="display:none;">
+                            <input asp-for="InvestmentGoalKhac" class="form-control form-control-sm" placeholder="Nhập mục tiêu khác..." />
+                        </div>
                     </div>
 
                     <!-- 10. Hình thức hợp tác mong muốn -->
@@ -318,6 +377,9 @@
                                     </div>
                                 </div>
                             }
+                        </div>
+                        <div class="mt-2" id="transferMethodKhacBox" style="display:none;">
+                            <input asp-for="TransferMethodKhac" class="form-control form-control-sm" placeholder="Nhập hình thức hợp tác khác..." />
                         </div>
                     </div>
 
@@ -369,9 +431,28 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js"></script>
 <script>
 $(function(){
+
+    // ═══════════════════════════════════════
+    // Owner type toggle (Đơn vị / Cá nhân)
+    // ═══════════════════════════════════════
+    $('input[name="OwnerType"]').on('change', function(){
+        var isOrg = $(this).val() === '1';
+        $('#panelOrg').toggle(isOrg);
+        $('#panelPerson').toggle(!isOrg);
+        if (!isOrg) {
+            $('#NCUId').val(null).trigger('change');
+        } else {
+            $('#HoTen, #DiaChi, #Phone, #OwnerEmail, #WebUrl').val('');
+        }
+    });
+    var initOwnerType = $('input[name="OwnerType"]:checked').val();
+    if (initOwnerType === '2') {
+        $('#panelOrg').hide();
+        $('#panelPerson').show();
+    }
 
     // Select2 searchable dropdown for NhaCungUng
     $('#NCUId').select2({
@@ -432,16 +513,26 @@ $(function(){
     // CKEditor 5 — lazy init for Tab 3 fields
     // ═══════════════════════════════════════
     var ckInstances = {};
+    var ckRemovePlugins = [
+        'ExportPdf','ExportWord','AIAssistant','CKBox','CKFinder','EasyImage',
+        'MultiLevelList','RealTimeCollaborativeComments','RealTimeCollaborativeTrackChanges',
+        'RealTimeCollaborativeRevisionHistory','PresenceList','Comments','TrackChanges',
+        'TrackChangesData','RevisionHistory','Pagination','WProofreader','MathType',
+        'SlashCommand','Template','DocumentOutline','FormatPainter','TableOfContents',
+        'PasteFromOfficeEnhanced','CaseChange'
+    ];
     var ckConfig = {
         simpleUpload: { uploadUrl: '/cms/Upload/Upload', withCredentials: true },
-        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList',
-                  '|', 'imageUpload', 'blockQuote', 'insertTable', 'undo', 'redo']
+        toolbar: ['heading', '|', 'bold', 'italic', 'fontColor', 'fontBackgroundColor', '|',
+                  'link', 'bulletedList', 'numberedList', '|',
+                  'imageUpload', 'blockQuote', 'insertTable', 'undo', 'redo'],
+        removePlugins: ckRemovePlugins
     };
 
     $('button[data-bs-target="#tab3"]').on('shown.bs.tab', function(){
         document.querySelectorAll('.ck-editor-field-tab3').forEach(function(el){
             if (ckInstances[el.id]) return;
-            ClassicEditor.create(el, ckConfig).then(function(editor){
+            CKEDITOR.ClassicEditor.create(el, ckConfig).then(function(editor){
                 ckInstances[el.id] = editor;
             }).catch(function(err){ console.error(err); });
         });
@@ -506,6 +597,60 @@ $(function(){
     // Load on page init if value set
     var initNcu = $('#NCUId').val();
     if (initNcu) loadNhaCungUng(initNcu);
+
+    // ═══════════════════════════════════════
+    // Toggle "Khác" text inputs
+    // ═══════════════════════════════════════
+    // Phân loại hồ sơ (radio)
+    $('input[name="LoaiDeTai"]').on('change', function(){
+        if ($(this).val() == '4') {
+            $('#loaiDeTaiKhacBox').slideDown(200);
+        } else {
+            $('#loaiDeTaiKhacBox').slideUp(200);
+            $('#LoaiDeTaiKhac').val('');
+        }
+    });
+    if ($('input[name="LoaiDeTai"]:checked').val() == '4') {
+        $('#loaiDeTaiKhacBox').show();
+    }
+
+    // Mục 9: Phân loại mục tiêu kêu gọi
+    $(document).on('change', '.chk-goal', function(){
+        var khacChecked = false;
+        $('.chk-goal').each(function(){
+            if ($(this).val().indexOf('Kh') === 0 && $(this).is(':checked')) khacChecked = true;
+        });
+        if (khacChecked) {
+            $('#goalKhacBox').slideDown(200);
+        } else {
+            $('#goalKhacBox').slideUp(200);
+            $('#InvestmentGoalKhac').val('');
+        }
+    });
+    var initKhacGoal = false;
+    $('.chk-goal').each(function(){
+        if ($(this).val().indexOf('Kh') === 0 && $(this).is(':checked')) initKhacGoal = true;
+    });
+    if (initKhacGoal) $('#goalKhacBox').show();
+
+    // Mục 10: Hình thức hợp tác mong muốn
+    $(document).on('change', '.chk-transfer', function(){
+        var khacChecked = false;
+        $('.chk-transfer').each(function(){
+            if ($(this).val().indexOf('Kh') === 0 && $(this).is(':checked')) khacChecked = true;
+        });
+        if (khacChecked) {
+            $('#transferMethodKhacBox').slideDown(200);
+        } else {
+            $('#transferMethodKhacBox').slideUp(200);
+            $('#TransferMethodKhac').val('');
+        }
+    });
+    var initKhacTransfer = false;
+    $('.chk-transfer').each(function(){
+        if ($(this).val().indexOf('Kh') === 0 && $(this).is(':checked')) initKhacTransfer = true;
+    });
+    if (initKhacTransfer) $('#transferMethodKhacBox').show();
 
 });
 </script>

@@ -297,6 +297,8 @@ namespace TPApp.Areas.Cms.Controllers
         // ─────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(52_428_800)] // 50 MB
+        [RequestFormLimits(ValueLengthLimit = 52_428_800, MultipartBodyLengthLimit = 52_428_800)]
         public async Task<IActionResult> Create(SanPhamCNTBFormVm model)
         {
             ValidateByProductType(model);
@@ -376,6 +378,8 @@ namespace TPApp.Areas.Cms.Controllers
         // ─────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(52_428_800)] // 50 MB
+        [RequestFormLimits(ValueLengthLimit = 52_428_800, MultipartBodyLengthLimit = 52_428_800)]
         public async Task<IActionResult> Edit(SanPhamCNTBFormVm model)
         {
             ValidateByProductType(model);
@@ -633,8 +637,14 @@ namespace TPApp.Areas.Cms.Controllers
         Keywords = m.Keywords,
         LanguageId = 1,
         SiteId = m.SiteId ?? 1, // overridden in Create/Edit POST
-        // New fields (contact info NOT saved — comes from NhaCungUng)
+        // Owner fields
+        OwnerType = m.OwnerType,
+        OwnerEmail = m.OwnerEmail,
+        HoTen = m.HoTen,
+        DiaChi = m.DiaChi,
+        Phone = m.Phone,
         LoaiDeTai = m.LoaiDeTai,
+        LoaiDeTaiKhac = m.LoaiDeTaiKhac,
         URL = m.URL,
         IsYoutube = m.IsYoutube,
         QuyTrinhHinhAnh = m.QuyTrinhHinhAnh,
@@ -644,6 +654,7 @@ namespace TPApp.Areas.Cms.Controllers
         Khachhang = m.Khachhang,
         CooperationGoal = m.CooperationGoal,
         TransferMethod = m.TransferMethod,
+        TransferMethodKhac = m.TransferMethodKhac,
         CooperationType = m.CooperationType,
         ApplicationNumber = m.ApplicationNumber,
         AcceptedDate = m.AcceptedDate,
@@ -653,8 +664,11 @@ namespace TPApp.Areas.Cms.Controllers
         BrochureUrl = m.BrochureUrl,
 ChungNhanISO = m.ChungNhanISO,
 ChungNhanQuatest = m.ChungNhanQuatest,
+ChungNhanKhac = m.ChungNhanKhac,
+ChungNhanKhacText = m.ChungNhanKhacText,
 DevelopmentStageValue = m.DevelopmentStageValue,
-InvestmentGoal = m.InvestmentGoal
+InvestmentGoal = m.InvestmentGoal,
+InvestmentGoalKhac = m.InvestmentGoalKhac
     };
         private static void UpdateEntity(SanPhamCNTB e, SanPhamCNTBFormVm m)
     {
@@ -683,8 +697,14 @@ InvestmentGoal = m.InvestmentGoal
         e.GiaiThuong = m.GiaiThuong;
         e.Keywords = m.Keywords;
         e.SiteId = m.SiteId ?? e.SiteId;
-        // New fields (contact info NOT saved — comes from NhaCungUng)
+        // Owner fields
+        e.OwnerType = m.OwnerType;
+        e.OwnerEmail = m.OwnerEmail;
+        e.HoTen = m.HoTen;
+        e.DiaChi = m.DiaChi;
+        e.Phone = m.Phone;
         e.LoaiDeTai = m.LoaiDeTai;
+        e.LoaiDeTaiKhac = m.LoaiDeTaiKhac;
         e.URL = m.URL;
         e.IsYoutube = m.IsYoutube;
         e.QuyTrinhHinhAnh = m.QuyTrinhHinhAnh;
@@ -694,6 +714,7 @@ InvestmentGoal = m.InvestmentGoal
         e.Khachhang = m.Khachhang;
         e.CooperationGoal = m.CooperationGoal;
         e.TransferMethod = m.TransferMethod;
+        e.TransferMethodKhac = m.TransferMethodKhac;
         e.CooperationType = m.CooperationType;
         e.ApplicationNumber = m.ApplicationNumber;
         e.AcceptedDate = m.AcceptedDate;
@@ -703,8 +724,11 @@ InvestmentGoal = m.InvestmentGoal
         e.BrochureUrl = m.BrochureUrl;
 e.ChungNhanISO = m.ChungNhanISO;
 e.ChungNhanQuatest = m.ChungNhanQuatest;
+e.ChungNhanKhac = m.ChungNhanKhac;
+e.ChungNhanKhacText = m.ChungNhanKhacText;
 e.DevelopmentStageValue = m.DevelopmentStageValue;
 e.InvestmentGoal = m.InvestmentGoal;
+e.InvestmentGoalKhac = m.InvestmentGoalKhac;
     }
         private static SanPhamCNTBFormVm MapToFormVm(SanPhamCNTB p) => new()
     {
@@ -734,13 +758,16 @@ e.InvestmentGoal = m.InvestmentGoal;
         GiaiThuong = p.GiaiThuong,
         Keywords = p.Keywords,
         SiteId = p.SiteId,
-        // New fields
+        // Owner fields
+        OwnerType = p.OwnerType,
+        OwnerEmail = p.OwnerEmail,
         DiaChi = p.DiaChi,
         HoTen = p.HoTen,
         Phone = p.Phone,
         PhoneOther = p.PhoneOther,
         WebUrl = p.WebUrl,
         LoaiDeTai = p.LoaiDeTai,
+        LoaiDeTaiKhac = p.LoaiDeTaiKhac,
         URL = p.URL,
         IsYoutube = p.IsYoutube ?? false,
         QuyTrinhHinhAnh = p.QuyTrinhHinhAnh,
@@ -750,6 +777,7 @@ e.InvestmentGoal = m.InvestmentGoal;
         Khachhang = p.Khachhang,
         CooperationGoal = p.CooperationGoal,
         TransferMethod = p.TransferMethod,
+        TransferMethodKhac = p.TransferMethodKhac,
         CooperationType = p.CooperationType,
         ApplicationNumber = p.ApplicationNumber,
         AcceptedDate = p.AcceptedDate,
@@ -759,8 +787,11 @@ e.InvestmentGoal = m.InvestmentGoal;
         BrochureUrl = p.BrochureUrl,
 ChungNhanISO = p.ChungNhanISO ?? false,
 ChungNhanQuatest = p.ChungNhanQuatest ?? false,
+ChungNhanKhac = p.ChungNhanKhac ?? false,
+ChungNhanKhacText = p.ChungNhanKhacText,
 DevelopmentStageValue = p.DevelopmentStageValue,
-InvestmentGoal = p.InvestmentGoal
+InvestmentGoal = p.InvestmentGoal,
+InvestmentGoalKhac = p.InvestmentGoalKhac
     };
     }
 
@@ -825,12 +856,15 @@ InvestmentGoal = p.InvestmentGoal
         public string? Keywords { get; set; }
 
         // ── Tab 1: Chủ sở hữu ──
+        public int? OwnerType { get; set; }
+        public string? OwnerEmail { get; set; }
         public string? DiaChi { get; set; }
         public string? HoTen { get; set; }
         public string? Phone { get; set; }
         public string? PhoneOther { get; set; }
         public string? WebUrl { get; set; }
         public int? LoaiDeTai { get; set; }
+        public string? LoaiDeTaiKhac { get; set; }
 
         // ── Tab 2: Định danh ──
         public string? URL { get; set; }
@@ -852,6 +886,7 @@ InvestmentGoal = p.InvestmentGoal
 
         // ── Tab 6: Chuyển giao ──
         public string? TransferMethod { get; set; }
+        public string? TransferMethodKhac { get; set; }
         public string? CooperationType { get; set; }
         public string? GiaBanDuKien { get; set; }
         public string? ChiPhiPhatSinh { get; set; }
@@ -861,9 +896,12 @@ InvestmentGoal = p.InvestmentGoal
         public string? BrochureUrl { get; set; }
         public bool ChungNhanISO { get; set; }
         public bool ChungNhanQuatest { get; set; }
+        public bool ChungNhanKhac { get; set; }
+        public string? ChungNhanKhacText { get; set; }
 
         // ── SanPhamTriTue dedicated fields ──
         public int? DevelopmentStageValue { get; set; }
         public string? InvestmentGoal { get; set; }
+        public string? InvestmentGoalKhac { get; set; }
     }
 }

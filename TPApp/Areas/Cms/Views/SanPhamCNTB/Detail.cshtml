@@ -289,7 +289,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.ChiPhiPhatSinh))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">15. Các chi phí phát sinh khác</label>
+                        <label class="form-label fw-semibold">15. Các chi phí phát sinh khác (Chi phí đào tạo, hướng dẫn kỹ thuật, bảo trì, bảo hành, vận chuyển, lắp đặt,…)</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.ChiPhiPhatSinh)</div>
                     </div>
                 }
@@ -306,6 +306,18 @@
             <!-- ──── TAB 7: Chứng nhận & Tài liệu số ──── -->
             <div class="tab-pane fade" id="dtab7" role="tabpanel">
                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-certificate me-1"></i> VII. Chứng nhận & Tài liệu số</h6>
+                <!-- 17. Chứng nhận chất lượng -->
+                @if ((Model.ChungNhanISO == true) || (Model.ChungNhanQuatest == true) || (Model.ChungNhanKhac == true))
+                {
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">17. Chứng nhận chất lượng</label>
+                        <div>
+                            @if (Model.ChungNhanISO == true) { <span class="badge bg-success me-1">ISO / CE / HACCP</span> }
+                            @if (Model.ChungNhanQuatest == true) { <span class="badge bg-info me-1">Phiếu kết quả kiểm nghiệm (Quatest)</span> }
+                            @if (Model.ChungNhanKhac == true) { <span class="badge bg-secondary me-1">Khác: @(Model.ChungNhanKhacText ?? "—")</span> }
+                        </div>
+                    </div>
+                }
 
                 <!-- Video clip -->
                 @if (!string.IsNullOrWhiteSpace(Model.URL))

@@ -34,6 +34,10 @@ namespace TPApp.Entities
 
         public string? GiaiThuong { get; set; }
 
+        /// <summary>1 = Đơn vị (NhaCungUng), 2 = Cá nhân</summary>
+        public int? OwnerType { get; set; }
+        public string? OwnerEmail { get; set; }
+
         public int? NCUId { get; set; }
 
         public string? Khachhang { get; set; }
@@ -85,6 +89,7 @@ namespace TPApp.Entities
         public string? CoQuanChuQuan { get; set; }
 
         public int? LoaiDeTai { get; set; }
+        public string? LoaiDeTaiKhac { get; set; }
         public int? Rating { get; set; }
 
         public int? ParentId { get; set; }
@@ -99,6 +104,7 @@ namespace TPApp.Entities
 
         public int? TRLLevel { get; set; }
         public string? TransferMethod { get; set; }
+        public string? TransferMethodKhac { get; set; }
         public string? TargetCustomer { get; set; }
         public string? ApplicationNumber { get; set; }
         public DateTime? AcceptedDate { get; set; }
@@ -116,10 +122,13 @@ namespace TPApp.Entities
         public string? BrochureUrl { get; set; }
         public bool? ChungNhanISO { get; set; }
         public bool? ChungNhanQuatest { get; set; }
+        public bool? ChungNhanKhac { get; set; }
+        public string? ChungNhanKhacText { get; set; }
 
         // ── SanPhamTriTue dedicated fields ──
         public int? DevelopmentStageValue { get; set; }
         public string? InvestmentGoal { get; set; }
+        public string? InvestmentGoalKhac { get; set; }
 
         /// <summary>1 = CongNghe, 2 = ThietBi, 3 = SanPhamTriTue</summary>
         public int ProductType { get; set; } = 1;
