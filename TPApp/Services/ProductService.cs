@@ -29,43 +29,17 @@ namespace TPApp.Services
 
         public async Task<List<SanPhamCNTB>> GetProductsByCategoryAsync(int catId, int languageId, int take)
         {
-            var cateKey = $";{catId};";
-            return await _context.SanPhamCNTBs
-                .Where(x => x.LanguageId == languageId 
-                         && x.StatusId == 3 
-                         && x.CategoryId != null 
-                         && x.CategoryId.Contains(cateKey))
-                .OrderByDescending(x => x.Created)
-                .Take(take)
-                .ToListAsync();
-        }
-
-        public async Task<List<SanPhamCNTB>> GetProductsByCategoriesAsync(string categoryIds, int languageId, int take)
-        {
-             // Note: This logic mimics the original code's requirement to filter by multiple categories if needed
-             // For now, implementing simplistic containment check as per original Logic in RelatedProducts
-             
-            if (string.IsNullOrEmpty(categoryIds)) return new List<SanPhamCNTB>();
-
-            var cateIds = categoryIds.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            
-            // This query might be expensive on large datasets due to client-side evaluation or complex LIKEs
-            // Optimizing for simple containment matching
-            var query = _context.SanPhamCNTBs
-                .Where(x => x.LanguageId == languageId && x.StatusId == 3 && x.CategoryId != null);
-
-            // Dynamically build OR clause is complex in LINQ without PredicateBuilder. 
-            // Falling back to functional equivalent of original code logic: fetch candidates and filter in memory if complex, 
-            // or use specific EF Core capabilities. 
-            // Given the original code use AsEnumerable() in RelatedProducts, we will implement optimized database-side filtering if possible.
-            // For now, let's use the exact pattern from original efficient query if possible, or Keep it simple.
-            
-            // Replicating original "RelatedProducts" logic which fetches candidates then filters
-             return await query
-                .Where(x => cateIds.Any(c => x.CategoryId.Contains(";" + c + ";")))
-                .OrderByDescending(x => x.Created)
-                .Take(take)
-                .ToListAsync();
+            // Join with SanPhamCNTBCategory table instead of string parsing
+            return await (from p in _context.SanPhamCNTBs
+                          join c in _context.SanPhamCNTBCategories on p.ID equals c.SanPhamCNTBId
+                          where c.CatId == catId
+                                && p.LanguageId == languageId
+                                && p.StatusId == 3
+                          orderby p.Created descending
+                          select p)
+                          .Distinct()
+                          .Take(take)
+                          .ToListAsync();
         }
 
         public async Task<SanPhamCNTB?> GetProductByIdAsync(int id)
@@ -76,43 +50,49 @@ namespace TPApp.Services
 
         public async Task<List<SanPhamCNTB>> GetRelatedProductsAsync(int productId, int languageId, int take)
         {
-            var pp = await _context.SanPhamCNTBs.FirstOrDefaultAsync(x => x.ID == productId);
-            if (pp == null || string.IsNullOrWhiteSpace(pp.CategoryId)) return new List<SanPhamCNTB>();
+            // Get category IDs for current product from junction table
+            var catIds = await _context.SanPhamCNTBCategories
+                .Where(x => x.SanPhamCNTBId == productId)
+                .Select(x => x.CatId)
+                .ToListAsync();
 
-            var cateIds = pp.CategoryId.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            
-            // logic from original: fetch candidates then filter. 
-            // We can improve this in the future with Full Text Search or proper relationship tables.
-            var candidates = await _context.SanPhamCNTBs
-                .Where(x => x.LanguageId == languageId 
-                         && x.StatusId == 3 
-                         && x.ID != productId 
-                         && x.CategoryId != null)
-                .ToListAsync(); // Fetch eligible to memory to parse CategoryId string
+            if (!catIds.Any()) return new List<SanPhamCNTB>();
 
-            return candidates
-                .Where(x => cateIds.Any(c => x.CategoryId != null && x.CategoryId.Contains(";" + c + ";")))
-                .OrderByDescending(x => x.Created)
-                .Take(take)
-                .ToList();
+            // Find products in the same categories
+            return await (from p in _context.SanPhamCNTBs
+                          join c in _context.SanPhamCNTBCategories on p.ID equals c.SanPhamCNTBId
+                          where catIds.Contains(c.CatId)
+                                && p.LanguageId == languageId
+                                && p.StatusId == 3
+                                && p.ID != productId
+                          orderby p.Created descending
+                          select p)
+                          .Distinct()
+                          .Take(take)
+                          .ToListAsync();
         }
 
         public async Task<int> GetProductCountByCategoryAsync(int catId)
         {
-            string cateToken = $";{catId};";
-            return await _context.SanPhamCNTBs
-                .CountAsync(x => x.StatusId == 3 && x.CategoryId != null && x.CategoryId.Contains(cateToken));
+            return await (from p in _context.SanPhamCNTBs
+                          join c in _context.SanPhamCNTBCategories on p.ID equals c.SanPhamCNTBId
+                          where c.CatId == catId && p.StatusId == 3
+                          select p.ID)
+                          .Distinct()
+                          .CountAsync();
         }
 
         public async Task<List<SanPhamCNTB>> GetPagedProductsByCategoryAsync(int catId, int page, int pageSize)
         {
-            string cateToken = $";{catId};";
-            return await _context.SanPhamCNTBs
-                .Where(x => x.StatusId == 3 && x.CategoryId != null && x.CategoryId.Contains(cateToken))
-                .OrderByDescending(x => x.Created)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            return await (from p in _context.SanPhamCNTBs
+                          join c in _context.SanPhamCNTBCategories on p.ID equals c.SanPhamCNTBId
+                          where c.CatId == catId && p.StatusId == 3
+                          orderby p.Created descending
+                          select p)
+                          .Distinct()
+                          .Skip((page - 1) * pageSize)
+                          .Take(pageSize)
+                          .ToListAsync();
         }
     }
 }

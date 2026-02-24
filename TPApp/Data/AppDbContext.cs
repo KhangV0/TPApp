@@ -24,6 +24,7 @@ namespace TPApp.Data
         public DbSet<SubMenuIdDto> SubMenuIds { get; set; }
 
         public DbSet<SanPhamCNTB> SanPhamCNTBs { get; set; }
+        public DbSet<SanPhamCNTBCategory> SanPhamCNTBCategories { get; set; }
         public DbSet<Log> Logs { get; set; }
         public DbSet<Content> Contents { get; set; }
         public DbSet<ContentsYeuCau> ContentsYeuCaus { get; set; }

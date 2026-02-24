@@ -108,7 +108,7 @@ namespace TPApp.Controllers
             {
                 Product = product,
                 TypeId = product.TypeId ?? 0,
-                CategoryTitle = GetCategoryTitle(product.CategoryId),
+                CategoryTitle = GetCategoryTitle(id),
                 Industries = GetIndustries(),
                 Suppliers = GetSuppliers(),
                 Images = GetImages(id),
@@ -125,11 +125,14 @@ namespace TPApp.Controllers
         }
 
         //Helpers to be refactored into CommonService later
-        private string GetCategoryTitle(string categoryIds)
+        private string GetCategoryTitle(int productId)
         {
-            if (string.IsNullOrEmpty(categoryIds)) return "";
-            var ids = categoryIds.Split(";").Where(x => !string.IsNullOrEmpty(x)).Select(int.Parse).ToList();
-            return _context.Categories.Where(x => ids.Contains(x.CatId)).Select(x => x.Title).FirstOrDefault() ?? "";
+            var catId = _context.SanPhamCNTBCategories
+                .Where(x => x.SanPhamCNTBId == productId)
+                .Select(x => x.CatId)
+                .FirstOrDefault();
+            if (catId == 0) return "";
+            return _context.Categories.Where(x => x.CatId == catId).Select(x => x.Title).FirstOrDefault() ?? "";
         }
         private List<Category> GetIndustries() => _context.Categories.Where(x => x.ParentId == 1).OrderBy(x => x.Sort).ToList();
         private List<NhaCungUng> GetSuppliers() => _context.NhaCungUngs.OrderBy(x => x.FullName).ToList();
