@@ -1,0 +1,302 @@
+@model TPApp.Entities.SanPhamCNTB
+@{
+    var images = (dynamic)ViewBag.Images;
+    var linhVucItems = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>?)ViewBag.LinhVucList;
+    string devLevel = (Model.Rating ?? 0) switch {
+        7 => "Đã ứng dụng thử nghiệm (Pilot)",
+        8 => "Đã ứng dụng công nghiệp",
+        9 => "Đã thương mại hóa",
+        _ => "— Chưa xác định —"
+    };
+    string devBadge = (Model.Rating ?? 0) switch {
+        7 => "bg-warning",
+        8 => "bg-info",
+        9 => "bg-success",
+        _ => "bg-secondary"
+    };
+}
+
+<div class="card card-outline card-info shadow-sm">
+    <div class="card-header d-flex align-items-center">
+        <h3 class="card-title mb-0"><i class="fas fa-info-circle me-1"></i> @ViewData["Title"]</h3>
+        <div class="ms-auto">
+            <a asp-action="Edit" asp-route-id="@Model.ID" class="btn btn-sm btn-primary">
+                <i class="fas fa-pen-to-square me-1"></i> Sửa
+            </a>
+            <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Quay lại
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+
+        <!-- ═══════ TAB HEADERS ═══════ -->
+        <ul class="nav nav-tabs mb-3" id="detailTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dtab1" type="button">
+                    <i class="fas fa-id-card me-1"></i> I. Nhận diện thiết bị
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dtab2" type="button">
+                    <i class="fas fa-cogs me-1"></i> II. Thông số kỹ thuật
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dtab3" type="button">
+                    <i class="fas fa-star me-1"></i> III. Ưu điểm & Giá
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#dtab4" type="button">
+                    <i class="fas fa-building me-1"></i> IV. Nhà cung ứng
+                </button>
+            </li>
+        </ul>
+
+        <!-- ═══════ TAB CONTENT ═══════ -->
+        <div class="tab-content">
+
+            <!-- ──── TAB 1: Nhận diện thiết bị ──── -->
+            <div class="tab-pane fade show active" id="dtab1" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-1"></i> I. Thông tin nhận diện thiết bị</h6>
+
+                <!-- 1. Tên thiết bị -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <span class="small text-muted d-block">1. Tên thiết bị / máy móc</span>
+                        <strong class="fs-5">@(Model.Name ?? "—")</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="small text-muted d-block">Mã sản phẩm</span>
+                        <strong>@(Model.Code ?? "—")</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="small text-muted d-block">Loại sản phẩm</span>
+                        <span class="badge bg-primary">Thiết bị</span>
+                    </div>
+                </div>
+
+                <!-- 2. Ảnh đại diện -->
+                <div class="mb-3">
+                    <span class="small text-muted d-block mb-1">2. Ảnh đại diện thiết bị</span>
+                    @if (!string.IsNullOrWhiteSpace(Model.QuyTrinhHinhAnh))
+                    {
+                        <img src="@Model.QuyTrinhHinhAnh" class="img-fluid rounded border" style="max-height:200px;" />
+                    }
+                    else
+                    {
+                        <span class="text-muted">— Chưa có —</span>
+                    }
+                </div>
+
+                <!-- Gallery images -->
+                @if (((IEnumerable<dynamic>)images).Any())
+                {
+                    <div class="mb-3">
+                        <span class="small text-muted d-block mb-1">Thư viện hình ảnh</span>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (var img in (IEnumerable<dynamic>)images)
+                            {
+                                <img src="@img.FileURL" alt="@img.Title" class="rounded border" style="max-height:100px;" />
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- 3. Xuất xứ -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <span class="small text-muted d-block">3. Xuất xứ</span>
+                        <span>@(ViewBag.XuatXuName as string ?? "—")</span>
+                    </div>
+                </div>
+
+                <!-- 4. Lĩnh vực áp dụng (checkbox style giống Edit) -->
+                <div class="mb-3">
+                    <span class="small text-muted d-block mb-1">4. Lĩnh vực áp dụng</span>
+                    @{
+                        var currentCatIds = Model.CategoryId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                    }
+                    @if (linhVucItems != null && linhVucItems.Any(x => !string.IsNullOrEmpty(x.Value)))
+                    {
+                        <div class="row g-2">
+                            @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+                            {
+                                var isChecked = currentCatIds.Contains(item.Value);
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" disabled @(isChecked ? "checked" : "") />
+                                        <label class="form-check-label @(isChecked ? "fw-semibold text-primary" : "text-muted")">@item.Text</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="text-muted">— Chưa chọn —</span>
+                    }
+                </div>
+
+                <!-- 5. Mức độ phát triển -->
+                <div class="mb-3">
+                    <span class="small text-muted d-block">5. Mức độ phát triển</span>
+                    <span class="badge @devBadge fs-6 px-3 py-2">@devLevel</span>
+                </div>
+            </div>
+
+            <!-- ──── TAB 2: Thông số kỹ thuật & Vận hành ──── -->
+            <div class="tab-pane fade" id="dtab2" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-cogs me-1"></i> II. Thông số kỹ thuật & Vận hành</h6>
+
+                <!-- 6. Thông số kỹ thuật chính -->
+                @if (!string.IsNullOrWhiteSpace(Model.ThongSo))
+                {
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">6. Thông số kỹ thuật chính</label>
+                        <div class="border rounded p-3 bg-light">@Html.Raw(Model.ThongSo)</div>
+                    </div>
+                }
+
+                <!-- 7. Mô tả nguyên lý hoạt động -->
+                @if (!string.IsNullOrWhiteSpace(Model.MoTa))
+                {
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">7. Mô tả nguyên lý hoạt động</label>
+                        <div class="border rounded p-3 bg-light">@Html.Raw(Model.MoTa)</div>
+                    </div>
+                }
+
+                <!-- 8. Video vận hành -->
+                @if (!string.IsNullOrWhiteSpace(Model.URL))
+                {
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">8. Video vận hành</label>
+                        @if (Model.IsYoutube == true && Model.URL.Contains("youtube", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var videoId = "";
+                            if (Model.URL.Contains("v=")) { videoId = Model.URL.Split("v=")[1].Split('&')[0]; }
+                            else if (Model.URL.Contains("youtu.be/")) { videoId = Model.URL.Split("youtu.be/")[1].Split('?')[0]; }
+
+                            if (!string.IsNullOrEmpty(videoId))
+                            {
+                                <div class="ratio ratio-16x9" style="max-width:640px;">
+                                    <iframe src="https://www.youtube.com/embed/@videoId" allowfullscreen></iframe>
+                                </div>
+                            }
+                            else
+                            {
+                                <a href="@Model.URL" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    <i class="fab fa-youtube me-1"></i> Xem video
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <a href="@Model.URL" target="_blank" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-video me-1"></i> Xem video
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- ──── TAB 3: Ưu điểm & Giá bán ──── -->
+            <div class="tab-pane fade" id="dtab3" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-star me-1"></i> III. Ưu điểm và Giá bán</h6>
+
+                <!-- 9. Ưu điểm -->
+                @if (!string.IsNullOrWhiteSpace(Model.UuDiem))
+                {
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">9. Ưu điểm nổi bật</label>
+                        <div class="border rounded p-3 bg-light">@Html.Raw(Model.UuDiem)</div>
+                    </div>
+                }
+
+                <!-- 10. Giá tham khảo -->
+                @if (!string.IsNullOrWhiteSpace(Model.GiaBanDuKien))
+                {
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">10. Giá tham khảo</label>
+                        <div class="border rounded p-3 bg-light">@Html.Raw(Model.GiaBanDuKien)</div>
+                    </div>
+                }
+
+                <!-- 11. Bảo hành & Hỗ trợ -->
+                @if (!string.IsNullOrWhiteSpace(Model.BaoHanhHoTro))
+                {
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">11. Chế độ bảo hành & Hỗ trợ kỹ thuật</label>
+                        <div class="border rounded p-3 bg-light">@Html.Raw(Model.BaoHanhHoTro)</div>
+                    </div>
+                }
+            </div>
+
+            <!-- ──── TAB 4: Nhà cung ứng ──── -->
+            <div class="tab-pane fade" id="dtab4" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-building me-1"></i> IV. Thông tin nhà cung ứng</h6>
+
+                @{
+                    var ncu = ViewBag.NhaCungUng as dynamic;
+                }
+                @if (ncu != null)
+                {
+                    <div class="border rounded p-3 bg-light">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <span class="small text-muted d-block">12. Tên đơn vị sở hữu / cung ứng</span>
+                                <strong class="fs-5">@ncu.FullName</strong>
+                            </div>
+                            <div class="col-md-12">
+                                <span class="small text-muted d-block">Địa chỉ</span>
+                                <span>@(ncu.DiaChi ?? "—")</span>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="small text-muted d-block">Người đại diện</span>
+                                <span>@(ncu.NguoiDaiDien ?? "—")</span>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="small text-muted d-block">Chức vụ</span>
+                                <span>@(ncu.ChucVu ?? "—")</span>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="small text-muted d-block">Điện thoại</span>
+                                <span>@(ncu.Phone ?? "—")</span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="small text-muted d-block">Email</span>
+                                <span>@(ncu.Email ?? "—")</span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="small text-muted d-block">Website</span>
+                                <span>@(ncu.Website ?? "—")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">— Chưa chọn nhà cung ứng —</p>
+                }
+            </div>
+
+        </div>
+
+        <!-- ═══════ FOOTER META ═══════ -->
+        <hr />
+        <div class="row g-3 small text-muted">
+            <div class="col-md-4">
+                <i class="fas fa-calendar-plus me-1"></i> Tạo: @(Model.Created?.ToString("dd/MM/yyyy HH:mm") ?? "—") bởi @(Model.Creator ?? "—")
+            </div>
+            <div class="col-md-4">
+                <i class="fas fa-calendar-pen me-1"></i> Sửa: @(Model.Modified?.ToString("dd/MM/yyyy HH:mm") ?? "—") bởi @(Model.Modifier ?? "—")
+            </div>
+            <div class="col-md-4">
+                <i class="fas fa-eye me-1"></i> Lượt xem: @(Model.Viewed ?? 0)
+            </div>
+        </div>
+
+    </div>
+</div>

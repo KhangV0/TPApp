@@ -1,0 +1,504 @@
+@model TPApp.Areas.Cms.Controllers.SanPhamCNTBFormVm
+@{
+    ViewData["Title"] = ViewData["Title"] ?? "Thêm thiết bị";
+    var linhVucItems = (List<SelectListItem>)ViewBag.LinhVucList;
+}
+
+<style>
+    .ck-editor__editable { min-height: 300px !important; }
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-plus-circle me-1"></i> @ViewData["Title"]</h3>
+    </div>
+    <form asp-action="Create" method="post" id="frmCNTB">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ProductType" id="hdnProductType" />
+        <input type="hidden" asp-for="Code" />
+        <input type="hidden" asp-for="StatusId" />
+        <input type="hidden" asp-for="SiteId" />
+
+        <div class="card-body">
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-1"></i> Vui lòng kiểm tra lại thông tin bên dưới.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- ═══════════════════════════════════════ -->
+            <!-- NAV TABS                                -->
+            <!-- ═══════════════════════════════════════ -->
+            <ul class="nav nav-tabs mb-0" id="cntbTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab"
+                            data-bs-target="#tab1" type="button" role="tab">
+                        <i class="fas fa-id-card me-1"></i> I. Nhận diện thiết bị
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab2-tab" data-bs-toggle="tab"
+                            data-bs-target="#tab2" type="button" role="tab">
+                        <i class="fas fa-cogs me-1"></i> II. Thông số kỹ thuật
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab3-tab" data-bs-toggle="tab"
+                            data-bs-target="#tab3" type="button" role="tab">
+                        <i class="fas fa-star me-1"></i> III. Ưu điểm & Giá
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab4-tab" data-bs-toggle="tab"
+                            data-bs-target="#tab4" type="button" role="tab">
+                        <i class="fas fa-building me-1"></i> IV. Nhà cung ứng
+                    </button>
+                </li>
+            </ul>
+
+            <!-- ═══════════════════════════════════════ -->
+            <!-- TAB CONTENT                             -->
+            <!-- ═══════════════════════════════════════ -->
+            <div class="tab-content border border-top-0 rounded-bottom p-4" id="cntbTabContent">
+
+                <!-- ──────────────────────────────────────── -->
+                <!-- TAB 1 — I. THÔNG TIN NHẬN DIỆN THIẾT BỊ -->
+                <!-- ──────────────────────────────────────── -->
+                <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-1"></i> I. Thông tin nhận diện thiết bị</h6>
+
+                    <!-- 1. Tên thiết bị/máy móc -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">1. Tên thiết bị / máy móc <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" placeholder="Nhập tên thiết bị..." />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <!-- 2. Ảnh đại diện thiết bị -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">2. Ảnh đại diện thiết bị</label>
+                        <small class="text-muted d-block mb-2">(Đính kèm 01 ảnh chụp thực tế chất lượng cao, thể hiện rõ kiểu dáng và quy mô)</small>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-8">
+                                <input asp-for="QuyTrinhHinhAnh" class="form-control" id="txtImageUrl" placeholder="URL ảnh đại diện..." />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="btn btn-outline-primary w-100" id="btnUploadImage">
+                                    <i class="fas fa-upload me-1"></i> Upload
+                                    <input type="file" accept="image/*" id="fileUploadImage" class="d-none" />
+                                </label>
+                            </div>
+                            <div class="col-md-2">
+                                <div id="imgPreview" class="border rounded text-center p-1" style="min-height:80px; background:#f8f9fa;">
+                                    @if (!string.IsNullOrEmpty(Model.QuyTrinhHinhAnh))
+                                    {
+                                        <img src="@Model.QuyTrinhHinhAnh" class="img-fluid rounded" style="max-height:80px;" />
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted"><i class="fas fa-image"></i> Preview</small>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Xuất xứ -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">3. Xuất xứ</label>
+                        <select asp-for="XuatXuId" class="form-select" id="selXuatXu" asp-items="@((List<SelectListItem>)ViewBag.XuatXuList)">
+                            <option value="">-- Chọn --</option>
+                        </select>
+                    </div>
+
+                    <!-- 4. Lĩnh vực áp dụng -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">4. Lĩnh vực áp dụng</label>
+                        <input type="hidden" asp-for="CategoryId" id="hdnCategoryId" />
+                        <div class="row g-2">
+                            @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+                            {
+                                var currentCats = Model.CategoryId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                                var chk = currentCats.Contains(item.Value) ? "checked" : "";
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input chk-linhvuc" type="checkbox"
+                                               value="@item.Value" id="cat_@item.Value" @chk />
+                                        <label class="form-check-label" for="cat_@item.Value">@item.Text</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- 5. Mức độ phát triển -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">5. Mức độ phát triển <span class="text-danger">*</span></label>
+                        <span asp-validation-for="Rating" class="text-danger small d-block mb-2"></span>
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="Rating" id="dev1" value="7"
+                                       @(Model.Rating == 7 ? "checked" : "") />
+                                <label class="btn btn-outline-warning" for="dev1"><i class="fas fa-flask me-1"></i> Đã ứng dụng thử nghiệm (Pilot)</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="Rating" id="dev2" value="8"
+                                       @(Model.Rating == 8 ? "checked" : "") />
+                                <label class="btn btn-outline-info" for="dev2"><i class="fas fa-industry me-1"></i> Đã ứng dụng công nghiệp</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="Rating" id="dev3" value="9"
+                                       @(Model.Rating == 9 ? "checked" : "") />
+                                <label class="btn btn-outline-success" for="dev3"><i class="fas fa-shopping-cart me-1"></i> Đã thương mại hóa</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-primary btn-next-tab">
+                            Tiếp theo <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ──────────────────────────────────────── -->
+                <!-- TAB 2 — II. THÔNG SỐ KỸ THUẬT & VẬN HÀNH -->
+                <!-- ──────────────────────────────────────── -->
+                <div class="tab-pane fade" id="tab2" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-cogs me-1"></i> II. Thông số kỹ thuật & Vận hành</h6>
+
+                    <!-- 6. Thông số kỹ thuật chính -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">6. Thông số kỹ thuật chính</label>
+                        <textarea asp-for="ThongSo" id="editorThongSo" class="form-control ck-editor-field-tab2" rows="20"></textarea>
+                    </div>
+
+                    <!-- 7. Mô tả nguyên lý hoạt động -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">7. Mô tả nguyên lý hoạt động</label>
+                        <textarea asp-for="MoTa" id="editorNguyenLy" class="form-control ck-editor-field-tab2" rows="20"></textarea>
+                    </div>
+
+                    <!-- 8. Video vận hành -->
+                    <div class="border rounded p-3 bg-light mb-3">
+                        <h6 class="fw-semibold mb-2"><i class="fas fa-video me-1 text-primary"></i> 8. Video vận hành (nếu có)</h6>
+                        <div class="mb-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input media-toggle" type="radio" name="videoSource" id="videoUpload" value="upload" />
+                                <label class="form-check-label" for="videoUpload">Upload file</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input media-toggle" type="radio" name="videoSource" id="videoYoutube" value="youtube" checked />
+                                <label class="form-check-label" for="videoYoutube">YouTube URL</label>
+                            </div>
+                        </div>
+                        <div id="videoUrlBox">
+                            <input asp-for="URL" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
+                        </div>
+                        <div id="videoUploadBox" style="display:none">
+                            <input type="file" class="form-control" id="fileVideo" accept="video/*" />
+                            <small class="text-muted">Sau khi upload, URL sẽ được tự động lưu.</small>
+                        </div>
+                        <input type="hidden" asp-for="IsYoutube" />
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary btn-prev-tab">
+                            <i class="fas fa-arrow-left me-1"></i> Quay lại
+                        </button>
+                        <button type="button" class="btn btn-primary btn-next-tab">
+                            Tiếp theo <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ──────────────────────────────────────── -->
+                <!-- TAB 3 — III. ƯU ĐIỂM VÀ GIÁ BÁN        -->
+                <!-- ──────────────────────────────────────── -->
+                <div class="tab-pane fade" id="tab3" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-star me-1"></i> III. Ưu điểm và Giá bán</h6>
+
+                    <!-- 9. Ưu điểm -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">9. Ưu điểm nổi bật</label>
+                        <textarea asp-for="UuDiem" id="editorUuDiem" class="form-control ck-editor-field-tab3" rows="20"></textarea>
+                    </div>
+
+                    <!-- 10. Giá tham khảo -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">10. Giá tham khảo</label>
+                        <textarea asp-for="GiaBanDuKien" id="editorGiaBan" class="form-control ck-editor-field-tab3" rows="20"></textarea>
+                    </div>
+
+                    <!-- 11. Bảo hành & Hỗ trợ -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">11. Chế độ bảo hành & Hỗ trợ kỹ thuật</label>
+                        <textarea asp-for="BaoHanhHoTro" id="editorBaoHanh" class="form-control ck-editor-field-tab3" rows="20"></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary btn-prev-tab">
+                            <i class="fas fa-arrow-left me-1"></i> Quay lại
+                        </button>
+                        <button type="button" class="btn btn-primary btn-next-tab">
+                            Tiếp theo <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ──────────────────────────────────────── -->
+                <!-- TAB 4 — IV. THÔNG TIN NHÀ CUNG ỨNG      -->
+                <!-- ──────────────────────────────────────── -->
+                <div class="tab-pane fade" id="tab4" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-building me-1"></i> IV. Thông tin nhà cung ứng</h6>
+
+                    <!-- 12. Tên đơn vị sở hữu/cung ứng -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">12. Tên đơn vị sở hữu / cung ứng</label>
+                            <select asp-for="NCUId" class="form-select" asp-items="@((List<SelectListItem>)ViewBag.NhaCungUngList)">
+                                <option value="">-- Chọn nhà cung ứng --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 13. Thông tin liên hệ nhanh -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">13. Thông tin liên hệ nhanh
+                            <span class="badge bg-info text-dark ms-1"><i class="fas fa-info-circle"></i> Tự động điền từ NCC</span>
+                        </label>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Địa chỉ</label>
+                            <input id="ncuDiaChi" class="form-control bg-light" readonly />
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Người đại diện</label>
+                            <input id="ncuNguoiDaiDien" class="form-control bg-light" readonly />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Chức vụ</label>
+                            <input id="ncuChucVu" class="form-control bg-light" readonly />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Điện thoại</label>
+                            <input id="ncuPhone" class="form-control bg-light" readonly />
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input id="ncuEmail" class="form-control bg-light" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Website</label>
+                            <input id="ncuWebsite" class="form-control bg-light" readonly />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-start mt-4">
+                        <button type="button" class="btn btn-outline-secondary btn-prev-tab">
+                            <i class="fas fa-arrow-left me-1"></i> Quay lại
+                        </button>
+                    </div>
+                </div>
+
+            </div><!-- /tab-content -->
+
+        </div><!-- /card-body -->
+
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save me-1"></i> Lưu thiết bị
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+$(function(){
+
+    // Select2 searchable dropdown for NhaCungUng
+    $('#NCUId').select2({
+        theme: 'bootstrap-5',
+        placeholder: '-- Tìm và chọn nhà cung ứng --',
+        allowClear: true,
+        width: '100%'
+    }).on('change', function(){ loadNhaCungUng($(this).val()); });
+
+    // Select2 for Xuất xứ
+    $('#selXuatXu').select2({ theme: 'bootstrap-5', placeholder: '-- Tìm xuất xứ --', allowClear: true, width: '100%' });
+
+    // Image upload for Ảnh đại diện
+    $('#fileUploadImage').on('change', function(){
+        var file = this.files[0];
+        if (!file) return;
+        var fd = new FormData();
+        fd.append('upload', file);
+        $.ajax({
+            url: '/cms/Upload/UploadImage',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if (res && res.url) {
+                    $('#txtImageUrl').val(res.url);
+                    $('#imgPreview').html('<img src="' + res.url + '" class="img-fluid rounded" style="max-height:80px;" />');
+                } else if (res && res.error) {
+                    alert(res.error.message);
+                }
+            },
+            error: function(){ alert('Upload thất bại!'); }
+        });
+    });
+
+    // ═══════════════════════════════════════
+    // Tab navigation — Next / Previous
+    // ═══════════════════════════════════════
+    var $tabs = $('#cntbTabs button[data-bs-toggle="tab"]');
+
+    function getActiveIndex() {
+        return $tabs.index($tabs.filter('.active'));
+    }
+
+    $(document).on('click', '.btn-next-tab', function(){
+        var idx = getActiveIndex();
+        if (idx < $tabs.length - 1) {
+            new bootstrap.Tab($tabs[idx + 1]).show();
+        }
+    });
+
+    $(document).on('click', '.btn-prev-tab', function(){
+        var idx = getActiveIndex();
+        if (idx > 0) {
+            new bootstrap.Tab($tabs[idx - 1]).show();
+        }
+    });
+
+    // ═══════════════════════════════════════
+    // CKEditor 5 — lazy init for Tab 2 fields
+    // ═══════════════════════════════════════
+    var ckInstances = {};
+    var ckConfig = {
+        simpleUpload: { uploadUrl: '/cms/Upload/Upload', withCredentials: true },
+        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList',
+                  '|', 'imageUpload', 'blockQuote', 'insertTable', 'undo', 'redo']
+    };
+
+    $('button[data-bs-target="#tab2"]').on('shown.bs.tab', function(){
+        document.querySelectorAll('.ck-editor-field-tab2').forEach(function(el){
+            if (ckInstances[el.id]) return;
+            ClassicEditor.create(el, ckConfig).then(function(editor){
+                ckInstances[el.id] = editor;
+            }).catch(function(err){ console.error(err); });
+        });
+    });
+
+    // CKEditor 5 — lazy init for Tab 3 fields
+    $('button[data-bs-target="#tab3"]').on('shown.bs.tab', function(){
+        document.querySelectorAll('.ck-editor-field-tab3').forEach(function(el){
+            if (ckInstances[el.id]) return;
+            ClassicEditor.create(el, ckConfig).then(function(editor){
+                ckInstances[el.id] = editor;
+            }).catch(function(err){ console.error(err); });
+        });
+    });
+
+    // Sync CKEditor data back to textareas before submit
+    $('#frmCNTB').on('submit', function(){
+        Object.keys(ckInstances).forEach(function(id){
+            document.getElementById(id).value = ckInstances[id].getData();
+        });
+    });
+
+    // ═══════════════════════════════════════
+    // Category checkbox → hidden field sync
+    // ═══════════════════════════════════════
+    function syncCategoryCheckboxes() {
+        var vals = [];
+        $('.chk-linhvuc:checked').each(function(){ vals.push($(this).val()); });
+        $('#hdnCategoryId').val(vals.join(','));
+    }
+    $(document).on('change', '.chk-linhvuc', syncCategoryCheckboxes);
+    syncCategoryCheckboxes();
+
+    // ═══════════════════════════════════════
+    // Video upload / URL toggle
+    // ═══════════════════════════════════════
+    $('input[name="videoSource"]').on('change', function(){
+        if ($(this).val() === 'upload') {
+            $('#videoUploadBox').show();
+            $('#videoUrlBox').hide();
+            $('#IsYoutube').val('false');
+        } else {
+            $('#videoUploadBox').hide();
+            $('#videoUrlBox').show();
+            $('#IsYoutube').val('true');
+        }
+    });
+
+    // AJAX file upload helper
+    function uploadMediaFile(fileInput, targetField) {
+        var file = fileInput.files[0];
+        if (!file) return;
+        var fd = new FormData();
+        fd.append('upload', file);
+        $.ajax({
+            url: '/cms/Upload/Upload',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if (res && res.url) {
+                    $(targetField).val(res.url);
+                    alert('Upload thành công!');
+                }
+            },
+            error: function() { alert('Upload thất bại. Vui lòng thử lại.'); }
+        });
+    }
+
+    // Video file upload → save URL to #URL
+    $('#fileVideo').on('change', function(){ uploadMediaFile(this, '#URL'); });
+
+    // ═══════════════════════════════════════
+    // Auto-fill NhaCungUng contact info
+    // ═══════════════════════════════════════
+    function loadNhaCungUng(id) {
+        if (!id) {
+            $('#ncuDiaChi, #ncuNguoiDaiDien, #ncuChucVu, #ncuPhone, #ncuEmail, #ncuWebsite').val('');
+            return;
+        }
+        $.getJSON('/cms/SanPhamCNTB/GetNhaCungUng/' + id, function(d){
+            $('#ncuDiaChi').val(d.diaChi || '');
+            $('#ncuNguoiDaiDien').val(d.nguoiDaiDien || '');
+            $('#ncuChucVu').val(d.chucVu || '');
+            $('#ncuPhone').val(d.phone || '');
+            $('#ncuEmail').val(d.email || '');
+            $('#ncuWebsite').val(d.website || '');
+        });
+    }
+
+    // Load on page init if value set
+    var initNcu = $('#NCUId').val();
+    if (initNcu) loadNhaCungUng(initNcu);
+
+});
+</script>
+}

@@ -40,7 +40,7 @@
                 </th>
                 @if (productType == 3)
                 {
-                    <th class="text-uppercase small fw-bold d-none d-md-table-cell">Số bằng</th>
+                    <th class="text-uppercase small fw-bold d-none d-md-table-cell">Nhà cung ứng</th>
                 }
                 <th class="sortable text-uppercase small fw-bold text-center" data-sort="status" role="button">
                     Trạng thái @Html.Raw(SortIcon("status", sortBy, sortDir))
@@ -139,7 +139,7 @@
                     </td>
                     @if (productType == 3)
                     {
-                        <td class="d-none d-md-table-cell small">@(p.SoBang ?? "—")</td>
+                        <td class="d-none d-md-table-cell small">@(p.NhaCungUngName ?? "—")</td>
                     }
                     <td class="text-center">
                         @{

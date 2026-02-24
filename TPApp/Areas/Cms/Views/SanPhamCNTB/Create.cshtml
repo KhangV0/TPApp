@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = ViewData["Title"] ?? "Thêm sản phẩm CNTB";
     var linhVucItems = (List<SelectListItem>)ViewBag.LinhVucList;
+    var isThietBi = Model.ProductType == 2;
 }
 
 <style>
@@ -31,15 +32,15 @@
             <!-- ═══════════════════════════════════════ -->
             <ul class="nav nav-tabs mb-0" id="cntbTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab"
+                    <button class="nav-link @(!isThietBi ? "active" : "")" id="tab1-tab" data-bs-toggle="tab"
                             data-bs-target="#tab1" type="button" role="tab">
-                        <i class="fas fa-building me-1"></i> I. Chủ sở hữu
+                        <i class="fas fa-building me-1"></i> @(!isThietBi ? "I" : "II"). Chủ sở hữu
                     </button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab2-tab" data-bs-toggle="tab"
+                <li class="nav-item @(isThietBi ? "order-first" : "")" role="presentation">
+                    <button class="nav-link @(isThietBi ? "active" : "")" id="tab2-tab" data-bs-toggle="tab"
                             data-bs-target="#tab2" type="button" role="tab">
-                        <i class="fas fa-id-card me-1"></i> II. Định danh
+                        <i class="fas fa-id-card me-1"></i> @(isThietBi ? "I. Nhận diện thiết bị" : "II. Định danh")
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -82,7 +83,7 @@
                 <!-- ──────────────────────────────────────── -->
                 <!-- TAB 1 — I. THÔNG TIN CHỦ SỞ HỮU         -->
                 <!-- ──────────────────────────────────────── -->
-                <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                <div class="tab-pane fade @(!isThietBi ? "show active" : "")" id="tab1" role="tabpanel">
                     <h6 class="fw-bold text-primary mb-3"><i class="fas fa-building me-1"></i> I. Thông tin chủ sở hữu (Nhà cung ứng)</h6>
 
                     <div class="row g-3 mb-3">
@@ -168,8 +169,8 @@
                 <!-- ──────────────────────────────────────── -->
                 <!-- TAB 2 — II. THÔNG TIN ĐỊNH DANH          -->
                 <!-- ──────────────────────────────────────── -->
-                <div class="tab-pane fade" id="tab2" role="tabpanel">
-                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-1"></i> II. Thông tin định danh</h6>
+                <div class="tab-pane fade @(isThietBi ? "show active" : "")" id="tab2" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-1"></i> @(isThietBi ? "I. Thông tin nhận diện thiết bị" : "II. Thông tin định danh")</h6>
 
                     <!-- Tên công nghệ / quy trình -->
                     <div class="mb-3">

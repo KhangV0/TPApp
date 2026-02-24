@@ -1,8 +1,7 @@
 @model TPApp.Areas.Cms.Controllers.SanPhamCNTBFormVm
 @{
-    ViewData["Title"] = ViewData["Title"] ?? "Sửa sản phẩm CNTB";
+    ViewData["Title"] = ViewData["Title"] ?? "Thêm công nghệ";
     var linhVucItems = (List<SelectListItem>)ViewBag.LinhVucList;
-    var isThietBi = Model.ProductType == 2;
 }
 
 <style>
@@ -11,12 +10,14 @@
 
 <div class="card card-outline card-primary shadow-sm">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-pen-to-square me-1"></i> @ViewData["Title"]</h3>
+        <h3 class="card-title"><i class="fas fa-plus-circle me-1"></i> @ViewData["Title"]</h3>
     </div>
-    <form asp-action="Edit" method="post" id="frmCNTB">
+    <form asp-action="Create" method="post" id="frmCNTB">
         @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="ID" />
         <input type="hidden" asp-for="ProductType" id="hdnProductType" />
+        <input type="hidden" asp-for="Code" />
+        <input type="hidden" asp-for="StatusId" />
+        <input type="hidden" asp-for="SiteId" />
 
         <div class="card-body">
 
@@ -33,15 +34,15 @@
             <!-- ═══════════════════════════════════════ -->
             <ul class="nav nav-tabs mb-0" id="cntbTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link @(!isThietBi ? "active" : "")" id="tab1-tab" data-bs-toggle="tab"
+                    <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab"
                             data-bs-target="#tab1" type="button" role="tab">
-                        <i class="fas fa-building me-1"></i> @(!isThietBi ? "I" : "II"). Chủ sở hữu
+                        <i class="fas fa-building me-1"></i> I. Chủ sở hữu
                     </button>
                 </li>
-                <li class="nav-item @(isThietBi ? "order-first" : "")" role="presentation">
-                    <button class="nav-link @(isThietBi ? "active" : "")" id="tab2-tab" data-bs-toggle="tab"
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab2-tab" data-bs-toggle="tab"
                             data-bs-target="#tab2" type="button" role="tab">
-                        <i class="fas fa-id-card me-1"></i> @(isThietBi ? "I. Nhận diện thiết bị" : "II. Định danh")
+                        <i class="fas fa-id-card me-1"></i> II. Định danh
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -84,7 +85,7 @@
                 <!-- ──────────────────────────────────────── -->
                 <!-- TAB 1 — I. THÔNG TIN CHỦ SỞ HỮU         -->
                 <!-- ──────────────────────────────────────── -->
-                <div class="tab-pane fade @(!isThietBi ? "show active" : "")" id="tab1" role="tabpanel">
+                <div class="tab-pane fade show active" id="tab1" role="tabpanel">
                     <h6 class="fw-bold text-primary mb-3"><i class="fas fa-building me-1"></i> I. Thông tin chủ sở hữu (Nhà cung ứng)</h6>
 
                     <div class="row g-3 mb-3">
@@ -170,13 +171,13 @@
                 <!-- ──────────────────────────────────────── -->
                 <!-- TAB 2 — II. THÔNG TIN ĐỊNH DANH          -->
                 <!-- ──────────────────────────────────────── -->
-                <div class="tab-pane fade @(isThietBi ? "show active" : "")" id="tab2" role="tabpanel">
-                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-1"></i> @(isThietBi ? "I. Thông tin nhận diện thiết bị" : "II. Thông tin định danh")</h6>
+                <div class="tab-pane fade" id="tab2" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-1"></i> II. Thông tin định danh</h6>
 
                     <!-- Tên công nghệ / quy trình -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold">4. Tên công nghệ / quy trình <span class="text-danger">*</span></label>
-                        <input asp-for="Name" class="form-control" />
+                        <input asp-for="Name" class="form-control" placeholder="Nhập tên công nghệ..." />
                         <span asp-validation-for="Name" class="text-danger small"></span>
                     </div>
 
@@ -185,7 +186,7 @@
                         <label class="form-label fw-semibold">5. Ảnh đại diện tiêu biểu</label>
                         <div class="row g-3 align-items-end">
                             <div class="col-md-8">
-                                <input asp-for="QuyTrinhHinhAnh" class="form-control" id="txtImageUrl" />
+                                <input asp-for="QuyTrinhHinhAnh" class="form-control" id="txtImageUrl" placeholder="URL ảnh đại diện..." />
                             </div>
                             <div class="col-md-2">
                                 <label class="btn btn-outline-primary w-100" id="btnUploadImage">
@@ -222,7 +223,7 @@
                         <div class="row g-3 mb-2">
                             <div class="col-md-6">
                                 <label class="form-label">Bằng sáng chế số</label>
-                                <input asp-for="SoBang" class="form-control" />
+                                <input asp-for="SoBang" class="form-control" placeholder="VD: VN1-0001234" />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Ngày cấp bằng sáng chế</label>
@@ -231,11 +232,11 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Giấy CN Đăng ký Quyền tác giả (phần mềm) số</label>
-                            <input asp-for="ApplicationNumber" class="form-control" />
+                            <input asp-for="ApplicationNumber" class="form-control" placeholder="Số giấy chứng nhận..." />
                         </div>
                         <div>
                             <label class="form-label">Bí mật công nghệ</label>
-                            <input asp-for="CoQuanChuTri" class="form-control" />
+                            <input asp-for="CoQuanChuTri" class="form-control" placeholder="Mô tả bí mật công nghệ..." />
                         </div>
                     </div>
 
@@ -468,13 +469,13 @@
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="chkISO" name="ChungNhanISO" value="true" />
+                                    <input asp-for="ChungNhanISO" class="form-check-input" type="checkbox" id="chkISO" />
                                     <label class="form-check-label" for="chkISO">ISO / CE / HACCP</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="chkQuatest" name="ChungNhanQuatest" value="true" />
+                                    <input asp-for="ChungNhanQuatest" class="form-check-input" type="checkbox" id="chkQuatest" />
                                     <label class="form-check-label" for="chkQuatest">Phiếu kết quả kiểm nghiệm (Quatest)</label>
                                 </div>
                             </div>
@@ -547,7 +548,7 @@
                 <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
             </a>
             <button type="submit" class="btn btn-primary btn-lg">
-                <i class="fas fa-save me-1"></i> Cập nhật sản phẩm
+                <i class="fas fa-save me-1"></i> Lưu sản phẩm
             </button>
         </div>
     </form>
@@ -697,6 +698,7 @@ $(function(){
     // ═══════════════════════════════════════
     // Media upload / URL toggle (Tab 7, field 18)
     // ═══════════════════════════════════════
+    // Video: toggle upload vs YouTube URL
     $('input[name="videoSource"]').on('change', function(){
         if ($(this).val() === 'upload') {
             $('#videoUploadBox').show();
@@ -709,6 +711,7 @@ $(function(){
         }
     });
 
+    // Brochure: toggle upload vs URL
     $('input[name="brochureSource"]').on('change', function(){
         if ($(this).val() === 'upload') {
             $('#brochureUploadBox').show();
@@ -719,6 +722,7 @@ $(function(){
         }
     });
 
+    // AJAX file upload helper
     function uploadMediaFile(fileInput, targetField) {
         var file = fileInput.files[0];
         if (!file) return;
@@ -740,8 +744,11 @@ $(function(){
         });
     }
 
+    // Video file upload → save URL to #URL
     $('#fileVideo').on('change', function(){ uploadMediaFile(this, '#URL'); });
-    $('#fileBrochure').on('change', function(){ uploadMediaFile(this, '#Keywords'); });
+
+    // Brochure file upload → save URL to #Keywords
+    $('#fileBrochure').on('change', function(){ uploadMediaFile(this, '#BrochureUrl'); });
 
     // Image upload for QuyTrinhHinhAnh → resize 1200px, keep original name
     $('#fileUploadImage').on('change', function(){
@@ -785,7 +792,7 @@ $(function(){
         });
     }
 
-    // Load on page init for Edit
+    // Load on page init if value set
     var initNcu = $('#NCUId').val();
     if (initNcu) loadNhaCungUng(initNcu);
 

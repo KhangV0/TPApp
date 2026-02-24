@@ -1,0 +1,511 @@
+@model TPApp.Areas.Cms.Controllers.SanPhamCNTBFormVm
+@{
+    ViewData["Title"] = ViewData["Title"] ?? "Thêm sản phẩm trí tuệ";
+    var linhVucItems = (List<SelectListItem>)ViewBag.LinhVucList;
+}
+
+<style>
+    .ck-editor__editable { min-height: 300px !important; }
+</style>
+
+<div class="card card-outline card-primary shadow-sm">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-plus-circle me-1"></i> @ViewData["Title"]</h3>
+    </div>
+    <form asp-action="Create" method="post" id="frmCNTB">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ProductType" id="hdnProductType" />
+        <input type="hidden" asp-for="Code" />
+        <input type="hidden" asp-for="StatusId" />
+        <input type="hidden" asp-for="SiteId" />
+
+        <div class="card-body">
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-1"></i> Vui lòng kiểm tra lại thông tin bên dưới.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- ═══════════════════════════════════════ -->
+            <!-- NAV TABS                                -->
+            <!-- ═══════════════════════════════════════ -->
+            <ul class="nav nav-tabs mb-0" id="cntbTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab1-tab" data-bs-toggle="tab"
+                            data-bs-target="#tab1" type="button" role="tab">
+                        <i class="fas fa-building me-1"></i> I. Chủ sở hữu
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab2-tab" data-bs-toggle="tab"
+                            data-bs-target="#tab2" type="button" role="tab">
+                        <i class="fas fa-id-card me-1"></i> II. Phân loại & Định danh
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab3-tab" data-bs-toggle="tab"
+                            data-bs-target="#tab3" type="button" role="tab">
+                        <i class="fas fa-file-lines me-1"></i> III. Mô tả
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab4-tab" data-bs-toggle="tab"
+                            data-bs-target="#tab4" type="button" role="tab">
+                        <i class="fas fa-bullseye me-1"></i> IV. Mục tiêu kêu gọi
+                    </button>
+                </li>
+            </ul>
+
+            <!-- ═══════════════════════════════════════ -->
+            <!-- TAB CONTENT                             -->
+            <!-- ═══════════════════════════════════════ -->
+            <div class="tab-content border border-top-0 rounded-bottom p-4" id="cntbTabContent">
+
+                <!-- ──────────────────────────────────────── -->
+                <!-- TAB 1 — I. THÔNG TIN CHỦ SỞ HỮU         -->
+                <!-- ──────────────────────────────────────── -->
+                <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-building me-1"></i> I. Thông tin chủ sở hữu</h6>
+
+                    <!-- 1. Tên đơn vị/Cá nhân -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">1. Tên đơn vị / Cá nhân chủ sở hữu</label>
+                            <select asp-for="NCUId" class="form-select" asp-items="@((List<SelectListItem>)ViewBag.NhaCungUngList)">
+                                <option value="">-- Chọn nhà cung ứng --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. Thông tin liên hệ (auto-filled from NhaCungUng) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">2. Thông tin liên hệ
+                            <span class="badge bg-info text-dark ms-1"><i class="fas fa-info-circle"></i> Tự động điền từ NCC</span>
+                        </label>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Địa chỉ</label>
+                            <input id="ncuDiaChi" class="form-control bg-light" readonly />
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Người đại diện</label>
+                            <input id="ncuNguoiDaiDien" class="form-control bg-light" readonly />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Điện thoại</label>
+                            <input id="ncuPhone" class="form-control bg-light" readonly />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            <input id="ncuEmail" class="form-control bg-light" readonly />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-primary btn-next-tab">
+                            Tiếp theo <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ──────────────────────────────────────── -->
+                <!-- TAB 2 — II. PHÂN LOẠI & ĐỊNH DANH        -->
+                <!-- ──────────────────────────────────────── -->
+                <div class="tab-pane fade" id="tab2" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-1"></i> II. Phân loại và Định danh tài sản trí tuệ</h6>
+
+                    <!-- 3. Phân loại hồ sơ -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">3. Phân loại hồ sơ</label>
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="LoaiDeTai" id="loai1" value="1"
+                                       @(Model.LoaiDeTai == 1 ? "checked" : "") />
+                                <label class="btn btn-outline-secondary btn-sm" for="loai1">Sáng chế / Giải pháp hữu ích</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="LoaiDeTai" id="loai2" value="2"
+                                       @(Model.LoaiDeTai == 2 ? "checked" : "") />
+                                <label class="btn btn-outline-secondary btn-sm" for="loai2">Thiết kế bố trí vi mạch</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="LoaiDeTai" id="loai3" value="3"
+                                       @(Model.LoaiDeTai == 3 ? "checked" : "") />
+                                <label class="btn btn-outline-secondary btn-sm" for="loai3">Phần mềm (Bản quyền tác giả)</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="LoaiDeTai" id="loai4" value="4"
+                                       @(Model.LoaiDeTai == 4 ? "checked" : "") />
+                                <label class="btn btn-outline-secondary btn-sm" for="loai4">Khác</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Tên tài sản trí tuệ -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">4. Tên tài sản trí tuệ <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" placeholder="Nhập tên tài sản trí tuệ..." />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <!-- 5. Tình trạng pháp lý -->
+                    <div class="border rounded p-3 mb-3 bg-light">
+                        <h6 class="fw-bold text-info mb-3"><i class="fas fa-gavel me-1"></i> 5. Tình trạng pháp lý</h6>
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Số đơn</label>
+                                <input asp-for="ApplicationNumber" class="form-control" placeholder="VD: 1-2025-05886" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ngày chấp nhận đơn</label>
+                                <input asp-for="NgayCapBang" type="date" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Thời hạn bảo hộ đến</label>
+                                <input asp-for="ThoiHan" type="date" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. Lĩnh vực áp dụng -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">6. Lĩnh vực áp dụng</label>
+                        <input type="hidden" asp-for="CategoryId" id="hdnCategoryId" />
+                        <div class="row g-2">
+                            @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+                            {
+                                var currentCats = Model.CategoryId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                                var chk = currentCats.Contains(item.Value) ? "checked" : "";
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input chk-linhvuc" type="checkbox"
+                                               value="@item.Value" id="cat_@item.Value" @chk />
+                                        <label class="form-check-label" for="cat_@item.Value">@item.Text</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary btn-prev-tab">
+                            <i class="fas fa-arrow-left me-1"></i> Quay lại
+                        </button>
+                        <button type="button" class="btn btn-primary btn-next-tab">
+                            Tiếp theo <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ──────────────────────────────────────── -->
+                <!-- TAB 3 — III. NỘI DUNG MÔ TẢ              -->
+                <!-- ──────────────────────────────────────── -->
+                <div class="tab-pane fade" id="tab3" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-file-lines me-1"></i> III. Nội dung mô tả và quy trình</h6>
+
+                    <!-- 7. Mô tả tài sản trí tuệ -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">7. Mô tả tài sản trí tuệ</label>
+                        <small class="text-muted d-block mb-2">(Tóm tắt tính mới, tính sáng tạo và khả năng áp dụng)</small>
+                        <textarea asp-for="MoTa" id="editorMoTa" class="form-control ck-editor-field-tab3" rows="20"></textarea>
+                    </div>
+
+                    <!-- 8. Ảnh đại diện sản phẩm / Sơ đồ quy trình -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">8. Ảnh đại diện sản phẩm / Sơ đồ quy trình</label>
+                        <small class="text-muted d-block mb-2">(Đính kèm 01 ảnh chất lượng cao để hiển thị trên giao diện)</small>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-8">
+                                <input asp-for="QuyTrinhHinhAnh" class="form-control" id="txtImageUrl" placeholder="URL ảnh đại diện..." />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="btn btn-outline-primary w-100" id="btnUploadImage">
+                                    <i class="fas fa-upload me-1"></i> Upload
+                                    <input type="file" accept="image/*" id="fileUploadImage" class="d-none" />
+                                </label>
+                            </div>
+                            <div class="col-md-2">
+                                <div id="imgPreview" class="border rounded text-center p-1" style="min-height:80px; background:#f8f9fa;">
+                                    @if (!string.IsNullOrEmpty(Model.QuyTrinhHinhAnh))
+                                    {
+                                        <img src="@Model.QuyTrinhHinhAnh" class="img-fluid rounded" style="max-height:80px;" />
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted"><i class="fas fa-image"></i> Preview</small>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary btn-prev-tab">
+                            <i class="fas fa-arrow-left me-1"></i> Quay lại
+                        </button>
+                        <button type="button" class="btn btn-primary btn-next-tab">
+                            Tiếp theo <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ──────────────────────────────────────── -->
+                <!-- TAB 4 — IV. MỤC TIÊU KÊU GỌI             -->
+                <!-- ──────────────────────────────────────── -->
+                <div class="tab-pane fade" id="tab4" role="tabpanel">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-bullseye me-1"></i> IV. Mục tiêu kêu gọi đầu tư & Hợp tác</h6>
+
+                    <!-- 9. Phân loại mục tiêu kêu gọi -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">9. Phân loại mục tiêu kêu gọi</label>
+                        <input type="hidden" asp-for="InvestmentGoal" id="hdnCooperationGoal" />
+                        @{
+                            var goalOptions = new[] {
+                                "Tìm nhà đầu tư tài chính",
+                                "Tìm đối tác sản xuất",
+                                "Tìm đối tác phân phối/thương mại",
+                                "Khác"
+                            };
+                            var selectedGoals = Model.InvestmentGoal?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                        }
+                        <div class="row g-2">
+                            @for (int i = 0; i < goalOptions.Length; i++)
+                            {
+                                var opt = goalOptions[i];
+                                var chk = selectedGoals.Contains(opt) ? "checked" : "";
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input chk-goal" type="checkbox"
+                                               value="@opt" id="goal_@i" @chk />
+                                        <label class="form-check-label" for="goal_@i">@opt</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- 10. Hình thức hợp tác mong muốn -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">10. Hình thức hợp tác mong muốn</label>
+                        <input type="hidden" asp-for="TransferMethod" id="hdnTransferMethod" />
+                        @{
+                            var transferOptions = new[] {
+                                "Chuyển nhượng toàn bộ bản quyền",
+                                "Chuyển giao quyền sử dụng (Li-xăng)",
+                                "Góp vốn bằng tài sản trí tuệ",
+                                "Hợp tác nghiên cứu phát triển thêm",
+                                "Khác"
+                            };
+                            var selectedTransfer = Model.TransferMethod?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                        }
+                        <div class="row g-2">
+                            @for (int i = 0; i < transferOptions.Length; i++)
+                            {
+                                var opt = transferOptions[i];
+                                var chk = selectedTransfer.Contains(opt) ? "checked" : "";
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input chk-transfer" type="checkbox"
+                                               value="@opt" id="transfer_@i" @chk />
+                                        <label class="form-check-label" for="transfer_@i">@opt</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- 11. Tình trạng phát triển -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">11. Tình trạng phát triển</label>
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="DevelopmentStageValue" id="dev1" value="1"
+                                       @(Model.DevelopmentStageValue == 1 ? "checked" : "") />
+                                <label class="btn btn-outline-secondary" for="dev1"><i class="fas fa-lightbulb me-1"></i> Ý tưởng / Thiết kế</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="DevelopmentStageValue" id="dev2" value="2"
+                                       @(Model.DevelopmentStageValue == 2 ? "checked" : "") />
+                                <label class="btn btn-outline-info" for="dev2"><i class="fas fa-flask me-1"></i> Đã có sản phẩm mẫu (Prototype)</label>
+                            </div>
+                            <div class="col-auto">
+                                <input type="radio" class="btn-check" name="DevelopmentStageValue" id="dev3" value="3"
+                                       @(Model.DevelopmentStageValue == 3 ? "checked" : "") />
+                                <label class="btn btn-outline-success" for="dev3"><i class="fas fa-shopping-cart me-1"></i> Đã thương mại hóa</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-start mt-4">
+                        <button type="button" class="btn btn-outline-secondary btn-prev-tab">
+                            <i class="fas fa-arrow-left me-1"></i> Quay lại
+                        </button>
+                    </div>
+                </div>
+
+            </div><!-- /tab-content -->
+
+        </div><!-- /card-body -->
+
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-save me-1"></i> Lưu tài sản trí tuệ
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+$(function(){
+
+    // Select2 searchable dropdown for NhaCungUng
+    $('#NCUId').select2({
+        theme: 'bootstrap-5',
+        placeholder: '-- Tìm và chọn chủ sở hữu --',
+        allowClear: true,
+        width: '100%'
+    }).on('change', function(){ loadNhaCungUng($(this).val()); });
+
+    // Image upload
+    $('#fileUploadImage').on('change', function(){
+        var file = this.files[0];
+        if (!file) return;
+        var fd = new FormData();
+        fd.append('upload', file);
+        $.ajax({
+            url: '/cms/Upload/UploadImage',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if (res && res.url) {
+                    $('#txtImageUrl').val(res.url);
+                    $('#imgPreview').html('<img src="' + res.url + '" class="img-fluid rounded" style="max-height:80px;" />');
+                } else if (res && res.error) {
+                    alert(res.error.message);
+                }
+            },
+            error: function(){ alert('Upload thất bại!'); }
+        });
+    });
+
+    // ═══════════════════════════════════════
+    // Tab navigation — Next / Previous
+    // ═══════════════════════════════════════
+    var $tabs = $('#cntbTabs button[data-bs-toggle="tab"]');
+
+    function getActiveIndex() {
+        return $tabs.index($tabs.filter('.active'));
+    }
+
+    $(document).on('click', '.btn-next-tab', function(){
+        var idx = getActiveIndex();
+        if (idx < $tabs.length - 1) {
+            new bootstrap.Tab($tabs[idx + 1]).show();
+        }
+    });
+
+    $(document).on('click', '.btn-prev-tab', function(){
+        var idx = getActiveIndex();
+        if (idx > 0) {
+            new bootstrap.Tab($tabs[idx - 1]).show();
+        }
+    });
+
+    // ═══════════════════════════════════════
+    // CKEditor 5 — lazy init for Tab 3 fields
+    // ═══════════════════════════════════════
+    var ckInstances = {};
+    var ckConfig = {
+        simpleUpload: { uploadUrl: '/cms/Upload/Upload', withCredentials: true },
+        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList',
+                  '|', 'imageUpload', 'blockQuote', 'insertTable', 'undo', 'redo']
+    };
+
+    $('button[data-bs-target="#tab3"]').on('shown.bs.tab', function(){
+        document.querySelectorAll('.ck-editor-field-tab3').forEach(function(el){
+            if (ckInstances[el.id]) return;
+            ClassicEditor.create(el, ckConfig).then(function(editor){
+                ckInstances[el.id] = editor;
+            }).catch(function(err){ console.error(err); });
+        });
+    });
+
+    // Sync CKEditor data back to textareas before submit
+    $('#frmCNTB').on('submit', function(){
+        Object.keys(ckInstances).forEach(function(id){
+            document.getElementById(id).value = ckInstances[id].getData();
+        });
+    });
+
+    // ═══════════════════════════════════════
+    // Category checkbox → hidden field sync
+    // ═══════════════════════════════════════
+    function syncCategoryCheckboxes() {
+        var vals = [];
+        $('.chk-linhvuc:checked').each(function(){ vals.push($(this).val()); });
+        $('#hdnCategoryId').val(vals.join(','));
+    }
+    $(document).on('change', '.chk-linhvuc', syncCategoryCheckboxes);
+    syncCategoryCheckboxes();
+
+    // ═══════════════════════════════════════
+    // CooperationGoal checkbox → hidden field sync
+    // ═══════════════════════════════════════
+    function syncGoalCheckboxes() {
+        var vals = [];
+        $('.chk-goal:checked').each(function(){ vals.push($(this).val()); });
+        $('#hdnCooperationGoal').val(vals.join(','));
+    }
+    $(document).on('change', '.chk-goal', syncGoalCheckboxes);
+    syncGoalCheckboxes();
+
+    // ═══════════════════════════════════════
+    // Transfer method checkbox → hidden field sync
+    // ═══════════════════════════════════════
+    function syncTransferCheckboxes() {
+        var vals = [];
+        $('.chk-transfer:checked').each(function(){ vals.push($(this).val()); });
+        $('#hdnTransferMethod').val(vals.join(','));
+    }
+    $(document).on('change', '.chk-transfer', syncTransferCheckboxes);
+    syncTransferCheckboxes();
+
+    // ═══════════════════════════════════════
+    // Auto-fill NhaCungUng contact info
+    // ═══════════════════════════════════════
+    function loadNhaCungUng(id) {
+        if (!id) {
+            $('#ncuDiaChi, #ncuNguoiDaiDien, #ncuPhone, #ncuEmail').val('');
+            return;
+        }
+        $.getJSON('/cms/SanPhamCNTB/GetNhaCungUng/' + id, function(d){
+            $('#ncuDiaChi').val(d.diaChi || '');
+            $('#ncuNguoiDaiDien').val(d.nguoiDaiDien || '');
+            $('#ncuPhone').val(d.phone || '');
+            $('#ncuEmail').val(d.email || '');
+        });
+    }
+
+    // Load on page init if value set
+    var initNcu = $('#NCUId').val();
+    if (initNcu) loadNhaCungUng(initNcu);
+
+});
+</script>
+}

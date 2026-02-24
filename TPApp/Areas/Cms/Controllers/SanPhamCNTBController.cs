@@ -156,6 +156,12 @@ namespace TPApp.Areas.Cms.Controllers
                     Viewed = p.Viewed ?? 0,
                     ProductType = p.ProductType,
                     SoBang = p.SoBang,
+                    NhaCungUngName = p.NCUId.HasValue
+                        ? _context.NhaCungUngs
+                            .Where(n => n.CungUngId == p.NCUId.Value)
+                            .Select(n => n.FullName)
+                            .FirstOrDefault()
+                        : null,
                     ImageUrl = p.QuyTrinhHinhAnh,
                     SiteId = p.SiteId
                 })
@@ -221,7 +227,19 @@ namespace TPApp.Areas.Cms.Controllers
                     .FirstOrDefaultAsync();
             }
 
-            return View(p);
+            // Load XuatXu name
+            if (p.XuatXuId.HasValue)
+            {
+                ViewBag.XuatXuName = await _context.Set<TPApp.Entities.XuatXu>().AsNoTracking()
+                    .Where(x => x.Id == p.XuatXuId.Value)
+                    .Select(x => x.Title)
+                    .FirstOrDefaultAsync();
+            }
+
+            // Load LinhVuc list for category name resolution
+            ViewBag.LinhVucList = ToSelectList(await _masterService.GetLinhVucAsync(), "");
+
+            return View(GetDetailViewName(p.ProductType), p);
         }
 
         // ─────────────────────────────────────────
@@ -254,13 +272,24 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpGet]
         public async Task<IActionResult> Create(int? productType)
         {
+            var pt = productType ?? TypeCongNghe;
+
+            // Auto-generate Code
+            var prefix = pt switch { TypeThietBi => "TB", TypeSanPhamTriTue => "TT", _ => "CN" };
+            var maxId = await _context.SanPhamCNTBs
+                .Where(x => x.ProductType == pt)
+                .MaxAsync(x => (int?)x.ID) ?? 0;
+
             var vm = new SanPhamCNTBFormVm
             {
-                ProductType = productType ?? TypeCongNghe
+                ProductType = pt,
+                Code = $"{prefix}-{(maxId + 1):D5}",
+                StatusId = 1,       // Nháp (Draft)
+                SiteId = GetSiteId()
             };
             ViewData["Title"] = "Thêm sản phẩm CNTB";
             await LoadFormSelectListsAsync();
-            return View(vm);
+            return View(GetCreateViewName(vm.ProductType), vm);
         }
 
         // ─────────────────────────────────────────
@@ -276,7 +305,7 @@ namespace TPApp.Areas.Cms.Controllers
             {
                 ViewData["Title"] = "Thêm sản phẩm CNTB";
                 await LoadFormSelectListsAsync();
-                return View(model);
+                return View(GetCreateViewName(model.ProductType), model);
             }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -316,7 +345,7 @@ namespace TPApp.Areas.Cms.Controllers
                 TempData["Error"] = "Có lỗi xảy ra khi lưu dữ liệu.";
                 ViewData["Title"] = "Thêm sản phẩm CNTB";
                 await LoadFormSelectListsAsync();
-                return View(model);
+                return View(GetCreateViewName(model.ProductType), model);
             }
         }
 
@@ -339,7 +368,7 @@ namespace TPApp.Areas.Cms.Controllers
             var vm = MapToFormVm(p);
             ViewData["Title"] = $"Sửa: {p.Name}";
             await LoadFormSelectListsAsync();
-            return View(vm);
+            return View(GetEditViewName(p.ProductType), vm);
         }
 
         // ─────────────────────────────────────────
@@ -355,7 +384,7 @@ namespace TPApp.Areas.Cms.Controllers
             {
                 ViewData["Title"] = "Sửa sản phẩm CNTB";
                 await LoadFormSelectListsAsync();
-                return View(model);
+                return View(GetEditViewName(model.ProductType), model);
             }
 
             var entity = await _context.SanPhamCNTBs.FindAsync(model.ID);
@@ -393,7 +422,7 @@ namespace TPApp.Areas.Cms.Controllers
                 TempData["Error"] = "Có lỗi xảy ra khi lưu dữ liệu.";
                 ViewData["Title"] = "Sửa sản phẩm CNTB";
                 await LoadFormSelectListsAsync();
-                return View(model);
+                return View(GetEditViewName(model.ProductType), model);
             }
         }
 
@@ -506,12 +535,11 @@ namespace TPApp.Areas.Cms.Controllers
                         ModelState.AddModelError("Rating", "TRL Level là bắt buộc cho Công nghệ.");
                     break;
                 case TypeThietBi:
-                    if (!model.OriginalPrice.HasValue && !model.SellPrice.HasValue)
-                        ModelState.AddModelError("SellPrice", "Ít nhất một giá là bắt buộc cho Thiết bị.");
+                    if (!model.Rating.HasValue)
+                        ModelState.AddModelError("Rating", "Mức độ phát triển là bắt buộc cho Thiết bị.");
                     break;
                 case TypeSanPhamTriTue:
-                    if (string.IsNullOrWhiteSpace(model.SoBang))
-                        ModelState.AddModelError("SoBang", "Số bằng là bắt buộc cho Sản phẩm trí tuệ.");
+                    // SoBang is no longer required — removed from SanPhamTriTue form
                     break;
             }
         }
@@ -549,7 +577,28 @@ namespace TPApp.Areas.Cms.Controllers
             }
         }
 
-        private IActionResult RedirectToListByType(int productType) => productType switch
+        private string GetCreateViewName(int? productType) => productType switch
+        {
+            TypeThietBi => "CreateThietBi",
+            TypeSanPhamTriTue => "CreateSanPhamTriTue",
+            _ => "CreateCongNghe"
+        };
+
+        private string GetEditViewName(int? productType) => productType switch
+        {
+            TypeThietBi => "EditThietBi",
+            TypeSanPhamTriTue => "EditSanPhamTriTue",
+            _ => "EditCongNghe"
+        };
+
+        private string GetDetailViewName(int? productType) => productType switch
+        {
+            TypeThietBi => "DetailThietBi",
+            TypeSanPhamTriTue => "DetailSanPhamTriTue",
+            _ => "Detail"
+        };
+
+        private IActionResult RedirectToListByType(int? productType) => productType switch
         {
             TypeThietBi => RedirectToAction(nameof(ThietBi)),
             TypeSanPhamTriTue => RedirectToAction(nameof(SanPhamTriTue)),
@@ -601,7 +650,11 @@ namespace TPApp.Areas.Cms.Controllers
         GiaBanDuKien = m.GiaBanDuKien,
         ChiPhiPhatSinh = m.ChiPhiPhatSinh,
         BaoHanhHoTro = m.BaoHanhHoTro,
-        BrochureUrl = m.BrochureUrl
+        BrochureUrl = m.BrochureUrl,
+ChungNhanISO = m.ChungNhanISO,
+ChungNhanQuatest = m.ChungNhanQuatest,
+DevelopmentStageValue = m.DevelopmentStageValue,
+InvestmentGoal = m.InvestmentGoal
     };
         private static void UpdateEntity(SanPhamCNTB e, SanPhamCNTBFormVm m)
     {
@@ -648,6 +701,10 @@ namespace TPApp.Areas.Cms.Controllers
         e.ChiPhiPhatSinh = m.ChiPhiPhatSinh;
         e.BaoHanhHoTro = m.BaoHanhHoTro;
         e.BrochureUrl = m.BrochureUrl;
+e.ChungNhanISO = m.ChungNhanISO;
+e.ChungNhanQuatest = m.ChungNhanQuatest;
+e.DevelopmentStageValue = m.DevelopmentStageValue;
+e.InvestmentGoal = m.InvestmentGoal;
     }
         private static SanPhamCNTBFormVm MapToFormVm(SanPhamCNTB p) => new()
     {
@@ -699,7 +756,11 @@ namespace TPApp.Areas.Cms.Controllers
         GiaBanDuKien = p.GiaBanDuKien,
         ChiPhiPhatSinh = p.ChiPhiPhatSinh,
         BaoHanhHoTro = p.BaoHanhHoTro,
-        BrochureUrl = p.BrochureUrl
+        BrochureUrl = p.BrochureUrl,
+ChungNhanISO = p.ChungNhanISO ?? false,
+ChungNhanQuatest = p.ChungNhanQuatest ?? false,
+DevelopmentStageValue = p.DevelopmentStageValue,
+InvestmentGoal = p.InvestmentGoal
     };
     }
 
@@ -718,6 +779,7 @@ namespace TPApp.Areas.Cms.Controllers
         public int Viewed { get; set; }
         public int ProductType { get; set; }
         public string? SoBang { get; set; }
+        public string? NhaCungUngName { get; set; }
         public string? ImageUrl { get; set; }
         public int? SiteId { get; set; }
     }
@@ -797,5 +859,11 @@ namespace TPApp.Areas.Cms.Controllers
 
         // ── Tab 7: Chứng nhận & Tài liệu số ──
         public string? BrochureUrl { get; set; }
+        public bool ChungNhanISO { get; set; }
+        public bool ChungNhanQuatest { get; set; }
+
+        // ── SanPhamTriTue dedicated fields ──
+        public int? DevelopmentStageValue { get; set; }
+        public string? InvestmentGoal { get; set; }
     }
 }

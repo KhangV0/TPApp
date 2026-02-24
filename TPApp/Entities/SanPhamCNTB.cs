@@ -114,6 +114,12 @@ namespace TPApp.Entities
 
         // ── Tab 7: Chứng nhận & Tài liệu số ──
         public string? BrochureUrl { get; set; }
+        public bool? ChungNhanISO { get; set; }
+        public bool? ChungNhanQuatest { get; set; }
+
+        // ── SanPhamTriTue dedicated fields ──
+        public int? DevelopmentStageValue { get; set; }
+        public string? InvestmentGoal { get; set; }
 
         /// <summary>1 = CongNghe, 2 = ThietBi, 3 = SanPhamTriTue</summary>
         public int ProductType { get; set; } = 1;
