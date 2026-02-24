@@ -172,7 +172,7 @@
 
 .hp-category-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: 20px;
     text-align: center;
 }
@@ -746,7 +746,7 @@
     border-radius: 5px;
     color: #ffffff;
     background: #000000;
-    margin-top: 50px;
+    margin-top: 30px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -805,13 +805,13 @@
 }
 
 .YCCN {
-    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #ece3ff, #d4c7ff);
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #cfe9ff, #9fd3ff);
     height: 130px;
     transition: height .3s ease;
 }
 
 .DVTV {
-    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #ffe7c7, #ffd39f);
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #d6f5ea, #a8e6cf);
     height: 130px;
     transition: height .3s ease;
 }
