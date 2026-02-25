@@ -1,0 +1,189 @@
+@model TPApp.Areas.Cms.Models.ContentFormVm
+@{
+    ViewData["Title"] = $"Chi tiết: {Model.Title}";
+    var menuTitle = ViewBag.MenuTitle as string ?? "—";
+    var statusTitle = ViewBag.StatusTitle as string ?? "—";
+}
+
+<!-- Top toolbar -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h4 class="mb-0"><i class="fas fa-file-alt me-2 text-info"></i> @Model.Title</h4>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
+            <i class="fas fa-pen me-1"></i> Sửa
+        </a>
+        <a asp-action="Index" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Danh sách
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Left: Main info -->
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header"><i class="fas fa-info-circle me-1"></i> Thông tin chung</div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <th class="text-muted" style="width:140px">Tiêu đề</th>
+                        <td class="fw-semibold">@Model.Title</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Slug</th>
+                        <td><code>@(Model.QueryString ?? "—")</code></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Menu</th>
+                        <td><span class="badge bg-secondary bg-opacity-25 text-dark">@menuTitle</span></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Tác giả</th>
+                        <td>@(Model.Author ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Loại bài</th>
+                        <td>@(Model.TypeId?.ToString() ?? "—")</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-header"><i class="fas fa-edit me-1"></i> Nội dung</div>
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(Model.Contents))
+                {
+                    <div class="border rounded p-3 bg-light">
+                        @Html.Raw(Model.Contents)
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0"><em>Chưa có nội dung.</em></p>
+                }
+            </div>
+        </div>
+
+        <!-- SEO -->
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="fas fa-search me-1"></i> SEO</div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <th class="text-muted" style="width:140px">Meta Title</th>
+                        <td>@(Model.Subject ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Meta Desc</th>
+                        <td>@(Model.Description ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Keywords</th>
+                        <td>@(Model.Keyword ?? "—")</td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(Model.ImageBig))
+                    {
+                        <tr>
+                            <th class="text-muted">OG Image</th>
+                            <td><img src="@Model.ImageBig" class="rounded" style="max-height:100px" /></td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Status + Media -->
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header"><i class="fas fa-paper-plane me-1"></i> Trạng thái & Ngày</div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <th class="text-muted">Trạng thái</th>
+                        <td>
+                            @{
+                                var badgeClass = Model.StatusId switch
+                                {
+                                    1 => "bg-success",
+                                    2 => "bg-warning text-dark",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass">@statusTitle</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Ngày đăng</th>
+                        <td>@(Model.PublishedDate?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Hiệu lực từ</th>
+                        <td>@(Model.bEffectiveDate?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Hết hiệu lực</th>
+                        <td>@(Model.eEffectiveDate?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Hot / New</th>
+                        <td>
+                            @if (Model.IsHot) { <span class="badge bg-danger me-1"><i class="fas fa-fire"></i> Hot</span> }
+                            @if (Model.IsNew) { <span class="badge bg-primary"><i class="fas fa-star"></i> New</span> }
+                            @if (!Model.IsHot && !Model.IsNew) { <span class="text-muted">—</span> }
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header"><i class="fas fa-photo-video me-1"></i> Media</div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.Image))
+                {
+                    <div class="mb-2">
+                        <small class="text-muted">Ảnh đại diện:</small>
+                        <img src="@Model.Image" class="rounded d-block mt-1" style="max-width:100%;max-height:150px" />
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.URL))
+                {
+                    <div class="mb-2">
+                        <small class="text-muted">URL:</small>
+                        <a href="@Model.URL" target="_blank" class="d-block text-truncate">@Model.URL</a>
+                        @if (Model.IsYoutube)
+                        {
+                            <span class="badge bg-danger"><i class="fab fa-youtube"></i> YouTube</span>
+                        }
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.LinkFile))
+                {
+                    <div class="mb-2">
+                        <small class="text-muted">File đính kèm:</small>
+                        <a href="@Model.LinkFile" target="_blank" class="d-block text-truncate">@Model.LinkFile</a>
+                    </div>
+                }
+                @if (string.IsNullOrEmpty(Model.Image) && string.IsNullOrEmpty(Model.URL) && string.IsNullOrEmpty(Model.LinkFile))
+                {
+                    <p class="text-muted mb-0"><em>Không có media.</em></p>
+                }
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header"><i class="fas fa-clock me-1"></i> Lịch sử</div>
+            <div class="card-body">
+                <small class="text-muted">
+                    Domain: <strong>@Model.Domain</strong><br />
+                    Language: <strong>@Model.LanguageId</strong><br />
+                    Site: <strong>@(Model.SiteId?.ToString() ?? "—")</strong><br />
+                    ID: <strong>@Model.Id</strong>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>

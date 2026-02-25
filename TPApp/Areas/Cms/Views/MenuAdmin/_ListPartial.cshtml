@@ -1,0 +1,159 @@
+@model List<TPApp.Areas.Cms.Controllers.MenuListItem>
+@{
+    var totalCount = ViewBag.TotalCount ?? 0;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var page = ViewBag.Page ?? 1;
+    var pageSize = ViewBag.PageSize ?? 30;
+}
+
+<span id="partialTotalCount" class="d-none">@totalCount</span>
+
+<div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:35px"><input type="checkbox" id="chkAll" class="form-check-input" /></th>
+                    <th style="width:120px">Thao tác</th>
+                    <th class="sortable" data-sort="title" style="cursor:pointer">
+                        Tiêu đề <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th style="width:150px">Menu cha</th>
+                    <th class="sortable" data-sort="sort" style="cursor:pointer;width:70px">
+                        STT <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th class="sortable" data-sort="status" style="cursor:pointer;width:130px">
+                        Trạng thái <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th style="width:150px">Đường dẫn</th>
+                    <th class="sortable d-none d-md-table-cell" data-sort="created" style="cursor:pointer;width:130px">
+                        Người tạo <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th class="sortable d-none d-md-table-cell" data-sort="created" style="cursor:pointer;width:130px">
+                        Ngày tạo <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
+                            Không có dữ liệu. Hãy thêm menu mới!
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        var isPublished = item.StatusId == 3;
+                        var hasContent = false; // checked server-side on delete
+                        var canDelete = !isPublished;
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input chkRow" value="@item.MenuId" @(canDelete ? "" : "disabled") />
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@item.MenuId"
+                                       class="btn btn-outline-primary" title="Sửa">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                    @if (canDelete)
+                                    {
+                                        <button type="button" class="btn btn-outline-danger btn-del"
+                                                data-id="@item.MenuId" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-secondary btn-sm" disabled title="Đang xuất bản">
+                                            <i class="fas fa-lock"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.MenuId" class="fw-semibold text-decoration-none small">
+                                    @item.Title
+                                </a>
+                            </td>
+                            <td>
+                                <span class="small text-muted">@(item.ParentTitle ?? "—")</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark">@(item.Sort ?? 0)</span>
+                            </td>
+                            <td>
+                                @{
+                                    var badgeClass = item.StatusId switch
+                                    {
+                                        3 => "bg-success",    // Xuất bản
+                                        2 => "bg-info",       // Duyệt
+                                        1 => "bg-warning",    // Nháp
+                                        4 => "bg-danger",     // Trả về
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @badgeClass">@(item.StatusTitle ?? "—")</span>
+                            </td>
+                            <td>
+                                <small class="text-muted text-truncate d-block" style="max-width:140px"
+                                       title="@(item.NavigateUrl ?? item.QueryString ?? "")">
+                                    @(item.NavigateUrl ?? item.QueryString ?? "—")
+                                </small>
+                            </td>
+                            <td class="d-none d-md-table-cell small text-muted">@(item.Creator ?? "—")</td>
+                            <td class="d-none d-md-table-cell small text-muted">@(item.Created?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <small class="text-muted">
+            Hiển thị <strong>@(((int)page - 1) * (int)pageSize + 1)</strong>–<strong>@Math.Min((int)page * (int)pageSize, (int)totalCount)</strong> / <strong>@totalCount</strong> bản ghi
+        </small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{
+                    int startP = Math.Max(1, (int)page - 4);
+                    int endP = Math.Min((int)totalPages, (int)page + 4);
+                }
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="1" title="Trang đầu"><i class="fas fa-angles-left"></i></a>
+                </li>
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@(page - 1)" title="Trang trước"><i class="fas fa-angle-left"></i></a>
+                </li>
+                @for (int i = startP; i <= endP; i++)
+                {
+                    <li class="page-item @(i == (int)page ? "active" : "")">
+                        <a class="page-link ajax-page" data-page="@i" href="#">@i</a>
+                    </li>
+                }
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@(page + 1)" title="Trang sau"><i class="fas fa-angle-right"></i></a>
+                </li>
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@totalPages" title="Trang cuối"><i class="fas fa-angles-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+else if (totalCount > 0)
+{
+    <div class="card-footer">
+        <small class="text-muted">Tổng: <strong>@totalCount</strong> bản ghi</small>
+    </div>
+}

@@ -1,0 +1,35 @@
+@model TPApp.Entities.Content
+@{
+    var statuses = ViewBag.Statuses as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+}
+
+<form id="quickConfigForm">
+    <input type="hidden" name="id" value="@Model.Id" />
+
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Trạng thái</label>
+        <select name="statusId" class="form-select form-select-sm" asp-items="@statuses">
+            <option value="">-- Chọn --</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="isHot" value="true"
+                   @(Model.IsHot == true ? "checked" : "") id="qcIsHot">
+            <label class="form-check-label" for="qcIsHot">
+                <i class="fas fa-fire text-danger me-1"></i> Bài Hot
+            </label>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="isNew" value="true"
+                   @(Model.IsNew == true ? "checked" : "") id="qcIsNew">
+            <label class="form-check-label" for="qcIsNew">
+                <i class="fas fa-star text-primary me-1"></i> Bài mới
+            </label>
+        </div>
+    </div>
+</form>

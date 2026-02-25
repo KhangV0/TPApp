@@ -1,0 +1,188 @@
+@model List<TPApp.Areas.Cms.Models.ContentListItem>
+@{
+    var totalCount = ViewBag.TotalCount ?? 0;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var page = ViewBag.Page ?? 1;
+    var pageSize = ViewBag.PageSize ?? 20;
+    var imageDomain = ViewBag.ImageDomain ?? "";
+}
+
+<span id="partialTotalCount" class="d-none">@totalCount</span>
+
+<div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:35px"><input type="checkbox" id="chkAll" class="form-check-input" /></th>
+                    <th style="width:120px">Thao tác</th>
+                    <th style="width:50px">Ảnh</th>
+                    <th class="sortable" data-sort="title" style="cursor:pointer">
+                        Tiêu đề <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th class="sortable" data-sort="menu" style="cursor:pointer;width:140px">
+                        Menu <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th class="sortable" data-sort="status" style="cursor:pointer;width:130px">
+                        Trạng thái <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th class="sortable" data-sort="published" style="cursor:pointer;width:150px">
+                        Ngày đăng <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th class="sortable" data-sort="viewed" style="cursor:pointer;width:70px">
+                        Xem <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th style="width:80px">Hot/New</th>
+                    <th class="sortable d-none d-md-table-cell" data-sort="created" style="cursor:pointer;width:130px">
+                        Người tạo <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th class="sortable d-none d-md-table-cell" data-sort="created" style="cursor:pointer;width:130px">
+                        Ngày tạo <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="11" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
+                            Không có dữ liệu. Hãy thêm tin bài mới!
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="text-center">
+                            @{
+                                var isPublished = item.StatusId == 3;
+                                var canDelete = !isPublished;
+                            }
+                                <input type="checkbox" class="form-check-input chkRow" value="@item.Id" @(canDelete ? "" : "disabled") />
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@item.Id"
+                                       class="btn btn-outline-primary" title="Sửa">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-warning btn-config"
+                                            data-id="@item.Id" title="Cấu hình nhanh">
+                                        <i class="fas fa-gear"></i>
+                                    </button>
+                                    @if (canDelete)
+                                    {
+                                        <button type="button" class="btn btn-outline-danger btn-del"
+                                                data-id="@item.Id" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-secondary btn-sm" disabled title="Đang xuất bản">
+                                            <i class="fas fa-lock"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.Image))
+                                {
+                                    <img src="@Html.CookedImageURL("108-84", item.Image)" alt="@item.Title" class="rounded" style="width:40px;height:40px;object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <div class="rounded bg-light d-flex align-items-center justify-content-center" style="width:40px;height:40px">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="Detail" asp-route-id="@item.Id" class="fw-semibold text-decoration-none small">
+                                    @item.Title
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-25 text-dark">
+                                    @(item.MenuTitle ?? "—")
+                                </span>
+                            </td>
+                            <td>
+                                @{
+                                    var badgeClass = item.StatusId switch
+                                    {
+                                        3 => "bg-success",    // Xuất bản
+                                        2 => "bg-info",       // Duyệt
+                                        1 => "bg-warning",    // Nháp
+                                        4 => "bg-danger",     // Trả về
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @badgeClass">@(item.StatusTitle ?? "—")</span>
+                            </td>
+                            <td>
+                                <small>@(item.PublishedDate?.ToString("dd/MM/yyyy HH:mm") ?? "—")</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-eye me-1"></i>@item.Viewed
+                                </span>
+                            </td>
+                            <td>
+                                @if (item.IsHot)
+                                {
+                                    <span class="badge bg-danger me-1" title="Hot"><i class="fas fa-fire"></i></span>
+                                }
+                                @if (item.IsNew)
+                                {
+                                    <span class="badge bg-primary" title="New"><i class="fas fa-star"></i></span>
+                                }
+                            </td>
+                            <td class="d-none d-md-table-cell small text-muted">@(item.Creator ?? "—")</td>
+                            <td class="d-none d-md-table-cell small text-muted">@(item.Created?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <small class="text-muted">
+            Hiển thị <strong>@(((int)page - 1) * (int)pageSize + 1)</strong>–<strong>@Math.Min((int)page * (int)pageSize, (int)totalCount)</strong> / <strong>@totalCount</strong> bản ghi
+        </small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{
+                    int startP = Math.Max(1, (int)page - 4);
+                    int endP = Math.Min((int)totalPages, (int)page + 4);
+                }
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="1" title="Trang đầu"><i class="fas fa-angles-left"></i></a>
+                </li>
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@(page - 1)" title="Trang trước"><i class="fas fa-angle-left"></i></a>
+                </li>
+                @for (int i = startP; i <= endP; i++)
+                {
+                    <li class="page-item @(i == (int)page ? "active" : "")">
+                        <a class="page-link ajax-page" data-page="@i" href="#">@i</a>
+                    </li>
+                }
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@(page + 1)" title="Trang sau"><i class="fas fa-angle-right"></i></a>
+                </li>
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@totalPages" title="Trang cuối"><i class="fas fa-angles-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

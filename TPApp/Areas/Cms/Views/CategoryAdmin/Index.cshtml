@@ -1,12 +1,12 @@
-@model List<TPApp.Areas.Cms.Models.ContentListItem>
+@model List<TPApp.Areas.Cms.Controllers.CategoryListItem>
 @{
-    ViewData["Title"] = "Quản lý Tin bài";
+    ViewData["Title"] = "Quản lý Danh mục";
 }
 
 <!-- ─── Search Card ─── -->
 <div class="card card-outline card-primary shadow-sm mb-3">
     <div class="card-header" id="searchCardHeader" style="cursor:pointer" title="Nhấn đúp để thu gọn/mở rộng">
-        <h3 class="card-title"><i class="fas fa-search me-1"></i> Tìm kiếm Tin bài</h3>
+        <h3 class="card-title"><i class="fas fa-search me-1"></i> Tìm kiếm Danh mục</h3>
         <div class="card-tools">
             <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse"><i class="fas fa-minus"></i></button>
         </div>
@@ -15,11 +15,13 @@
         <form id="searchForm">
             @Html.AntiForgeryToken()
             <div class="row g-3">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="mb-2">
                         <label class="form-label fw-semibold small mb-1">Từ khóa</label>
-                        <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control form-control-sm" placeholder="Tiêu đề / từ khóa..." />
+                        <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control form-control-sm" placeholder="Tiêu đề danh mục..." />
                     </div>
+                </div>
+                <div class="col-md-4">
                     <div class="mb-2">
                         <label class="form-label fw-semibold small mb-1">Trạng thái</label>
                         <select name="statusId" class="form-select form-select-sm">
@@ -38,72 +40,23 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="mb-2">
-                        <label class="form-label fw-semibold small mb-1">Menu / Danh mục</label>
-                        <select name="menuId" id="filterMenu" class="form-select form-select-sm">
+                        <label class="form-label fw-semibold small mb-1">Danh mục cha</label>
+                        <select name="parentId" id="filterParent" class="form-select form-select-sm">
                             <option value="">---Tất cả---</option>
                             @{
-                                var selMenu = ViewBag.MenuId?.ToString() ?? "";
-                                var menus = ViewBag.Menus as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+                                var selParent = ViewBag.ParentId?.ToString() ?? "";
+                                var parentCats = ViewBag.ParentCategories as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
                             }
-                            @if (menus != null)
+                            @if (parentCats != null)
                             {
-                                foreach (var m in menus)
+                                foreach (var m in parentCats)
                                 {
-                                    <option value="@m.Value" selected="@(selMenu == m.Value)">@m.Text</option>
+                                    <option value="@m.Value" selected="@(selParent == m.Value)">@m.Text</option>
                                 }
                             }
                         </select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label fw-semibold small mb-1">Sàn</label>
-                        @{
-                            var configSiteId = (int)(ViewBag.CurrentSiteId ?? 0);
-                        }
-                        <select name="siteId" id="filterSiteId" class="form-select form-select-sm"
-                                @(configSiteId > 1 ? "disabled" : "")>
-                            <option value="">-- Tất cả --</option>
-                            @{
-                                var selSite = ViewBag.SiteId?.ToString() ?? ViewBag.CurrentSiteId?.ToString() ?? "";
-                                var sites = (IEnumerable<TPApp.Entities.RootSite>?)ViewBag.Sites;
-                            }
-                            @if (sites != null)
-                            {
-                                foreach (var s in sites)
-                                {
-                                    <option value="@s.SiteId" selected="@(selSite == s.SiteId.ToString())">@s.SiteName</option>
-                                }
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label fw-semibold small mb-1">Ngày đăng từ</label>
-                            <input type="date" name="dateFrom" class="form-control form-control-sm" />
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label fw-semibold small mb-1">Ngày đăng đến</label>
-                            <input type="date" name="dateTo" class="form-control form-control-sm" />
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="mb-2">
-                        <div class="form-check form-switch mt-3">
-                            <input class="form-check-input" type="checkbox" name="isHot" value="true"
-                                   @(ViewBag.IsHot == true ? "checked" : "")>
-                            <label class="form-check-label small fw-semibold">Chỉ hiện bài Hot</label>
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="isNew" value="true"
-                                   @(ViewBag.IsNew == true ? "checked" : "")>
-                            <label class="form-check-label small fw-semibold">Chỉ hiện bài Mới</label>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -123,12 +76,12 @@
 <div class="card card-outline card-info shadow-sm">
     <div class="card-header d-flex align-items-center flex-wrap gap-2">
         <h3 class="card-title mb-0">
-            <i class="fas fa-newspaper me-1"></i> Tin bài
+            <i class="fas fa-tags me-1"></i> Danh sách Danh mục
             <span class="badge bg-info ms-1" id="badgeTotal">@ViewBag.TotalCount</span>
         </h3>
         <div class="ms-auto d-flex gap-2">
             <a asp-action="Create" class="btn btn-success btn-sm">
-                <i class="fas fa-plus me-1"></i> Thêm tin bài
+                <i class="fas fa-plus me-1"></i> Thêm danh mục
             </a>
             <button type="button" class="btn btn-outline-danger btn-sm" id="btnBulkDelete" disabled>
                 <i class="fas fa-trash-alt me-1"></i> Xóa chọn
@@ -141,47 +94,22 @@
     </div>
 </div>
 
-<!-- ─── Quick Config Modal ─── -->
-<div class="modal fade" id="configModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title"><i class="fas fa-gear me-1"></i> Cấu hình nhanh</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="configModalBody">
-                <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-primary btn-sm" id="btnSaveConfig">
-                    <i class="fas fa-save me-1"></i> Lưu
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
 <script>
 $(function(){
 
-    // Select2 for filter dropdowns
-    $('#filterMenu').select2({ theme: 'bootstrap-5', placeholder: '-- Tìm menu --', allowClear: true, width: '100%' });
-    $('#filterSiteId').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn sàn --', allowClear: true, width: '100%' });
+    $('#filterParent').select2({ theme: 'bootstrap-5', placeholder: '-- Tìm danh mục cha --', allowClear: true, width: '100%' });
 
     toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
 
     var token = $('input[name="__RequestVerificationToken"]').val() || '';
-    var baseUrl = '@Url.Action("Index", "Posts", new { area = "Cms" })';
+    var baseUrl = '@Url.Action("Index", "CategoryAdmin", new { area = "Cms" })';
     var currentPage = 1, currentSortBy = '', currentSortDir = '';
 
-    // Double-click toggle search card
     $('#searchCardHeader').on('dblclick', function() {
         $(this).find('[data-lte-toggle="card-collapse"]').trigger('click');
     });
 
-    // Load list via AJAX
     function loadList(page) {
         currentPage = page || 1;
         var params = $('#searchForm').serialize()
@@ -206,7 +134,6 @@ $(function(){
         });
     }
 
-    // Sort
     $(document).on('click', '.sortable', function() {
         var col = $(this).data('sort');
         if (currentSortBy === col) currentSortDir = (currentSortDir === 'asc') ? 'desc' : 'asc';
@@ -214,42 +141,36 @@ $(function(){
         loadList(1);
     });
 
-    // Search
     $('#searchForm').on('submit', function(e) { e.preventDefault(); loadList(1); });
     $('#btnSearch').on('click', function() { loadList(1); });
     $('#btnReset').on('click', function() {
         $('#searchForm')[0].reset();
-        $('input[type="checkbox"]').prop('checked', false);
-        $('#filterMenu').val('').trigger('change');
-        $('#filterSiteId').val('').trigger('change');
+        $('#filterParent').val('').trigger('change');
         currentSortBy = ''; currentSortDir = '';
         loadList(1);
     });
 
-    // Pagination
     $(document).on('click', '.ajax-page', function(e) {
         e.preventDefault();
         if ($(this).closest('.page-item').hasClass('disabled') || $(this).closest('.page-item').hasClass('active')) return;
         loadList($(this).data('page'));
     });
 
-    // Checkbox + Bulk Delete
     $(document).on('change', '#chkAll', function() { $('.chkRow:not(:disabled)').prop('checked', this.checked); toggleBulk(); });
     $(document).on('change', '.chkRow', toggleBulk);
     function toggleBulk() { $('#btnBulkDelete').prop('disabled', !$('.chkRow:checked').length); }
 
-    // Delete single
     $(document).on('click', '.btn-del', function(e) {
         e.preventDefault();
         var id = $(this).data('id');
         Swal.fire({
-            title: 'Xác nhận xóa?', text: 'Bạn chắc chắn muốn xóa tin bài #' + id + '?',
+            title: 'Xác nhận xóa?', text: 'Bạn chắc chắn muốn xóa danh mục #' + id + '?',
             icon: 'warning', showCancelButton: true,
             confirmButtonColor: '#d33', cancelButtonColor: '#6c757d',
             confirmButtonText: '<i class="fas fa-trash"></i> Xóa', cancelButtonText: 'Hủy'
         }).then(function(result) {
             if (result.isConfirmed) {
-                $.post('@Url.Action("Delete", "Posts", new { area = "Cms" })',
+                $.post('@Url.Action("Delete", "CategoryAdmin", new { area = "Cms" })',
                     { id: id, __RequestVerificationToken: token },
                     function(r) {
                         if (r.success) { toastr.success(r.message); loadList(currentPage); }
@@ -259,41 +180,22 @@ $(function(){
         });
     });
 
-    // Quick Config
-    $(document).on('click', '.btn-config', function(e) {
-        e.preventDefault();
-        var id = $(this).data('id');
-        $('#configModalBody').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
-        $('#configModal').modal('show');
-        $.get('@Url.Action("QuickConfig", "Posts", new { area = "Cms" })', { id: id }, function(html) {
-            $('#configModalBody').html(html);
-        });
-        $('#btnSaveConfig').off('click').on('click', function() {
-            var formData = $('#quickConfigForm').serialize() + '&__RequestVerificationToken=' + encodeURIComponent(token);
-            $.post('@Url.Action("QuickConfig", "Posts", new { area = "Cms" })', formData, function(r) {
-                if (r.success) { toastr.success(r.message); $('#configModal').modal('hide'); loadList(currentPage); }
-                else { toastr.error(r.message); }
-            });
-        });
-    });
-
-    // Bulk delete
     $('#btnBulkDelete').on('click', function() {
         var ids = $('.chkRow:checked').map(function() { return $(this).val(); }).get();
         if (!ids.length) return;
         Swal.fire({
-            title: 'Xóa nhiều bài viết?', text: 'Bạn chắc chắn xóa ' + ids.length + ' bài viết đã chọn?',
+            title: 'Xóa nhiều danh mục?', text: 'Bạn chắc chắn xóa ' + ids.length + ' danh mục đã chọn?',
             icon: 'warning', showCancelButton: true,
             confirmButtonColor: '#d33', cancelButtonColor: '#6c757d',
             confirmButtonText: '<i class="fas fa-trash"></i> Xóa tất cả', cancelButtonText: 'Hủy'
         }).then(function(result) {
             if (result.isConfirmed) {
                 var promises = ids.map(function(id) {
-                    return $.post('@Url.Action("Delete", "Posts", new { area = "Cms" })',
+                    return $.post('@Url.Action("Delete", "CategoryAdmin", new { area = "Cms" })',
                         { id: id, __RequestVerificationToken: token });
                 });
                 $.when.apply($, promises).then(function() {
-                    toastr.success('Đã xóa ' + ids.length + ' bài viết.');
+                    toastr.success('Đã xóa ' + ids.length + ' danh mục.');
                     loadList(currentPage);
                 });
             }

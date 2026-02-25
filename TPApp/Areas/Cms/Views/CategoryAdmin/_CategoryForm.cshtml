@@ -1,0 +1,83 @@
+@model TPApp.Areas.Cms.Controllers.CategoryFormVm
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <!-- Left column -->
+    <div class="col-md-8">
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label fw-semibold">Tiêu đề <span class="text-danger">*</span></label>
+            <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề danh mục..." />
+            <span asp-validation-for="Title" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="TitleEn" class="form-label fw-semibold">Tiêu đề (EN)</label>
+            <input asp-for="TitleEn" class="form-control form-control-sm" placeholder="English title..." />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label fw-semibold">Mô tả</label>
+            <textarea asp-for="Description" id="editorDescription" class="form-control" rows="6"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="QueryString" class="form-label fw-semibold">Đường dẫn (Slug)</label>
+            <input asp-for="QueryString" class="form-control form-control-sm" placeholder="/danh-muc-abc" />
+            <small class="text-muted">Đường dẫn URL thân thiện, ví dụ: /cong-nghe</small>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LogoURL" class="form-label fw-semibold">Logo / Hình ảnh</label>
+            <input asp-for="LogoURL" class="form-control form-control-sm" placeholder="/images/category-logo.png" />
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-md-4">
+        <div class="card card-outline card-secondary mb-3">
+            <div class="card-header py-2">
+                <h3 class="card-title mb-0 small fw-bold">Cấu hình</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="ParentId" class="form-label fw-semibold small">Danh mục cha</label>
+                    <select asp-for="ParentId" class="form-select form-select-sm" id="selParent">
+                        <option value="">-- Gốc --</option>
+                        @{
+                            var parentCats = ViewBag.ParentCategories as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+                        }
+                        @if (parentCats != null)
+                        {
+                            foreach (var item in parentCats)
+                            {
+                                <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="StatusId" class="form-label fw-semibold small">Trạng thái</label>
+                    <select asp-for="StatusId" asp-items="(SelectList)ViewBag.Statuses" class="form-select form-select-sm"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Sort" class="form-label fw-semibold small">Thứ tự sắp xếp</label>
+                    <input asp-for="Sort" type="number" class="form-control form-control-sm" />
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="hidden" name="MainCate" value="false" />
+                    <input type="checkbox" name="MainCate" value="true" class="form-check-input"
+                           id="MainCate" @(Model.MainCate == true ? "checked" : "") />
+                    <label for="MainCate" class="form-check-label small">Danh mục chính</label>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" asp-for="LanguageId" />
+        <input type="hidden" asp-for="Domain" />
+        <input type="hidden" asp-for="SiteId" />
+    </div>
+</div>

@@ -1,0 +1,110 @@
+@model TPApp.Areas.Cms.Controllers.MenuFormVm
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <!-- Left column -->
+    <div class="col-md-8">
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label fw-semibold">Tiêu đề <span class="text-danger">*</span></label>
+            <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề menu..." />
+            <span asp-validation-for="Title" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label fw-semibold">Mô tả</label>
+            <textarea asp-for="Description" id="editorDescription" class="form-control" rows="6"></textarea>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label asp-for="QueryString" class="form-label fw-semibold">Query String</label>
+                    <input asp-for="QueryString" class="form-control form-control-sm" placeholder="/danh-muc-abc" />
+                    <small class="text-muted">Đường dẫn nội bộ, ví dụ: /tin-tuc</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label asp-for="NavigateUrl" class="form-label fw-semibold">Navigate URL</label>
+                    <input asp-for="NavigateUrl" class="form-control form-control-sm" placeholder="https://..." />
+                    <small class="text-muted">Liên kết ngoài (nếu có)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="TitlePage" class="form-label fw-semibold">Title Page (SEO)</label>
+            <input asp-for="TitlePage" class="form-control form-control-sm" placeholder="Tiêu đề SEO..." />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ImageLogo" class="form-label fw-semibold">Hình ảnh / Icon</label>
+            <input asp-for="ImageLogo" class="form-control form-control-sm" placeholder="/images/menu-icon.png" />
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-md-4">
+        <div class="card card-outline card-secondary mb-3">
+            <div class="card-header py-2">
+                <h3 class="card-title mb-0 small fw-bold">Cấu hình</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="ParentId" class="form-label fw-semibold small">Menu cha</label>
+                    <select asp-for="ParentId" class="form-select form-select-sm" id="selParent">
+                        <option value="">-- Gốc --</option>
+                        @{
+                            var parentMenus = ViewBag.ParentMenus as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+                        }
+                        @if (parentMenus != null)
+                        {
+                            foreach (var item in parentMenus)
+                            {
+                                <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="StatusId" class="form-label fw-semibold small">Trạng thái</label>
+                    <select asp-for="StatusId" asp-items="(SelectList)ViewBag.Statuses" class="form-select form-select-sm"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Sort" class="form-label fw-semibold small">Thứ tự sắp xếp</label>
+                    <input asp-for="Sort" type="number" class="form-control form-control-sm" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="MenuPosition" class="form-label fw-semibold small">Vị trí hiển thị</label>
+                    <input asp-for="MenuPosition" class="form-control form-control-sm" placeholder="1,2,3..." />
+                    <small class="text-muted">Các vị trí cách nhau bởi dấu phẩy</small>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input asp-for="ShowRight" class="form-check-input" type="checkbox" />
+                    <label asp-for="ShowRight" class="form-check-label small">Hiển thị bên phải</label>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label asp-for="bEffectiveDate" class="form-label fw-semibold small">Hiệu lực từ</label>
+                        <input asp-for="bEffectiveDate" type="date" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="eEffectiveDate" class="form-label fw-semibold small">Hiệu lực đến</label>
+                        <input asp-for="eEffectiveDate" type="date" class="form-control form-control-sm" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" asp-for="LanguageId" />
+        <input type="hidden" asp-for="Domain" />
+        <input type="hidden" asp-for="SiteId" />
+    </div>
+</div>
+

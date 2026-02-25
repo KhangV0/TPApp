@@ -1,0 +1,76 @@
+@model TPApp.Areas.Cms.Controllers.ImageAdverFormVm
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <!-- Left column -->
+    <div class="col-md-8">
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label fw-semibold">Tiêu đề <span class="text-danger">*</span></label>
+            <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề quảng cáo..." />
+            <span asp-validation-for="Title" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label fw-semibold">Mô tả</label>
+            <textarea asp-for="Description" id="editorDescription" class="form-control" rows="6"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="SRC" class="form-label fw-semibold">Hình ảnh quảng cáo</label>
+            <div class="input-group">
+                <input asp-for="SRC" class="form-control form-control-sm" placeholder="/images/banner.jpg" id="inputSRC" />
+                <button type="button" class="btn btn-outline-primary btn-upload-field" data-target="inputSRC">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+            </div>
+            <div id="previewSRC" class="mt-2">
+                @if (!string.IsNullOrEmpty(Model.SRC))
+                {
+                    <img src="@Model.SRC" class="rounded" style="max-height:150px" />
+                }
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="URL" class="form-label fw-semibold">URL liên kết</label>
+            <input asp-for="URL" class="form-control form-control-sm" placeholder="https://example.com/landing-page" />
+            <small class="text-muted">URL điều hướng khi click vào quảng cáo</small>
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-md-4">
+        <div class="card card-outline card-secondary mb-3">
+            <div class="card-header py-2">
+                <h3 class="card-title mb-0 small fw-bold">Cấu hình</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="Subject" class="form-label fw-semibold small">Vị trí (Subject)</label>
+                    <input asp-for="Subject" type="number" class="form-control form-control-sm" placeholder="0" />
+                    <small class="text-muted">Mã vị trí hiển thị quảng cáo</small>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="StatusID" class="form-label fw-semibold small">Trạng thái</label>
+                    <select asp-for="StatusID" asp-items="(SelectList)ViewBag.Statuses" class="form-select form-select-sm"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Sort" class="form-label fw-semibold small">Thứ tự sắp xếp</label>
+                    <input asp-for="Sort" type="number" class="form-control form-control-sm" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ParentId" class="form-label fw-semibold small">Parent ID</label>
+                    <input asp-for="ParentId" type="number" class="form-control form-control-sm" placeholder="0" />
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" asp-for="LanguageID" />
+        <input type="hidden" asp-for="Domain" />
+        <input type="hidden" asp-for="SiteId" />
+    </div>
+</div>

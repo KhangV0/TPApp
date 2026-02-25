@@ -1,0 +1,417 @@
+@model TPApp.Areas.Cms.Models.ContentFormVm
+@{
+    ViewData["Title"] = "Thêm tin bài";
+}
+
+<form asp-action="Create" method="post" id="contentForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Domain" />
+    <input type="hidden" asp-for="LanguageId" />
+    <input type="hidden" asp-for="SiteId" />
+
+    <!-- Top toolbar -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="mb-0"><i class="fas fa-plus-circle me-2 text-success"></i> Thêm tin bài</h4>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm" id="btnSave">
+                <i class="fas fa-save me-1"></i> Lưu
+            </button>
+            <a asp-action="Index" class="btn btn-secondary btn-sm">
+                <i class="fas fa-times me-1"></i> Hủy
+            </a>
+        </div>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            <strong>Vui lòng kiểm tra lại:</strong>
+            <div asp-validation-summary="All" class="mt-1"></div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Tabs -->
+    <div class="card shadow-sm">
+        <div class="card-header p-0 border-bottom">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabGeneral" type="button">
+                        <i class="fas fa-info-circle me-1"></i> Chung
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabEditor" type="button">
+                        <i class="fas fa-edit me-1"></i> Nội dung
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSeo" type="button">
+                        <i class="fas fa-search me-1"></i> SEO
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPublish" type="button">
+                        <i class="fas fa-paper-plane me-1"></i> Đăng bài
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMedia" type="button">
+                        <i class="fas fa-photo-video me-1"></i> Media
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+
+                <!-- Tab 1: General -->
+                <div class="tab-pane fade show active" id="tabGeneral">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label asp-for="Title" class="form-label fw-semibold">Tiêu đề <span class="text-danger">*</span></label>
+                                <input asp-for="Title" class="form-control" placeholder="Nhập tiêu đề bài viết..." id="inputTitle" />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="QueryString" class="form-label fw-semibold">Slug (URL)</label>
+                                <div class="input-group">
+                                    <input asp-for="QueryString" class="form-control" placeholder="tu-dong-tao-tu-tieu-de" id="inputSlug" />
+                                    <button type="button" class="btn btn-outline-secondary" id="btnGenSlug" title="Tạo slug từ tiêu đề">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Để trống sẽ tự động tạo từ tiêu đề</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="MenuId" class="form-label fw-semibold">Menu / Danh mục <span class="text-danger">*</span></label>
+                                <select asp-for="MenuId" asp-items="@(ViewBag.Menus as Microsoft.AspNetCore.Mvc.Rendering.SelectList)"
+                                        class="form-select" id="selMenuId">
+                                    <option value="">-- Chọn menu --</option>
+                                </select>
+                                <span asp-validation-for="MenuId" class="text-danger small"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="TypeId" class="form-label fw-semibold">Loại bài (TypeId)</label>
+                                <input asp-for="TypeId" class="form-control" type="number" />
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="Author" class="form-label fw-semibold">Tác giả</label>
+                                <input asp-for="Author" class="form-control" placeholder="Tên tác giả..." />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Editor -->
+                <div class="tab-pane fade" id="tabEditor">
+                    <div class="mb-3">
+                        <label asp-for="Contents" class="form-label fw-semibold">Nội dung HTML</label>
+                        <textarea asp-for="Contents" id="editorContents" class="form-control" rows="15"></textarea>
+                    </div>
+                </div>
+
+                <!-- Tab 3: SEO -->
+                <div class="tab-pane fade" id="tabSeo">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Subject" class="form-label fw-semibold">Meta Title (Subject)</label>
+                                <input asp-for="Subject" class="form-control" placeholder="Tiêu đề hiển thị trên kết quả tìm kiếm" />
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="Description" class="form-label fw-semibold">Meta Description</label>
+                                <textarea asp-for="Description" class="form-control" rows="3" placeholder="Mô tả ngắn cho SEO..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="Keyword" class="form-label fw-semibold">Keywords</label>
+                                <input asp-for="Keyword" class="form-control" placeholder="từ khóa 1, từ khóa 2, ..." />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="ImageBig" class="form-label fw-semibold">OG Image (ảnh chia sẻ MXH)</label>
+                                <div class="input-group">
+                                    <input asp-for="ImageBig" class="form-control" placeholder="URL ảnh OG..." id="inputImageBig" />
+                                    <button type="button" class="btn btn-outline-primary btn-upload-field" data-target="inputImageBig">
+                                        <i class="fas fa-upload"></i>
+                                    </button>
+                                </div>
+                                <div id="previewImageBig" class="mt-2"></div>
+                            </div>
+                            <!-- SEO Preview -->
+                            <div class="card bg-light p-3">
+                                <small class="text-muted">Xem trước kết quả Google:</small>
+                                <div class="mt-2">
+                                    <div class="text-primary fw-semibold" id="seoPreviewTitle">Tiêu đề bài viết</div>
+                                    <small class="text-success">example.com/slug-bai-viet</small>
+                                    <div class="text-muted small" id="seoPreviewDesc">Mô tả ngắn sẽ hiện ở đây...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Publish -->
+                <div class="tab-pane fade" id="tabPublish">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="StatusId" class="form-label fw-semibold">Trạng thái</label>
+                                <select asp-for="StatusId" asp-items="@(ViewBag.Statuses as Microsoft.AspNetCore.Mvc.Rendering.SelectList)"
+                                        class="form-select">
+                                    <option value="">-- Chọn --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="PublishedDate" class="form-label fw-semibold">Ngày đăng</label>
+                                <input asp-for="PublishedDate" class="form-control" type="datetime-local" />
+                            </div>
+                        </div>
+                        <div class="col-md-4"></div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="bEffectiveDate" class="form-label fw-semibold">Có hiệu lực từ</label>
+                                <input asp-for="bEffectiveDate" class="form-control" type="datetime-local" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="eEffectiveDate" class="form-label fw-semibold">Hết hiệu lực</label>
+                                <input asp-for="eEffectiveDate" class="form-control" type="datetime-local" />
+                            </div>
+                        </div>
+                        <div class="col-md-4"></div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" asp-for="IsHot" id="chkIsHot">
+                                <label class="form-check-label" for="chkIsHot">
+                                    <i class="fas fa-fire text-danger me-1"></i> Đánh dấu Hot
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsNew" id="chkIsNew">
+                                <label class="form-check-label" for="chkIsNew">
+                                    <i class="fas fa-star text-primary me-1"></i> Đánh dấu Mới
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 5: Media -->
+                <div class="tab-pane fade" id="tabMedia">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Image" class="form-label fw-semibold">Ảnh đại diện</label>
+                                <div class="input-group">
+                                    <input asp-for="Image" class="form-control" placeholder="URL ảnh..." id="inputImage" />
+                                    <button type="button" class="btn btn-outline-primary btn-upload-field" data-target="inputImage">
+                                        <i class="fas fa-upload"></i> Upload
+                                    </button>
+                                </div>
+                                <div id="previewImage" class="mt-2"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="URL" class="form-label fw-semibold">URL liên kết</label>
+                                <input asp-for="URL" class="form-control" placeholder="https://..." />
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" asp-for="IsYoutube" id="chkYt">
+                                <label class="form-check-label" for="chkYt">
+                                    <i class="fab fa-youtube text-danger me-1"></i> Là video YouTube
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="LinkFile" class="form-label fw-semibold">File đính kèm</label>
+                                <div class="input-group">
+                                    <input asp-for="LinkFile" class="form-control" placeholder="URL file..." id="inputLinkFile" />
+                                    <button type="button" class="btn btn-outline-primary btn-upload-field" data-target="inputLinkFile">
+                                        <i class="fas fa-upload"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="LinkInvite" class="form-label fw-semibold">Link mời</label>
+                                <input asp-for="LinkInvite" class="form-control" placeholder="URL mời..." />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom save -->
+    <div class="d-flex justify-content-end mt-3 gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-1"></i> Lưu tin bài
+        </button>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-times me-1"></i> Hủy
+        </a>
+    </div>
+</form>
+
+@section Styles {
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.css" />
+}
+
+@section Scripts {
+<script src="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.umd.js"></script>
+<script>
+$(function(){
+    toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
+
+    // Select2 for menu
+    $('#selMenuId').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn menu --', allowClear: true, width: '100%' });
+
+    // CKEditor 5
+    const { ClassicEditor, Essentials, Bold, Italic, Link, Paragraph,
+            Heading, List, BlockQuote, Table, TableToolbar, Image, ImageUpload,
+            MediaEmbed, SourceEditing, Alignment, Font, HtmlEmbed,
+            SimpleUploadAdapter } = CKEDITOR;
+
+    ClassicEditor.create(document.querySelector('#editorContents'), {
+        plugins: [
+            Essentials, Bold, Italic, Link, Paragraph, Heading,
+            List, BlockQuote, Table, TableToolbar, Image, ImageUpload,
+            MediaEmbed, SourceEditing, Alignment, Font, HtmlEmbed,
+            SimpleUploadAdapter
+        ],
+        toolbar: {
+            items: [
+                'heading', '|',
+                'bold', 'italic', 'link', '|',
+                'alignment', '|',
+                'fontSize', 'fontColor', '|',
+                'bulletedList', 'numberedList', '|',
+                'blockQuote', 'insertTable', '|',
+                'imageUpload', 'mediaEmbed', 'htmlEmbed', '|',
+                'sourceEditing', '|',
+                'undo', 'redo'
+            ]
+        },
+        simpleUpload: {
+            uploadUrl: '@Url.Action("Upload", "Upload", new { area = "Cms" })',
+            withCredentials: true
+        },
+        table: {
+            contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+        }
+    }).then(editor => {
+        window._editor = editor;
+        // Sync editor content before form submit
+        document.getElementById('contentForm').addEventListener('submit', function() {
+            document.getElementById('editorContents').value = editor.getData();
+        });
+    }).catch(err => {
+        console.error('CKEditor init error:', err);
+        // Fallback: just show textarea
+    });
+
+    // Slug generation
+    $('#btnGenSlug').on('click', function() {
+        var title = $('#inputTitle').val();
+        if (title) {
+            $('#inputSlug').val(slugify(title));
+        }
+    });
+
+    // Auto-slug on title blur if empty
+    $('#inputTitle').on('blur', function() {
+        if (!$('#inputSlug').val()) {
+            $('#inputSlug').val(slugify($(this).val()));
+        }
+    });
+
+    // SEO Preview
+    $('#inputTitle, #Subject').on('input', function() {
+        $('#seoPreviewTitle').text($('#Subject').val() || $('#inputTitle').val() || 'Tiêu đề bài viết');
+    });
+    $('#Description').on('input', function() {
+        $('#seoPreviewDesc').text($(this).val() || 'Mô tả ngắn sẽ hiện ở đây...');
+    });
+
+    // Image upload buttons
+    $('.btn-upload-field').on('click', function() {
+        var targetId = $(this).data('target');
+        var input = $('<input type="file" accept="image/*,.pdf" style="display:none">');
+        input.on('change', function() {
+            var file = this.files[0];
+            if (!file) return;
+            var formData = new FormData();
+            formData.append('upload', file);
+            $.ajax({
+                url: '@Url.Action("Upload", "Upload", new { area = "Cms" })',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(r) {
+                    if (r.url) {
+                        $('#' + targetId).val(r.url);
+                        // Show preview for image fields
+                        var previewId = 'preview' + targetId.replace('input', '');
+                        if ($('#' + previewId).length) {
+                            $('#' + previewId).html('<img src="' + r.url + '" class="rounded" style="max-height:120px" />');
+                        }
+                        toastr.success('Upload thành công!');
+                    } else if (r.error) {
+                        toastr.error(r.error.message);
+                    }
+                },
+                error: function() { toastr.error('Upload thất bại.'); }
+            });
+        });
+        input.trigger('click');
+    });
+
+    // Preview existing images on load
+    ['inputImage', 'inputImageBig'].forEach(function(id) {
+        var val = $('#' + id).val();
+        if (val) {
+            var previewId = 'preview' + id.replace('input', '');
+            $('#' + previewId).html('<img src="' + val + '" class="rounded" style="max-height:120px" />');
+        }
+    });
+
+    // Ctrl+S shortcut
+    $(document).on('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            if (window._editor) {
+                document.getElementById('editorContents').value = window._editor.getData();
+            }
+            $('#contentForm').submit();
+        }
+    });
+});
+
+function slugify(text) {
+    if (!text) return '';
+    // Vietnamese diacritics
+    var from = 'àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ';
+    var to   = 'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd';
+    for (var i = 0; i < from.length; i++) {
+        text = text.replace(new RegExp(from[i], 'g'), to[i]);
+        text = text.replace(new RegExp(from[i].toUpperCase(), 'g'), to[i]);
+    }
+    return text.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/[\s]+/g, '-')
+        .replace(/-{2,}/g, '-')
+        .replace(/^-|-$/g, '');
+}
+</script>
+}

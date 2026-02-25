@@ -87,12 +87,52 @@
                             <p>Người dùng</p>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a asp-area="Cms" asp-controller="Posts" asp-action="Index"
-                           class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Posts" ? "active" : "")">
+                    @{
+                        var postsCtrl = ViewContext.RouteData.Values["controller"]?.ToString();
+                        bool isPosts = postsCtrl == "Posts";
+                        bool isMenuAdmin = postsCtrl == "MenuAdmin";
+                        bool isCategoryAdmin = postsCtrl == "CategoryAdmin";
+                        bool isImageAdverAdmin = postsCtrl == "ImageAdverAdmin";
+                        bool isContentGroup = isPosts || isMenuAdmin || isCategoryAdmin || isImageAdverAdmin;
+                    }
+                    <li class="nav-item @(isContentGroup ? "menu-open" : "")">
+                        <a href="#" class="nav-link @(isContentGroup ? "active" : "")">
                             <i class="nav-icon fas fa-newspaper"></i>
-                            <p>Tin bài</p>
+                            <p>
+                                Tin bài / Contents
+                                <i class="nav-arrow fas fa-angle-right"></i>
+                            </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-area="Cms" asp-controller="Posts" asp-action="Index"
+                                   class="nav-link @(isPosts ? "active" : "")">
+                                    <i class="nav-icon fas fa-list"></i>
+                                    <p>Quản lý tin bài</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-area="Cms" asp-controller="MenuAdmin" asp-action="Index"
+                                   class="nav-link @(isMenuAdmin ? "active" : "")">
+                                    <i class="nav-icon fas fa-sitemap"></i>
+                                    <p>Quản lý Menu</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-area="Cms" asp-controller="CategoryAdmin" asp-action="Index"
+                                   class="nav-link @(isCategoryAdmin ? "active" : "")">
+                                    <i class="nav-icon fas fa-tags"></i>
+                                    <p>Quản lý Danh mục</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-area="Cms" asp-controller="ImageAdverAdmin" asp-action="Index"
+                                   class="nav-link @(isImageAdverAdmin ? "active" : "")">
+                                    <i class="nav-icon fas fa-ad"></i>
+                                    <p>Quản lý Quảng cáo</p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
 
                     @{
