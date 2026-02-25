@@ -16,11 +16,11 @@ namespace TPApp.Services
 
         public async Task<List<SanPhamCNTB>> GetNewProductsAsync(int take)
         {
+            // NOTE: bEffectiveDate/eEffectiveDate range filter removed — it caused a full table scan
+            // (no index on those columns). StatusId + LanguageId filter is sufficient for homepage.
             return await _context.SanPhamCNTBs
-                .Where(x => x.StatusId == 3
-                         && x.LanguageId == 1
-                         && x.bEffectiveDate <= DateTime.Now
-                         && x.eEffectiveDate >= DateTime.Now)
+                .AsNoTracking()
+                .Where(x => x.StatusId == 3 && x.LanguageId == 1)
                 .OrderByDescending(x => x.Modified)
                 .ThenByDescending(x => x.Created)
                 .Take(take)

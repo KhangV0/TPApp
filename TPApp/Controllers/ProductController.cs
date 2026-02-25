@@ -192,7 +192,7 @@ namespace TPApp.Controllers
                     PriceText = row.OriginalPrice == null ? "" : FormatCurrencyOto((decimal?)row.OriginalPrice, row.Currency),
                     // Using Instance Method or passing domain
                     ImageUrl = string.IsNullOrEmpty(row.QuyTrinhHinhAnh) ? (row.TypeId == 2 ? _mainDomain + "images/sangche.png" : _mainDomain + "images/research.jpg") : CookedImageURL("254-170", row.QuyTrinhHinhAnh),
-                    Url = _mainDomain + "2-cong-nghe-thiet-bi/" + row.TypeId + "/" + MakeURLFriendly(row.Name) + "-" + row.ID + ".html"
+                    Url = _mainDomain + "2-cong-nghe-thiet-bi/" + row.ProductType + "/" + MakeURLFriendly(row.Name) + "-" + row.ID + ".html"
                 };
                 vm.Products.Add(item);
             }

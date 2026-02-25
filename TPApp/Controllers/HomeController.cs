@@ -41,8 +41,10 @@ namespace TPApp.Controllers
                 YeuCauCongNghe = LoadYeuCauCongNghe()
             };
 
-            ViewBag.NewTech = await _productService.GetNewProductsAsync(10);
-            ViewBag.NewProducts = await _productService.GetNewProductsAsync(12);
+            // Single query — NewTech uses first 10, NewProducts uses all 12
+            var newProducts = await _productService.GetNewProductsAsync(12);
+            ViewBag.NewTech     = newProducts.Take(10).ToList();
+            ViewBag.NewProducts = newProducts;
 
             return View(model);
         }

@@ -161,43 +161,65 @@
                         </div>
                     </div>
 
-                    <!-- ================= PAGINATION ================= -->
-                    <div class="sortPagiBar">
-                        <div class="bottom-pagination">
-                            <nav>
-                                <ul class="pagination">
-                                    @foreach (var p in Model.Pager.Pages)
+                    @* ================= PAGINATION ================= *@
+                    @if (Model.Pager.TotalPage > 1)
+                    {
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                            <div class="small text-muted">
+                                @Model.TotalText &nbsp;|&nbsp;
+                                Thảo luận/trang:
+                                <select class="form-select form-select-sm d-inline-block w-auto"
+                                        onchange="location.href='?pageSize='+this.value+'&linhVuc=@Model.LinhVuc'">
+                                    @foreach (var s in new[] { 10, 20, 30, 40, 50 })
                                     {
-                                        <li class="@(p == Model.Pager.CurrentPage ? "active" : "")">
-                                            <a href="@Url.Action("Index", new {
-                                                page = p,
-                                                pageSize = Model.PageSize,
-                                                linhVuc = Model.LinhVuc
-                                            })">
-                                                @p
-                                            </a>
-                                        </li>
+                                        if (s == Model.PageSize)
+                                        {
+                                            <option value="@s" selected>@s</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@s">@s</option>
+                                        }
                                     }
-                                </ul>
-                            </nav>
-                        </div>
-
-                        <div class="show-product-item">
-                            Thảo luận / trang:
-                            <select onchange="location.href='?pageSize='+this.value">
-                                @foreach (var s in new[] { 10,20,30,40,50 })
+                                </select>
+                            </div>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item @(Model.Pager.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = 1, pageSize = Model.PageSize, linhVuc = Model.LinhVuc })">
+                                        <i class="fas fa-angles-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item @(Model.Pager.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = Model.Pager.CurrentPage - 1, pageSize = Model.PageSize, linhVuc = Model.LinhVuc })">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                                @foreach (var p in Model.Pager.Pages)
                                 {
-                                    <option value="@s" selected="@(s==Model.PageSize)">
-                                        @s
-                                    </option>
+                                    <li class="page-item @(p == Model.Pager.CurrentPage ? "active" : "")">
+                                        <a class="page-link"
+                                           href="@Url.Action("Index", new { page = p, pageSize = Model.PageSize, linhVuc = Model.LinhVuc })">
+                                            @p
+                                        </a>
+                                    </li>
                                 }
-                            </select>
+                                <li class="page-item @(Model.Pager.CurrentPage == Model.Pager.TotalPage ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = Model.Pager.CurrentPage + 1, pageSize = Model.PageSize, linhVuc = Model.LinhVuc })">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item @(Model.Pager.CurrentPage == Model.Pager.TotalPage ? "disabled" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = Model.Pager.TotalPage, pageSize = Model.PageSize, linhVuc = Model.LinhVuc })">
+                                        <i class="fas fa-angles-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
-
-                        <div>
-                            @Model.TotalText
-                        </div>
-                    </div>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.TotalText))
+                    {
+                        <div class="small text-muted mt-2">@Model.TotalText</div>
+                    }
 
                 </div>
 

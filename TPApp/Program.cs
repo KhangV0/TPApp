@@ -193,7 +193,19 @@ app.MapAreaControllerRoute(
 // 1. Product Routes
 app.MapControllerRoute(
     name: "product_index",
-    pattern: "cong-nghe-thiet-bi-2.html",
+    pattern: "cong-nghe.html",
+    defaults: new { controller = "Product", action = "Index" }
+);
+
+app.MapControllerRoute(
+    name: "product_index",
+    pattern: "thiet-bi.html",
+    defaults: new { controller = "Product", action = "Index" }
+);
+
+app.MapControllerRoute(
+    name: "product_index",
+    pattern: "tai-san-tri-tue.html",
     defaults: new { controller = "Product", action = "Index" }
 );
 

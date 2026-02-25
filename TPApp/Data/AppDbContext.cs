@@ -59,6 +59,11 @@ namespace TPApp.Data
             modelBuilder.Entity<uspPortletCountTichcuu_Result>().HasNoKey();
             modelBuilder.Entity<uspPortletCountTichcuuTraloi_Result>().HasNoKey();
 
+            // SanPhamCNTBCategory — composite PK matching dbo.SanPhamCNTBCategory schema
+            modelBuilder.Entity<SanPhamCNTBCategory>()
+                .HasKey(e => new { e.SanPhamCNTBId, e.CatId });
+
+
             // Configure Identity Mapping to existing User table
             modelBuilder.Entity<ApplicationUser>(entity =>
             {

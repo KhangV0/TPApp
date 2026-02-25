@@ -34,8 +34,8 @@
                         break;
                 }
 
-            @*     @await Component.InvokeAsync("ProductPortletIOSanpham")
-                @await Component.InvokeAsync("TimKiemDoiTacPortlet") *@
+            @await Component.InvokeAsync("ProductPortletIOSanpham", new { productId = Model.Product.ID })
+                @*      @await Component.InvokeAsync("TimKiemDoiTacPortlet") *@
             </div>
 
             @* SIDEBAR *@

@@ -96,42 +96,58 @@
 
             </div>
 
-            <!-- ================= PAGINATION ================= -->
-            <div class="sortPagiBar">
-                <div class="bottom-pagination">
-                    <nav>
-                        <ul class="pagination">
+            @{
+                int totalPages = Model.PageSize > 0 ? (int)Math.Ceiling((double)Model.Total / Model.PageSize) : 1;
+                int curPage   = Model.CurPage;
+            }
 
-                            @foreach (var page in Model.Pages)
+            @if (totalPages > 1)
+            {
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                    <div class="small text-muted">
+                        Hiển thị <strong>@((curPage - 1) * Model.PageSize + 1)</strong>–<strong>@Math.Min(curPage * Model.PageSize, Model.Total)</strong>
+                        / <strong>@Model.Total</strong> sản phẩm &nbsp;|&nbsp;
+                        Sản phẩm/trang:
+                        <select class="form-select form-select-sm d-inline-block w-auto" onchange="location.href='?page=1&pageSize=' + this.value">
+                            @foreach (var size in new[] { 12, 24, 36, 48, 60 })
                             {
-                                <li class="@(page.IsActive ? "active" : "")">
-                                    <a class="phantrang"
-                                       href="?page=@(page.Page)&pageSize=@Model.PageSize">
-                                        @(page.Page)
-                                    </a>
-                                </li>
+                                if (size == Model.PageSize)
+                                {
+                                    <option value="@size" selected>@size</option>
+                                }
+                                else
+                                {
+                                    <option value="@size">@size</option>
+                                }
                             }
-
-                        </ul>
-                    </nav>
-                </div>
-
-                <div class="show-product-item">
-                    Sản phẩm / trang:
-                    <select onchange="location.href='?page=1&pageSize=' + this.value">
-                        @foreach (var size in new[] { 12, 24, 36, 48, 60 })
+                        </select>
+                    </div>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(curPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=1&pageSize=@Model.PageSize"><i class="fas fa-angles-left"></i></a>
+                        </li>
+                        <li class="page-item @(curPage == 1 ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(curPage - 1)&pageSize=@Model.PageSize"><i class="fas fa-angle-left"></i></a>
+                        </li>
+                        @foreach (var pg in Model.Pages)
                         {
-                            <option value="@size" selected="@(size == Model.PageSize)">
-                                @size
-                            </option>
+                            <li class="page-item @(pg.IsActive ? "active" : "")">
+                                <a class="page-link" href="?page=@pg.Page&pageSize=@Model.PageSize">@pg.Page</a>
+                            </li>
                         }
-                    </select>
+                        <li class="page-item @(curPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@(curPage + 1)&pageSize=@Model.PageSize"><i class="fas fa-angle-right"></i></a>
+                        </li>
+                        <li class="page-item @(curPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" href="?page=@totalPages&pageSize=@Model.PageSize"><i class="fas fa-angles-right"></i></a>
+                        </li>
+                    </ul>
                 </div>
-
-                <span class="first">
-                    Tổng: @Model.Total sản phẩm
-                </span>
-            </div>
+            }
+            else if (Model.Total > 0)
+            {
+                <div class="small text-muted mt-2">Tổng cộng <strong>@Model.Total</strong> sản phẩm</div>
+            }
 
             <!-- hidden -->
             <input type="hidden" value="@Model.CurPage" />
