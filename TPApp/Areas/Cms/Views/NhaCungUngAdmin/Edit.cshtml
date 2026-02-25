@@ -1,0 +1,122 @@
+@model TPApp.Areas.Cms.Controllers.NhaCungUngFormVm
+@{
+    ViewData["Title"] = "Sửa Nhà cung ứng";
+}
+
+<form asp-action="Edit" method="post" id="ncuForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="CungUngId" />
+    <div class="card card-outline card-primary shadow-sm">
+        <div class="card-header d-flex align-items-center flex-wrap gap-2">
+            <h3 class="card-title mb-0">
+                <i class="fas fa-pen me-1"></i> Sửa Nhà cung ứng #@Model.CungUngId
+            </h3>
+            <div class="ms-auto d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-save me-1"></i> Cập nhật
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Created.HasValue)
+            {
+                <div class="alert alert-light small mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Tạo bởi <strong>@(Model.CreatedBy ?? "—")</strong> lúc <strong>@Model.Created?.ToString("dd/MM/yyyy HH:mm")</strong>
+                </div>
+            }
+            @await Html.PartialAsync("_NhaCungUngForm", Model)
+        </div>
+    </div>
+</form>
+
+@section Styles {
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.css" />
+<style>.ck-editor__editable { min-height: 200px; }</style>
+}
+
+@section Scripts {
+<script src="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.umd.js"></script>
+<script>
+$(function(){
+    const { ClassicEditor, Essentials, Bold, Italic, Link, Paragraph,
+            Heading, List, BlockQuote, Table, TableToolbar,
+            SourceEditing, Alignment, Font, HtmlEmbed } = CKEDITOR;
+
+    var editorConfig = {
+        plugins: [
+            Essentials, Bold, Italic, Link, Paragraph, Heading,
+            List, BlockQuote, Table, TableToolbar,
+            SourceEditing, Alignment, Font, HtmlEmbed
+        ],
+        toolbar: {
+            items: [
+                'heading', '|',
+                'bold', 'italic', 'link', '|',
+                'alignment', '|',
+                'fontSize', 'fontColor', '|',
+                'bulletedList', 'numberedList', '|',
+                'blockQuote', 'insertTable', 'htmlEmbed', '|',
+                'sourceEditing', '|',
+                'undo', 'redo'
+            ]
+        },
+        table: {
+            contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+        }
+    };
+
+    var editors = {};
+    ['editorChucNangChinh', 'editorSanPham'].forEach(function(id) {
+        var el = document.querySelector('#' + id);
+        if (el) {
+            ClassicEditor.create(el, editorConfig).then(function(editor) {
+                editors[id] = editor;
+            }).catch(function(err) { console.error('CKEditor init error:', err); });
+        }
+    });
+
+    document.getElementById('ncuForm').addEventListener('submit', function() {
+        for (var id in editors) {
+            document.getElementById(id).value = editors[id].getData();
+        }
+    });
+
+    // Image upload buttons
+    $('.btn-upload-field').on('click', function() {
+        var targetId = $(this).data('target');
+        var input = $('<input type="file" accept="image/*" style="display:none">');
+        input.on('change', function() {
+            var file = this.files[0];
+            if (!file) return;
+            var formData = new FormData();
+            formData.append('upload', file);
+            $.ajax({
+                url: '@Url.Action("Upload", "Upload", new { area = "Cms" })',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(r) {
+                    if (r.url) {
+                        $('#' + targetId).val(r.url);
+                        var previewId = 'preview' + targetId.replace('input', '');
+                        if ($('#' + previewId).length) {
+                            $('#' + previewId).html('<img src="' + r.url + '" class="rounded" style="max-height:150px" />');
+                        }
+                        toastr.success('Upload thành công!');
+                    } else if (r.error) {
+                        toastr.error(r.error.message);
+                    }
+                },
+                error: function() { toastr.error('Upload thất bại.'); }
+            });
+        });
+        input.trigger('click');
+    });
+});
+</script>
+}

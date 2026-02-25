@@ -1,0 +1,135 @@
+@model TPApp.Areas.Cms.Controllers.NhaCungUngFormVm
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <!-- Left column -->
+    <div class="col-md-8">
+        <div class="mb-3">
+            <label asp-for="FullName" class="form-label fw-semibold">Tên nhà cung ứng <span class="text-danger">*</span></label>
+            <input asp-for="FullName" class="form-control" placeholder="Nhập tên nhà cung ứng..." />
+            <span asp-validation-for="FullName" class="text-danger small"></span>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="NguoiDaiDien" class="form-label fw-semibold">Người đại diện</label>
+                <input asp-for="NguoiDaiDien" class="form-control form-control-sm" placeholder="Họ tên người đại diện..." />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="ChucVu" class="form-label fw-semibold">Chức vụ</label>
+                <input asp-for="ChucVu" class="form-control form-control-sm" placeholder="Chức vụ..." />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DiaChi" class="form-label fw-semibold">Địa chỉ</label>
+            <input asp-for="DiaChi" class="form-control form-control-sm" placeholder="Địa chỉ nhà cung ứng..." />
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="Phone" class="form-label fw-semibold">Điện thoại</label>
+                <input asp-for="Phone" class="form-control form-control-sm" placeholder="Số điện thoại..." />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                <input asp-for="Email" type="email" class="form-control form-control-sm" placeholder="Email..." />
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Fax" class="form-label fw-semibold">Fax</label>
+                <input asp-for="Fax" class="form-control form-control-sm" placeholder="Fax..." />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Website" class="form-label fw-semibold">Website</label>
+            <input asp-for="Website" class="form-control form-control-sm" placeholder="https://..." />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DichVu" class="form-label fw-semibold">Dịch vụ</label>
+            <input asp-for="DichVu" class="form-control form-control-sm" placeholder="Dịch vụ cung cấp..." />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LinhVucId" class="form-label fw-semibold">Lĩnh vực</label>
+            <input asp-for="LinhVucId" class="form-control form-control-sm" placeholder="Mã lĩnh vực..." />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="ChucNangChinh" class="form-label fw-semibold">Chức năng chính</label>
+            <textarea asp-for="ChucNangChinh" id="editorChucNangChinh" class="form-control" rows="5"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="SanPham" class="form-label fw-semibold">Sản phẩm</label>
+            <textarea asp-for="SanPham" id="editorSanPham" class="form-control" rows="5"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Keywords" class="form-label fw-semibold">Từ khóa</label>
+            <textarea asp-for="Keywords" class="form-control form-control-sm" rows="2" placeholder="Từ khóa SEO, phân cách bằng dấu phẩy..."></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="HinhDaiDien" class="form-label fw-semibold">Hình đại diện</label>
+            <div class="input-group">
+                <input asp-for="HinhDaiDien" class="form-control form-control-sm" placeholder="/images/supplier.jpg" id="inputHinhDaiDien" />
+                <button type="button" class="btn btn-outline-primary btn-upload-field" data-target="inputHinhDaiDien">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+            </div>
+            <div id="previewHinhDaiDien" class="mt-2">
+                @if (!string.IsNullOrEmpty(Model.HinhDaiDien))
+                {
+                    <img src="@Model.HinhDaiDien" class="rounded" style="max-height:150px" />
+                }
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="QueryString" class="form-label fw-semibold">Query String (URL slug)</label>
+            <input asp-for="QueryString" class="form-control form-control-sm" placeholder="url-slug..." />
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-md-4">
+        <div class="card card-outline card-secondary mb-3">
+            <div class="card-header py-2">
+                <h3 class="card-title mb-0 small fw-bold">Cấu hình</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="StatusId" class="form-label fw-semibold small">Trạng thái</label>
+                    <select asp-for="StatusId" asp-items="(SelectList)ViewBag.Statuses" class="form-select form-select-sm"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Kích hoạt</label>
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="IsActivated" value="false" />
+                        <input type="checkbox" name="IsActivated" value="true" class="form-check-input"
+                               id="IsActivated" @(Model.IsActivated == true ? "checked" : "") />
+                        <label for="IsActivated" class="form-check-label small">Đang hoạt động</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Rating" class="form-label fw-semibold small">Đánh giá (Rating)</label>
+                    <input asp-for="Rating" type="number" class="form-control form-control-sm" min="0" max="5" placeholder="0-5" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ParentId" class="form-label fw-semibold small">Parent ID</label>
+                    <input asp-for="ParentId" type="number" class="form-control form-control-sm" placeholder="0" />
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" asp-for="LanguageId" />
+        <input type="hidden" asp-for="Domain" />
+        <input type="hidden" asp-for="SiteId" />
+    </div>
+</div>

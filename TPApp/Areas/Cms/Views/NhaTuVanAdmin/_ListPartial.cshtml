@@ -1,0 +1,175 @@
+@model List<TPApp.Areas.Cms.Controllers.NhaTuVanListItem>
+@{
+    var totalCount = ViewBag.TotalCount ?? 0;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var page = ViewBag.Page ?? 1;
+    var pageSize = ViewBag.PageSize ?? 30;
+}
+
+<span id="partialTotalCount" class="d-none">@totalCount</span>
+
+<div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:35px"><input type="checkbox" id="chkAll" class="form-check-input" /></th>
+                    <th style="width:120px">Thao tác</th>
+                    <th style="width:60px">Ảnh</th>
+                    <th class="sortable" data-sort="fullname" style="cursor:pointer">
+                        Họ tên <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th style="width:120px">Học hàm</th>
+                    <th style="width:160px">Cơ quan</th>
+                    <th class="sortable" data-sort="phone" style="cursor:pointer;width:130px">
+                        Điện thoại <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th class="sortable" data-sort="email" style="cursor:pointer;width:180px">
+                        Email <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                    <th style="width:110px">Kích hoạt</th>
+                    <th style="width:120px">Trạng thái</th>
+                    <th class="sortable d-none d-md-table-cell" data-sort="created" style="cursor:pointer;width:130px">
+                        Ngày tạo <i class="fas fa-sort text-muted ms-1"></i>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="11" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
+                            Không có dữ liệu. Hãy thêm nhà tư vấn mới!
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        var isActive = item.IsActivated == true;
+                        var canDelete = !isActive;
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input chkRow" value="@item.TuVanId" @(canDelete ? "" : "disabled") />
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@item.TuVanId"
+                                       class="btn btn-outline-primary" title="Sửa">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                    @if (canDelete)
+                                    {
+                                        <button type="button" class="btn btn-outline-danger btn-del"
+                                                data-id="@item.TuVanId" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-secondary btn-sm" disabled title="Đang kích hoạt">
+                                            <i class="fas fa-lock"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.HinhDaiDien))
+                                {
+                                    <img src="@Html.CookedImageURL("108-84", item.HinhDaiDien)" alt="@item.FullName" class="rounded" style="width:40px;height:40px;object-fit:cover;" />
+                                }
+                                else
+                                {
+                                    <div class="rounded bg-light d-flex align-items-center justify-content-center" style="width:40px;height:40px">
+                                        <i class="fas fa-user-tie text-muted"></i>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.TuVanId" class="fw-semibold text-decoration-none small">
+                                    @item.FullName
+                                </a>
+                                @if (!string.IsNullOrEmpty(item.ChucVu))
+                                {
+                                    <br /><small class="text-muted">@item.ChucVu</small>
+                                }
+                            </td>
+                            <td class="small">@(item.HocHam ?? "—")</td>
+                            <td class="small">@(item.CoQuan ?? "—")</td>
+                            <td class="small">@(item.Phone ?? "—")</td>
+                            <td class="small">@(item.Email ?? "—")</td>
+                            <td class="text-center">
+                                @if (isActive)
+                                {
+                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Chưa kích hoạt</span>
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var badgeClass = item.StatusId switch
+                                    {
+                                        3 => "bg-success",
+                                        2 => "bg-info",
+                                        1 => "bg-warning",
+                                        4 => "bg-danger",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @badgeClass">@(item.StatusTitle ?? "—")</span>
+                            </td>
+                            <td class="d-none d-md-table-cell small text-muted">@(item.Created?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <small class="text-muted">
+            Hiển thị <strong>@(((int)page - 1) * (int)pageSize + 1)</strong>–<strong>@Math.Min((int)page * (int)pageSize, (int)totalCount)</strong> / <strong>@totalCount</strong> bản ghi
+        </small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{
+                    int startP = Math.Max(1, (int)page - 4);
+                    int endP = Math.Min((int)totalPages, (int)page + 4);
+                }
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="1" title="Trang đầu"><i class="fas fa-angles-left"></i></a>
+                </li>
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@(page - 1)" title="Trang trước"><i class="fas fa-angle-left"></i></a>
+                </li>
+                @for (int i = startP; i <= endP; i++)
+                {
+                    <li class="page-item @(i == (int)page ? "active" : "")">
+                        <a class="page-link ajax-page" data-page="@i" href="#">@i</a>
+                    </li>
+                }
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@(page + 1)" title="Trang sau"><i class="fas fa-angle-right"></i></a>
+                </li>
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@totalPages" title="Trang cuối"><i class="fas fa-angles-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+else if (totalCount > 0)
+{
+    <div class="card-footer">
+        <small class="text-muted">Tổng: <strong>@totalCount</strong> bản ghi</small>
+    </div>
+}
