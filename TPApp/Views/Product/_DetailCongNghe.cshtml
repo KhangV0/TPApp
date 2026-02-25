@@ -1,0 +1,752 @@
+@using TPApp.ViewModel
+@using TPApp.Entities
+@model ProductDetailViewModel
+
+@{
+    var p = Model.Product;
+    var supplier = (p.NCUId != null)
+        ? Model.Suppliers?.FirstOrDefault(s => s.CungUngId == p.NCUId)
+        : null;
+
+    // Phân tích CategoryId thành list int
+    var catIds = new List<int>();
+    if (!string.IsNullOrEmpty(p.CategoryId))
+    {
+        foreach (var s in p.CategoryId.Split(new[]{',','|',';'}, StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (int.TryParse(s.Trim(), out int cid)) catIds.Add(cid);
+        }
+    }
+
+    // Checkbox renderer helper
+    Func<bool, string> chk = (checked_) => checked_ ? "☑" : "☐";
+}
+
+<style>
+/* ═══════════════════════════════════════════
+   HỒ SƠ CÔNG NGHỆ – Document Styles
+═══════════════════════════════════════════ */
+.ho-so-cong-nghe {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #222;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.hscn-header {
+    border: 2px solid #1a5276;
+    padding: 20px 28px;
+    margin-bottom: 24px;
+    position: relative;
+}
+.hscn-header .iso-badge {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    border: 2px solid #1a5276;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #1a5276;
+    letter-spacing: 1px;
+}
+.hscn-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #1a5276;
+    margin: 12px 0 4px 0;
+}
+.hscn-code {
+    text-align: center;
+    font-style: italic;
+    color: #555;
+    margin-bottom: 0;
+}
+.hscn-org {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.hscn-section {
+    margin-bottom: 28px;
+}
+.hscn-section-title {
+    background: #1a5276;
+    color: #fff;
+    padding: 7px 14px;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    border-radius: 3px;
+}
+.hscn-item {
+    margin-bottom: 14px;
+    padding-left: 4px;
+}
+.hscn-item-title {
+    font-weight: 700;
+    color: #1a5276;
+    margin-bottom: 5px;
+    font-size: 13.5px;
+}
+.hscn-item-title .num {
+    display: inline-block;
+    min-width: 24px;
+}
+.hscn-check-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 3px;
+    font-size: 13.5px;
+}
+.hscn-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+.hscn-table th,
+.hscn-table td {
+    border: 1px solid #aaa;
+    padding: 6px 10px;
+    vertical-align: top;
+}
+.hscn-table th {
+    background: #eaf0f8;
+    font-weight: 700;
+    white-space: nowrap;
+    width: 220px;
+}
+.hscn-table-info td {
+    border: none;
+    padding: 3px 10px 3px 0;
+}
+.hscn-table-info td:first-child {
+    font-weight: 700;
+    white-space: nowrap;
+    min-width: 180px;
+    color: #444;
+}
+.hscn-trl-table th { background: #eaf0f8; text-align: center; }
+.hscn-trl-table td { text-align: center; }
+.hscn-trl-table tr.trl-current { background: #d6eaf8; font-weight: 700; }
+.hscn-trl-table tr.trl-done td { color: #1e8449; }
+.hscn-divider {
+    border: none;
+    border-top: 1px dashed #aaa;
+    margin: 18px 0;
+}
+.hscn-admin-block {
+    border: 1px dashed #999;
+    padding: 14px 18px;
+    background: #fafafa;
+    font-size: 13px;
+}
+.content-body img  { max-width: 100%; height: auto; }
+.content-body table { width: 100%; }
+
+@@media print {
+    .hscn-header { break-inside: avoid; }
+    .hscn-section { break-inside: avoid; }
+}
+</style>
+
+<div class="ho-so-cong-nghe mt-4">
+
+    @await Html.PartialAsync("_DetailHeader", Model)
+
+    @* ── TAB NAVIGATION ── *@
+    <ul class="nav nav-tabs" id="detailTabsCongNghe" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="hscn-tab1-btn" data-bs-toggle="tab"
+                    data-bs-target="#hscn-tab1" type="button" role="tab">
+                <i class="fa fa-user me-1"></i>Chủ sở hữu
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hscn-tab2-btn" data-bs-toggle="tab"
+                    data-bs-target="#hscn-tab2" type="button" role="tab">
+                <i class="fa fa-id-card me-1"></i>Định danh
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hscn-tab3-btn" data-bs-toggle="tab"
+                    data-bs-target="#hscn-tab3" type="button" role="tab">
+                <i class="fa fa-file-text me-1"></i>Mô tả
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hscn-tab4-btn" data-bs-toggle="tab"
+                    data-bs-target="#hscn-tab4" type="button" role="tab">
+                <i class="fa fa-bar-chart me-1"></i>TRL
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hscn-tab5-btn" data-bs-toggle="tab"
+                    data-bs-target="#hscn-tab5" type="button" role="tab">
+                <i class="fa fa-cogs me-1"></i>Ứng dụng
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hscn-tab6-btn" data-bs-toggle="tab"
+                    data-bs-target="#hscn-tab6" type="button" role="tab">
+                <i class="fa fa-exchange me-1"></i>Chuyển giao
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="hscn-tab7-btn" data-bs-toggle="tab"
+                    data-bs-target="#hscn-tab7" type="button" role="tab">
+                <i class="fa fa-certificate me-1"></i>Chứng nhận
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom p-4" id="detailTabsCongNgheContent">
+
+    @* ════════════════════════════════════════
+       I. THÔNG TIN CHỦ SỞ HỮU
+       ════════════════════════════════════════ *@
+    <div class="tab-pane fade show active" id="hscn-tab1" role="tabpanel">
+    <div class="hscn-section">
+        <div class="hscn-section-title">Thông tin chủ sở hữu (Nhà cung ứng)</div>
+
+        @* 1. Tên đơn vị / Cá nhân *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">1.</span> Tên đơn vị / Cá nhân chủ sở hữu</div>
+            <div class="ps-3">
+                @if (supplier != null)
+                {
+                    <strong>@supplier.FullName</strong>
+                }
+                else if (!string.IsNullOrEmpty(p.HoTen))
+                {
+                    <strong>@p.HoTen</strong>
+                }
+                else if (!string.IsNullOrEmpty(Model.SupplierName))
+                {
+                    <strong>@Model.SupplierName</strong>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </div>
+        </div>
+
+        @* 2. Loại hình *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">2.</span> Loại hình</div>
+            <div class="ps-3">
+                @{ var loai = p.LoaiDeTai ?? 0; }
+                <div class="hscn-check-row">@chk(loai == 1) Viện / Trường</div>
+                <div class="hscn-check-row">@chk(loai == 2) Doanh nghiệp KH&amp;CN</div>
+                <div class="hscn-check-row">@chk(loai == 3) Cá nhân</div>
+                <div class="hscn-check-row">@chk(loai == 4)
+                    Khác@(!string.IsNullOrEmpty(p.LoaiDeTaiKhac) ? $" ({p.LoaiDeTaiKhac})" : "")
+                </div>
+            </div>
+        </div>
+
+        @* 3. Thông tin liên hệ *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">3.</span> Thông tin liên hệ</div>
+            <table class="hscn-table-info ps-3 ms-3" style="font-size:13.5px;">
+                <tbody>
+                    @if (!string.IsNullOrEmpty(p.DiaChi) || p.TinhTP.HasValue)
+                    {
+                        <tr>
+                            <td>Địa chỉ:</td>
+                            <td>@p.DiaChi @(p.TinhTP.HasValue ? $"(Tỉnh/TP: {p.TinhTP})" : "")</td>
+                        </tr>
+                    }
+                    @if (supplier != null && !string.IsNullOrEmpty(supplier.NguoiDaiDien))
+                    {
+                        <tr><td>Người đại diện:</td><td>@supplier.NguoiDaiDien @(!string.IsNullOrEmpty(supplier.ChucVu) ? $"– {supplier.ChucVu}" : "")</td></tr>
+                    }
+                    else if (!string.IsNullOrEmpty(p.HoTen))
+                    {
+                        <tr><td>Người đại diện:</td><td>@p.HoTen</td></tr>
+                    }
+                    @if (!string.IsNullOrEmpty(p.Phone))
+                    {
+                        <tr><td>Điện thoại:</td><td>@p.Phone @(!string.IsNullOrEmpty(p.PhoneOther) ? $" / {p.PhoneOther}" : "")</td></tr>
+                    }
+                    @if (!string.IsNullOrEmpty(p.OwnerEmail))
+                    {
+                        <tr><td>Email:</td><td><a href="mailto:@p.OwnerEmail">@p.OwnerEmail</a></td></tr>
+                    }
+                    @if (!string.IsNullOrEmpty(p.WebUrl))
+                    {
+                        <tr><td>Website:</td><td><a href="@p.WebUrl" target="_blank">@p.WebUrl</a></td></tr>
+                    }
+                    @if (supplier != null)
+                    {
+                        @if (!string.IsNullOrEmpty(supplier.Phone))
+                        {
+                            <tr><td>ĐT (NCC):</td><td>@supplier.Phone</td></tr>
+                        }
+                        @if (!string.IsNullOrEmpty(supplier.Email))
+                        {
+                            <tr><td>Email (NCC):</td><td><a href="mailto:@supplier.Email">@supplier.Email</a></td></tr>
+                        }
+                        @if (!string.IsNullOrEmpty(supplier.Website))
+                        {
+                            <tr><td>Website (NCC):</td><td><a href="@supplier.Website" target="_blank">@supplier.Website</a></td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div><!-- /tab-pane I -->
+
+    @* ════════════════════════════════════════
+       II. THÔNG TIN ĐỊNH DANH
+       ════════════════════════════════════════ *@
+    <div class="tab-pane fade" id="hscn-tab2" role="tabpanel">
+    <div class="hscn-section">
+        <div class="hscn-section-title">Thông tin định danh</div>
+
+        @* 4. Tên công nghệ *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">4.</span> Tên công nghệ / Quy trình</div>
+            <div class="ps-3 fs-6 fw-bold">@p.Name</div>
+        </div>
+
+        @* 5. Ảnh đại diện *@
+        @if (!string.IsNullOrEmpty(p.QuyTrinhHinhAnh))
+        {
+            <div class="hscn-item">
+                <div class="hscn-item-title"><span class="num">5.</span> Ảnh đại diện tiêu biểu</div>
+                <div class="ps-3">
+                    <img src="@Html.CookedImageURL("org", p.QuyTrinhHinhAnh)"
+                         alt="@p.Name"
+                         style="max-width:320px; max-height:240px; object-fit:contain; border:1px solid #ddd; padding:4px;" />
+                </div>
+            </div>
+        }
+
+        @* 6. Xuất xứ *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">6.</span> Xuất xứ</div>
+            <div class="ps-3">
+                @{
+                    bool isDomestic = string.IsNullOrEmpty(p.XuatXu) ||
+                        p.XuatXu.Contains("Việt", StringComparison.OrdinalIgnoreCase) ||
+                        p.XuatXu.Contains("VN", StringComparison.OrdinalIgnoreCase);
+                }
+                <div class="hscn-check-row">@chk(isDomestic) Trong nước (Việt Nam)</div>
+                <div class="hscn-check-row">@chk(!isDomestic) Nước ngoài
+                    @if (!isDomestic && !string.IsNullOrEmpty(p.XuatXu))
+                    {
+                        <span>(Quốc gia: <strong>@p.XuatXu</strong>)</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* 7. Tình trạng pháp lý & SHTT *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">7.</span> Tình trạng pháp lý &amp; Sở hữu trí tuệ</div>
+            <div class="ps-3">
+                <div class="hscn-check-row">
+                    @chk(!string.IsNullOrEmpty(p.SoBang))
+                    Bằng độc quyền Sáng chế số:
+                    @if (!string.IsNullOrEmpty(p.SoBang))
+                    {
+                        <strong>@p.SoBang</strong>
+                        @if (p.NgayCapBang.HasValue) { <span>– Ngày cấp: @p.NgayCapBang.Value.ToString("dd/MM/yyyy")</span> }
+                        @if (p.ThoiHan.HasValue)     { <span>– Hết hạn: @p.ThoiHan.Value.ToString("dd/MM/yyyy")</span> }
+                    }
+                </div>
+                <div class="hscn-check-row">
+                    @chk(!string.IsNullOrEmpty(p.ApplicationNumber))
+                    Giấy chứng nhận Đăng ký Quyền tác giả số:
+                    @if (!string.IsNullOrEmpty(p.ApplicationNumber)) { <strong>@p.ApplicationNumber</strong> }
+                    @if (p.AcceptedDate.HasValue)
+                    {
+                        <span>– Ngày chấp nhận: @p.AcceptedDate.Value.ToString("dd/MM/yyyy")</span>
+                    }
+                </div>
+                @if (p.ClaimsCount.HasValue && p.ClaimsCount > 0)
+                {
+                    <div class="hscn-check-row">☑ Số yêu cầu bảo hộ: <strong>@p.ClaimsCount</strong></div>
+                }
+                <div class="hscn-check-row">☐ Bí mật công nghệ</div>
+                @if (p.LoaiDeTai.HasValue)
+                {
+                    var loaiLabel = p.LoaiDeTai switch {
+                        1 => "Đề tài cấp Nhà nước",
+                        2 => "Đề tài cấp Bộ",
+                        3 => "Đề tài cấp Tỉnh / TP",
+                        4 => "Đề tài cấp Cơ sở",
+                        5 => "Nghiên cứu độc lập",
+                        _ => $"Loại {p.LoaiDeTai}"
+                    };
+                    <div class="hscn-check-row">☑ @loaiLabel @(!string.IsNullOrEmpty(p.LoaiDeTaiKhac) ? $"({p.LoaiDeTaiKhac})" : "")</div>
+                }
+            </div>
+        </div>
+    </div>
+    </div><!-- /tab-pane II -->
+
+    @* ════════════════════════════════════════
+       III. MÔ TẢ CHI TIẾT GIẢI PHÁP
+       ════════════════════════════════════════ *@
+    <div class="tab-pane fade" id="hscn-tab3" role="tabpanel">
+    <div class="hscn-section">
+        <div class="hscn-section-title">Mô tả chi tiết giải pháp</div>
+
+        @* 6 (theo mẫu). Bối cảnh & vấn đề *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">6.</span> Bối cảnh &amp; Vấn đề giải quyết</div>
+            <div class="ps-3 content-body">
+                @if (!string.IsNullOrEmpty(p.MoTa)) { @Html.Raw(p.MoTa) }
+                else { <span class="text-muted">—</span> }
+            </div>
+        </div>
+
+        @* 7. Nguyên lý vận hành & Sơ đồ quy trình *@
+        @if (!string.IsNullOrEmpty(p.QuyTrinhHinhAnh))
+        {
+            <div class="hscn-item">
+                <div class="hscn-item-title"><span class="num">7.</span> Nguyên lý vận hành &amp; Sơ đồ quy trình</div>
+                <div class="ps-3">
+                    <img src="@Html.CookedImageURL("org", p.QuyTrinhHinhAnh)"
+                         alt="@p.Name"
+                         style="max-width:100%; border:1px solid #ddd; padding:4px;" />
+                </div>
+            </div>
+        }
+
+        @* 8. Thông số kỹ thuật *@
+        @if (!string.IsNullOrEmpty(p.ThongSo))
+        {
+            <div class="hscn-item">
+                <div class="hscn-item-title"><span class="num">8.</span> Thông số kỹ thuật chủ yếu</div>
+                <div class="ps-3 content-body">@Html.Raw(p.ThongSo)</div>
+            </div>
+        }
+
+        @* 9. Ưu điểm *@
+        @if (!string.IsNullOrEmpty(p.UuDiem))
+        {
+            <div class="hscn-item">
+                <div class="hscn-item-title"><span class="num">9.</span> Ưu điểm</div>
+                <div class="ps-3 content-body">@Html.Raw(p.UuDiem)</div>
+            </div>
+        }
+    </div>
+    </div><!-- /tab-pane III -->
+
+    @* ════════════════════════════════════════
+       IV. ĐÁNH GIÁ MỨC ĐỘ PHÁT TRIỂN (TRL)
+       ════════════════════════════════════════ *@
+    <div class="tab-pane fade" id="hscn-tab4" role="tabpanel">
+    <div class="hscn-section">
+        <div class="hscn-section-title">Đánh giá mức độ phát triển công nghệ (TRL)</div>
+
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">10.</span> Mức độ sẵn sàng công nghệ TRL</div>
+            <div class="ps-3">
+                @{
+                    int trl = p.Rating ?? 0;
+                    var trlDescriptions = new Dictionary<int, string> {
+                        {1, "Nghiên cứu cơ bản và các nguyên tắc cơ bản của công nghệ được quan sát."},
+                        {2, "Khái niệm công nghệ và/hoặc ứng dụng được hình thành."},
+                        {3, "Thử nghiệm khái niệm và đánh giá phân tích ban đầu."},
+                        {4, "Công nghệ được chứng minh trong phòng thí nghiệm."},
+                        {5, "Công nghệ được chứng minh trong môi trường mô phỏng."},
+                        {6, "Công nghệ được chứng minh trong môi trường thực tế."},
+                        {7, "Nguyên mẫu hệ thống được trình diễn trong môi trường hoạt động."},
+                        {8, "Hệ thống hoàn chỉnh và được thử nghiệm."},
+                        {9, "Ứng dụng thực tế – thị trường."}
+                    };
+                }
+                <table class="hscn-table hscn-trl-table">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">Chọn</th>
+                            <th style="width:80px;">Cấp độ</th>
+                            <th>Mô tả</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 1; i <= 9; i++)
+                        {
+                            bool isSelected = trl == i;
+                            string rowClass = isSelected ? "trl-current" : (i < trl ? "trl-done" : "");
+                            <tr class="@rowClass">
+                                <td>@chk(isSelected)</td>
+                                <td class="fw-bold text-primary">TRL @i</td>
+                                <td class="text-start">@trlDescriptions[i]</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (!string.IsNullOrEmpty(p.DevelopmentStage))
+                {
+                    <div class="mt-2 text-muted small"><em>Giai đoạn: @p.DevelopmentStage</em></div>
+                }
+            </div>
+        </div>
+    </div>
+    </div><!-- /tab-pane IV -->
+
+    @* ════════════════════════════════════════
+       V. KHẢ NĂNG ỨNG DỤNG & HIỆU QUẢ KINH TẾ
+       ════════════════════════════════════════ *@
+    <div class="tab-pane fade" id="hscn-tab5" role="tabpanel">
+    <div class="hscn-section">
+        <div class="hscn-section-title">Khả năng ứng dụng &amp; Hiệu quả kinh tế</div>
+
+        @* 11. Lĩnh vực ứng dụng *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">11.</span> Lĩnh vực ứng dụng</div>
+            <div class="ps-3">
+                @if (Model.Industries != null && Model.Industries.Any())
+                {
+                    @foreach (var ind in Model.Industries)
+                    {
+                        var isChecked = catIds.Contains(ind.CatId);
+                        <div class="hscn-check-row">@chk(isChecked) @ind.Title</div>
+                    }
+                }
+                else if (!string.IsNullOrEmpty(Model.CategoryTitle))
+                {
+                    <div class="hscn-check-row">☑ @Model.CategoryTitle</div>
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </div>
+        </div>
+
+        @* 12. Đối tượng khách hàng *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">12.</span> Đối tượng khách hàng mục tiêu</div>
+            <div class="ps-3 content-body">
+                @if (!string.IsNullOrEmpty(p.TargetCustomer)) { @Html.Raw(p.TargetCustomer) }
+                @if (!string.IsNullOrEmpty(p.Khachhang))
+                {
+                    <div class="mt-1 text-muted small">Khách hàng hiện có:</div>
+                    <div>@Html.Raw(p.Khachhang)</div>
+                }
+                @if (string.IsNullOrEmpty(p.TargetCustomer) && string.IsNullOrEmpty(p.Khachhang))
+                { <span class="text-muted">—</span> }
+            </div>
+        </div>
+
+        @* 13. Hiệu quả kinh tế - xã hội *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">13.</span> Hiệu quả kinh tế – xã hội</div>
+            <div class="ps-3 content-body">
+                @if (!string.IsNullOrEmpty(p.CooperationGoal))
+                {
+                    @Html.Raw(p.CooperationGoal)
+                }
+                else if (!string.IsNullOrEmpty(p.MoTaNgan))
+                {
+                    @Html.Raw(p.MoTaNgan)
+                }
+                else
+                {
+                    <span class="text-muted">—</span>
+                }
+            </div>
+        </div>
+    </div>
+    </div><!-- /tab-pane V -->
+
+    @* ════════════════════════════════════════
+       VI. PHƯƠNG THỨC CHUYỂN GIAO & DỊCH VỤ HỖ TRỢ
+       ════════════════════════════════════════ *@
+    <div class="tab-pane fade" id="hscn-tab6" role="tabpanel">
+    <div class="hscn-section">
+        <div class="hscn-section-title">Phương thức chuyển giao &amp; Dịch vụ hỗ trợ</div>
+
+        @* 13 (mẫu) / 14. Hình thức chuyển giao *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">13.</span> Hình thức chuyển giao</div>
+            <div class="ps-3">
+                @{
+                    var tm = (p.TransferMethod ?? "").ToLower();
+                    bool isLicense  = tm.Contains("li-xăng") || tm.Contains("li_xang") || tm.Contains("quyền sử dụng") || tm.Contains("license");
+                    bool isOwn      = tm.Contains("nhượng") || tm.Contains("chuyển nhượng");
+                    bool isCapital  = tm.Contains("góp vốn");
+                    bool isTurnkey  = tm.Contains("chìa khóa") || tm.Contains("turnkey");
+                }
+                <div class="hscn-check-row">@chk(isLicense)  Chuyển giao quyền sử dụng (Li-xăng)</div>
+                <div class="hscn-check-row">@chk(isOwn)      Chuyển nhượng quyền sở hữu</div>
+                <div class="hscn-check-row">@chk(isCapital)  Góp vốn bằng công nghệ</div>
+                <div class="hscn-check-row">@chk(isTurnkey)  Chìa khóa trao tay</div>
+                <div class="hscn-check-row">
+                    @chk(!isLicense && !isOwn && !isCapital && !isTurnkey && (!string.IsNullOrEmpty(p.TransferMethod) || !string.IsNullOrEmpty(p.TransferMethodKhac)))
+                    Khác:
+                    @if (!string.IsNullOrEmpty(p.TransferMethodKhac))
+                    {
+                        <span>@p.TransferMethodKhac</span>
+                    }
+                    else if (!string.IsNullOrEmpty(p.TransferMethod))
+                    {
+                        <span>@p.TransferMethod</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* 14. Giá bán dự kiến *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">14.</span> Giá bán dự kiến (VNĐ)</div>
+            <div class="ps-3 content-body">
+                @if (!string.IsNullOrEmpty(p.GiaBanDuKien)) { @Html.Raw(p.GiaBanDuKien) }
+                else if (p.SellPrice.HasValue) { <span class="fw-bold text-danger">@string.Format("{0:N0}", p.SellPrice) @p.Currency</span> }
+                else { <span class="text-muted">—</span> }
+            </div>
+        </div>
+
+        @* 15. Chi phí phát sinh *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">15.</span> Các chi phí phát sinh khác</div>
+            <div class="ps-3 content-body">
+                @if (!string.IsNullOrEmpty(p.ChiPhiPhatSinh)) { @Html.Raw(p.ChiPhiPhatSinh) }
+                else { <span class="text-muted">—</span> }
+            </div>
+        </div>
+
+        @* 16. Bảo hành & Hỗ trợ *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">16.</span> Chế độ bảo hành &amp; Hỗ trợ kỹ thuật</div>
+            <div class="ps-3 content-body">
+                @if (!string.IsNullOrEmpty(p.BaoHanhHoTro)) { @Html.Raw(p.BaoHanhHoTro) }
+                else { <span class="text-muted">—</span> }
+            </div>
+        </div>
+    </div>
+    </div><!-- /tab-pane VI -->
+
+    @* ════════════════════════════════════════
+       VII. CHỨNG NHẬN & TÀI LIỆU SỐ
+       ════════════════════════════════════════ *@
+    <div class="tab-pane fade" id="hscn-tab7" role="tabpanel">
+    <div class="hscn-section">
+        <div class="hscn-section-title">Chứng nhận &amp; Tài liệu số</div>
+
+        @* 17. Chứng nhận chất lượng *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">17.</span> Chứng nhận chất lượng</div>
+            <div class="ps-3">
+                <div class="hscn-check-row">@chk(p.ChungNhanISO == true)      ISO / CE / HACCP</div>
+                <div class="hscn-check-row">@chk(p.ChungNhanQuatest == true)  Phiếu kiểm nghiệm Quatest</div>
+                <div class="hscn-check-row">@chk(p.ChungNhanKhac == true)
+                    Khác: @(p.ChungNhanKhacText ?? "")
+                </div>
+                @if (p.ChungNhanISO != true && p.ChungNhanQuatest != true && p.ChungNhanKhac != true)
+                {
+                    <span class="text-muted small">Chưa có thông tin chứng nhận.</span>
+                }
+            </div>
+        </div>
+
+        @* 18. Đa phương tiện *@
+        <div class="hscn-item">
+            <div class="hscn-item-title"><span class="num">18.</span> Dữ liệu đa phương tiện</div>
+            <div class="ps-3">
+                @{
+                    @* Xây dựng YouTube embed URL từ nhiều nguồn *@
+                    string embedUrl = null;
+
+                    @* Ưu tiên 1: YoutubeEmbedUrl đã sẵn *@
+                    if (!string.IsNullOrEmpty(Model.YoutubeEmbedUrl))
+                    {
+                        embedUrl = Model.YoutubeEmbedUrl;
+                    }
+                    @* Ưu tiên 2: Chuyển đổi từ p.URL nếu là YouTube *@
+                    else if (!string.IsNullOrEmpty(p.URL))
+                    {
+                        var rawUrl = p.URL.Trim();
+                        if (rawUrl.Contains("youtube.com/embed/"))
+                        {
+                            embedUrl = rawUrl;
+                        }
+                        else if (rawUrl.Contains("youtube.com/watch"))
+                        {
+                            @* watch?v=XXXX hoặc watch?v=XXXX&... *@
+                            var vIdx = rawUrl.IndexOf("v=");
+                            if (vIdx >= 0)
+                            {
+                                var vid = rawUrl.Substring(vIdx + 2);
+                                var ampIdx = vid.IndexOf('&');
+                                if (ampIdx >= 0) vid = vid.Substring(0, ampIdx);
+                                embedUrl = $"https://www.youtube.com/embed/{vid}";
+                            }
+                        }
+                        else if (rawUrl.Contains("youtu.be/"))
+                        {
+                            @* youtu.be/XXXX *@
+                            var parts = rawUrl.Split(new[] { "youtu.be/" }, StringSplitOptions.None);
+                            if (parts.Length > 1)
+                            {
+                                var vid = parts[1].Split('?')[0];
+                                embedUrl = $"https://www.youtube.com/embed/{vid}";
+                            }
+                        }
+                    }
+                }
+
+                @* Nhúng YouTube *@
+                @if (!string.IsNullOrEmpty(embedUrl))
+                {
+                    <div class="mb-3">
+                        <div class="fw-semibold text-muted small mb-1"><i class="fa fa-video-camera me-1 text-danger"></i> Video clip vận hành:</div>
+                        <div class="ratio ratio-16x9" style="max-width:640px;">
+                            <iframe src="@embedUrl"
+                                    title="@p.Name"
+                                    allowfullscreen
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                            </iframe>
+                        </div>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(Model.VideoFileUrl))
+                {
+                    <div class="mb-3">
+                        <div class="fw-semibold text-muted small mb-1"><i class="fa fa-play-circle me-1 text-danger"></i> Video clip:</div>
+                        <a href="@Model.VideoFileUrl" target="_blank" class="btn btn-sm btn-outline-danger">
+                            <i class="fa fa-play me-1"></i> Xem video
+                        </a>
+                    </div>
+                }
+
+                @* Brochure *@
+                @if (!string.IsNullOrEmpty(p.BrochureUrl))
+                {
+                    <div>
+                        <div class="fw-semibold text-muted small mb-1"><i class="fa fa-file-pdf-o me-1 text-primary"></i> Brochure / Catalogue:</div>
+                        <a href="@p.BrochureUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fa fa-download me-1"></i> Tải tài liệu
+                        </a>
+                    </div>
+                }
+
+                @if (string.IsNullOrEmpty(embedUrl) && string.IsNullOrEmpty(Model.VideoFileUrl) && string.IsNullOrEmpty(p.BrochureUrl))
+                {
+                    <span class="text-muted">—</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    
+
+    </div><!-- /tab-pane VII -->
+
+    </div><!-- /tab-content -->
+
+</div><!-- /ho-so-cong-nghe -->

@@ -1,0 +1,82 @@
+@using TPApp.ViewModel
+@using TPApp.Enums
+@model ProductDetailViewModel
+
+<div class="detail-header row mb-4 g-4">
+    @* IMAGE GALLERY *@
+    <div class="col-md-5">
+        <div class="detail-image-main mb-2">
+            <img src="@Html.CookedImageURL("org", Model.Product.QuyTrinhHinhAnh)"
+                 class="img-fluid rounded shadow-sm w-100"
+                 alt="@Model.Product.Name"
+                 style="max-height:380px; object-fit:cover;" />
+        </div>
+        @if (Model.Images != null && Model.Images.Any())
+        {
+            <div class="d-flex gap-2 flex-wrap mt-2">
+                @foreach (var img in Model.Images)
+                {
+                    <img src="@Html.CookedImageURL("68-68", img.ToString())"
+                         class="rounded border"
+                         style="width:68px; height:68px; object-fit:cover; cursor:pointer;"
+                         alt="Ảnh sản phẩm" />
+                }
+            </div>
+        }
+    </div>
+
+    <div class="col-md-7">
+        <h1 class="fw-bold fs-4 mb-2">@Model.Product.Name</h1>
+
+        <div class="d-flex align-items-center gap-2 mb-3 text-muted">
+            <span class="text-warning fs-5">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <span>@(i <= (Model.Product.Rating ?? 0) ? "★" : "☆")</span>
+                }
+            </span>
+            <span><i class="fa fa-eye me-1"></i>@(Model.Product.Viewed ?? 0) lượt xem</span>
+            <span><i class="fa fa-comments me-1"></i>@Model.RatingCount đánh giá</span>
+        </div>
+
+        @if (Model.Product.ProductType == (int)ProductTypeEnum.ThietBi && Model.Product.SellPrice.HasValue)
+        {
+            <div class="alert alert-danger py-2 mb-3">
+                <i class="fa fa-tag me-1"></i>
+                <strong>Giá tham khảo:</strong>
+                @string.Format("{0:N0} {1}", Model.Product.SellPrice, Model.Product.Currency)
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.SupplierName))
+        {
+            <p class="mb-2">
+                <i class="fa fa-building me-1 text-secondary"></i>
+                <strong>Nhà cung ứng:</strong>
+                <a href="@Model.SupplierUrl" class="text-decoration-none fw-semibold">@Model.SupplierName</a>
+            </p>
+        }
+
+        @if (!string.IsNullOrEmpty(Model.CategoryTitle))
+        {
+            <p class="mb-2">
+                <i class="fa fa-folder me-1 text-secondary"></i>
+                <strong>Danh mục:</strong> @Model.CategoryTitle
+            </p>
+        }
+
+
+        <div class="d-flex gap-2 mt-3 flex-wrap">
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                <i class="fa fa-print me-1"></i> In trang
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Product.MoTaNgan))
+{
+    <div class="detail-description text-muted mb-3 border-start border-3 border-secondary ps-3">
+        @Html.Raw(Model.Product.MoTaNgan)
+    </div>
+}

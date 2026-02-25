@@ -4328,3 +4328,7 @@ header {
     font-size: 11px;
     color: #9ca3af;
 }
+.image img {
+    width: 100%;  
+    height: auto;
+}

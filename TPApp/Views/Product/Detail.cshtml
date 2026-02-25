@@ -1,122 +1,44 @@
 ﻿@using TPApp.ViewModel
+@using TPApp.Enums
 @model ProductDetailViewModel
 @{
     ViewData["Title"] = Model.Product.Name;
 }
 
-
-
 <div class="columns-container">
     <div class="container">
         <div class="row">
 
-            <!-- MAIN CONTENT -->
+            @* MAIN CONTENT *@
             <div class="center_column col-xs-12 col-sm-9">
 
-                <div class="product" id="product">
+                @switch (Model.Product.ProductType)
+                {
+                    case (int)ProductTypeEnum.CongNghe:
+                        @await Html.PartialAsync("_DetailCongNghe", Model)
+                        break;
 
-                    <!-- IMAGE -->
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <img class="img-fluid"
-                                 src="@Html.CookedImageURL("org", Model.Product.QuyTrinhHinhAnh)" />
+                    case (int)ProductTypeEnum.ThietBi:
+                        @await Html.PartialAsync("_DetailThietBi", Model)
+                        break;
 
-                            <ul class="owl-carousel mt-3">
-                                @foreach (var img in Model.Images)
-                                {
-                                    <li>
-                                        <img class="ImageSmall"
-                                             src="@Html.CookedImageURL("68-68", img.ToString())" />
-                                    </li>
-                                }
-                            </ul>
+                    case (int)ProductTypeEnum.SangChe:
+                        @await Html.PartialAsync("_DetailSangChe", Model)
+                        break;
+
+                    default:
+                        <div class="alert alert-warning mt-4">
+                            <i class="fa fa-exclamation-triangle me-2"></i>
+                            Không xác định loại sản phẩm.
                         </div>
+                        break;
+                }
 
-                        <!-- INFO -->
-                        <div class="col-sm-6">
-                            <h1>@Model.Product.Name</h1>
-
-                            <div class="product-star">
-                                @for (int i = 1; i <= 5; i++)
-                                {
-                                    <span style="color:@(i <= Model.Product.Rating ? "gold" : "#ccc")">
-                                        ★
-                                    </span>
-                                }
-                                <span class="ms-2">
-                                    <i class="fa fa-user"></i> @Model.Product.Viewed lượt xem
-                                </span>
-                            </div>
-
-                            <p style="color: red; font-weight:600;">
-                                Giá tham khảo:
-                                <strong>@Model.Product.SellPrice</strong>
-                            </p>
-                            <p >
-                                Nhà cung ứng:
-                                <strong>
-                                    <a href="@Model.SupplierUrl">
-                                        @Model.SupplierName
-                                    </a>
-                                </strong>
-                            </p>
-
-
-
-                            <p>@Html.Raw(Model.Product.Name)</p>
-
-
-
-                            <a class=""
-                                    onclick="window.print();">
-                                <i class="fa fa-print"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- TABS -->
-                    <div class="product-tabModify mt-4">
-
-                        <ul class="ui-tabViewNav">
-                            <li class="selected"><a href="tabThongtin">THÔNG TIN CHUNG</a></li>
-                                <div id="tabThongtin" class="detailTab">
-                                    @Html.Raw(Model.Product.MoTa)
-                                </div>
-                            <li><a href="tabThongso">THÔNG SỐ</a></li>
-                                <div id="tabThongso" class="detailTab" style="display:none">
-                                    @Html.Raw(Model.Product.ThongSo)
-                                </div>
-                            <li><a href="tabUudiem">ƯU ĐIỂM</a></li>
-                                <div id="tabUudiem" class="detailTab" style="display:none">
-                                    @Html.Raw(Model.Product.UuDiem)
-                                </div>
-                            <li><a href="tabGiaithuong">GIẢI THƯỞNG</a></li>
-                                <div id="tabGiaithuong" class="detailTab" style="display:none">
-                                    @Html.Raw(Model.Product.GiaiThuong)
-                                </div>
-                        </ul>
-
-
-
-
-                    </div>
-
-
-                    <!-- TAGS -->
-                   @*  <div class="mt-3">
-                        <strong>Tags:</strong>
-                        @foreach (var tag in Model.Tags)
-                        {
-                            <a class="badge bg-secondary me-1">@tag</a>
-                        }
-                    </div> *@
-
-                </div>
-                @await Component.InvokeAsync("ProductPortletIOSanpham")
-                @await Component.InvokeAsync("TimKiemDoiTacPortlet")
+            @*     @await Component.InvokeAsync("ProductPortletIOSanpham")
+                @await Component.InvokeAsync("TimKiemDoiTacPortlet") *@
             </div>
 
-            <!-- SIDEBAR -->
+            @* SIDEBAR *@
             <div class="col-sm-3">
                 @await Component.InvokeAsync("QuangCaoLeft")
                 @await Html.PartialAsync("_ProductRelated", Model.RelatedProducts)
