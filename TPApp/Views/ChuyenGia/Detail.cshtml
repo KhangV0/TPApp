@@ -1,0 +1,179 @@
+@using TPApp.ViewModel
+@model ChuyenGiaDetailVm
+
+@{
+    ViewData["Title"] = Model.FullName + " — Chuyên gia tư vấn";
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            @* =============== LEFT: SIDEBAR =============== *@
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                @* Category filter *@
+                <div class="block left-module">
+                    <p class="title_block">Lĩnh vực tư vấn</p>
+                    <div class="block_content">
+                        <ul class="tree-menu">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <li>
+                                    <span></span>
+                                    <a href="/chuyen-gia.html?cateId=@c.Id">@c.Title</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+                @* Other experts *@
+                @if (Model.NhaTuVanKhac.Any())
+                {
+                    <div class="block left-module">
+                        <p class="title_block">Chuyên gia khác</p>
+                        <div class="block_content">
+                            @foreach (var other in Model.NhaTuVanKhac)
+                            {
+                                <div class="d-flex align-items-center mb-2">
+                                    <img src="@other.ImageUrl"
+                                         alt="@other.FullName"
+                                         style="width:48px;height:48px;object-fit:cover;border-radius:50%;margin-right:8px;" />
+                                    <div>
+                                        <a href="@other.DetailUrl" class="d-block" style="font-size:13px;font-weight:600;">@other.FullName</a>
+                                        <span class="small text-muted">@other.CoQuan</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* =============== CENTER: PROFILE =============== *@
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+                @* Breadcrumb *@
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a href="/chuyen-gia.html">Chuyên gia tư vấn</a></li>
+                        <li class="breadcrumb-item active">@Model.FullName</li>
+                    </ol>
+                </nav>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            @* Avatar *@
+                            <div class="col-xs-12 col-sm-3 text-center mb-3">
+                                <img src="@Model.ImageUrl"
+                                     alt="@Model.FullName"
+                                     class="img-thumbnail"
+                                     style="width:160px;height:180px;object-fit:cover;" />
+                                <div class="mt-2">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <span style="color:gold;font-size:18px;">@(i <= Model.Rating ? "★" : "☆")</span>
+                                    }
+                                </div>
+                                <small class="text-muted">@Model.LuotDanhGia đánh giá · @Model.LuotXem lượt xem</small>
+                            </div>
+
+                            @* Info *@
+                            <div class="col-xs-12 col-sm-9">
+                                <h1 style="font-size:22px;font-weight:700;margin-bottom:8px;">@Model.FullName</h1>
+
+                                <table class="table table-sm table-borderless">
+                                    <tbody>
+                                        @if (!string.IsNullOrEmpty(Model.HocHam))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold" style="width:140px;">Học hàm/Học vị:</td>
+                                                <td>@Model.HocHam</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.CoQuan))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Cơ quan:</td>
+                                                <td>@Model.CoQuan</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.ChucVu))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Chức vụ:</td>
+                                                <td>@Model.ChucVu</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.DiaChi))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Địa chỉ:</td>
+                                                <td>@Model.DiaChi</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.Phone))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Điện thoại:</td>
+                                                <td><a href="tel:@Model.Phone">@Model.Phone</a></td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.Email))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Email:</td>
+                                                <td><a href="mailto:@Model.Email">@Model.Email</a></td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.DichVuText))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Dịch vụ tư vấn:</td>
+                                                <td>@Model.DichVuText</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.LinhVucText))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Lĩnh vực:</td>
+                                                <td>@Model.LinhVucText</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Research results *@
+                @if (!string.IsNullOrEmpty(Model.KetQuaNghienCuu))
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header fw-bold">Kết quả nghiên cứu</div>
+                        <div class="card-body">
+                            @Html.Raw(Model.KetQuaNghienCuu)
+                        </div>
+                    </div>
+                }
+
+                @* Keywords *@
+                @if (Model.TuKhoa.Any())
+                {
+                    <div class="mb-4">
+                        <strong>Từ khoá: </strong>
+                        @foreach (var kw in Model.TuKhoa)
+                        {
+                            <span class="badge bg-secondary me-1">@kw</span>
+                        }
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>

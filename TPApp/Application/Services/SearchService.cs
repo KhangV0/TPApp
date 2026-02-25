@@ -346,7 +346,7 @@ namespace TPApp.Application.Services
                         {
                             CompanyId = company.CungUngId,
                             CompanyName = company.FullName ?? "Không rõ",
-                            CompanyUrl = $"8-dich-vu-cung-ung/{company.QueryString}-{company.CungUngId}.html",
+                            CompanyUrl = $"nha-cung-ung/{company.QueryString}-{company.CungUngId}.html",
                             MatchPercentage = CalculateMatchPercentage(productList),
                             Rating = company.Rating ?? 0,
                             ViewCount = company.Viewed ?? 0,

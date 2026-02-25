@@ -1,0 +1,129 @@
+@using TPApp.ViewModel
+@model NhaCungUngIndexVm
+
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            @* =============== LEFT: CATEGORY SIDEBAR =============== *@
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+                <div class="block left-module">
+                    <p class="title_block">Lĩnh vực cung ứng</p>
+                    <div class="block_content">
+                        <ul class="tree-menu">
+                            <li class="@(Model.CateId == 0 ? "active" : "")">
+                                <span></span>
+                                <a href="/nha-cung-ung">Tất cả</a>
+                            </li>
+                            @foreach (var c in Model.Categories)
+                            {
+                                <li class="@(Model.CateId == c.Id ? "active" : "")">
+                                    <span></span>
+                                    <a href="/nha-cung-ung.html?cateId=@c.Id">@c.Title</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            @* =============== CENTER: LIST =============== *@
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+                <h2 class="page-heading view-product-list">
+                    <span class="page-heading-title text-uppercase">@Model.PageTitle</span>
+                </h2>
+
+                @if (!Model.Items.Any())
+                {
+                    <div class="alert alert-info mt-3">Không có nhà cung ứng nào.</div>
+                }
+                else
+                {
+                    <div class="row mt-3">
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="col-xs-12 col-sm-6 col-md-3 mb-4">
+                                <div class="card h-100 shadow-sm">
+                                    <a href="@item.DetailUrl">
+                                        <img src="@item.ImageUrl"
+                                             class="card-img-top"
+                                             alt="@item.FullName"
+                                             style="height:160px;object-fit:contain;padding:8px;background:#f8f8f8;" />
+                                    </a>
+                                    <div class="card-body p-2">
+                                        <h5 class="card-title" style="font-size:14px;">
+                                            <a href="@item.DetailUrl">@item.FullName</a>
+                                        </h5>
+                                        @if (!string.IsNullOrEmpty(item.DiaChi))
+                                        {
+                                            <p class="card-text small text-muted mb-1">
+                                                <i class="fas fa-map-marker-alt"></i> @item.DiaChi
+                                            </p>
+                                        }
+                                        @if (!string.IsNullOrEmpty(item.Phone))
+                                        {
+                                            <p class="card-text small mb-1">
+                                                <i class="fas fa-phone"></i> @item.Phone
+                                            </p>
+                                        }
+                                        <div>
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <span style="color:gold">@(i <= item.Rating ? "★" : "☆")</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @* ── PAGINATION (CMS style) ─────────────────────────── *@
+                    @if (Model.TotalPage > 1)
+                    {
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                            <div class="small text-muted">
+                                Trang <strong>@Model.CurrentPage</strong> / <strong>@Model.TotalPage</strong>
+                                &nbsp;·&nbsp; Tổng <strong>@Model.TotalCount</strong> nhà cung ứng
+                            </div>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="/nha-cung-ung.html?cateId=@Model.CateId&page=1">
+                                        <i class="fas fa-angles-left"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="/nha-cung-ung.html?cateId=@Model.CateId&page=@(Model.CurrentPage - 1)">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                                @foreach (var p in Model.Pages)
+                                {
+                                    <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                                        <a class="page-link" href="/nha-cung-ung.html?cateId=@Model.CateId&page=@p">@p</a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPage ? "disabled" : "")">
+                                    <a class="page-link" href="/nha-cung-ung.html?cateId=@Model.CateId&page=@(Model.CurrentPage + 1)">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPage ? "disabled" : "")">
+                                    <a class="page-link" href="/nha-cung-ung.html?cateId=@Model.CateId&page=@Model.TotalPage">
+                                        <i class="fas fa-angles-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
