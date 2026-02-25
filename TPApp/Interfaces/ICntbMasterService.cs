@@ -10,5 +10,6 @@ namespace TPApp.Interfaces
         Task<List<LookupDto>> GetRootSitesAsync();
         Task<List<LookupDto>> GetStatusesAsync();
         Task<List<LookupDto>> GetNhaCungUngAsync();
+        Task<List<LookupDto>> GetDichVuAsync();
     }
 }
