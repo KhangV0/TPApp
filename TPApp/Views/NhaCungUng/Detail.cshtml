@@ -1,0 +1,180 @@
+@using TPApp.ViewModel
+@model NhaCungUngDetailVm
+
+@{
+    ViewData["Title"] = Model.FullName + " — Nhà cung ứng";
+}
+
+<div class="columns-container">
+    <div class="container" id="columns">
+        <div class="row">
+
+            @* =============== LEFT: SIDEBAR =============== *@
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                @* Category filter *@
+                <div class="block left-module">
+                    <p class="title_block">Lĩnh vực cung ứng</p>
+                    <div class="block_content">
+                        <ul class="tree-menu">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <li>
+                                    <span></span>
+                                    <a href="/nha-cung-ung.html?cateId=@c.Id">@c.Title</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+                @* Other suppliers *@
+                @if (Model.NhaCungUngKhac.Any())
+                {
+                    <div class="block left-module">
+                        <p class="title_block">Nhà cung ứng khác</p>
+                        <div class="block_content">
+                            @foreach (var other in Model.NhaCungUngKhac)
+                            {
+                                <div class="d-flex align-items-center mb-2">
+                                    <img src="@other.ImageUrl"
+                                         alt="@other.FullName"
+                                         style="width:48px;height:40px;object-fit:contain;background:#f8f8f8;margin-right:8px;" />
+                                    <div>
+                                        <a href="@other.DetailUrl" class="d-block" style="font-size:13px;font-weight:600;">@other.FullName</a>
+                                        <span class="small text-muted">@other.DiaChi</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @* =============== CENTER: COMPANY DETAIL =============== *@
+            <div class="center_column col-xs-12 col-sm-9" id="center_column">
+
+                @* Breadcrumb *@
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                        <li class="breadcrumb-item"><a href="/nha-cung-ung.html">Nhà cung ứng</a></li>
+                        <li class="breadcrumb-item active">@Model.FullName</li>
+                    </ol>
+                </nav>
+
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            @* Logo *@
+                            <div class="col-xs-12 col-sm-3 text-center mb-3">
+                                <img src="@Model.ImageUrl"
+                                     alt="@Model.FullName"
+                                     class="img-thumbnail"
+                                     style="max-width:160px;max-height:160px;object-fit:contain;padding:8px;" />
+                                <div class="mt-2">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <span style="color:gold;font-size:18px;">@(i <= Model.Rating ? "★" : "☆")</span>
+                                    }
+                                </div>
+                                <small class="text-muted">@Model.LuotDanhGia đánh giá · @Model.LuotXem lượt xem</small>
+                            </div>
+
+                            @* Info *@
+                            <div class="col-xs-12 col-sm-9">
+                                <h1 style="font-size:20px;font-weight:700;margin-bottom:8px;">@Model.FullName</h1>
+
+                                <table class="table table-sm table-borderless">
+                                    <tbody>
+                                        @if (!string.IsNullOrEmpty(Model.DiaChi))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold" style="width:160px;">Địa chỉ:</td>
+                                                <td>@Model.DiaChi</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.Phone))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Điện thoại:</td>
+                                                <td><a href="tel:@Model.Phone">@Model.Phone</a></td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.Fax))
+                                        {
+                                            <tr><td class="fw-bold">Fax:</td><td>@Model.Fax</td></tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.Email))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Email:</td>
+                                                <td><a href="mailto:@Model.Email">@Model.Email</a></td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.Website))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Website:</td>
+                                                <td>
+                                                    <a href="@Model.Website" target="_blank" rel="nofollow">@Model.Website</a>
+                                                </td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.NguoiDaiDien))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Người đại diện:</td>
+                                                <td>@Model.NguoiDaiDien</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.ChucVu))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Chức vụ:</td>
+                                                <td>@Model.ChucVu</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.LinhVucText))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Lĩnh vực:</td>
+                                                <td>@Html.Raw(Model.LinhVucText)</td>
+                                            </tr>
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.DichVuText))
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Dịch vụ:</td>
+                                                <td>@Html.Raw(Model.DichVuText)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Main function *@
+                @if (!string.IsNullOrEmpty(Model.ChucNang))
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header fw-bold">Chức năng chính</div>
+                        <div class="card-body">@Html.Raw(Model.ChucNang)</div>
+                    </div>
+                }
+
+                @* Products *@
+                @if (!string.IsNullOrEmpty(Model.SanPham))
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header fw-bold">Sản phẩm / Dịch vụ</div>
+                        <div class="card-body">@Html.Raw(Model.SanPham)</div>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>

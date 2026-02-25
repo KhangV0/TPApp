@@ -31,16 +31,4 @@
         public List<NhaCungUngItemVm> NhaCungUngKhac { get; set; } = new();
         public List<CategoryVm> Categories { get; set; } = new();
     }
-    public class NhaCungUngItemVm
-    {
-        public int Id { get; set; }
-        public string? FullName { get; set; }
-        public string? DiaChi { get; set; }
-        public string? Phone { get; set; }
-        public string? Email { get; set; }
-        public string? Website { get; set; }
-
-        public int Rating { get; set; }
-        public string? ImageUrl { get; set; }
-    }
 }

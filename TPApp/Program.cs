@@ -325,6 +325,31 @@ app.MapControllerRoute(
 );
 
 
+// 9. ChuyenGia Routes
+app.MapControllerRoute(
+    name: "chuyen_gia_index",
+    pattern: "chuyen-gia.html",
+    defaults: new { controller = "ChuyenGia", action = "Index" }
+);
+
+app.MapControllerRoute(
+    name: "nha_cung_ung_index",
+    pattern: "nha-cung-ung.html",
+    defaults: new { controller = "NhaCungUng", action = "Index" }
+);
+
+// 301 Redirect — old DichVuTuVan list pages
+app.MapGet("8-dich-vu-tu-van.html", ctx =>
+{
+    ctx.Response.Redirect("/chuyen-gia", permanent: true);
+    return Task.CompletedTask;
+});
+app.MapGet("8-dich-vu-cung-ung.html", ctx =>
+{
+    ctx.Response.Redirect("/nha-cung-ung", permanent: true);
+    return Task.CompletedTask;
+});
+
 // ROUTE MẶC ĐỊNH
 
 app.MapControllerRoute(

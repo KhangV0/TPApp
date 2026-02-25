@@ -142,7 +142,7 @@ namespace TPApp.Controllers
             var supplier = _context.NhaCungUngs.FirstOrDefault(x => x.CungUngId == p.NCUId);
             if (supplier == null) return;
             vm.SupplierName = supplier.FullName;
-            vm.SupplierUrl = $"{_mainDomain}8-dich-vu-cung-ung/{MakeURLFriendly(supplier.FullName)}-{supplier.CungUngId}.html";
+            vm.SupplierUrl = $"{_mainDomain}nha-cung-ung/{MakeURLFriendly(supplier.FullName)}-{supplier.CungUngId}.html";
         }
         
         private List<VSImage> GetImages(int contentId) => _context.VSImages.Where(x => x.ContentId == contentId && x.StatusId == 1).OrderBy(x => x.Id).ToList();
