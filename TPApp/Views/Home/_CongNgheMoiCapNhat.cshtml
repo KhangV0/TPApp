@@ -6,7 +6,7 @@
     <div class="container">
 
         <p class="text-center">
-            <a href="cong-nghe-thiet-bi-2.html" class="text-decoration-none" style="color: #111111; font-size: 16px; font-weight: 700;">
+            <a href="cong-nghe.html" class="text-decoration-none" style="color: #111111; font-size: 16px; font-weight: 700;">
                 CÔNG NGHỆ MỚI CẬP NHẬT
             </a>
         </p>
@@ -42,7 +42,7 @@
                                     .CookedImageURL("254-170", item.QuyTrinhHinhAnh, mainDomain);
 
                                     string url = $"{mainDomain}2-cong-nghe-thiet-bi/{item.ProductType}/" +
-                                    $"{TPApp.Controllers.ProductController.MakeURLFriendly(item.Name)}-{item.ID}.html";
+                                    $"{item.QueryString}-{item.ID}.html";
 
                                     <div class="col-lg-3 col-md-4 col-6">
                                         <div class="hp-tech-card-new">

@@ -1,0 +1,270 @@
+@model List<TPApp.Areas.Cms.Controllers.CmsProjectListItem>
+@{
+    ViewData["Title"] = "Quản lý dự án";
+}
+
+<!-- ─── Search Card ─── -->
+<div class="card card-outline card-primary shadow-sm mb-3">
+    <div class="card-header" id="searchCardHeader" style="cursor:pointer" title="Nhấn đúp để thu gọn/mở rộng">
+        <h3 class="card-title"><i class="fas fa-search me-1"></i> Tìm kiếm dự án</h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse"><i class="fas fa-minus"></i></button>
+        </div>
+    </div>
+    <div class="card-body">
+        <form id="searchForm">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold small mb-1">Tìm kiếm</label>
+                    <input type="text" name="search" value="@ViewBag.Search" class="form-control form-control-sm"
+                           placeholder="Nhập mã dự án, tên dự án, buyer, seller, hoặc nhà tư vấn..." />
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="button" class="btn btn-primary btn-sm" id="btnSearch">
+                        <i class="fas fa-search me-1"></i> Tìm kiếm
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnReset">
+                        <i class="fas fa-undo me-1"></i> Đặt lại
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ─── Result Card ─── -->
+<div class="card card-outline card-info shadow-sm">
+    <div class="card-header d-flex align-items-center flex-wrap gap-2">
+        <h3 class="card-title mb-0">
+            <i class="fas fa-project-diagram me-1"></i> Danh sách dự án
+            <span class="badge bg-info ms-1" id="badgeTotal">@ViewBag.TotalCount</span>
+        </h3>
+    </div>
+
+    <!-- AJAX content area -->
+    <div id="projectListContainer">
+        @await Html.PartialAsync("_ProjectListPartial", Model)
+    </div>
+</div>
+
+<!-- ─── Bootstrap Modal ─── -->
+<div class="modal fade" id="modalForm" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitle">...</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div id="modalBody">
+                <!-- Partial view loaded via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$(function(){
+
+    // ── Double-click to toggle search card ──
+    $('#searchCardHeader').on('dblclick', function() {
+        $(this).find('[data-lte-toggle="card-collapse"]').trigger('click');
+    });
+
+    // ── Toastr config ──
+    toastr.options = {
+        closeButton: true,
+        progressBar: true,
+        positionClass: 'toast-top-right',
+        timeOut: 3000,
+        showEasing: 'swing',
+        hideEasing: 'linear',
+        showMethod: 'fadeIn',
+        hideMethod: 'fadeOut'
+    };
+
+    var token = $('input[name="__RequestVerificationToken"]').val() || '';
+    var baseUrl = '@Url.Action("Index","ProjectsAdmin",new{area="Cms"})';
+    var currentPage = 1;
+    var currentSortBy = '';
+    var currentSortDir = '';
+
+    // ──────────────────────────────────────────────
+    // AJAX: Load project list
+    // ──────────────────────────────────────────────
+    function loadList(page) {
+        currentPage = page || 1;
+        var params = $('#searchForm').serialize()
+            + '&page=' + currentPage
+            + '&sortBy=' + encodeURIComponent(currentSortBy)
+            + '&sortDir=' + encodeURIComponent(currentSortDir);
+        $('#projectListContainer').css('opacity', '0.5');
+        $.ajax({
+            url: baseUrl,
+            data: params,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(html) {
+                $('#projectListContainer').html(html).css('opacity', '1');
+                var cnt = $('#partialTotalCount').text();
+                $('#badgeTotal').text(cnt);
+            },
+            error: function() {
+                toastr.error('Lỗi tải dữ liệu.');
+                $('#projectListContainer').css('opacity', '1');
+            }
+        });
+    }
+
+    // ── SORT ──
+    $(document).on('click', '.sortable', function() {
+        var col = $(this).data('sort');
+        if (currentSortBy === col) {
+            currentSortDir = (currentSortDir === 'asc') ? 'desc' : 'asc';
+        } else {
+            currentSortBy = col;
+            currentSortDir = 'asc';
+        }
+        loadList(1);
+    });
+
+    // ── SEARCH ──
+    $('#searchForm').on('submit', function(e) { e.preventDefault(); loadList(1); });
+    $('#btnSearch').on('click', function() { loadList(1); });
+
+    // ── RESET ──
+    $('#btnReset').on('click', function() {
+        $('#searchForm')[0].reset();
+        currentSortBy = '';
+        currentSortDir = '';
+        loadList(1);
+    });
+
+    // ── PAGINATION ──
+    $(document).on('click', '.ajax-page', function(e) {
+        e.preventDefault();
+        if ($(this).closest('.page-item').hasClass('disabled') || $(this).closest('.page-item').hasClass('active')) return;
+        loadList($(this).data('page'));
+    });
+
+    // ──────────────────────────────────────────────
+    // Modal helpers
+    // ──────────────────────────────────────────────
+    function openModal(url, title, headerClass) {
+        $('#modalTitle').text(title);
+        $('#modalForm .modal-header').removeClass('bg-primary bg-info bg-warning bg-success').addClass(headerClass || 'bg-primary');
+        $('#modalBody').html('<div class="text-center p-5"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalForm')).show();
+        $.get(url, function(html) { $('#modalBody').html(html); initSelect2InModal(); })
+         .fail(function() { $('#modalBody').html('<div class="p-3 text-danger">Lỗi tải dữ liệu.</div>'); });
+    }
+
+    function initSelect2InModal() {
+        $('#modalBody .select2-consultant').select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Chọn nhà tư vấn --',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#modalForm')
+        });
+    }
+
+    // ── Modal form submit ──
+    $(document).on('submit', '#modalBody form', function(e) {
+        e.preventDefault();
+        var $form = $(this);
+        var $btn = $form.find('button[type="submit"]');
+        var originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Đang xử lý...');
+        $.ajax({
+            url: $form.attr('action'),
+            method: 'POST',
+            data: $form.serialize(),
+            success: function(result) {
+                if (typeof result === 'object' && result.success) {
+                    var m = bootstrap.Modal.getInstance(document.getElementById('modalForm'));
+                    if (m) m.hide();
+                    toastr.success(result.message);
+                    loadList(currentPage);
+                } else if (typeof result === 'object' && !result.success) {
+                    toastr.error(result.message);
+                    $btn.prop('disabled', false).html(originalText);
+                } else {
+                    $('#modalBody').html(result);
+                    initSelect2InModal();
+                }
+            },
+            error: function() {
+                toastr.error('Có lỗi xảy ra. Vui lòng thử lại.');
+                $btn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // ──────────────────────────────────────────────
+    // ADD CONSULTANT
+    // ──────────────────────────────────────────────
+    $(document).on('click', '.btn-add-consultant', function(e) {
+        e.preventDefault();
+        var projectId = $(this).data('id');
+        openModal('@Url.Action("AddConsultant","ProjectsAdmin",new{area="Cms"})?projectId=' + projectId,
+            'Thêm nhà tư vấn', 'bg-success');
+    });
+
+    // ──────────────────────────────────────────────
+    // REMOVE CONSULTANT
+    // ──────────────────────────────────────────────
+    $(document).on('click', '.btn-remove-consultant', function(e) {
+        e.preventDefault();
+        var pcId = $(this).data('id');
+        var name = $(this).data('name');
+        Swal.fire({
+            title: 'Xác nhận xóa?',
+            text: 'Bạn chắc chắn muốn gỡ nhà tư vấn "' + name + '" khỏi dự án?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Gỡ',
+            cancelButtonText: 'Hủy'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.post('@Url.Action("RemoveConsultant","ProjectsAdmin",new{area="Cms"})',
+                    { id: pcId, __RequestVerificationToken: token }, function(r) {
+                    if (r.success) { toastr.success('Đã gỡ nhà tư vấn.'); loadList(currentPage); }
+                    else { toastr.error(r.message); }
+                });
+            }
+        });
+    });
+
+    // ──────────────────────────────────────────────
+    // DELETE PROJECT
+    // ──────────────────────────────────────────────
+    $(document).on('click', '.btn-del-project', function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        var code = $(this).data('code');
+        Swal.fire({
+            title: 'Xác nhận xóa dự án?',
+            html: 'Bạn chắc chắn muốn xóa dự án <strong>' + code + '</strong>?<br><small class="text-danger">Tất cả dữ liệu liên quan sẽ bị xóa.</small>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Xóa dự án',
+            cancelButtonText: 'Hủy'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.post('@Url.Action("Delete","ProjectsAdmin",new{area="Cms"})',
+                    { id: id, __RequestVerificationToken: token }, function(r) {
+                    if (r.success) { toastr.success('Đã xóa dự án thành công.'); loadList(currentPage); }
+                    else { toastr.error(r.message); }
+                });
+            }
+        });
+    });
+
+});
+</script>
+}

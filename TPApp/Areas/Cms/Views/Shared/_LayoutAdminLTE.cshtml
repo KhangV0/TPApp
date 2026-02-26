@@ -87,6 +87,14 @@
                             <p>Người dùng</p>
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a asp-area="Cms" asp-controller="ProjectsAdmin" asp-action="Index"
+                           class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ProjectsAdmin" ? "active" : "")">
+                            <i class="nav-icon fas fa-project-diagram"></i>
+                            <p>Dự án</p>
+                        </a>
+                    </li>
                     @{
                         var postsCtrl = ViewContext.RouteData.Values["controller"]?.ToString();
                         bool isPosts = postsCtrl == "Posts";

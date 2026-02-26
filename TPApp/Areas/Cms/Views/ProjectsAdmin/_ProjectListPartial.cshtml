@@ -1,0 +1,170 @@
+@model List<TPApp.Areas.Cms.Controllers.CmsProjectListItem>
+@{
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var totalCount = (int)ViewBag.TotalCount;
+    var totalPages = (int)ViewBag.TotalPages;
+    var sortBy = (string?)ViewBag.SortBy ?? "";
+    var sortDir = (string?)ViewBag.SortDir ?? "";
+}
+
+@functions {
+    string SortIcon(string col, string currentSort, string currentDir)
+    {
+        if (!string.Equals(col, currentSort, StringComparison.OrdinalIgnoreCase))
+            return "<i class='fas fa-sort text-muted' style='opacity:.25'></i>";
+        return currentDir == "asc"
+            ? "<i class='fas fa-sort-up text-primary'></i>"
+            : "<i class='fas fa-sort-down text-primary'></i>";
+    }
+}
+
+<span id="partialTotalCount" class="d-none">@totalCount</span>
+<div class="table-responsive">
+    <table class="table table-hover table-striped table-bordered align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="text-center text-uppercase small fw-bold" style="width:50px">STT</th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="code" role="button" style="width:160px">
+                    Mã dự án @Html.Raw(SortIcon("code", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold" data-sort="name" role="button" style="max-width:200px">
+                    Tên dự án @Html.Raw(SortIcon("name", sortBy, sortDir))
+                </th>
+                <th class="sortable text-uppercase small fw-bold text-center" data-sort="step" role="button" style="width:180px">
+                    Bước hiện tại @Html.Raw(SortIcon("step", sortBy, sortDir))
+                </th>
+                <th class="text-uppercase small fw-bold" style="min-width:120px">Buyer</th>
+                <th class="text-uppercase small fw-bold" style="max-width:130px">Seller</th>
+                <th class="text-uppercase small fw-bold" style="max-width:150px">Consultant</th>
+                <th class="text-center text-uppercase small fw-bold" style="width:100px">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x d-block mb-2 text-muted"></i>
+                        Không tìm thấy dự án nào.
+                    </td>
+                </tr>
+            }
+            @{ int stt = (page - 1) * pageSize; }
+            @foreach (var p in Model)
+            {
+                stt++;
+                <tr>
+                    <td class="text-center text-muted small">@stt</td>
+                    <td>
+                        <span class="fw-semibold text-primary">@p.ProjectCode</span>
+                    </td>
+                    <td>@p.ProjectName</td>
+                    <td class="text-center">
+                        @if (p.CurrentStep > 0)
+                        {
+                            <span class="badge bg-info">Bước @p.CurrentStep</span>
+                            <div class="small fw-semibold mt-1">@p.CurrentStepName</div>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Chưa bắt đầu</span>
+                        }
+                    </td>
+                    <td>
+                        @if (p.BuyerNames.Any())
+                        {
+                            @foreach (var buyer in p.BuyerNames)
+                            {
+                                <span class="badge bg-primary me-1 mb-1"><i class="fas fa-user me-1"></i>@buyer</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small">—</span>
+                        }
+                    </td>
+                    <td>
+                        @if (p.SellerNames.Any())
+                        {
+                            @foreach (var seller in p.SellerNames)
+                            {
+                                <span class="badge bg-success me-1 mb-1"><i class="fas fa-store me-1"></i>@seller</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small">—</span>
+                        }
+                    </td>
+                    <td>
+                        @if (p.Consultants.Any())
+                        {
+                            @foreach (var c in p.Consultants)
+                            {
+                                <span class="badge bg-warning text-dark me-1 mb-1">
+                                    <i class="fas fa-user-tie me-1"></i>@c.Name
+                                    <a href="#" class="btn-remove-consultant text-dark ms-1" data-id="@c.Id" data-name="@c.Name"
+                                       title="Gỡ nhà tư vấn"><i class="fas fa-times"></i></a>
+                                </span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small">—</span>
+                        }
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="#" class="btn btn-outline-success btn-sm btn-add-consultant" data-id="@p.ProjectId" title="Thêm nhà tư vấn">
+                                <i class="fas fa-user-plus"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-danger btn-sm btn-del-project" data-id="@p.ProjectId" data-code="@p.ProjectCode" title="Xóa dự án">
+                                <i class="fas fa-trash-can"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="small text-muted">
+            Hiển thị <strong>@((page-1)*pageSize+1)</strong>–<strong>@Math.Min(page*pageSize, totalCount)</strong> / <strong>@totalCount</strong> dự án
+        </div>
+        <ul class="pagination pagination-sm mb-0">
+            @{
+                int startPage = Math.Max(1, page - 4);
+                int endPage = Math.Min(totalPages, page + 4);
+            }
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="1" title="Trang đầu"><i class="fas fa-angles-left"></i></a>
+            </li>
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@(page - 1)" title="Trang trước"><i class="fas fa-angle-left"></i></a>
+            </li>
+            @for (int pg = startPage; pg <= endPage; pg++)
+            {
+                <li class="page-item @(pg == page ? "active" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@pg">@pg</a>
+                </li>
+            }
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@(page + 1)" title="Trang sau"><i class="fas fa-angle-right"></i></a>
+            </li>
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link ajax-page" href="#" data-page="@totalPages" title="Trang cuối"><i class="fas fa-angles-right"></i></a>
+            </li>
+        </ul>
+    </div>
+}
+else if (totalCount > 0)
+{
+    <div class="card-footer">
+        <div class="small text-muted">Tổng cộng <strong>@totalCount</strong> dự án</div>
+    </div>
+}

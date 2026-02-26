@@ -1,0 +1,46 @@
+@{
+    var projectId = (int)ViewBag.ProjectId;
+    var projectName = (string)ViewBag.ProjectName;
+    var available = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.AvailableConsultants;
+}
+
+<form action="@Url.Action("AddConsultant", "ProjectsAdmin", new { area = "Cms" })" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="projectId" value="@projectId" />
+    <div class="modal-body">
+        <div class="mb-3">
+            <label class="form-label fw-semibold small">Dự án</label>
+            <input type="text" class="form-control form-control-sm" value="@projectName" disabled />
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-semibold small">Chọn nhà tư vấn <span class="text-danger">*</span></label>
+            @if (available.Any())
+            {
+                <select name="consultantUserId" class="form-select form-select-sm select2-consultant" required>
+                    <option value="">-- Chọn nhà tư vấn --</option>
+                    @foreach (var item in available)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-0">
+                    <i class="fas fa-info-circle me-1"></i> Không có nhà tư vấn nào khả dụng để thêm.
+                </div>
+            }
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i> Hủy
+        </button>
+        @if (available.Any())
+        {
+            <button type="submit" class="btn btn-success btn-sm">
+                <i class="fas fa-user-plus me-1"></i> Thêm nhà tư vấn
+            </button>
+        }
+    </div>
+</form>

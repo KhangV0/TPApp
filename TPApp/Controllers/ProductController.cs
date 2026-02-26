@@ -102,7 +102,7 @@ namespace TPApp.Controllers
             var product = await _productService.GetProductByIdAsync(id);
 
             if (product == null)
-                return Redirect($"{_mainDomain}cong-nghe-thiet-bi-2.html");
+                return Redirect($"{_mainDomain}cong-nghe.html");
 
             var model = new ProductDetailViewModel
             {
