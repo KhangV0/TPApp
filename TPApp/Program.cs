@@ -190,24 +190,25 @@ app.MapAreaControllerRoute(
 
 // --- Custom Routes (Moved from Controllers) ---
 
-// 1. Product Routes
+// 1. Product Routes — each URL maps to its own dedicated action
 app.MapControllerRoute(
-    name: "product_index",
+    name: "product_cong_nghe",
     pattern: "cong-nghe.html",
-    defaults: new { controller = "Product", action = "Index" }
+    defaults: new { controller = "Product", action = "CongNghe" }
 );
 
 app.MapControllerRoute(
-    name: "product_index",
+    name: "product_thiet_bi",
     pattern: "thiet-bi.html",
-    defaults: new { controller = "Product", action = "Index" }
+    defaults: new { controller = "Product", action = "ThietBi" }
 );
 
 app.MapControllerRoute(
-    name: "product_index",
+    name: "product_sp_tri_tue",
     pattern: "tai-san-tri-tue.html",
-    defaults: new { controller = "Product", action = "Index" }
+    defaults: new { controller = "Product", action = "TaiSanTriTue" }
 );
+
 
 app.MapControllerRoute(
     name: "product_detail",

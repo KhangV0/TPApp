@@ -94,5 +94,34 @@ namespace TPApp.Services
                           .Take(pageSize)
                           .ToListAsync();
         }
+
+        // ── ProductType-scoped queries ─────────────────────────────────────────────
+
+        public async Task<List<SanPhamCNTB>> GetNewProductsByProductTypeAsync(int productType, int take)
+        {
+            return await _context.SanPhamCNTBs
+                .AsNoTracking()
+                .Where(x => x.ProductType == productType && x.StatusId == 3)
+                .OrderByDescending(x => x.Modified)
+                .ThenByDescending(x => x.Created)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<List<SanPhamCNTB>> GetProductsByCategoryAndProductTypeAsync(
+            int cateId, int productType, int languageId, int take)
+        {
+            return await (from p in _context.SanPhamCNTBs
+                          join c in _context.SanPhamCNTBCategories on p.ID equals c.SanPhamCNTBId
+                          where c.CatId == cateId
+                                && p.ProductType == productType
+                                && p.StatusId == 3
+                                && p.LanguageId == languageId
+                          orderby p.Created descending
+                          select p)
+                          .Distinct()
+                          .Take(take)
+                          .ToListAsync();
+        }
     }
 }
