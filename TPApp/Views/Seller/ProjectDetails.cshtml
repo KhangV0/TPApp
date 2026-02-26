@@ -213,12 +213,13 @@
 
                         <!-- Preliminary Price -->
                         <div class="mb-3">
-                            <label for="preliminaryPrice" class="form-label">
+                            <label for="preliminaryPriceDisplay" class="form-label">
                                 <i class="fas fa-dollar-sign text-success"></i> 
                                 Báo giá sơ bộ (VNĐ)
                             </label>
-                            <input type="number" class="form-control" id="preliminaryPrice" name="preliminaryPrice" 
-                                   placeholder="Nhập số tiền..." step="1000" min="0">
+                            <input type="text" class="form-control" id="preliminaryPriceDisplay" 
+                                   placeholder="Nhập số tiền..." autocomplete="off">
+                            <input type="hidden" id="preliminaryPrice" name="preliminaryPrice" />
                             <small class="form-text text-muted">Để trống nếu chưa có báo giá cụ thể</small>
                         </div>
 
@@ -288,6 +289,25 @@
             margin-bottom: 10px;
         }
     </style>
+    <script>
+        $(document).ready(function () {
+            // Format number with dots (VND style: 1.000.000)
+            function formatVND(num) {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+
+            $('#preliminaryPriceDisplay').on('input', function () {
+                var raw = $(this).val().replace(/\./g, '').replace(/[^\d]/g, '');
+                if (raw) {
+                    $(this).val(formatVND(raw));
+                    $('#preliminaryPrice').val(raw);
+                } else {
+                    $(this).val('');
+                    $('#preliminaryPrice').val('');
+                }
+            });
+        });
+    </script>
 }
 
 @functions {

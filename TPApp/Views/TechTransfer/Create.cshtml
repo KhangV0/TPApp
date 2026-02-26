@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "PHIẾU YÊU CẦU CHUYỂN GIAO CÔNG NGHỆ";
+    var linhVucList = ViewBag.LinhVucList as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
 }
 
 <div class="container mt-5 mb-5">
@@ -68,12 +69,18 @@
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="LinhVuc" class="form-label">Lĩnh vực</label>
-                                <input asp-for="LinhVuc" class="form-control" />
+                                <select asp-for="LinhVuc" asp-items="linhVucList"
+                                        class="form-select" id="selectLinhVuc">
+                                    <option value="">-- Chọn lĩnh vực --</option>
+                                </select>
                                 <span asp-validation-for="LinhVuc" class="text-danger"></span>
                             </div>
                              <div class="col-md-6">
                                 <label asp-for="NganSachDuKien" class="form-label">Ngân sách dự kiến (VNĐ)</label>
-                                <input asp-for="NganSachDuKien" class="form-control" type="number" />
+                                <input type="text" class="form-control" id="txtNganSachDisplay"
+                                       placeholder="0" inputmode="numeric"
+                                       value="@(Model?.NganSachDuKien > 0 ? Model.NganSachDuKien?.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) : "")" />
+                                <input asp-for="NganSachDuKien" type="hidden" id="hdnNganSach" />
                                 <span asp-validation-for="NganSachDuKien" class="text-danger"></span>
                             </div>
                              <div class="col-md-6" style="display:none;">
@@ -86,7 +93,7 @@
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Quay lại</a>
+                    <a asp-controller="Projects" asp-action="MyProjects" class="btn btn-secondary me-md-2">Quay lại</a>
                     <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i>Gửi yêu cầu</button>
                 </div>
             </form>
@@ -96,4 +103,41 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(function () {
+            // Select2 searchable dropdown for Lĩnh vực
+            $('#selectLinhVuc').select2({
+                theme: 'bootstrap-5',
+                placeholder: '-- Chọn lĩnh vực --',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Vietnamese currency formatting for Ngân sách
+            var $display = $('#txtNganSachDisplay');
+            var $hidden = $('#hdnNganSach');
+
+            function formatVND(value) {
+                var num = value.replace(/\D/g, '');
+                if (!num) return '';
+                return num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+
+            $display.on('input', function () {
+                var raw = $(this).val().replace(/\D/g, '');
+                $(this).val(formatVND($(this).val()));
+                $hidden.val(raw);
+            });
+
+            // Initialize hidden field from display value on load
+            var initVal = $display.val().replace(/\D/g, '');
+            if (initVal) $hidden.val(initVal);
+
+            // Ensure hidden field is synced before form submit
+            $display.closest('form').on('submit', function () {
+                $hidden.val($display.val().replace(/\D/g, ''));
+            });
+        });
+    </script>
 }

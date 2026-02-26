@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TPApp.Data;
 using TPApp.Entities;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace TPApp.Controllers
 {
@@ -50,13 +51,37 @@ namespace TPApp.Controllers
             var existing = await _context.RFQRequests.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             if (existing != null) return RedirectToAction("Details", "Project", new { id = projectId });
 
-            return View(new RFQRequest { ProjectId = projectId });
+            // Auto-generate MaRFQ
+            var maRFQ = "RFQ-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+
+            // Get TechTransfer's LinhVuc as default category filter
+            var techTransfer = await _context.TechTransferRequests.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.ProjectId == projectId);
+            var defaultLinhVuc = techTransfer?.LinhVuc ?? "";
+
+            // Load categories for filter dropdown
+            ViewBag.LinhVucList = await _context.Categories.AsNoTracking()
+                .Where(c => c.ParentId == 1)
+                .OrderBy(c => c.Title)
+                .Select(c => new SelectListItem { Value = c.Title, Text = c.Title })
+                .ToListAsync();
+            ViewBag.DefaultLinhVuc = defaultLinhVuc;
+            ViewBag.ProjectId = projectId;
+
+            // Get already-invited seller user IDs for this project
+            var invitedSellerIds = await _context.RFQInvitations
+                .Where(i => i.ProjectId == projectId && i.IsActive)
+                .Select(i => i.SellerId)
+                .ToListAsync();
+            ViewBag.InvitedSellerIds = invitedSellerIds;
+
+            return View(new RFQRequest { ProjectId = projectId, MaRFQ = maRFQ });
         }
 
         // POST: /RFQ/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(RFQRequest model)
+        public async Task<IActionResult> Create(RFQRequest model, int[]? selectedSellerIds, bool alsoInvite = false)
         {
             var userId = GetCurrentUserId();
             var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
@@ -81,6 +106,41 @@ namespace TPApp.Controllers
                     "RFQ đã tạo",
                     "Yêu cầu báo giá đã tạo thành công. Hãy mời nhà cung ứng nộp hồ sơ.");
 
+                // Also invite selected suppliers if requested
+                if (alsoInvite && selectedSellerIds != null && selectedSellerIds.Length > 0)
+                {
+                    foreach (var sellerId in selectedSellerIds)
+                    {
+                        var existingInvitation = await _context.RFQInvitations
+                            .FirstOrDefaultAsync(i => i.ProjectId == model.ProjectId &&
+                                                     i.RFQId == model.Id &&
+                                                     i.SellerId == sellerId);
+
+                        if (existingInvitation == null)
+                        {
+                            _context.RFQInvitations.Add(new RFQInvitation
+                            {
+                                ProjectId = model.ProjectId.Value,
+                                RFQId = model.Id,
+                                SellerId = sellerId,
+                                InvitedDate = DateTime.Now,
+                                StatusId = 0,
+                                IsActive = true
+                            });
+
+                            await _notifQueue.QueueAsync(sellerId, null,
+                                "📨 Bạn được mời nộp hồ sơ báo giá",
+                                $"Bạn được mời nộp hồ sơ báo giá. Hãy vào mục 'Dự án được mời' để xem chi tiết và nộp hồ sơ trước hạn.");
+                        }
+                    }
+
+                    model.StatusId = 2; // Sent
+                    _context.Update(model);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = $"Đã tạo RFQ và mời {selectedSellerIds.Length} nhà cung ứng.";
+                }
+
                 return RedirectToAction("Details", "Project", new { id = model.ProjectId });
             }
 
@@ -91,24 +151,118 @@ namespace TPApp.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var rfq = await _context.RFQRequests
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (rfq == null)
-            {
-                return NotFound();
-            }
-
-            // Optional: Check if user is owner or admin
-            // var userId = _userManager.GetUserId(User);
-            // if (rfq.NguoiTao != userId && !User.IsInRole("Admin")) return Forbid();
+            var rfq = await _context.RFQRequests.FirstOrDefaultAsync(m => m.Id == id);
+            if (rfq == null) return NotFound();
 
             return View(rfq);
+        }
+
+        // GET: /RFQ/SearchSuppliers?projectId=5&search=abc&linhVuc=xyz&page=1
+        [HttpGet]
+        public async Task<IActionResult> SearchSuppliers(int projectId, string? search, string? linhVuc, int page = 1)
+        {
+            const int pageSize = 10;
+
+            // Get already-invited seller user IDs
+            var invitedSellerIdsList = await _context.RFQInvitations
+                .Where(i => i.ProjectId == projectId && i.IsActive)
+                .Select(i => i.SellerId)
+                .ToListAsync();
+            var invitedSellerIds = invitedSellerIdsList.ToHashSet();
+
+            // Query NhaCungUng with UserId, activated, StatusId=3, and LanguageId from session
+            var lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
+            var query = _context.NhaCungUngs.AsNoTracking()
+                .Where(n => n.UserId != null && n.IsActivated == true
+                    && n.StatusId == 3
+                    && !invitedSellerIds.Contains(n.UserId!.Value)
+                    && (n.LanguageId == null || n.LanguageId == lang));
+
+            // Filter by lĩnh vực (resolve name to CatId, then search in ";id;" format)
+            if (!string.IsNullOrWhiteSpace(linhVuc))
+            {
+                var catId = await _context.Categories.AsNoTracking()
+                    .Where(c => c.Title == linhVuc && c.ParentId == 1)
+                    .Select(c => c.CatId)
+                    .FirstOrDefaultAsync();
+                if (catId > 0)
+                {
+                    var catIdStr = catId.ToString();
+                    query = query.Where(n => n.LinhVucId != null && n.LinhVucId.Contains(catIdStr));
+                }
+            }
+
+            // Filter by search text (name)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim().ToLower();
+                query = query.Where(n =>
+                    (n.FullName != null && n.FullName.ToLower().Contains(s)) ||
+                    (n.Email != null && n.Email.ToLower().Contains(s)) ||
+                    (n.Phone != null && n.Phone.Contains(s)));
+            }
+
+            // Get total count for pagination
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            if (page < 1) page = 1;
+            if (page > totalPages && totalPages > 0) page = totalPages;
+
+            var suppliers = await query
+                .OrderBy(n => n.FullName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(n => new
+                {
+                    userId = n.UserId,
+                    fullName = n.FullName ?? "",
+                    diaChi = n.DiaChi ?? "",
+                    email = n.Email ?? "",
+                    phone = n.Phone ?? "",
+                    linhVuc = n.LinhVucId ?? "",
+                    userName = ""
+                })
+                .ToListAsync();
+
+            // Resolve usernames
+            var userIds = suppliers.Where(s => s.userId.HasValue).Select(s => s.userId!.Value).ToList();
+            var userNames = await _context.Users.AsNoTracking()
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "");
+
+            // Resolve LinhVucId (";1045;1064;") to category names
+            var allCatIds = suppliers
+                .SelectMany(s => s.linhVuc.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                .Where(id => int.TryParse(id, out _))
+                .Select(int.Parse)
+                .Distinct()
+                .ToList();
+            var catNames = allCatIds.Any()
+                ? await _context.Categories.AsNoTracking()
+                    .Where(c => allCatIds.Contains(c.CatId))
+                    .ToDictionaryAsync(c => c.CatId, c => c.Title ?? "")
+                : new Dictionary<int, string>();
+
+            var data = suppliers.Select(s => new
+            {
+                s.userId,
+                s.fullName,
+                s.diaChi,
+                s.email,
+                s.phone,
+                linhVuc = string.Join(", ", s.linhVuc
+                    .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(id => int.TryParse(id, out _))
+                    .Select(int.Parse)
+                    .Where(id => catNames.ContainsKey(id))
+                    .Select(id => catNames[id])),
+                userName = s.userId.HasValue && userNames.ContainsKey(s.userId.Value)
+                    ? userNames[s.userId.Value] : ""
+            });
+
+            return Json(new { data, totalCount, totalPages, currentPage = page });
         }
 
         // POST: /RFQ/SendToSuppliers/5
@@ -172,6 +326,11 @@ namespace TPApp.Controllers
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = $"Đã gửi RFQ đến {selectedSellerIds?.Length ?? 0} nhà cung ứng.";
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, message = $"Đã mời {selectedSellerIds?.Length ?? 0} nhà cung ứng thành công!" });
+            }
 
             return RedirectToAction("Details", "Project", new { id = rfq.ProjectId });
         }

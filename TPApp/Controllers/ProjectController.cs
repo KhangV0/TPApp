@@ -545,37 +545,72 @@ namespace TPApp.Controllers
                 }
             }
             
-            // Special handling for Step 3 (RFQ) - Load available suppliers
+            // Special handling for Step 3 (RFQ) - Load categories and supplier data
             if (stepNumber == 3)
             {
-                var availableSuppliers = await (
-                    from n in _context.NhaCungUngs
-                    join u in _context.Users on n.UserId equals u.Id into userJoin
-                    from u in userJoin.DefaultIfEmpty()
-                    where n.IsActivated == true && n.UserId != null
-                    select new
+                // Load LinhVuc categories for search filter
+                ViewBag.LinhVucList = await _context.Categories.AsNoTracking()
+                    .Where(c => c.ParentId == 1)
+                    .OrderBy(c => c.Title)
+                    .Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
                     {
-                        n.CungUngId,
-                        n.UserId,
-                        n.FullName,
-                        n.Email,
-                        n.Phone,
-                        n.DiaChi,
-                        UserName = u != null ? u.UserName : null
-                    }
-                ).ToListAsync();
-                ViewBag.AvailableSuppliers = availableSuppliers;
-                
+                        Value = c.Title,
+                        Text = c.Title
+                    })
+                    .ToListAsync();
+
+                // Get TechTransfer's LinhVuc as default filter
+                var techTransfer = await _context.TechTransferRequests.AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.ProjectId == projectId);
+                ViewBag.DefaultLinhVuc = techTransfer?.LinhVuc ?? "";
+
+                // Auto-generate MaRFQ for creation form
+                ViewBag.AutoMaRFQ = "RFQ-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+
                 // Load invited suppliers for this RFQ
-        var rfqData = model.StepData as RFQRequest;
-        if (rfqData != null)
-        {
-            var invitedSuppliers = await _context.RFQInvitations
-                .Where(i => i.RFQId == rfqData.Id && i.IsActive)
-                .Join(_context.NhaCungUngs,
-                    inv => inv.SellerId,
-                    ncc => ncc.UserId,
-                    (inv, ncc) => new
+                var rfqData = model.StepData as RFQRequest;
+                if (rfqData != null)
+                {
+                    var invitedSuppliers = await _context.RFQInvitations
+                        .Where(i => i.RFQId == rfqData.Id && i.IsActive)
+                        .Join(_context.NhaCungUngs,
+                            inv => inv.SellerId,
+                            ncc => ncc.UserId,
+                            (inv, ncc) => new
+                            {
+                                inv.Id,
+                                inv.SellerId,
+                                inv.InvitedDate,
+                                inv.StatusId,
+                                inv.ViewedDate,
+                                inv.ResponseDate,
+                                ncc.FullName,
+                                ncc.Email,
+                                ncc.Phone,
+                                LinhVucId = ncc.LinhVucId ?? ""
+                            })
+                        .ToListAsync();
+
+                    // Resolve LinhVucId to category names
+                    var allInvCatIds = invitedSuppliers
+                        .SelectMany(s => s.LinhVucId.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                        .Where(id => int.TryParse(id, out _))
+                        .Select(int.Parse)
+                        .Distinct()
+                        .ToList();
+                    var invCatNames = allInvCatIds.Any()
+                        ? await _context.Categories.AsNoTracking()
+                            .Where(c => allInvCatIds.Contains(c.CatId))
+                            .ToDictionaryAsync(c => c.CatId, c => c.Title ?? "")
+                        : new Dictionary<int, string>();
+
+                    // Resolve usernames
+                    var invSellerIds = invitedSuppliers.Select(s => s.SellerId).Distinct().ToList();
+                    var invUserNames = await _context.Users.AsNoTracking()
+                        .Where(u => invSellerIds.Contains(u.Id))
+                        .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "");
+
+                    var invitedWithProposals = invitedSuppliers.Select(inv => new
                     {
                         inv.Id,
                         inv.SellerId,
@@ -583,31 +618,23 @@ namespace TPApp.Controllers
                         inv.StatusId,
                         inv.ViewedDate,
                         inv.ResponseDate,
-                        ncc.FullName,
-                        ncc.Email,
-                        ncc.Phone
-                    })
-                .ToListAsync();
-            
-            // Check if each seller has submitted a proposal
-            var invitedWithProposals = invitedSuppliers.Select(inv => new
-            {
-                inv.Id,
-                inv.SellerId,
-                inv.InvitedDate,
-                inv.StatusId,
-                inv.ViewedDate,
-                inv.ResponseDate,
-                inv.FullName,
-                inv.Email,
-                inv.Phone,
-                HasProposal = _context.ProposalSubmissions
-                    .Any(p => p.ProjectId == projectId && p.NguoiTao == inv.SellerId)
-            }).ToList();
-            
-            ViewBag.InvitedSuppliers = invitedWithProposals;
-        }
-    }
+                        inv.FullName,
+                        inv.Email,
+                        inv.Phone,
+                        UserName = invUserNames.ContainsKey(inv.SellerId) ? invUserNames[inv.SellerId] : "",
+                        LinhVuc = string.Join(", ", inv.LinhVucId
+                            .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                            .Where(id => int.TryParse(id, out _))
+                            .Select(int.Parse)
+                            .Where(id => invCatNames.ContainsKey(id))
+                            .Select(id => invCatNames[id])),
+                        HasProposal = _context.ProposalSubmissions
+                            .Any(p => p.ProjectId == projectId && p.NguoiTao == inv.SellerId)
+                    }).ToList();
+
+                    ViewBag.InvitedSuppliers = invitedWithProposals;
+                }
+            }
             
             // Special handling for Step 5 (Negotiation) - Access control + Auto-create
             if (stepNumber == 5)

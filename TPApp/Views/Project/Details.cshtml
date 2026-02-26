@@ -310,8 +310,8 @@
                         <form id="editStepForm">
                             <input type="hidden" name="__RequestVerificationToken" value="${$('input[name="__RequestVerificationToken"]').val()}" />
                             <div class="mb-3">
-                                <label for="MaRFQ" class="form-label">Mã RFQ <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="MaRFQ" required />
+                                <label for="MaRFQ" class="form-label">Mã RFQ</label>
+                                <input type="text" class="form-control bg-light" name="MaRFQ" readonly />
                             </div>
                             <div class="mb-3">
                                 <label for="YeuCauKyThuat" class="form-label">Yêu cầu kỹ thuật <span class="text-danger">*</span></label>
@@ -321,19 +321,9 @@
                                 <label for="TieuChuanNghiemThu" class="form-label">Tiêu chuẩn nghiệm thu</label>
                                 <textarea class="form-control" name="TieuChuanNghiemThu" rows="4"></textarea>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="HanChotNopHoSo" class="form-label">Hạn chót nộp hồ sơ <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="HanChotNopHoSo" required />
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <div class="form-check mt-4">
-                                        <input type="checkbox" class="form-check-input" name="DaGuiNhaCungUng" id="DaGuiNhaCungUng" value="true" />
-                                        <label class="form-check-label" for="DaGuiNhaCungUng">
-                                            Đã gửi nhà cung ứng
-                                        </label>
-                                    </div>
-                                </div>
+                            <div class="mb-3">
+                                <label for="HanChotNopHoSo" class="form-label">Hạn chót nộp hồ sơ <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="HanChotNopHoSo" required />
                             </div>
                         </form>
                     `;

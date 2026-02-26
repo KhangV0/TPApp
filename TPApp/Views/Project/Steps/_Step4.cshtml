@@ -45,9 +45,11 @@
                     <table class="table table-hover table-bordered">
                         <thead class="table-light">
                             <tr>
-                                <th>Seller</th>
+                                <th>Tên nhà cung ứng</th>
+                                <th>Địa chỉ</th>
                                 <th>Giá</th>
                                 <th>Thời gian</th>
+                                <th>Hồ sơ</th>
                                 <th>Điểm TB</th>
                                 <th>Comments của Consultants</th>
                                 <th>Action</th>
@@ -70,6 +72,7 @@
                                             </span>
                                         }
                                     </td>
+                                    <td>@(Context.NhaCungUngs.FirstOrDefault(n => n.UserId == (item.Seller != null ? item.Seller.Id : 0))?.DiaChi ?? "N/A")</td>
                                     <td>
                                         @if (item.BaoGiaSoBo.HasValue)
                                         {
@@ -81,6 +84,14 @@
                                         }
                                     </td>
                                     <td>@item.ThoiGianTrienKhai</td>
+                                    <td>
+                                        <a href="@item.GiaiPhapKyThuat" class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-download"></i> Giải pháp
+                                        </a>
+                                        <a href="@item.HoSoNangLucDinhKem" class="btn btn-sm btn-outline-primary ms-1" target="_blank">
+                                            <i class="fas fa-download"></i> Hồ sơ
+                                        </a>
+                                    </td>
                                     <td>
                                         @if (avgScore > 0)
                                         {

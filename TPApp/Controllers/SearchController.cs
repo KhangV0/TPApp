@@ -56,7 +56,7 @@ namespace TPApp.Controllers
                 return View(viewModel);
             }
 
-            _logger.LogInformation("Search request: {Query}, Mode: {Mode}, Page: {Page}", 
+            _logger.LogInformation("Search request: {Query}, Mode: {Mode}, Page: {Page}",
                 viewModel.Query, viewModel.Mode, page);
 
             try
@@ -164,8 +164,8 @@ namespace TPApp.Controllers
                 Id = item.RefId ?? 0,
                 Title = SearchHighlightHelper.HighlightKeywords(item.Title ?? string.Empty, viewModel.Query),
                 Description = SearchHighlightHelper.CreateSnippet(
-                    item.Description ?? item.Contents ?? string.Empty, 
-                    viewModel.Query, 
+                    item.Description ?? item.Contents ?? string.Empty,
+                    viewModel.Query,
                     200),
                 Url = item.URL ?? string.Empty,
                 ImageUrl = item.ImgPreview ?? string.Empty,
@@ -191,7 +191,7 @@ namespace TPApp.Controllers
             {
                 _logger.LogDebug("Query too short for AI search ({Length} chars), minimum is {Min}. Falling back to normal search.",
                     viewModel.Query.Length, _featureFlags.MinAISearchLength);
-                
+
                 await PerformNormalSearchAsync(viewModel, options);
                 return;
             }
@@ -205,7 +205,7 @@ namespace TPApp.Controllers
             viewModel.CurrentPage = options.PageNumber;
             viewModel.TotalPages = (int)Math.Ceiling(viewModel.AIResultCount / (double)options.PageSize);
 
-            _logger.LogInformation("AI search found {Companies} companies with {Total} products", 
+            _logger.LogInformation("AI search found {Companies} companies with {Total} products",
                 viewModel.AISearchResults.Count,
                 viewModel.AIResultCount);
         }

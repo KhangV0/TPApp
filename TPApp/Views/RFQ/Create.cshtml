@@ -2,23 +2,26 @@
 
 @{
     ViewData["Title"] = "PHIẾU YÊU CẦU BÁO GIÁ (BÊN MUA YÊU CẦU)";
+    var linhVucList = ViewBag.LinhVucList as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+    var defaultLinhVuc = ViewBag.DefaultLinhVuc as string ?? "";
+    var projectId = ViewBag.ProjectId;
 }
 
 <div class="container mt-5 mb-5">
-    <div class="card shadow">
+    <div class="card shadow mb-4">
         <div class="card-header bg-primary text-white">
             <h2 class="h4 mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>@ViewData["Title"]</h2>
         </div>
         <div class="card-body">
-            <form asp-action="Create" method="post">
+            <form asp-action="Create" method="post" id="rfqForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="ProjectId" />
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label asp-for="MaRFQ" class="form-label">Mã RFQ <span class="text-danger">*</span></label>
-                        <input asp-for="MaRFQ" class="form-control" placeholder="Nhập mã RFQ..." />
+                        <label asp-for="MaRFQ" class="form-label">Mã RFQ</label>
+                        <input asp-for="MaRFQ" class="form-control bg-light" readonly />
                         <span asp-validation-for="MaRFQ" class="text-danger"></span>
                     </div>
 
@@ -26,12 +29,6 @@
                         <label asp-for="HanChotNopHoSo" class="form-label">Hạn chót nộp hồ sơ <span class="text-danger">*</span></label>
                         <input asp-for="HanChotNopHoSo" class="form-control" type="datetime-local" />
                         <span asp-validation-for="HanChotNopHoSo" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label asp-for="ProjectId" class="form-label">Dự án ID</label>
-                        <input asp-for="ProjectId" class="form-control" type="number" />
-                        <span asp-validation-for="ProjectId" class="text-danger"></span>
                     </div>
 
                     <div class="col-12">
@@ -48,14 +45,193 @@
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary me-md-2">Hủy bỏ</a>
+                    <a asp-controller="Projects" asp-action="MyProjects" class="btn btn-secondary me-md-2">Quay lại</a>
                     <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle me-2"></i>Tạo yêu cầu báo giá</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Supplier Search Section -->
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-search me-2"></i>Tìm nhà cung ứng để mời báo giá</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Tìm theo tên / email / SĐT</label>
+                    <input type="text" class="form-control" id="txtSearchSupplier" placeholder="Nhập tên nhà cung ứng..." />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Lĩnh vực</label>
+                    <select class="form-select" id="selectFilterLinhVuc">
+                        <option value="">-- Tất cả lĩnh vực --</option>
+                        @foreach (var item in linhVucList)
+                        {
+                            if (item.Value == defaultLinhVuc)
+                            {
+                                <option value="@item.Value" selected>@item.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-success w-100" id="btnSearchSupplier">
+                        <i class="fas fa-search me-1"></i> Tìm
+                    </button>
+                </div>
+            </div>
+
+            <div id="supplierResults">
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-users fa-2x d-block mb-2"></i>
+                    Nhấn <strong>Tìm</strong> để hiển thị nhà cung ứng
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(function () {
+            var projectId = @Html.Raw(projectId);
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            // Select2 for category filter
+            $('#selectFilterLinhVuc').select2({
+                theme: 'bootstrap-5',
+                placeholder: '-- Tất cả lĩnh vực --',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Auto-search on page load if default lĩnh vực is set
+            var defaultLV = '@Html.Raw(defaultLinhVuc)';
+            if (defaultLV) {
+                searchSuppliers();
+            }
+
+            $('#btnSearchSupplier').on('click', function () {
+                searchSuppliers();
+            });
+
+            $('#txtSearchSupplier').on('keypress', function (e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    searchSuppliers();
+                }
+            });
+
+            function searchSuppliers() {
+                var search = $('#txtSearchSupplier').val();
+                var linhVuc = $('#selectFilterLinhVuc').val();
+
+                $('#supplierResults').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>');
+
+                $.getJSON('@Url.Action("SearchSuppliers", "RFQ")', {
+                    projectId: projectId,
+                    search: search,
+                    linhVuc: linhVuc
+                }, function (data) {
+                    if (!data || data.length === 0) {
+                        $('#supplierResults').html('<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i>Không tìm thấy nhà cung ứng phù hợp.</div>');
+                        return;
+                    }
+
+                    var html = '<div class="table-responsive"><table class="table table-hover table-striped table-bordered align-middle mb-0">';
+                    html += '<thead class="table-light"><tr>';
+                    html += '<th class="text-center" style="width:50px"><input type="checkbox" id="checkAll" title="Chọn tất cả" /></th>';
+                    html += '<th>Tên nhà cung ứng</th>';
+                    html += '<th>Địa chỉ</th>';
+                    html += '<th>Email</th>';
+                    html += '<th>Điện thoại</th>';
+                    html += '<th>Username</th>';
+                    html += '</tr></thead><tbody>';
+
+                    $.each(data, function (i, s) {
+                        html += '<tr>';
+                        html += '<td class="text-center"><input type="checkbox" class="chk-supplier" value="' + s.userId + '" /></td>';
+                        html += '<td class="fw-semibold">' + escapeHtml(s.fullName) + '</td>';
+                        html += '<td class="small">' + escapeHtml(s.diaChi) + '</td>';
+                        html += '<td class="small"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></td>';
+                        html += '<td class="small">' + escapeHtml(s.phone) + '</td>';
+                        html += '<td class="small text-muted">' + escapeHtml(s.userName) + '</td>';
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table></div>';
+                    html += '<div class="d-flex justify-content-between align-items-center mt-3">';
+                    html += '<span class="text-muted small">Tìm thấy <strong>' + data.length + '</strong> nhà cung ứng</span>';
+                    html += '<button type="button" class="btn btn-warning" id="btnInviteSelected" disabled>';
+                    html += '<i class="fas fa-paper-plane me-1"></i> Mời nhà cung ứng đã chọn</button>';
+                    html += '</div>';
+
+                    $('#supplierResults').html(html);
+
+                    // Check all
+                    $('#checkAll').on('change', function () {
+                        $('.chk-supplier').prop('checked', $(this).prop('checked'));
+                        updateInviteBtn();
+                    });
+
+                    $('.chk-supplier').on('change', function () {
+                        updateInviteBtn();
+                    });
+                });
+            }
+
+            function updateInviteBtn() {
+                var count = $('.chk-supplier:checked').length;
+                $('#btnInviteSelected').prop('disabled', count === 0)
+                    .text(count > 0 ? 'Mời ' + count + ' nhà cung ứng đã chọn' : 'Mời nhà cung ứng đã chọn');
+            }
+
+            // Invite selected suppliers (submit RFQ first if not created, then send invitations)
+            $(document).on('click', '#btnInviteSelected', function () {
+                var selectedIds = [];
+                $('.chk-supplier:checked').each(function () {
+                    selectedIds.push(parseInt($(this).val()));
+                });
+
+                if (selectedIds.length === 0) {
+                    toastr.warning('Vui lòng chọn ít nhất một nhà cung ứng.');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Xác nhận mời?',
+                    text: 'Bạn muốn mời ' + selectedIds.length + ' nhà cung ứng nộp báo giá?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Mời',
+                    cancelButtonText: 'Hủy'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        // First create the RFQ if needed, then invite
+                        var rfqForm = $('#rfqForm');
+                        // Append selectedSellerIds to form action via hidden inputs
+                        selectedIds.forEach(function(id) {
+                            rfqForm.append('<input type="hidden" name="selectedSellerIds" value="' + id + '" />');
+                        });
+                        // Mark that we want to also send invitations
+                        rfqForm.append('<input type="hidden" name="alsoInvite" value="true" />');
+                        rfqForm.submit();
+                    }
+                });
+            });
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+        });
+    </script>
 }

@@ -2,6 +2,9 @@
 
 @{
     var rfq = Model.StepData as TPApp.Entities.RFQRequest;
+    var linhVucList = ViewBag.LinhVucList as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
+    var defaultLinhVuc = ViewBag.DefaultLinhVuc as string ?? "";
+    var autoMaRFQ = ViewBag.AutoMaRFQ as string ?? "RFQ-" + DateTime.Now.ToString("yyyyMMddHHmmss");
 }
 
 <div class="card shadow-sm">
@@ -9,6 +12,12 @@
         <h5 class="mb-0">
             <i class="fas fa-file-invoice"></i> Bước 3: Yêu cầu Báo giá (RFQ)
         </h5>
+        @if (rfq != null)
+        {
+            <button class="btn btn-light btn-sm edit-step-btn" data-step="3" data-project-id="@Model.ProjectId">
+                <i class="fas fa-edit"></i> Chỉnh sửa
+            </button>
+        }
     </div>
     <div class="card-body">
         @if (rfq != null)
@@ -46,18 +55,6 @@
                     </span>
                 </dd>
 
-                <dt class="col-sm-3">Đã gửi nhà cung ứng:</dt>
-                <dd class="col-sm-9">
-                    @if (rfq.DaGuiNhaCungUng)
-                    {
-                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã gửi</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning"><i class="fas fa-times"></i> Chưa gửi</span>
-                    }
-                </dd>
-
                 <dt class="col-sm-3">Trạng thái:</dt>
                 <dd class="col-sm-9">
                     @if (Model.Steps[2].StatusId > 0)
@@ -92,6 +89,8 @@
                                 <tr>
                                     <th>Nhà cung ứng</th>
                                     <th>Liên hệ</th>
+                                    <th>Người dùng</th>
+                                    <th>Lĩnh vực</th>
                                     <th>Ngày mời</th>
                                     <th>Trạng thái</th>
                                 </tr>
@@ -113,15 +112,16 @@
                                                 }
                                             </small>
                                         </td>
+                                        <td class="small text-muted">@invited.UserName</td>
+                                        <td class="small">@invited.LinhVuc</td>
                                         <td><small>@invited.InvitedDate.ToString("dd/MM/yyyy HH:mm")</small></td>
                                         <td>
                                             @{
-                                                // Check if seller has submitted proposal
                                                 var hasProposal = invited.HasProposal;
-                                                
+
                                                 string statusText;
                                                 string badgeClass;
-                                                
+
                                                 if (hasProposal)
                                                 {
                                                     statusText = "Đã gửi báo giá";
@@ -157,93 +157,241 @@
                 </div>
             }
 
-            @* Send to More Suppliers Section *@
+            @* Searchable Supplier Invitation Section *@
             <hr class="my-4" />
             <div class="p-3 bg-light border rounded">
-                <h6 class="mb-3"><i class="fas fa-paper-plane"></i> Gửi yêu cầu đến nhà cung ứng @(ViewBag.InvitedSuppliers != null && ((IEnumerable<dynamic>)ViewBag.InvitedSuppliers).Any() ? "khác" : "")</h6>
-                <p class="text-muted">Chọn các nhà cung ứng để gửi yêu cầu báo giá. Họ sẽ nhận được thông báo và có thể xem chi tiết RFQ sau khi ký NDA.</p>
-                
-                <form method="post" action="/RFQ/SendToSuppliers/@rfq.Id" id="sendRfqForm">
-                    @Html.AntiForgeryToken()
-                    
-                    <div class="mb-3">
-                        <label class="form-label"><strong>Chọn nhà cung ứng:</strong></label>
-                        <div class="seller-selection border rounded p-3 bg-white" style="max-height: 300px; overflow-y: auto;">
-                            @if (ViewBag.AvailableSuppliers != null && ((IEnumerable<dynamic>)ViewBag.AvailableSuppliers).Any())
+                <h6 class="mb-3"><i class="fas fa-search"></i> Tìm nhà cung ứng chưa được mời</h6>
+                <p class="text-muted small">Tìm và chọn nhà cung ứng để gửi yêu cầu báo giá. Họ sẽ nhận được thông báo.</p>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold small">Tìm theo tên / Email / SĐT</label>
+                        <input type="text" class="form-control" id="txtSearchSupplier" placeholder="Nhập tên nhà cung ứng..." />
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold small">Lĩnh vực</label>
+                        <select class="form-select" id="selectFilterLinhVuc">
+                            <option value="">-- Tất cả lĩnh vực --</option>
+                            @foreach (var item in linhVucList)
                             {
-                                var invitedIds = ViewBag.InvitedSuppliers != null 
-                                    ? ((IEnumerable<dynamic>)ViewBag.InvitedSuppliers).Select(i => (int)i.SellerId).ToList()
-                                    : new List<int>();
-                                
-                                @foreach (var seller in (IEnumerable<dynamic>)ViewBag.AvailableSuppliers)
+                                if (item.Value == defaultLinhVuc)
                                 {
-                                    var alreadyInvited = invitedIds.Contains((int)seller.UserId);
-                                    <div class="form-check mb-2 @(alreadyInvited ? "text-muted" : "")">
-                                        <input type="checkbox" name="selectedSellerIds" 
-                                               value="@seller.UserId" 
-                                               class="form-check-input seller-checkbox" 
-                                               id="seller_@seller.UserId"
-                                               @(alreadyInvited ? "disabled" : "") />
-                                        <label class="form-check-label" for="seller_@seller.UserId">
-                                            <strong>@seller.FullName</strong>
-                                            @if (alreadyInvited)
-                                            {
-                                                <span class="badge bg-secondary ms-2">Đã mời</span>
-                                            }
-                                            <br />
-                                            <small class="text-muted">
-                                                @if (!string.IsNullOrEmpty(seller.Email))
-                                                {
-                                                    <i class="fas fa-envelope"></i> @seller.Email
-                                                }
-                                                @if (!string.IsNullOrEmpty(seller.Phone))
-                                                {
-                                                    <span class="ms-2"><i class="fas fa-phone"></i> @seller.Phone</span>
-                                                }
-                                                @if (!string.IsNullOrEmpty(seller.UserName))
-                                                {
-                                                    <span class="ms-2"><i class="fas fa-user"></i> @seller.UserName</span>
-                                                }
-                                            </small>
-                                        </label>
-                                    </div>
+                                    <option value="@item.Value" selected>@item.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@item.Value">@item.Text</option>
                                 }
                             }
-                            else
-                            {
-                                <div class="alert alert-warning mb-0">
-                                    <i class="fas fa-exclamation-triangle"></i> 
-                                    <strong>Chưa có nhà cung ứng nào trong hệ thống</strong><br />
-                                    Vui lòng liên hệ quản trị viên để thêm nhà cung ứng.
-                                </div>
-                            }
-                        </div>
-                        <small class="text-muted">Chọn ít nhất một nhà cung ứng để gửi RFQ</small>
+                        </select>
                     </div>
-                    
-                    <button type="submit" class="btn btn-success" id="btnSendRfq">
-                        <i class="fas fa-paper-plane"></i> Gửi đến nhà cung ứng đã chọn
-                    </button>
-                </form>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-success w-100" id="btnSearchSupplier">
+                            <i class="fas fa-search me-1"></i> Tìm
+                        </button>
+                    </div>
+                </div>
+
+                <div id="supplierSearchResults">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-users fa-2x d-block mb-2"></i>
+                        Nhấn <strong>Tìm</strong> để hiển thị nhà cung ứng
+                    </div>
+                </div>
             </div>
-            
+
             <script>
-                // Validate at least one supplier is selected
-                document.getElementById('sendRfqForm')?.addEventListener('submit', function(e) {
-                    const checkboxes = document.querySelectorAll('.seller-checkbox:checked:not([disabled])');
-                    if (checkboxes.length === 0) {
-                        e.preventDefault();
-                        showToast('warning', 'Vui lòng chọn ít nhất một nhà cung ứng!');
-                        return false;
+                (function () {
+                    var projectId = @Model.ProjectId;
+                    var rfqId = @rfq.Id;
+
+                    // Select2 for category filter
+                    $('#selectFilterLinhVuc').select2({
+                        theme: 'bootstrap-5',
+                        placeholder: '-- Tất cả lĩnh vực --',
+                        allowClear: true,
+                        width: '100%'
+                    });
+
+                    var currentPage = 1;
+
+                    // Auto-search on load if default lĩnh vực is set
+                    var defaultLV = '@Html.Raw(defaultLinhVuc)';
+                    if (defaultLV) {
+                        searchSuppliers(1);
                     }
-                });
+
+                    $('#btnSearchSupplier').on('click', function () {
+                        searchSuppliers(1);
+                    });
+
+                    $('#txtSearchSupplier').on('keypress', function (e) {
+                        if (e.which === 13) {
+                            e.preventDefault();
+                            searchSuppliers(1);
+                        }
+                    });
+
+                    function searchSuppliers(page) {
+                        currentPage = page || 1;
+                        var search = $('#txtSearchSupplier').val();
+                        var linhVuc = $('#selectFilterLinhVuc').val();
+
+                        $('#supplierSearchResults').html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>');
+
+                        $.getJSON('/RFQ/SearchSuppliers', {
+                            projectId: projectId,
+                            search: search,
+                            linhVuc: linhVuc,
+                            page: currentPage
+                        }, function (resp) {
+                            var data = resp.data;
+                            var totalCount = resp.totalCount;
+                            var totalPages = resp.totalPages;
+                            currentPage = resp.currentPage;
+
+                            if (!data || data.length === 0) {
+                                $('#supplierSearchResults').html(
+                                    '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i>Không tìm thấy nhà cung ứng phù hợp.</div>'
+                                );
+                                return;
+                            }
+
+                            var html = '<form method="post" action="/RFQ/SendToSuppliers/' + rfqId + '" id="sendRfqForm">';
+                            html += '<input type="hidden" name="__RequestVerificationToken" value="' + $('input[name=__RequestVerificationToken]').first().val() + '" />';
+                            html += '<div class="table-responsive"><table class="table table-hover table-striped table-bordered align-middle mb-0">';
+                            html += '<thead class="table-light"><tr>';
+                            html += '<th class="text-center" style="width:50px"><input type="checkbox" id="checkAllSuppliers" title="Chọn tất cả" /></th>';
+                            html += '<th>Tên nhà cung ứng</th>';
+                            html += '<th>Địa chỉ</th>';
+                            html += '<th>Email</th>';
+                            html += '<th>Điện thoại</th>';
+                            html += '<th>Username</th>';
+                            html += '<th>Lĩnh vực</th>';
+                            html += '</tr></thead><tbody>';
+
+                            $.each(data, function (i, s) {
+                                html += '<tr>';
+                                html += '<td class="text-center"><input type="checkbox" name="selectedSellerIds" class="chk-supplier" value="' + s.userId + '" /></td>';
+                                html += '<td class="fw-semibold">' + escapeHtml(s.fullName) + '</td>';
+                                html += '<td class="small">' + escapeHtml(s.diaChi) + '</td>';
+                                html += '<td class="small"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></td>';
+                                html += '<td class="small">' + escapeHtml(s.phone) + '</td>';
+                                html += '<td class="small text-muted">' + escapeHtml(s.userName) + '</td>';
+                                html += '<td class="small">' + escapeHtml(s.linhVuc) + '</td>';
+                                html += '</tr>';
+                            });
+
+                            html += '</tbody></table></div>';
+
+                            // Pagination + info bar
+                            html += '<div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">';
+                            html += '<span class="text-muted small">Tìm thấy <strong>' + totalCount + '</strong> nhà cung ứng (Trang ' + currentPage + '/' + totalPages + ')</span>';
+
+                            // Pagination buttons
+                            if (totalPages > 1) {
+                                html += '<nav><ul class="pagination pagination-sm mb-0">';
+                                // First page
+                                html += '<li class="page-item ' + (currentPage <= 1 ? 'disabled' : '') + '"><a class="page-link page-nav" href="#" data-page="1" title="Trang đầu">&laquo;&laquo;</a></li>';
+                                // Previous page
+                                html += '<li class="page-item ' + (currentPage <= 1 ? 'disabled' : '') + '"><a class="page-link page-nav" href="#" data-page="' + (currentPage - 1) + '" title="Trang trước">&laquo;</a></li>';
+                                // Page window: 5 before + current + 5 after
+                                var startPage = Math.max(1, currentPage - 5);
+                                var endPage = Math.min(totalPages, currentPage + 5);
+                                for (var p = startPage; p <= endPage; p++) {
+                                    html += '<li class="page-item ' + (p === currentPage ? 'active' : '') + '"><a class="page-link page-nav" href="#" data-page="' + p + '">' + p + '</a></li>';
+                                }
+                                // Next page
+                                html += '<li class="page-item ' + (currentPage >= totalPages ? 'disabled' : '') + '"><a class="page-link page-nav" href="#" data-page="' + (currentPage + 1) + '" title="Trang sau">&raquo;</a></li>';
+                                // Last page
+                                html += '<li class="page-item ' + (currentPage >= totalPages ? 'disabled' : '') + '"><a class="page-link page-nav" href="#" data-page="' + totalPages + '" title="Trang cuối">&raquo;&raquo;</a></li>';
+                                html += '</ul></nav>';
+                            }
+
+                            html += '<button type="submit" class="btn btn-warning" id="btnInviteSelected" disabled>';
+                            html += '<i class="fas fa-paper-plane me-1"></i> Mời nhà cung ứng đã chọn</button>';
+                            html += '</div></form>';
+
+                            $('#supplierSearchResults').html(html);
+
+                            // Pagination click
+                            $(document).off('click', '.page-nav').on('click', '.page-nav', function (e) {
+                                e.preventDefault();
+                                var p = parseInt($(this).data('page'));
+                                if (p >= 1 && p <= totalPages) searchSuppliers(p);
+                            });
+
+                            // Check all
+                            $('#checkAllSuppliers').on('change', function () {
+                                $('.chk-supplier').prop('checked', $(this).prop('checked'));
+                                updateInviteBtn();
+                            });
+
+                            $('.chk-supplier').on('change', function () {
+                                updateInviteBtn();
+                            });
+
+                            // Submit via AJAX to stay on Step 3
+                            $('#sendRfqForm').on('submit', function (e) {
+                                e.preventDefault();
+                                var count = $('.chk-supplier:checked').length;
+                                if (count === 0) {
+                                    showToast('warning', 'Vui lòng chọn ít nhất một nhà cung ứng!');
+                                    return;
+                                }
+
+                                var form = $(this);
+                                var btn = $('#btnInviteSelected');
+                                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Đang gửi...');
+
+                                $.ajax({
+                                    url: form.attr('action'),
+                                    type: 'POST',
+                                    data: form.serialize(),
+                                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                                    success: function (resp) {
+                                        if (resp.success) {
+                                            showToast('success', resp.message);
+                                            // Reload step 3 content to refresh invited list
+                                            $.get('/Project/Step', { projectId: projectId, stepNumber: 3 }, function (data) {
+                                                $('#step-content').html(data);
+                                            });
+                                        } else {
+                                            showToast('error', resp.message || 'Có lỗi xảy ra.');
+                                            btn.prop('disabled', false).html('<i class="fas fa-paper-plane me-1"></i> Mời nhà cung ứng đã chọn');
+                                        }
+                                    },
+                                    error: function () {
+                                        showToast('error', 'Lỗi kết nối. Vui lòng thử lại.');
+                                        btn.prop('disabled', false).html('<i class="fas fa-paper-plane me-1"></i> Mời nhà cung ứng đã chọn');
+                                    }
+                                });
+                            });
+                        });
+                    }
+
+                    function updateInviteBtn() {
+                        var count = $('.chk-supplier:checked').length;
+                        $('#btnInviteSelected').prop('disabled', count === 0);
+                        if (count > 0) {
+                            $('#btnInviteSelected').html('<i class="fas fa-paper-plane me-1"></i> Mời ' + count + ' nhà cung ứng đã chọn');
+                        } else {
+                            $('#btnInviteSelected').html('<i class="fas fa-paper-plane me-1"></i> Mời nhà cung ứng đã chọn');
+                        }
+                    }
+
+                    function escapeHtml(str) {
+                        if (!str) return '';
+                        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                    }
+                })();
             </script>
         }
         else
         {
             @* No RFQ yet - Show creation form *@
             <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> 
+                <i class="fas fa-info-circle"></i>
                 <strong>Tạo Yêu cầu Báo giá (RFQ)</strong>
             </div>
 
@@ -252,13 +400,13 @@
                 <form id="createRfqForm" method="post" action="/RFQ/Create">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="ProjectId" value="@Model.ProjectId" />
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Mã RFQ <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="MaRFQ" id="maRFQ" required 
-                                   placeholder="VD: RFQ-2026-001" />
-                            <small class="text-muted">Mã định danh duy nhất cho yêu cầu báo giá</small>
+                            <label class="form-label">Mã RFQ</label>
+                            <input type="text" class="form-control bg-light" name="MaRFQ" id="maRFQ"
+                                   value="@autoMaRFQ" readonly />
+                            <small class="text-muted">Mã RFQ được tự động sinh</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Hạn chót nộp hồ sơ <span class="text-danger">*</span></label>
@@ -320,4 +468,3 @@
         }
     });
 </script>
-

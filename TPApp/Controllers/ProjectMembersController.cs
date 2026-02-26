@@ -114,18 +114,35 @@ namespace TPApp.Controllers
 
                 _logger.LogInformation("User {CurrentUserId} removed member {UserId} from project {ProjectId}", currentUserId, userId, projectId);
 
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = true, message = "Đã xóa thành viên thành công!" });
+                }
+
                 TempData["SuccessMessage"] = "Đã xóa thành viên thành công!";
                 return RedirectToAction("Index", new { projectId });
             }
             catch (InvalidOperationException ex)
             {
                 _logger.LogError(ex, "Error removing member from project {ProjectId}", projectId);
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = ex.Message });
+                }
+
                 TempData["ErrorMessage"] = ex.Message;
                 return RedirectToAction("Index", new { projectId });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error removing member from project {ProjectId}", projectId);
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "Đã xảy ra lỗi khi xóa thành viên. Vui lòng thử lại." });
+                }
+
                 TempData["ErrorMessage"] = "Đã xảy ra lỗi khi xóa thành viên. Vui lòng thử lại.";
                 return RedirectToAction("Index", new { projectId });
             }

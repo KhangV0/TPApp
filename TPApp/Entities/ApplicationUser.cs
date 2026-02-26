@@ -7,6 +7,9 @@ namespace TPApp.Entities
     [Table("Users")]
     public class ApplicationUser : IdentityUser<int>
     {
+
+
+    
         // IdentityUser<int> already has Id, UserName, PasswordHash, Email, PhoneNumber, etc.
         // We need to map these to the existing table columns in OnModelCreating or here if possible.
 

@@ -37,9 +37,30 @@ namespace TPApp.Controllers
 
         // GET: /TechTransfer/Create
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            ViewBag.LinhVucList = await _context.Categories.AsNoTracking()
+                .Where(c => c.ParentId == 1)
+                .OrderBy(c => c.Title)
+                .Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = c.Title,
+                    Text = c.Title
+                })
+                .ToListAsync();
+
+            // Pre-fill contact info from current user
+            var user = await _userManager.GetUserAsync(User);
+            var model = new TechTransferRequest();
+            if (user != null)
+            {
+                model.HoTen = user.FullName ?? "";
+                model.DienThoai = user.Phone ?? user.PhoneNumber ?? "";
+                model.Email = user.Email ?? "";
+                model.DiaChi = user.DiaChi ?? "";
+            }
+
+            return View(model);
         }
 
         // POST: /TechTransfer/Create
@@ -109,6 +130,18 @@ namespace TPApp.Controllers
                    }
                 }
             }
+
+            // Reload categories on validation failure
+            ViewBag.LinhVucList = await _context.Categories.AsNoTracking()
+                .Where(c => c.ParentId == 1)
+                .OrderBy(c => c.Title)
+                .Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
+                {
+                    Value = c.Title,
+                    Text = c.Title
+                })
+                .ToListAsync();
+
             return View(model);
         }
 

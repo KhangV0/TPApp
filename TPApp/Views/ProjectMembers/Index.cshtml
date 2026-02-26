@@ -57,15 +57,11 @@
                     <td>
                         @if (isBuyer && member.Role == 3)
                         {
-                            <form method="post" asp-controller="ProjectMembers" asp-action="RemoveMember" style="display:inline;">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="projectId" value="@projectId" />
-                                <input type="hidden" name="userId" value="@member.UserId" />
-                                <button type="submit" class="btn btn-sm btn-danger" 
-                                        onclick="return confirm('Bạn có chắc chắn muốn xóa thành viên này?')">
-                                    <i class="fas fa-trash"></i> Remove
-                                </button>
-                            </form>
+                            <button type="button" class="btn btn-sm btn-danger btn-remove-member"
+                                    data-project-id="@projectId" data-user-id="@member.UserId"
+                                    onclick="if(!confirm('Bạn có chắc chắn muốn xóa thành viên này?')) return;">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
                         }
                         else
                         {
@@ -165,6 +161,35 @@ else if (isBuyer && !availableConsultants.Any())
                     
                     $('#addConsultantForm').before(alertHtml);
                     submitBtn.prop('disabled', false).html(originalBtnText);
+                }
+            });
+        });
+
+        // Handle remove member via AJAX
+        $(document).on('click', '.btn-remove-member', function() {
+            var btn = $(this);
+            var projectId = btn.data('project-id');
+            var userId = btn.data('user-id');
+            var token = $('input[name="__RequestVerificationToken"]').first().val();
+
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            $.ajax({
+                url: '/ProjectMembers/RemoveMember',
+                type: 'POST',
+                data: { projectId: projectId, userId: userId, __RequestVerificationToken: token },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function(response) {
+                    if (response.success) {
+                        $('#memberManagementModal').trigger('reload-content');
+                    } else {
+                        alert(response.message);
+                        btn.prop('disabled', false).html('<i class="fas fa-trash"></i> Remove');
+                    }
+                },
+                error: function() {
+                    alert('Đã xảy ra lỗi. Vui lòng thử lại.');
+                    btn.prop('disabled', false).html('<i class="fas fa-trash"></i> Remove');
                 }
             });
         });
