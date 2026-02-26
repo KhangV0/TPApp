@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TPApp.Data;
 using TPApp.Entities;
+using TPApp.Interfaces;
 
 namespace TPApp.Areas.Cms.Controllers
 {
@@ -47,7 +48,7 @@ namespace TPApp.Areas.Cms.Controllers
         public int? ParentId { get; set; }
         public int? LanguageId { get; set; }
         public string? Keywords { get; set; }
-        public string Domain { get; set; } = string.Empty;
+        public string Domain { get; set; } = "abc.com";
         public int? SiteId { get; set; }
         public string? CreatedBy { get; set; }
         public DateTime? Created { get; set; }
@@ -60,18 +61,40 @@ namespace TPApp.Areas.Cms.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ICntbMasterService _masterService;
 
-        public NhaTuVanAdminController(AppDbContext context, IConfiguration configuration)
+        public NhaTuVanAdminController(AppDbContext context, IConfiguration configuration, ICntbMasterService masterService)
         {
             _context = context;
             _configuration = configuration;
+            _masterService = masterService;
         }
 
         private int GetSiteId() =>
             int.TryParse(_configuration["AppSettings:SiteId"], out var id) ? id : 1;
 
         private string GetDomain() =>
-            _configuration["AppSettings:Domain"] ?? "";
+            _configuration["AppSettings:Domain"] ?? "abc.com";
+
+        private const int LogFunctionId = 21; // NhaTuVan
+
+        private async Task WriteLog(int eventId, string content)
+        {
+            _context.Logs.Add(new Log
+            {
+                FunctionID = LogFunctionId,
+                ActTime = DateTime.Now,
+                EventID = eventId,
+                Content = content,
+                ClientIP = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                UserName = User.Identity?.Name,
+                Domain = HttpContext.Request.Host.Value,
+                LanguageId = 1,
+                ParentId = 0,
+                SiteId = GetSiteId()
+            });
+            await _context.SaveChangesAsync();
+        }
 
         // ── INDEX ──
         public async Task<IActionResult> Index(
@@ -188,6 +211,8 @@ namespace TPApp.Areas.Cms.Controllers
             _context.NhaTuVans.Add(entity);
             await _context.SaveChangesAsync();
 
+            await WriteLog(1, $"Create NhaTuVan: {vm.FullName} (ID={entity.TuVanId})");
+
             TempData["Success"] = "Đã tạo nhà tư vấn thành công.";
             return RedirectToAction(nameof(Index));
         }
@@ -243,6 +268,8 @@ namespace TPApp.Areas.Cms.Controllers
 
             await _context.SaveChangesAsync();
 
+            await WriteLog(2, $"Update NhaTuVan: {vm.FullName} (ID={vm.TuVanId})");
+
             TempData["Success"] = "Đã cập nhật nhà tư vấn thành công.";
             return RedirectToAction(nameof(Index));
         }
@@ -261,6 +288,8 @@ namespace TPApp.Areas.Cms.Controllers
             _context.NhaTuVans.Remove(entity);
             await _context.SaveChangesAsync();
 
+            await WriteLog(3, $"Delete NhaTuVan: {entity.FullName} (ID={id})");
+
             return Json(new { success = true, message = "Đã xóa nhà tư vấn #" + id });
         }
 
@@ -270,6 +299,16 @@ namespace TPApp.Areas.Cms.Controllers
             var statuses = await _context.Statuses.AsNoTracking()
                 .OrderBy(s => s.StatusId).ToListAsync();
             ViewBag.Statuses = new SelectList(statuses, "StatusId", "Title");
+
+            var linhVucItems = await _masterService.GetLinhVucAsync();
+            ViewBag.LinhVucList = linhVucItems
+                .Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Title })
+                .ToList();
+
+            var dichVuItems = await _masterService.GetDichVuAsync();
+            ViewBag.DichVuList = dichVuItems
+                .Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Title })
+                .ToList();
         }
 
         private NhaTuVan MapToEntity(NhaTuVanFormVm vm) => new()

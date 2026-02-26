@@ -80,9 +80,12 @@ $(function(){
     });
 
     document.getElementById('ntvForm').addEventListener('submit', function() {
-        for (var id in editors) {
-            document.getElementById(id).value = editors[id].getData();
-        }
+        try {
+            for (var id in editors) {
+                var el = document.getElementById(id);
+                if (el) el.value = editors[id].getData();
+            }
+        } catch(e) { console.error('CKEditor sync error:', e); }
     });
 
     // Image upload buttons
@@ -117,6 +120,23 @@ $(function(){
         });
         input.trigger('click');
     });
+    // Lĩnh vực checkbox → hidden field sync
+    function syncLinhVucCheckboxes() {
+        var vals = [];
+        $('.chk-linhvuc:checked').each(function(){ vals.push($(this).val()); });
+        $('#hdnLinhVucId').val(vals.join(';'));
+    }
+    $(document).on('change', '.chk-linhvuc', syncLinhVucCheckboxes);
+    syncLinhVucCheckboxes();
+
+    // Dịch vụ checkbox → hidden field sync
+    function syncDichVuCheckboxes() {
+        var vals = [];
+        $('.chk-dichvu:checked').each(function(){ vals.push($(this).val()); });
+        $('#hdnDichVu').val(vals.join(';'));
+    }
+    $(document).on('change', '.chk-dichvu', syncDichVuCheckboxes);
+    syncDichVuCheckboxes();
 });
 </script>
 }

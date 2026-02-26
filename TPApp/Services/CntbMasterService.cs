@@ -61,6 +61,14 @@ namespace TPApp.Services
                     .Select(n => new LookupDto { Id = n.CungUngId, Title = n.FullName ?? "" })
                     .ToListAsync());
 
+        public Task<List<LookupDto>> GetDichVuAsync()
+            => GetOrCreateAsync("cntb_dichvu", () =>
+                _context.Categories.AsNoTracking()
+                    .Where(c => c.ParentId == 2 && c.StatusId == 1)
+                    .OrderBy(c => c.Title)
+                    .Select(c => new LookupDto { Id = c.CatId, Title = c.Title ?? "" })
+                    .ToListAsync());
+
         // ─── Cache helper ───
         private async Task<List<LookupDto>> GetOrCreateAsync(
             string cacheKey, Func<Task<List<LookupDto>>> factory)
