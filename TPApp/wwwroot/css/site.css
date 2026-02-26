@@ -4340,3 +4340,9 @@ header {
     width: 100%;  
     height: auto;
 }
+
+.page-heading.CongNgheThietBi {
+    color: #E82827;
+    font-size: 28px;
+    font-weight: 700;
+}

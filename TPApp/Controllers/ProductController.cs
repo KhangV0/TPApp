@@ -23,7 +23,16 @@ namespace TPApp.Controllers
             _mainDomain = appSettings.Value.MainDomain;
         }
 
-        // ================== INDEX (PORT TỪ WEBFORMS) ==================
+        // ================== PRODUCT TYPE CONSTANTS ==================
+
+        private static class ProductTypeConstants
+        {
+            public const int CongNghe      = 1;
+            public const int ThietBi       = 2;
+            public const int TaiSanTriTue = 3;
+        }
+
+        // ================== INDEX (PORT TỪ WEBFORMS — legacy fallback) ==================
 
         public async Task<IActionResult> Index(int catId = 1)
         {
@@ -48,6 +57,51 @@ namespace TPApp.Controllers
                 });
             }
 
+            return View(model);
+        }
+
+        // ================== SPLIT INDEX ACTIONS BY PRODUCT TYPE ==================
+
+        // Route: /cong-nghe.html
+        public Task<IActionResult> CongNghe()
+            => BuildIndexByProductTypeAsync(ProductTypeConstants.CongNghe, "Công nghệ");
+
+        // Route: /thiet-bi.html
+        public Task<IActionResult> ThietBi()
+            => BuildIndexByProductTypeAsync(ProductTypeConstants.ThietBi, "Thiết bị");
+
+        // Route: /tai-san-tri-tue.html
+        public Task<IActionResult> TaiSanTriTue()
+            => BuildIndexByProductTypeAsync(ProductTypeConstants.TaiSanTriTue, "Tài sản trí tuệ");
+
+        private async Task<IActionResult> BuildIndexByProductTypeAsync(int productType, string pageTitle)
+        {
+            var lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
+            ViewData["PageTitle"] = pageTitle;
+
+            var categories = _context.Categories
+                .Where(x => x.ParentId == 1 && x.MainCate == true)
+                .OrderBy(x => x.Sort)
+                .ToList();
+
+            var model = new ProductIndexViewModel();
+            model.NewProducts = await _productService.GetNewProductsByProductTypeAsync(productType, 12);
+
+            foreach (var cate in categories)
+            {
+                var products = await _productService
+                    .GetProductsByCategoryAndProductTypeAsync(cate.CatId, productType, lang, 4);
+
+                if (!products.Any()) continue; // skip categories with no matching products
+
+                model.Categories.Add(new CategoryBlockVm
+                {
+                    Category = cate,
+                    Products = products
+                });
+            }
+
+            // View name matches the calling action: CongNghe / ThietBi / SanPhamTriTue
             return View(model);
         }
 
