@@ -2,6 +2,7 @@
     var statuses = (IEnumerable<dynamic>)ViewBag.Statuses;
     var id = (int)ViewBag.ItemId;
     var statusId = (int?)ViewBag.StatusId;
+    var productType = (int?)ViewBag.ProductType ?? 1;
     var bDate = (DateTime?)ViewBag.BEffectiveDate;
     var eDate = (DateTime?)ViewBag.EEffectiveDate;
     var keywords = (string?)ViewBag.Keywords ?? "";
@@ -13,6 +14,17 @@
     <div class="mb-2 text-muted small">
         <i class="fas fa-tag me-1"></i> <strong>@itemName</strong>
     </div>
+
+    <div class="mb-3">
+        <label class="form-label fw-semibold small">Loại sản phẩm</label>
+        <select name="productType" class="form-select form-select-sm">
+            <option value="1" selected="@(productType == 1)">Công nghệ</option>
+            <option value="2" selected="@(productType == 2)">Thiết bị</option>
+            <option value="3" selected="@(productType == 3)">Sở hữu trí tuệ</option>
+        </select>
+        <small class="text-muted">⚠ Thay đổi loại sẽ chuyển sản phẩm sang mục tương ứng.</small>
+    </div>
+
     <div class="mb-3">
         <label class="form-label fw-semibold small">Trạng thái</label>
         <select name="statusId" class="form-select form-select-sm">

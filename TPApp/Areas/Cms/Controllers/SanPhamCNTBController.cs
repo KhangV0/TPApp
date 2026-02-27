@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -329,6 +331,9 @@ namespace TPApp.Areas.Cms.Controllers
                     entity.Code = $"{prefix}-{(maxId + 1):D5}";
                 }
 
+                // Auto-generate QueryString (slug) from Name
+                entity.QueryString = ToSlug(entity.Name ?? "");
+
                 _context.SanPhamCNTBs.Add(entity);
                 await _context.SaveChangesAsync();
 
@@ -408,6 +413,9 @@ namespace TPApp.Areas.Cms.Controllers
                 entity.Modified = DateTime.Now;
                 entity.Modifier = User.Identity?.Name;
                 entity.SiteId = GetSiteId();
+
+                // Always regenerate QueryString (slug) from the updated Name
+                entity.QueryString = ToSlug(entity.Name ?? "");
 
                 _context.SanPhamCNTBs.Update(entity);
                 await _context.SaveChangesAsync();
@@ -491,6 +499,7 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.ItemId = p.ID;
             ViewBag.ItemName = p.Name;
             ViewBag.StatusId = p.StatusId;
+            ViewBag.ProductType = p.ProductType;
             ViewBag.BEffectiveDate = p.bEffectiveDate ?? DateTime.Now;
             ViewBag.EEffectiveDate = p.eEffectiveDate ?? DateTime.Now.AddYears(3);
             ViewBag.Keywords = p.Keywords;
@@ -504,7 +513,7 @@ namespace TPApp.Areas.Cms.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> QuickConfig(int id, int? statusId,
+        public async Task<IActionResult> QuickConfig(int id, int? statusId, int? productType,
             DateTime? bEffectiveDate, DateTime? eEffectiveDate, string? keywords)
         {
             var entity = await _context.SanPhamCNTBs.FindAsync(id);
@@ -515,6 +524,8 @@ namespace TPApp.Areas.Cms.Controllers
                 return Json(new { success = false, message = "Không thể cấu hình sản phẩm thuộc sàn khác." });
 
             entity.StatusId = statusId;
+            if (productType.HasValue && productType.Value is TypeCongNghe or TypeThietBi or TypeSanPhamTriTue)
+                entity.ProductType = productType.Value;
             entity.bEffectiveDate = bEffectiveDate;
             entity.eEffectiveDate = eEffectiveDate;
             entity.Keywords = keywords;
@@ -579,6 +590,40 @@ namespace TPApp.Areas.Cms.Controllers
             {
                 // SP may not exist yet — log and continue
             }
+        }
+
+        /// <summary>
+        /// Converts a Vietnamese string to a URL-friendly slug (no diacritics, lowercase, hyphen-separated).
+        /// </summary>
+        internal static string ToSlug(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+
+            // Normalize to NFD to decompose accented characters
+            var normalized = text.Normalize(NormalizationForm.FormD);
+
+            // Remove combining (diacritic) characters
+            var sb = new StringBuilder();
+            foreach (var c in normalized)
+            {
+                var cat = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+                if (cat != System.Globalization.UnicodeCategory.NonSpacingMark)
+                    sb.Append(c);
+            }
+
+            var slug = sb.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
+
+            // Replace đ → d (special Vietnamese character not covered by NFD)
+            slug = slug.Replace('đ', 'd').Replace('Đ', 'd');
+
+            // Replace any non-alphanumeric by hyphen
+            slug = Regex.Replace(slug, @"[^a-z0-9]+", "-");
+
+            // Trim leading/trailing hyphens and collapse multiple hyphens
+            slug = slug.Trim('-');
+            slug = Regex.Replace(slug, @"-{2,}", "-");
+
+            return slug;
         }
 
         private string GetCreateViewName(int? productType) => productType switch
