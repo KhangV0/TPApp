@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using TPApp.Configuration;
 using TPApp.Interfaces;
 
@@ -8,15 +9,18 @@ namespace TPApp.Services
         private readonly ISystemParameterService _params;
         private readonly IEmailSender _emailSender;
         private readonly ILogger<OtpEmailService> _logger;
+        private readonly OtpSettings _otp;
 
         public OtpEmailService(
             ISystemParameterService @params,
             IEmailSender emailSender,
-            ILogger<OtpEmailService> logger)
+            ILogger<OtpEmailService> logger,
+            IOptions<OtpSettings> otpSettings)
         {
             _params      = @params;
             _emailSender = emailSender;
             _logger      = logger;
+            _otp         = otpSettings.Value;
         }
 
         public async Task SendOtpAsync(string toEmail, string fullName, string otp, string role, int projectId)
@@ -28,7 +32,7 @@ namespace TPApp.Services
             {
                 _logger.LogInformation(
                     "=== [OTP MOCK] ===\n  To: {Email}\n  Name: {Name}\n  Role: {Role}\n  Project: {ProjectId}\n  OTP: {Otp}\n  Expires: {Expire}",
-                    toEmail, fullName, role, projectId, otp, DateTime.Now.AddMinutes(5).ToString("HH:mm:ss"));
+                    toEmail, fullName, role, projectId, otp, DateTime.Now.Add(_otp.NegotiationOtpExpiry).ToString("HH:mm:ss"));
                 return;
             }
 
@@ -45,7 +49,7 @@ namespace TPApp.Services
     <div style='text-align:center;margin:24px 0'>
       <span style='font-size:36px;font-weight:bold;letter-spacing:8px;color:#1a73e8;background:#f0f4ff;padding:12px 24px;border-radius:8px'>{otp}</span>
     </div>
-    <p style='color:#d32f2f'><strong>⚠ Mã này có hiệu lực trong 5 phút.</strong> Không chia sẻ mã này với bất kỳ ai.</p>
+    <p style='color:#d32f2f'><strong>⚠ Mã này có hiệu lực trong {_otp.NegotiationOtpExpirySeconds / 60} phút.</strong> Không chia sẻ mã này với bất kỳ ai.</p>
     <hr style='border:none;border-top:1px solid #e0e0e0;margin:20px 0'/>
     <p style='color:#888;font-size:12px'>Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email này.</p>
   </div>

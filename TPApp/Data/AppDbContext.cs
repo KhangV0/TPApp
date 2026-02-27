@@ -172,5 +172,9 @@ namespace TPApp.Data
         public DbSet<Status> Statuses { get; set; } = null!;
         public DbSet<XuatXu> XuatXus { get; set; } = null!;
         public DbSet<MucDo> MucDos { get; set; } = null!;
+
+        // Admin Analytics Dashboard
+        public DbSet<DashboardSnapshot> DashboardSnapshots { get; set; } = null!;
+        public DbSet<DashboardMonthlyStats> DashboardMonthlyStats { get; set; } = null!;
     }
 }

@@ -1,0 +1,305 @@
+@using TPApp.ViewModel
+@model HomeAnalyticsVm
+@{
+    string Fmt(int n) => n > 0 ? n.ToString("N0") : "---";
+    string MomBadge(int p)    => p > 0 ? $"▲ +{p}% MoM" : p < 0 ? "↓ so với tháng trước" : "Ổn định";
+    string MomCss(int p)      => p >= 0 ? "up" : "flat";
+}
+
+<section class="tp-metrics yc-section" aria-label="Techport trong con số">
+  <div class="container">
+    <div class="tp-metrics__grid">
+
+      <!-- ═══════════════════════════════════════════════════════
+           LEFT — KPI CARDS (40%)
+           ═══════════════════════════════════════════════════════ -->
+      <div class="tp-kpi">
+
+        <div class="tp-kpi__head">
+          <div class="tp-overline">NỀN TẢNG GIAO DỊCH CÔNG NGHỆ QUỐC GIA</div>
+          <h2 class="tp-title">Techport trong con số</h2>
+          <p class="tp-sub">Hệ sinh thái kết nối doanh nghiệp, nhà cung ứng công nghệ và nhà tư vấn tại Việt Nam.</p>
+        </div>
+
+        <div class="tp-kpi__cards">
+
+          <div class="tp-card">
+            <div class="tp-card__icon i-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            </div>
+            <div class="tp-card__meta">
+              <div class="tp-card__value js-cu" data-target="@Model.TotalProducts">@Fmt(Model.TotalProducts)</div>
+              <div class="tp-card__label">Sản phẩm Công nghệ</div>
+            </div>
+            <div class="tp-card__delta @MomCss(Model.MomProducts)">
+              @MomBadge(Model.MomProducts)
+            </div>
+          </div>
+
+          <div class="tp-card">
+            <div class="tp-card__icon i-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <div class="tp-card__meta">
+              <div class="tp-card__value js-cu" data-target="@Model.TotalProjects">@Fmt(Model.TotalProjects)</div>
+              <div class="tp-card__label">Dự án Chuyển giao</div>
+            </div>
+            <div class="tp-card__delta @MomCss(Model.MomProjects)">
+              @MomBadge(Model.MomProjects)
+            </div>
+          </div>
+
+          <div class="tp-card">
+            <div class="tp-card__icon i-purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <div class="tp-card__meta">
+              <div class="tp-card__value js-cu" data-target="@Model.TotalSuppliers">@Fmt(Model.TotalSuppliers)</div>
+              <div class="tp-card__label">Nhà Cung ứng</div>
+            </div>
+            <div class="tp-card__delta @MomCss(Model.MomSuppliers)">
+              @MomBadge(Model.MomSuppliers)
+            </div>
+          </div>
+
+          <div class="tp-card">
+            <div class="tp-card__icon i-amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            </div>
+            <div class="tp-card__meta">
+              <div class="tp-card__value js-cu" data-target="@Model.TotalExperts">@Fmt(Model.TotalExperts)</div>
+              <div class="tp-card__label">Chuyên gia Tư vấn</div>
+            </div>
+            <div class="tp-card__delta @MomCss(Model.MomExperts)">
+              @MomBadge(Model.MomExperts)
+            </div>
+          </div>
+
+        </div><!-- /tp-kpi__cards -->
+
+        <div class="tp-updated">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Cập nhật: @Model.LastUpdated.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+        </div>
+
+      </div><!-- /tp-kpi -->
+
+      <!-- ═══════════════════════════════════════════════════════
+           RIGHT — ANALYTICS PANEL (60%)
+           ═══════════════════════════════════════════════════════ -->
+      <div class="tp-analytics"
+           data-labels='@Html.Raw(Model.MonthLabelsJson)'
+           data-growth='@Html.Raw(Model.GrowthSeriesJson)'
+           data-types='@Html.Raw(Model.ProductTypeJson)'>
+
+        <div class="tp-analytics__head">
+          <div>
+            <div class="tp-overline">TĂNG TRƯỞNG &amp; PHÂN BỔ</div>
+            <h2 class="tp-title">Sự phát triển của Techport</h2>
+            <p class="tp-sub">Xu hướng theo tháng và cơ cấu sản phẩm trên nền tảng.</p>
+          </div>
+          <a class="tp-btn" href="/san-pham">Khám phá →</a>
+        </div>
+
+        <div class="tp-analytics__row">
+
+          <!-- Line Chart -->
+          <div class="tp-panel">
+            <div class="tp-panel__title">Tăng trưởng 6 tháng</div>
+            <div class="tp-panel__hint">Sản phẩm · Dự án · Nhà cung ứng · Chuyên gia</div>
+            <canvas id="tpGrowthChart" height="140"></canvas>
+          </div>
+
+          <!-- Donut Chart -->
+          <div class="tp-panel">
+            <div class="tp-panel__title">Cơ cấu sản phẩm</div>
+            <div class="tp-panel__hint">Công nghệ / Thiết bị / Trí tuệ nhân tạo</div>
+            <canvas id="tpTypeChart" height="140"></canvas>
+            <div class="tp-chips">
+              <span class="tp-chip">Top: <b>@Model.TopTypeName</b></span>
+              <span class="tp-chip">Tháng này: <b>@Model.ThisMonthNewProducts</b> mới</span>
+            </div>
+          </div>
+
+        </div><!-- /tp-analytics__row -->
+
+        <!-- Insight chips -->
+        <div class="tp-insights">
+          <div class="tp-insight">
+            <div class="tp-insight__k">Nhịp độ tháng này</div>
+            <div class="tp-insight__v">@Model.InsightVelocity</div>
+          </div>
+          <div class="tp-insight">
+            <div class="tp-insight__k">Chuyển giao</div>
+            <div class="tp-insight__v">@Model.InsightProject</div>
+          </div>
+          <div class="tp-insight">
+            <div class="tp-insight__k">Nguồn cung</div>
+            <div class="tp-insight__v">@Model.InsightSupply</div>
+          </div>
+        </div>
+
+      </div><!-- /tp-analytics -->
+
+    </div><!-- /tp-metrics__grid -->
+  </div><!-- /container -->
+</section>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   HOME ENTERPRISE ANALYTICS — SaaS / GovTech style
+   ═══════════════════════════════════════════════════════════════ */
+.tp-metrics { padding: 52px 0 !important; }
+
+.tp-metrics__grid {
+  display: grid;
+  gap: 28px;
+  grid-template-columns: 1fr 1.45fr;
+  align-items: stretch;
+}
+
+/* ─── Shared typography ────────────────────────────────────── */
+.tp-overline {
+  font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+  color: #3b82f6; font-weight: 700; display: block; margin-bottom: 6px;
+}
+.tp-title { margin: 0 0 6px; font-size: 1.65rem; font-weight: 800; color: #0f172a; letter-spacing: -.03em; }
+.tp-sub   { margin: 0 0 22px; color: #64748b; font-size: .88rem; line-height: 1.6; }
+
+/* ─── KPI cards 2×2 ────────────────────────────────────────── */
+.tp-kpi__cards {
+  display: grid; gap: 14px;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 16px;
+}
+.tp-card {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15,23,42,.05);
+  transition: transform .2s ease, box-shadow .2s ease;
+  min-height: 112px;
+  overflow: hidden;
+}
+.tp-card:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(15,23,42,.09); }
+.tp-card__icon {
+  width: 38px; height: 38px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+}
+.tp-card__icon svg { width: 18px; height: 18px; }
+.i-blue   { background: rgba(59,130,246,.12); color: #2563eb; }
+.i-green  { background: rgba(16,185,129,.12); color: #059669; }
+.i-purple { background: rgba(139,92,246,.12); color: #7c3aed; }
+.i-amber  { background: rgba(245,158,11,.12); color: #d97706; }
+
+.tp-card__meta  { margin-top: 10px; }
+.tp-card__value { font-size: 2rem; font-weight: 900; color: #0f172a; letter-spacing: -.04em; font-variant-numeric: tabular-nums; line-height: 1; }
+.tp-card__label { color: #475569; font-size: .75rem; margin-top: 3px; font-weight: 500; }
+
+.tp-card__delta {
+  position: absolute; right: 12px; top: 12px;
+  font-size: .68rem; font-weight: 700;
+  padding: 4px 9px; border-radius: 999px;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.tp-card__delta.up   { color: #065f46; background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.25); }
+.tp-card__delta.flat { color: #475569; background: rgba(100,116,139,.1);  border-color: rgba(100,116,139,.2); }
+
+.tp-updated {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .68rem; color: #94a3b8;
+}
+
+/* ─── Analytics light panel ──────────────────────────────── */
+.tp-analytics {
+  --tp-analytics-bg : linear-gradient(135deg, #f8fbff, #eef4ff);
+  --tp-panel-bg     : #ffffff;
+  --tp-border       : #dce8f8;
+  --tp-shadow       : 0 10px 30px rgba(37,99,235,.08);
+  --tp-text         : #0f172a;
+  --tp-muted        : #64748b;
+
+  border-radius: 20px;
+  padding: 24px;
+  background: var(--tp-analytics-bg);
+  border: 1.5px solid var(--tp-border);
+  box-shadow: var(--tp-shadow);
+  color: var(--tp-text);
+}
+
+.tp-analytics__head {
+  display: flex; gap: 14px; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 18px;
+}
+.tp-analytics .tp-overline { color: #2563eb; }
+.tp-analytics .tp-title    { color: #0f172a; font-size: 1.4rem; }
+.tp-analytics .tp-sub      { color: #64748b; }
+.tp-btn {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 16px;
+  background: #2563eb; color: #fff; text-decoration: none;
+  border-radius: 10px; font-size: .82rem; font-weight: 700;
+  box-shadow: 0 8px 20px rgba(37,99,235,.3);
+  transition: filter .2s;
+  white-space: nowrap;
+}
+.tp-btn:hover { filter: brightness(1.08); color: #fff; }
+
+/* ─── Chart panels ──────────────────────────────────────────── */
+.tp-analytics__row {
+  display: grid; gap: 14px;
+  grid-template-columns: 1.45fr 1fr;
+}
+.tp-panel {
+  border-radius: 14px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1.5px solid #dce8f8;
+  box-shadow: 0 4px 14px rgba(37,99,235,.08);
+}
+.tp-panel__title { font-weight: 800; font-size: .9rem;  color: #0f172a; }
+.tp-panel__hint  { font-size: .7rem; color: #94a3b8; margin: 3px 0 10px; }
+
+/* ─── Chips ─────────────────────────────────────────────────── */
+.tp-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.tp-chip  {
+  font-size: .7rem; color: #334155;
+  padding: 5px 10px; border-radius: 999px;
+  background: #f0f6ff;
+  border: 1.5px solid #dce8f8;
+  font-weight: 600;
+}
+
+/* ─── Insight row ───────────────────────────────────────────── */
+.tp-insights {
+  margin-top: 14px;
+  display: grid; gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+}
+.tp-insight {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1.5px solid #dce8f8;
+  box-shadow: 0 2px 8px rgba(37,99,235,.06);
+}
+.tp-insight__k { font-size: .66rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .08em; }
+.tp-insight__v { margin-top: 5px; font-weight: 700; font-size: .82rem; color: #0f172a; }
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@@media (max-width: 1100px) {
+  .tp-metrics__grid    { grid-template-columns: 1fr; }
+  .tp-analytics__row   { grid-template-columns: 1fr; }
+}
+@@media (max-width: 600px) {
+  .tp-kpi__cards { grid-template-columns: 1fr 1fr; }
+  .tp-insights   { grid-template-columns: 1fr; }
+  .tp-card__value { font-size: 1.6rem; }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/js/home-analytics.js"></script>

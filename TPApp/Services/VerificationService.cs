@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using TPApp.Configuration;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Interfaces;
@@ -12,17 +14,20 @@ namespace TPApp.Services
         private readonly IEmailSender      _email;
         private readonly ISmsSender        _sms;
         private readonly ILogger<VerificationService> _logger;
+        private readonly OtpSettings       _otp;
 
         public VerificationService(
             AppDbContext context,
             IEmailSender email,
             ISmsSender sms,
-            ILogger<VerificationService> logger)
+            ILogger<VerificationService> logger,
+            IOptions<OtpSettings> otpSettings)
         {
             _context = context;
             _email   = email;
             _sms     = sms;
             _logger  = logger;
+            _otp     = otpSettings.Value;
         }
 
         // ─── Send Email OTP ──────────────────────────────────────────────────
@@ -51,7 +56,7 @@ namespace TPApp.Services
             var otp = GenerateOtp();
             await SaveOtpAsync(userId, 2, otp);
 
-            await _sms.SendAsync(user.PhoneNumber, $"[TechPort] Mã OTP xác thực SĐT của bạn: {otp}. Có hiệu lực 5 phút.");
+            await _sms.SendAsync(user.PhoneNumber, $"[TechPort] Mã OTP xác thực SĐT của bạn: {otp}. Có hiệu lực {_otp.PhoneOtpExpiryMinutes} phút.");
             _logger.LogInformation("[VerifyPhone] OTP {Otp} sent to {Phone}", otp, user.PhoneNumber);
             return true;
         }
@@ -190,7 +195,7 @@ namespace TPApp.Services
                 UserId    = userId,
                 OtpType   = otpType,
                 OtpCode   = code,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                ExpiresAt = DateTime.UtcNow.Add(otpType == 1 ? _otp.EmailOtpExpiry : _otp.PhoneOtpExpiry),
                 IsUsed    = false,
                 CreatedAt = DateTime.UtcNow
             });
@@ -226,9 +231,10 @@ namespace TPApp.Services
                 user.VerificationLevel = 0;
         }
 
-        private static string BuildOtpEmailBody(string name, string otp, string channel)
-        {
-            return $@"
+    private string BuildOtpEmailBody(string name, string otp, string channel)
+    {
+        int minutes = channel == "Email" ? _otp.EmailOtpExpiryMinutes : _otp.PhoneOtpExpiryMinutes;
+        return $@"
 <div style='font-family:Arial,sans-serif;max-width:480px;margin:auto;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden'>
   <div style='background:#1a73e8;padding:20px;text-align:center'>
     <h2 style='color:white;margin:0'>TechPort – Xác thực tài khoản</h2>
@@ -239,9 +245,9 @@ namespace TPApp.Services
     <div style='text-align:center;margin:24px 0'>
       <span style='font-size:36px;font-weight:bold;letter-spacing:8px;color:#1a73e8;background:#f0f4ff;padding:12px 24px;border-radius:8px'>{otp}</span>
     </div>
-    <p style='color:#d32f2f'><strong>⚠ Mã có hiệu lực 5 phút.</strong> Không chia sẻ mã này với bất kỳ ai.</p>
+    <p style='color:#d32f2f'><strong>⚠ Mã có hiệu lực {minutes} phút.</strong> Không chia sẻ mã này với bất kỳ ai.</p>
   </div>
 </div>";
-        }
+    }
     }
 }

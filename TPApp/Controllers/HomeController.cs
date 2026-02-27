@@ -15,6 +15,7 @@ namespace TPApp.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IProductService _productService;
+        private readonly IHomeAnalyticsService _analyticsService;
         private readonly string _mainDomain;
         
         // ===== CONSTANT =====
@@ -22,11 +23,16 @@ namespace TPApp.Controllers
         private const int VIDEO_MENU_ID = 70;
         private const int YEU_CAU_MENU_ID = 67;
 
-        public HomeController(AppDbContext context, IProductService productService, IOptions<AppSettings> appSettings)
+        public HomeController(
+            AppDbContext context,
+            IProductService productService,
+            IHomeAnalyticsService analyticsService,
+            IOptions<AppSettings> appSettings)
         {
-            _context = context;
-            _productService = productService;
-            _mainDomain = appSettings.Value.MainDomain;
+            _context          = context;
+            _productService   = productService;
+            _analyticsService = analyticsService;
+            _mainDomain       = appSettings.Value.MainDomain;
         }
 
         // ================= INDEX =================
@@ -45,6 +51,9 @@ namespace TPApp.Controllers
             var newProducts = await _productService.GetNewProductsAsync(12);
             ViewBag.NewTech     = newProducts.Take(10).ToList();
             ViewBag.NewProducts = newProducts;
+
+            // ── Enterprise Analytics (cached, max 2 DB queries) ─────
+            model.Analytics = await _analyticsService.GetHomeAnalyticsAsync();
 
             return View(model);
         }

@@ -8,6 +8,9 @@
     @await Html.PartialAsync("_TopBigBanner")
     @await Html.PartialAsync("_MainIcon")
 
+    @* ── Enterprise Analytics Section ── *@
+    @await Html.PartialAsync("_AnalyticsSection", Model.Analytics)
+
     <h3 class="hp-section-title">Công nghệ nổi bật</h3>
     <ul class="nav nav-tabs justify-content-center mb-4" role="tablist">
         <li class="nav-item">

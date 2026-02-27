@@ -49,6 +49,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // --- Configuration ---
 builder.Services.Configure<TPApp.Helpers.AppSettings>(builder.Configuration.GetSection("AppSettings"));
 builder.Services.Configure<TPApp.Configuration.FeatureFlags>(builder.Configuration.GetSection("FeatureFlags"));
+builder.Services.Configure<TPApp.Configuration.DashboardJobOptions>(builder.Configuration.GetSection(TPApp.Configuration.DashboardJobOptions.SectionName));
+builder.Services.Configure<TPApp.Configuration.OtpSettings>(builder.Configuration.GetSection(TPApp.Configuration.OtpSettings.SectionName));
+
+// In-process memory cache (used by HomeAnalyticsService)
+builder.Services.AddMemoryCache();
+builder.Services.AddResponseCaching();
 
 // --- Identity Configuration ---
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
@@ -98,6 +104,8 @@ builder.Services.AddScoped<TPApp.Interfaces.ICntbMasterService, TPApp.Services.C
 // --- Services ---
 builder.Services.AddScoped<TPApp.Interfaces.IProductService, TPApp.Services.ProductService>();
 builder.Services.AddScoped<TPApp.Interfaces.IDashboardService, TPApp.Services.DashboardService>();
+builder.Services.AddScoped<TPApp.Interfaces.IAdminDashboardService, TPApp.Services.AdminDashboardService>();
+builder.Services.AddScoped<TPApp.Interfaces.IHomeAnalyticsService, TPApp.Services.HomeAnalyticsService>();
 builder.Services.AddScoped<TPApp.Interfaces.IAccountService, TPApp.Services.AccountService>();
 builder.Services.AddScoped<TPApp.Interfaces.IProjectService, TPApp.Services.ProjectService>();
 
@@ -154,6 +162,7 @@ builder.Services.AddScoped<TPApp.Interfaces.IEmailSender, TPApp.Services.GmailEm
 builder.Services.AddScoped<TPApp.Interfaces.ISmsSender, TPApp.Services.StubSmsSender>(); // Twilio replaced with stub — add Twilio back when SMS is needed
 builder.Services.AddScoped<TPApp.Interfaces.INotificationProcessor, TPApp.Services.NotificationProcessor>();
 builder.Services.AddHostedService<TPApp.BackgroundServices.NotificationWorker>();
+builder.Services.AddHostedService<TPApp.BackgroundServices.DashboardBackgroundService>();
 
 
 var app = builder.Build();
