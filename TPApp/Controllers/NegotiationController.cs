@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using TPApp.Configuration;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Enums;
@@ -20,6 +22,7 @@ namespace TPApp.Controllers
         private readonly ISmsSender _smsSender;
         private readonly Services.INotificationQueueService _notifQueue;
         private readonly ILegalReviewService _legalReviewService;
+        private readonly OtpSettings _otpSettings;
 
         public NegotiationController(
             AppDbContext context,
@@ -29,7 +32,8 @@ namespace TPApp.Controllers
             IOtpEmailService otpEmailService,
             ISmsSender smsSender,
             Services.INotificationQueueService notifQueue,
-            ILegalReviewService legalReviewService)
+            ILegalReviewService legalReviewService,
+            IOptions<OtpSettings> otpSettings)
         {
             _context = context;
             _userManager = userManager;
@@ -39,6 +43,7 @@ namespace TPApp.Controllers
             _smsSender = smsSender;
             _notifQueue = notifQueue;
             _legalReviewService = legalReviewService;
+            _otpSettings = otpSettings.Value;
         }
 
         private int GetCurrentUserId()
@@ -281,16 +286,37 @@ namespace TPApp.Controllers
                 if (isBuyer && negotiation.BuyerSigned)
                     return Json(new { success = false, message = "Buyer đã ký rồi." });
 
-                // Generate 6-digit OTP
-                var otp = new Random().Next(100000, 999999).ToString();
-                var expire = DateTime.Now.AddMinutes(5);
+                // ── Cooldown guard: chặn gửi lại trong vòng ResendCooldownMinutes ──
+                DateTime? lastExpire = isSeller ? negotiation.SellerOtpExpire : negotiation.BuyerOtpExpire;
+                string?   lastCode   = isSeller ? negotiation.SellerOtpCode   : negotiation.BuyerOtpCode;
+                if (!string.IsNullOrEmpty(lastCode) && lastExpire.HasValue)
+                {
+                    // OTP còn hạn, tính thời điểm nó được tạo: createdAt = expire - expiryDuration
+                    var createdAt = lastExpire.Value.AddSeconds(-_otpSettings.NegotiationOtpExpirySeconds);
+                    var cooldownEnd = createdAt.AddMinutes(_otpSettings.ResendCooldownMinutes);
+                    if (DateTime.Now < cooldownEnd)
+                    {
+                        int secsLeft = (int)(cooldownEnd - DateTime.Now).TotalSeconds;
+                        return Json(new
+                        {
+                            success = false,
+                            cooldown = true,
+                            message = $"Vui lòng chờ {secsLeft} giây trước khi gửi lại OTP."
+                        });
+                    }
+                }
+
+                // ── Sinh OTP mới ────────────────────────────────────────────
+                var otp    = new Random().Next(100000, 999999).ToString();
+                var expire = DateTime.Now.AddSeconds(_otpSettings.NegotiationOtpExpirySeconds);
+                int expiryMinutes = _otpSettings.NegotiationOtpExpirySeconds / 60;
 
                 if (isSeller) { negotiation.SellerOtpCode = otp; negotiation.SellerOtpExpire = expire; }
                 if (isBuyer)  { negotiation.BuyerOtpCode  = otp; negotiation.BuyerOtpExpire  = expire; }
                 await _context.SaveChangesAsync();
 
                 // Get user email/phone
-                var user = await _context.Users.FindAsync(userId);
+                var user     = await _context.Users.FindAsync(userId);
                 var email    = user?.Email ?? "";
                 var phone    = user?.PhoneNumber ?? dto.PhoneNumber ?? "";
                 var fullName = user?.FullName ?? user?.UserName ?? "Người dùng";
@@ -302,10 +328,10 @@ namespace TPApp.Controllers
                     if (string.IsNullOrEmpty(phone))
                         return Json(new { success = false, message = "Không tìm thấy số điện thoại. Vui lòng nhập số điện thoại." });
 
-                    var smsMessage = $"[Techport] Mã OTP xác nhận ký Bước 5 (Dự án #{dto.ProjectId}): {otp}. Có hiệu lực 5 phút.";
+                    var smsMessage = $"[Techport] Mã OTP xác nhận ký Bước 5 (Dự án #{dto.ProjectId}): {otp}. Có hiệu lực {expiryMinutes} phút.";
                     await _smsSender.SendAsync(phone, smsMessage);
                     var maskedPhone = phone.Length > 4 ? new string('*', phone.Length - 4) + phone[^4..] : phone;
-                    return Json(new { success = true, channel = "sms", message = $"OTP đã gửi đến SMS {maskedPhone}. Có hiệu lực 5 phút." });
+                    return Json(new { success = true, channel = "sms", message = $"OTP đã gửi đến SMS {maskedPhone}. Có hiệu lực {expiryMinutes} phút." });
                 }
                 else
                 {
@@ -314,7 +340,7 @@ namespace TPApp.Controllers
 
                     await _otpEmailService.SendOtpAsync(email, fullName, otp, role, dto.ProjectId);
                     var maskedEmail = email.Length > 3 ? email[..3] + "***" + email[email.IndexOf('@')..] : email;
-                    return Json(new { success = true, channel = "email", message = $"OTP đã gửi đến {maskedEmail}. Có hiệu lực 5 phút." });
+                    return Json(new { success = true, channel = "email", message = $"OTP đã gửi đến {maskedEmail}. Có hiệu lực {expiryMinutes} phút." });
                 }
             }
             catch (Exception ex)

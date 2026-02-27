@@ -24,6 +24,13 @@ namespace TPApp.Configuration
         /// <summary>How long (seconds) a negotiation/contract OTP is valid. Default: 300 (5 min).</summary>
         public int NegotiationOtpExpirySeconds { get; set; } = 300;
 
+        /// <summary>
+        /// Cooldown between consecutive OTP send requests (minutes).
+        /// User must wait this long before requesting a new OTP.
+        /// Default: 2 minutes.
+        /// </summary>
+        public int ResendCooldownMinutes { get; set; } = 2;
+
         // Derived helpers
         public TimeSpan EmailOtpExpiry       => TimeSpan.FromMinutes(EmailOtpExpiryMinutes);
         public TimeSpan PhoneOtpExpiry       => TimeSpan.FromMinutes(PhoneOtpExpiryMinutes);
