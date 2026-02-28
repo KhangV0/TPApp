@@ -2,10 +2,21 @@
 @using TPApp.Controllers
 @model List<SanPhamCNTB>
 
+@{
+    var pageTitle = ViewData["PageTitle"]?.ToString() ?? "Công nghệ";
+    var pageTitleUpper = pageTitle.ToUpper();
+    var pageLink = pageTitle switch
+    {
+        "Thiết bị" => "thiet-bi.html",
+        "Tài sản trí tuệ" => "tai-san-tri-tue.html",
+        _ => "cong-nghe.html"
+    };
+}
+
 <div class="col-12">
     <div class="body-carousel">
         <h2 class="brand-showcase-title" style="color:#046dbd;">
-            <a href="cong-nghe.html">CÔNG NGHỆ MỚI CẬP NHẬT</a>
+            <a href="@pageLink">@pageTitleUpper MỚI CẬP NHẬT</a>
         </h2>
 
         <!-- ================= PC CAROUSEL (4 ITEM) ================= -->

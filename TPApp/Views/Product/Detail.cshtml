@@ -12,6 +12,17 @@
             @* MAIN CONTENT *@
             <div class="center_column col-xs-12 col-sm-9">
 
+                @{
+                    var typeName = Model.Product.ProductType switch
+                    {
+                        1 => "Công nghệ",
+                        2 => "Thiết bị",
+                        3 => "Tài sản trí tuệ",
+                        _ => "Sản phẩm"
+                    };
+                }
+                <h1 class="page-heading CongNgheThietBi">@typeName</h1>
+
                 @switch (Model.Product.ProductType)
                 {
                     case (int)ProductTypeEnum.CongNghe:

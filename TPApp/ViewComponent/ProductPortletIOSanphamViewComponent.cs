@@ -33,7 +33,7 @@ public class ProductPortletIOSanphamViewComponent : ViewComponent
         // ── Fallback path: no product context ──────────────────────────────────
         if (productId == 0)
         {
-            return View(TopProducts(productType, excludeId: null));
+            return TopProducts(productType, excludeId: null);
         }
 
         // ── Materialize category IDs for this product (one small, fast query) ────
@@ -46,7 +46,7 @@ public class ProductPortletIOSanphamViewComponent : ViewComponent
         if (categoryIds.Count == 0)
         {
             // Edge case: product exists but has no categories → top products fallback
-            return View(TopProducts(productType, excludeId: productId));
+            return TopProducts(productType, excludeId: productId);
         }
 
         // ── EXISTS pattern: no JOIN, no DISTINCT ───────────────────────────────
