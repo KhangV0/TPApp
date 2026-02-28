@@ -1,0 +1,177 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model TPApp.Interfaces.ChatConversationDetailVm
+@{
+    ViewData["Title"] = "Trò chuyện — " + Model.ProductName;
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            @await Html.PartialAsync("_AccountSidebar", sidebarData)
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            <div class="container-fluid py-2">
+
+                @* Header *@
+                <div class="d-flex align-items-center mb-3 gap-2">
+                    <a href="/chat" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-arrow-left"></i> Quay lại
+                    </a>
+                    <h4 class="mb-0 fw-bold">
+                        <i class="fa fa-comments text-primary me-1"></i>
+                        @Model.OtherUserName
+                    </h4>
+                    @if (!string.IsNullOrEmpty(Model.ProductName))
+                    {
+                        <span class="badge bg-info text-dark ms-2">
+                            <i class="fa fa-cube me-1"></i>@Model.ProductName
+                        </span>
+                    }
+                </div>
+
+                @* Messages *@
+                <div id="chatMessages"
+                     class="card border-0 shadow-sm p-3 mb-3"
+                     style="height:450px; overflow-y:auto; background:#f8f9fa;">
+
+                    @foreach (var m in Model.Messages)
+                    {
+                        <div class="d-flex mb-2 @(m.IsMe ? "justify-content-end" : "justify-content-start")">
+                            <div class="@(m.IsMe ? "bg-primary text-white" : "bg-white border") rounded px-3 py-2"
+                                 style="max-width:70%; word-wrap:break-word;">
+                                @if (!m.IsMe)
+                                {
+                                    <div class="fw-bold small text-secondary mb-1">@m.SenderName</div>
+                                }
+                                @if (m.IsSystem)
+                                {
+                                    <em>@Html.Raw(m.Message)</em>
+                                }
+                                else
+                                {
+                                    <span style="white-space:pre-wrap;">@m.Message</span>
+                                }
+                                <div class="text-end mt-1" style="font-size:11px; opacity:0.7;">
+                                    @m.Created.ToString("dd/MM HH:mm")
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @* Send form *@
+                <form id="chatSendForm" class="d-flex gap-2">
+                    <input type="text" id="chatInput"
+                           class="form-control"
+                           placeholder="Nhập tin nhắn..."
+                           autocomplete="off"
+                           maxlength="2000" />
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fa fa-paper-plane"></i> Gửi
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const conversationId = @Model.ConversationId;
+            const form = document.getElementById('chatSendForm');
+            const input = document.getElementById('chatInput');
+            const messagesDiv = document.getElementById('chatMessages');
+
+            // Track highest message ID for polling
+            let lastMessageId = @(Model.Messages.Any() ? Model.Messages.Max(m => m.Id) : 0);
+
+            // Scroll to bottom on load
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // ── Send message ──────────────────────────────────
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const msg = input.value.trim();
+                if (!msg) return;
+
+                input.disabled = true;
+
+                try {
+                    const res = await fetch(`/api/chat/${conversationId}/send`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: msg })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        input.value = '';
+                        await pollNewMessages();
+                    } else {
+                        alert(data.error || 'Không gửi được tin nhắn.');
+                    }
+                } catch {
+                    alert('Lỗi kết nối.');
+                }
+
+                input.disabled = false;
+                input.focus();
+            });
+
+            // ── Auto-poll every 5 seconds ─────────────────────
+            async function pollNewMessages() {
+                try {
+                    const res = await fetch(`/api/chat/${conversationId}/messages?afterId=${lastMessageId}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    if (data.messages && data.messages.length > 0) {
+                        data.messages.forEach(m => {
+                            appendMessage(m);
+                            if (m.id > lastMessageId) lastMessageId = m.id;
+                        });
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }
+                } catch { /* silent */ }
+            }
+
+            function appendMessage(m) {
+                const bubble = document.createElement('div');
+                bubble.className = 'd-flex mb-2 ' + (m.isMe ? 'justify-content-end' : 'justify-content-start');
+
+                const bgClass = m.isMe ? 'bg-primary text-white' : 'bg-white border';
+                const senderHtml = !m.isMe ? `<div class="fw-bold small text-secondary mb-1">${escapeHtml(m.senderName)}</div>` : '';
+                const msgHtml = m.isSystem ? `<em>${m.message}</em>` : `<span style="white-space:pre-wrap;">${escapeHtml(m.message)}</span>`;
+
+                bubble.innerHTML = `
+                    <div class="${bgClass} rounded px-3 py-2" style="max-width:70%; word-wrap:break-word;">
+                        ${senderHtml}
+                        ${msgHtml}
+                        <div class="text-end mt-1" style="font-size:11px; opacity:0.7;">${escapeHtml(m.created)}</div>
+                    </div>`;
+                messagesDiv.appendChild(bubble);
+            }
+
+            function escapeHtml(text) {
+                const d = document.createElement('div');
+                d.textContent = text;
+                return d.innerHTML;
+            }
+
+            // Poll every 5 seconds
+            setInterval(pollNewMessages, 5000);
+        })();
+    </script>
+}

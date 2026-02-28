@@ -26,7 +26,7 @@
     </div>
 
     <div class="col-md-7">
-        <h1 class="fw-bold fs-4 mb-2">@Model.Product.Name</h1>
+        <h2 class="fw-bold fs-4 mb-2 text-danger">@Model.Product.Name</h2>
 
         <div class="d-flex align-items-center gap-2 mb-3 text-muted">
             <span class="text-warning fs-5">
@@ -67,10 +67,49 @@
 
 
         <div class="d-flex gap-2 mt-3 flex-wrap">
+            <button class="btn btn-primary btn-sm" id="btnContactChat"
+                    data-product-id="@Model.Product.ID">
+                <i class="fa fa-comments me-1"></i> Liên hệ nhà cung ứng
+            </button>
             <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
                 <i class="fa fa-print me-1"></i> In trang
             </button>
         </div>
+
+        <script>
+            document.getElementById('btnContactChat')?.addEventListener('click', async function () {
+                const btn = this;
+                const productId = btn.getAttribute('data-product-id');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i> Đang xử lý...';
+
+                try {
+                    const res = await fetch('/api/chat/start', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productId: parseInt(productId) })
+                    });
+
+                    if (res.status === 401) {
+                        window.location.href = '/dang-nhap.html';
+                        return;
+                    }
+
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        alert(data.error || 'Không thể bắt đầu cuộc trò chuyện.');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa fa-comments me-1"></i> Liên hệ nhà cung ứng';
+                    }
+                } catch {
+                    alert('Lỗi kết nối. Vui lòng thử lại.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-comments me-1"></i> Liên hệ nhà cung ứng';
+                }
+            });
+        </script>
     </div>
 </div>
 

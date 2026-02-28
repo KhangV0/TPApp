@@ -14,7 +14,8 @@ namespace TPApp.Services
             int? projectId,
             string title,
             string content,
-            NotificationChannel channel = NotificationChannel.Email);
+            NotificationChannel channel = NotificationChannel.Email,
+            string? url = null);
 
         /// <summary>Queue for string userId (Identity).</summary>
         Task QueueAsync(
@@ -22,6 +23,7 @@ namespace TPApp.Services
             int? projectId,
             string title,
             string content,
-            NotificationChannel channel = NotificationChannel.Email);
+            NotificationChannel channel = NotificationChannel.Email,
+            string? url = null);
     }
 }

@@ -30,6 +30,10 @@
                     <span class="badge bg-danger float-end">@Model.InvitationCount</span>
                 </a>
             }
+            <a class="nav-link @(Context.Request.Path.StartsWithSegments("/chat") ? "active" : "")" href="/chat">
+                <i class="fas fa-comments me-2"></i> Tin nhắn
+                <span id="chatUnreadBadge" class="badge bg-danger float-end" style="display:none;"></span>
+            </a>
             <a class="nav-link @(Context.Request.Path.StartsWithSegments("/Account/Profile") ? "active" : "")" href="@Url.Action("Profile", "Account")">
                 <i class="fas fa-user me-2"></i> Thông tin cá nhân
             </a>
@@ -76,3 +80,26 @@
         width: 20px;
     }
 </style>
+
+<script>
+    (function () {
+        async function updateChatBadge() {
+            try {
+                const res = await fetch('/api/chat/unread-count');
+                if (!res.ok) return;
+                const data = await res.json();
+                const badge = document.getElementById('chatUnreadBadge');
+                if (badge) {
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = '';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch { }
+        }
+        updateChatBadge();
+        setInterval(updateChatBadge, 15000);
+    })();
+</script>

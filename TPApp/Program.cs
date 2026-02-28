@@ -109,6 +109,9 @@ builder.Services.AddScoped<TPApp.Interfaces.IHomeAnalyticsService, TPApp.Service
 builder.Services.AddScoped<TPApp.Interfaces.IAccountService, TPApp.Services.AccountService>();
 builder.Services.AddScoped<TPApp.Interfaces.IProjectService, TPApp.Services.ProjectService>();
 
+// Chat System
+builder.Services.AddScoped<TPApp.Interfaces.IChatService, TPApp.Services.ChatService>();
+
 // E-Sign Services
 builder.Services.AddScoped<TPApp.Interfaces.IESignGateway, TPApp.Services.ESignGateway>();
 

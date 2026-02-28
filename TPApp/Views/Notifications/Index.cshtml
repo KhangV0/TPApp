@@ -80,6 +80,13 @@
                                                                 <i class="bi bi-eye"></i> Xem dự án
                                                             </a>
                                                         }
+                                                        @if (!string.IsNullOrEmpty(n.Url))
+                                                        {
+                                                            <a href="@n.Url"
+                                                               class="btn btn-sm btn-outline-primary">
+                                                                <i class="bi bi-chat-dots"></i> Xem tin nhắn
+                                                            </a>
+                                                        }
                                                         @if (!n.IsRead)
                                                         {
                                                             <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" class="d-inline">

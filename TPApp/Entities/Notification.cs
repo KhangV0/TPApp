@@ -48,5 +48,9 @@ namespace TPApp.Entities
         public bool IsRead { get; set; } = false;
 
         public DateTime? ReadDate { get; set; }
+
+        /// <summary>Optional link URL (e.g. /chat/123).</summary>
+        [StringLength(500)]
+        public string? Url { get; set; }
     }
 }

@@ -95,6 +95,12 @@ namespace TPApp.Data
             modelBuilder.Ignore<IdentityUserLogin<int>>();
             modelBuilder.Ignore<IdentityUserClaim<int>>();
             modelBuilder.Ignore<IdentityRoleClaim<int>>();
+
+            // Chat — unique constraint: one conversation per Buyer + Supplier + Product
+            modelBuilder.Entity<ChatConversation>()
+                .HasIndex(c => new { c.ProductId, c.BuyerUserId, c.SupplierUserId })
+                .IsUnique()
+                .HasDatabaseName("UX_ChatConversation_Product_Buyer_Supplier");
         }
 
         public DbSet<Feedback> Feedbacks { get; set; }
@@ -163,6 +169,10 @@ namespace TPApp.Data
         // Notification System
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<SystemParameter> SystemParameters { get; set; } = null!;
+
+        // Chat System
+        public DbSet<ChatConversation> ChatConversations { get; set; } = null!;
+        public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
 
         // CMS Lookup Tables
         public DbSet<CmsRole> CmsRoles { get; set; } = null!;

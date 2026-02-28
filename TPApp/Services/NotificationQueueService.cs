@@ -21,9 +21,10 @@ namespace TPApp.Services
             int? projectId,
             string title,
             string content,
-            NotificationChannel channel = NotificationChannel.Email)
+            NotificationChannel channel = NotificationChannel.Email,
+            string? url = null)
         {
-            await QueueAsync(userId.ToString(), projectId, title, content, channel);
+            await QueueAsync(userId.ToString(), projectId, title, content, channel, url);
         }
 
         public async Task QueueAsync(
@@ -31,7 +32,8 @@ namespace TPApp.Services
             int? projectId,
             string title,
             string content,
-            NotificationChannel channel = NotificationChannel.Email)
+            NotificationChannel channel = NotificationChannel.Email,
+            string? url = null)
         {
             // Resolve email/phone as Target
             string? target = null;
@@ -52,7 +54,8 @@ namespace TPApp.Services
                 ProjectId   = projectId,
                 Channel     = (int)channel,
                 Status      = (int)NotificationStatus.Pending,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.UtcNow,
+                Url         = url
             };
 
             _context.Notifications.Add(notification);
