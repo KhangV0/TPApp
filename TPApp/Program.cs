@@ -112,6 +112,10 @@ builder.Services.AddScoped<TPApp.Interfaces.IProjectService, TPApp.Services.Proj
 // Chat System
 builder.Services.AddScoped<TPApp.Interfaces.IChatService, TPApp.Services.ChatService>();
 
+// Generic Entity Action Engine
+builder.Services.AddScoped<TPApp.Services.IEntityOwnershipResolver, TPApp.Services.EntityOwnershipResolver>();
+builder.Services.AddScoped<TPApp.Interfaces.IEntityActionService, TPApp.Services.EntityActionService>();
+
 // E-Sign Services
 builder.Services.AddScoped<TPApp.Interfaces.IESignGateway, TPApp.Services.ESignGateway>();
 

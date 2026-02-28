@@ -168,12 +168,11 @@ namespace TPApp.Controllers
                 Images = GetImages(id),
                 RelatedCategories = GetRelatedCategories(1),
                 Keywords = GetKeywords(id),
-                RatingCount = GetRatingCount(id, product.TypeId ?? 1)
+                RatingCount = GetRatingCount(id)
             };
 
             MapSupplier(model, product);
             MapVideo(model, product);
-            UpdateViewCount(product);
 
             return View(model);
         }
@@ -209,8 +208,9 @@ namespace TPApp.Controllers
         private void MapVideo(ProductDetailViewModel vm, SanPhamCNTB p) {
             if (p.IsYoutube == true && !string.IsNullOrEmpty(p.URL)) { vm.IsYoutube = true; vm.YoutubeEmbedUrl = $"https://www.youtube.com/embed/{p.URL}"; } else { vm.VideoFileUrl = p.URL; }
         }
-        private int GetRatingCount(int productId, int typeId) => _context.Ratings.Count(x => x.SanPhamId == productId && x.TypeID == typeId);
-        private void UpdateViewCount(SanPhamCNTB p) { p.Viewed = (p.Viewed ?? 0) + 1; _context.SaveChanges(); }
+        private int GetRatingCount(int productId) =>
+            _context.EntityRatings.Count(x => x.EntityId == productId && x.EntityType == TPApp.Enums.EntityTypes.SanPhamCNTB && x.StatusId == 1);
+        // View counter is now handled by _EntityRating widget JS via /api/entity/.../view/increase
 
 
         public async Task<IActionResult> ProductByCate(int cateId, int page = 1, int pageSize = 12)

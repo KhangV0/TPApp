@@ -101,6 +101,16 @@ namespace TPApp.Data
                 .HasIndex(c => new { c.ProductId, c.BuyerUserId, c.SupplierUserId })
                 .IsUnique()
                 .HasDatabaseName("UX_ChatConversation_Product_Buyer_Supplier");
+
+            // EntityRating — unique per user+entity
+            modelBuilder.Entity<EntityRating>()
+                .HasIndex(r => new { r.UserId, r.EntityType, r.EntityId })
+                .IsUnique()
+                .HasDatabaseName("UX_EntityRatings_User_Entity");
+
+            // EntityViewCounter — composite PK
+            modelBuilder.Entity<EntityViewCounter>()
+                .HasKey(v => new { v.EntityType, v.EntityId });
         }
 
         public DbSet<Feedback> Feedbacks { get; set; }
@@ -173,6 +183,11 @@ namespace TPApp.Data
         // Chat System
         public DbSet<ChatConversation> ChatConversations { get; set; } = null!;
         public DbSet<ChatMessage> ChatMessages { get; set; } = null!;
+
+        // Generic Entity Action Engine
+        public DbSet<EntityRating> EntityRatings { get; set; } = null!;
+        public DbSet<EntityActionLog> EntityActionLogs { get; set; } = null!;
+        public DbSet<EntityViewCounter> EntityViewCounters { get; set; } = null!;
 
         // CMS Lookup Tables
         public DbSet<CmsRole> CmsRoles { get; set; } = null!;

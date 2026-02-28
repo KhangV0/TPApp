@@ -45,6 +45,14 @@
                         break;
                 }
 
+                @* ── Rating + View Widget ── *@
+                <div class="mt-4">
+                    @await Html.PartialAsync("_EntityRating", null, new ViewDataDictionary(ViewData) {
+                        { "EntityType", "SanPhamCNTB" },
+                        { "EntityId", Model.Product.ID }
+                    })
+                </div>
+
             @await Component.InvokeAsync("ProductPortletIOSanpham", new { productId = Model.Product.ID })
                 @*      @await Component.InvokeAsync("TimKiemDoiTacPortlet") *@
             </div>

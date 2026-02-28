@@ -1,0 +1,263 @@
+@*
+    Generic Rating + View Widget (B2B Enterprise)
+    Usage:
+    @await Html.PartialAsync("_EntityRating", null, new ViewDataDictionary(ViewData) {
+        { "EntityType", "SanPhamCNTB" },
+        { "EntityId", Model.Product.ID }
+    })
+*@
+
+@{
+    var entityType = ViewData["EntityType"]?.ToString() ?? "";
+    var entityId = ViewData["EntityId"]?.ToString() ?? "0";
+}
+
+<div id="entityRatingWidget"
+     data-entity-type="@entityType"
+     data-entity-id="@entityId"
+     class="entity-rating-widget">
+
+    <!-- Summary Row -->
+    <div class="er-summary d-flex align-items-start gap-4 mb-3">
+        <!-- Average Score -->
+        <div class="er-score text-center" style="min-width:80px;">
+            <div class="er-score-number" id="ratingAverage">—</div>
+            <div id="ratingStarsDisplay" class="mb-1"></div>
+            <div class="er-score-count" id="ratingCount">0 đánh giá</div>
+        </div>
+
+        <!-- Star Distribution -->
+        <div id="starDistribution" class="flex-grow-1" style="max-width:260px;"></div>
+
+        <!-- Action -->
+        <div class="ms-auto text-end" id="ratingActionArea">
+            <!-- Loaded via JS -->
+        </div>
+    </div>
+
+    <!-- Ratings List -->
+    <div id="ratingsList"></div>
+
+    <!-- Rating Modal -->
+    <div class="modal fade" id="ratingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title"><i class="fa fa-star text-warning me-1"></i>Đánh giá</h6>
+                    <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex gap-1 mb-3 justify-content-center" id="ratingStarPicker">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="fas fa-star er-star-pick" data-star="@i" title="@i sao"></i>
+                        }
+                    </div>
+                    <textarea id="ratingComment" class="form-control form-control-sm" rows="3"
+                              placeholder="Nhận xét (không bắt buộc)..." maxlength="2000"></textarea>
+                </div>
+                <div class="modal-footer py-2">
+                    <span id="ratingSaveMsg" class="small me-auto"></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button id="btnSaveRating" class="btn btn-sm btn-primary">
+                        <i class="fa fa-check me-1"></i>Gửi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ── Meta Line (header) ── */
+    .tp-meta-line {
+        font-size: 14px;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 6px;
+        margin-bottom: 12px;
+    }
+    .tp-rating i { color: #f4b400; font-size: 13px; margin-right: 4px; }
+    .tp-rating strong { font-weight: 600; color: #111827; }
+    .tp-muted { color: #9ca3af; margin-left: 4px; }
+    .tp-dot { color: #d1d5db; }
+    .tp-view i { font-size: 13px; margin-right: 4px; }
+
+    /* ── Widget ── */
+    .entity-rating-widget {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 16px;
+    }
+
+    /* Score */
+    .er-score-number { font-size: 32px; font-weight: 700; color: #111827; line-height: 1; }
+    .er-score-count { font-size: 12px; color: #9ca3af; }
+
+    /* Distribution bars */
+    .er-bar-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-size: 12px; color: #6b7280; }
+    .er-bar-label { width: 28px; text-align: right; }
+    .er-bar-track { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+    .er-bar-fill { height: 100%; background: #f4b400; border-radius: 3px; transition: width 0.3s; }
+    .er-bar-count { width: 22px; text-align: left; color: #9ca3af; }
+
+    /* Star display (summary) */
+    .er-stars-sm i { font-size: 13px; color: #f4b400; }
+    .er-stars-sm i.empty { color: #d1d5db; }
+
+    /* Star picker (modal) */
+    .er-star-pick { font-size: 28px; color: #d1d5db; cursor: pointer; transition: color 0.15s; }
+    .er-star-pick:hover, .er-star-pick.active { color: #f4b400; }
+
+    /* Review list */
+    .er-review { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+    .er-review:last-child { border-bottom: none; }
+    .er-review-stars i { font-size: 12px; color: #f4b400; }
+    .er-review-user { font-size: 13px; font-weight: 600; color: #374151; }
+    .er-review-date { font-size: 11px; color: #9ca3af; }
+    .er-review-text { font-size: 13px; color: #6b7280; margin-top: 2px; }
+</style>
+
+<script>
+(function () {
+    const widget = document.getElementById('entityRatingWidget');
+    const entityType = widget.dataset.entityType;
+    const entityId = widget.dataset.entityId;
+    let selectedStars = 0;
+
+    // ── Load Summary ──────────────────────
+    async function loadSummary() {
+        try {
+            const res = await fetch(`/api/entity/${entityType}/${entityId}/summary`);
+            if (!res.ok) return;
+            const d = await res.json();
+
+            // Score
+            document.getElementById('ratingAverage').textContent = d.averageStars > 0 ? d.averageStars.toFixed(1) : '—';
+            document.getElementById('ratingCount').textContent = `${d.totalRatings} đánh giá`;
+
+            // Sync header meta line (if present)
+            const hAvg = document.getElementById('headerRatingAvg');
+            const hCount = document.getElementById('headerRatingCount');
+            const hView = document.getElementById('headerViewCount');
+            if (hAvg) hAvg.textContent = d.averageStars > 0 ? d.averageStars.toFixed(1) : '—';
+            if (hCount) hCount.textContent = d.totalRatings;
+            if (hView) hView.textContent = d.totalViews.toLocaleString();
+
+            // Mini stars
+            let starsHtml = '<span class="er-stars-sm">';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(d.averageStars)) starsHtml += '<i class="fas fa-star"></i>';
+                else if (i - d.averageStars < 1) starsHtml += '<i class="fas fa-star-half-alt"></i>';
+                else starsHtml += '<i class="far fa-star empty"></i>';
+            }
+            starsHtml += '</span>';
+            document.getElementById('ratingStarsDisplay').innerHTML = starsHtml;
+
+            // Distribution bars
+            const maxCount = Math.max(...d.starDistribution, 1);
+            let distHtml = '';
+            for (let i = 4; i >= 0; i--) {
+                const pct = (d.starDistribution[i] / maxCount) * 100;
+                distHtml += `
+                    <div class="er-bar-row">
+                        <span class="er-bar-label">${i + 1} ★</span>
+                        <div class="er-bar-track"><div class="er-bar-fill" style="width:${pct}%"></div></div>
+                        <span class="er-bar-count">${d.starDistribution[i]}</span>
+                    </div>`;
+            }
+            document.getElementById('starDistribution').innerHTML = distHtml;
+
+            // Action area
+            const actionEl = document.getElementById('ratingActionArea');
+            if (d.isOwner) {
+                actionEl.innerHTML = '<span class="text-muted small"><i class="fa fa-info-circle me-1"></i>Nội dung của bạn</span>';
+            } else {
+                const btnLabel = d.userRating ? 'Sửa đánh giá' : 'Viết đánh giá';
+                const btnIcon = d.userRating ? 'fa-edit' : 'fa-pen';
+                actionEl.innerHTML = `<button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#ratingModal"><i class="fa ${btnIcon} me-1"></i>${btnLabel}</button>`;
+
+                if (d.userRating) {
+                    selectedStars = d.userRating.stars;
+                    highlightStars(selectedStars);
+                    document.getElementById('ratingComment').value = d.userRating.comment || '';
+                }
+            }
+
+            loadRatings();
+        } catch { }
+    }
+
+    // ── Load Ratings ─────────────────────
+    async function loadRatings() {
+        try {
+            const res = await fetch(`/api/entity/${entityType}/${entityId}/ratings?take=5`);
+            if (!res.ok) return;
+            const d = await res.json();
+            const container = document.getElementById('ratingsList');
+            if (!d.ratings || d.ratings.length === 0) return;
+
+            let html = '<h6 class="fw-semibold mb-2" style="font-size:13px; color:#374151;">Đánh giá gần đây</h6>';
+            d.ratings.forEach(r => {
+                const dt = new Date(r.created).toLocaleDateString('vi-VN');
+                let stars = '';
+                for (let i = 1; i <= 5; i++) stars += `<i class="fas fa-star" style="color:${i <= r.stars ? '#f4b400' : '#d1d5db'};font-size:12px;"></i>`;
+                html += `
+                    <div class="er-review">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="er-review-user">${esc(r.userName)} <span class="er-review-stars ms-1">${stars}</span></span>
+                            <span class="er-review-date">${dt}</span>
+                        </div>
+                        ${r.comment ? `<div class="er-review-text">${esc(r.comment)}</div>` : ''}
+                    </div>`;
+            });
+            container.innerHTML = html;
+        } catch { }
+    }
+
+    // ── Star Picker ──────────────────────
+    document.querySelectorAll('#ratingStarPicker .er-star-pick').forEach(s => {
+        s.addEventListener('mouseenter', () => highlightStars(parseInt(s.dataset.star)));
+        s.addEventListener('mouseleave', () => highlightStars(selectedStars));
+        s.addEventListener('click', () => { selectedStars = parseInt(s.dataset.star); highlightStars(selectedStars); });
+    });
+
+    // ── Save Rating ──────────────────────
+    document.getElementById('btnSaveRating')?.addEventListener('click', async function () {
+        if (selectedStars < 1) { document.getElementById('ratingSaveMsg').innerHTML = '<span class="text-danger">Chọn số sao</span>'; return; }
+        const btn = this; btn.disabled = true;
+        const comment = document.getElementById('ratingComment').value.trim();
+        try {
+            const res = await fetch(`/api/entity/${entityType}/${entityId}/rating/save`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stars: selectedStars, comment })
+            });
+            if (res.status === 401) { document.getElementById('ratingSaveMsg').innerHTML = '<span class="text-danger">Vui lòng đăng nhập</span>'; btn.disabled = false; return; }
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('ratingSaveMsg').innerHTML = '<span class="text-success"><i class="fa fa-check me-1"></i>Đã lưu</span>';
+                setTimeout(() => { bootstrap.Modal.getInstance(document.getElementById('ratingModal'))?.hide(); loadSummary(); }, 800);
+            } else {
+                document.getElementById('ratingSaveMsg').innerHTML = `<span class="text-danger">${esc(data.error)}</span>`;
+            }
+        } catch { document.getElementById('ratingSaveMsg').innerHTML = '<span class="text-danger">Lỗi kết nối</span>'; }
+        btn.disabled = false;
+    });
+
+    // ── Track View ───────────────────────
+    fetch(`/api/entity/${entityType}/${entityId}/view/increase`, { method: 'POST' }).catch(() => { });
+
+    // ── Helpers ──────────────────────────
+    function highlightStars(n) {
+        document.querySelectorAll('#ratingStarPicker .er-star-pick').forEach(s => {
+            const v = parseInt(s.dataset.star);
+            s.classList.toggle('active', v <= n);
+            s.style.color = v <= n ? '#f4b400' : '#d1d5db';
+        });
+    }
+    function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+    loadSummary();
+})();
+</script>

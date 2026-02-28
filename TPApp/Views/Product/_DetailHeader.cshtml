@@ -28,15 +28,18 @@
     <div class="col-md-7">
         <h2 class="fw-bold fs-4 mb-2 text-danger">@Model.Product.Name</h2>
 
-        <div class="d-flex align-items-center gap-2 mb-3 text-muted">
-            <span class="text-warning fs-5">
-                @for (int i = 1; i <= 5; i++)
-                {
-                    <span>@(i <= (Model.Product.Rating ?? 0) ? "★" : "☆")</span>
-                }
+        <div class="tp-meta-line" id="headerMetaLine"
+             data-entity-type="SanPhamCNTB" data-entity-id="@Model.Product.ID">
+            <span class="tp-rating">
+                <i class="fa fa-star"></i>
+                <strong id="headerRatingAvg">@((Model.Product.Rating ?? 0) > 0 ? (Model.Product.Rating ?? 0).ToString("0.0") : "—")</strong>
+                <span class="tp-muted">(<span id="headerRatingCount">@(Model.RatingCount)</span> đánh giá)</span>
             </span>
-            <span><i class="fa fa-eye me-1"></i>@(Model.Product.Viewed ?? 0) lượt xem</span>
-            <span><i class="fa fa-comments me-1"></i>@Model.RatingCount đánh giá</span>
+            <span class="tp-dot">·</span>
+            <span class="tp-view">
+                <i class="fa fa-eye"></i>
+                <span id="headerViewCount">@((Model.Product.Viewed ?? 0).ToString("N0"))</span> lượt xem
+            </span>
         </div>
 
         @if (Model.Product.ProductType == (int)ProductTypeEnum.ThietBi && Model.Product.SellPrice.HasValue)
