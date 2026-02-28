@@ -1,8 +1,7 @@
 ﻿@model TPApp.ViewModel.NewsCategoryVm
-
+@using TPApp.Web.Helpers
 @{
     ViewData["Title"] = Model.CategoryTitle;
-    var domain = ViewBag.MainDomain as string ?? "";
 }
 
 <div class="columns-container">
@@ -24,7 +23,7 @@
                                 <div class="row">
                                     <div class="col-sm-3">
                                         <div class="entry-thumb image-hover2">
-                                            <a href="@item.DetailUrl(domain)">
+                                            <a href="@item.DetailUrl(Html.MainDomain())">
                                                 <img src="@Html.CookedImageURL("460-275", item.Image)"
                                                      alt="@item.Title"
                                                      title="@item.Title" />
@@ -35,7 +34,7 @@
                                     <div class="col-sm-9">
                                         <div class="entry-ci">
                                             <h3 class="entry-title">
-                                                <a href="@item.DetailUrl(domain)">
+                                                <a href="@item.DetailUrl(Html.MainDomain())">
                                                     @item.Title
                                                 </a>
                                             </h3>
@@ -55,7 +54,7 @@
                                             </div>
 
                                             <div class="entry-more">
-                                                <a href="@item.DetailUrl(domain)">Đọc thêm</a>
+                                                <a href="@item.DetailUrl(Html.MainDomain())">Đọc thêm</a>
                                             </div>
                                         </div>
                                     </div>

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Helpers;
+using TPApp.Web.Helpers;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers
@@ -283,9 +284,7 @@ namespace TPApp.Controllers
                 LuotDanhGia = 0,
                 LuotXem = entity.Viewed ?? 0,
 
-                ImageUrl = string.IsNullOrEmpty(entity.HinhDaiDien)
-                    ? $"{_mainDomain}image/NoAvarta.jpg"
-                    : $"{_mainDomain}{entity.HinhDaiDien}",
+                ImageUrl = ImageHtmlHelper.ResolveImageUrl(entity.HinhDaiDien, _mainDomain, "image/NoAvarta.jpg"),
 
                 DichVuText = dichVuText,
                 LinhVucText = linhVucText,
@@ -314,9 +313,7 @@ namespace TPApp.Controllers
                 {
                     Id = x.TuVanId,
                     FullName = x.FullName,
-                    ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                        ? $"{_mainDomain}image/NoImages.jpg"
-                        : $"{_mainDomain}{x.HinhDaiDien}",
+                    ImageUrl = ImageHtmlHelper.ResolveImageUrl(x.HinhDaiDien, _mainDomain, "image/NoImages.jpg"),
                     CoQuan = x.CoQuan,
                     Phone = x.Phone,
                     Email = x.Email,
@@ -417,9 +414,7 @@ namespace TPApp.Controllers
                 Rating = entity.Rating ?? 0,
                 LuotXem = entity.Viewed ?? 0,
 
-                ImageUrl = string.IsNullOrEmpty(entity.HinhDaiDien)
-                    ? $"{_mainDomain}/image/logoT.png"
-                    : $"{_mainDomain}{entity.HinhDaiDien}"
+                ImageUrl = ImageHtmlHelper.ResolveImageUrl(entity.HinhDaiDien, _mainDomain, "image/logoT.png")
             };
 
             // ================== NHÀ CUNG ỨNG KHÁC ==================
@@ -441,9 +436,7 @@ namespace TPApp.Controllers
                     Email = x.Email,
                     Website = x.Website,
                     Rating = x.Rating ?? 0,
-                    ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                        ? $"{_mainDomain}image/NoImages.jpg"
-                        : $"{_mainDomain}{x.HinhDaiDien}"
+                    ImageUrl = ImageHtmlHelper.ResolveImageUrl(x.HinhDaiDien, _mainDomain, "image/NoImages.jpg")
                 })
                 .ToList();
 

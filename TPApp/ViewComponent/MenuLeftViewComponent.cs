@@ -19,7 +19,7 @@ public class MenuLeftViewComponent : ViewComponent
         var lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
         var mainDomain = _config["AppSettings:MainDomain"] ?? "";
 
-        int[] listMenuId = { 44, 45 };
+        int[] listMenuId = { 44 };
 
         var model = new MenuLeftViewModel
         {

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Helpers;
+using TPApp.Web.Helpers;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers
@@ -71,9 +72,7 @@ namespace TPApp.Controllers
                     Email    = x.Email    ?? "",
                     Website  = x.Website  ?? "",
                     Rating   = x.Rating   ?? 0,
-                    ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                        ? $"{_mainDomain}image/NoImages.jpg"
-                        : $"{_mainDomain}{x.HinhDaiDien}"
+                    ImageUrl = ImageHtmlHelper.ResolveImageUrl(x.HinhDaiDien, _mainDomain, "image/NoImages.jpg")
                 })
                 .ToList();
 
@@ -140,9 +139,7 @@ namespace TPApp.Controllers
                     Email    = x.Email   ?? "",
                     Website  = x.Website ?? "",
                     Rating   = x.Rating  ?? 0,
-                    ImageUrl = string.IsNullOrEmpty(x.HinhDaiDien)
-                        ? $"{_mainDomain}image/NoImages.jpg"
-                        : $"{_mainDomain}{x.HinhDaiDien}"
+                    ImageUrl = ImageHtmlHelper.ResolveImageUrl(x.HinhDaiDien, _mainDomain, "image/NoImages.jpg")
                 })
                 .ToList();
 
@@ -173,12 +170,31 @@ namespace TPApp.Controllers
                 Rating        = entity.Rating ?? 0,
                 LuotXem       = entity.Viewed  ?? 0,
                 LuotDanhGia   = luotDanhGia,
-                ImageUrl      = string.IsNullOrEmpty(entity.HinhDaiDien)
-                    ? $"{_mainDomain}image/logoT.png"
-                    : $"{entity.HinhDaiDien}",
+                ImageUrl      = ImageHtmlHelper.ResolveImageUrl(entity.HinhDaiDien, _mainDomain, "image/logoT.png"),
                 NhaCungUngKhac = others,
                 Categories     = categories
             };
+
+            // ── Load products of this supplier ───────────────────────────
+            vm.Products = _context.SanPhamCNTBs
+                .AsNoTracking()
+                .Where(p => p.NCUId == id && p.StatusId == 3)
+                .OrderByDescending(p => p.PublishedDate)
+                .Take(20)
+                .AsEnumerable()
+                .Select(p => new NhaCungUngProductVm
+                {
+                    Id          = p.ID,
+                    Title       = p.Name ?? "",
+                    Code        = p.Code ?? "",
+                    Rating      = p.Rating ?? 0,
+                    ProductType = p.ProductType,
+                    PriceText   = p.OriginalPrice == null ? ""
+                        : string.Format("{0:N0} {1}", p.OriginalPrice, p.Currency),
+                    ImageUrl    = ProductController.CookedImageURL("254-170", p.QuyTrinhHinhAnh, _mainDomain),
+                    Url         = $"/2-cong-nghe-thiet-bi/{p.ProductType}/{ProductController.MakeURLFriendly(p.Name)}-{p.ID}.html"
+                })
+                .ToList();
 
             return View(vm);
         }

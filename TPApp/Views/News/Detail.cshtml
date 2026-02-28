@@ -1,6 +1,7 @@
 ﻿@model TPApp.ViewModel.NewsDetailVm
+@using TPApp.Web.Helpers
 @{
-    Layout = "_Layout"; // giữ layout site hiện tại
+    Layout = "_Layout";
 }
 
 <div class="columns-container">
@@ -69,7 +70,7 @@
                         {
                             <li>
                                 <a class="title_pro"
-                                   href="/@item.MenuId/@(item.QueryString)-@(item.Id).html">
+                                   href="@item.DetailUrl(Html.MainDomain())">
                                     @item.Title
                                 </a>
                                 <span>

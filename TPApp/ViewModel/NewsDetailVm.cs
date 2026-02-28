@@ -23,6 +23,10 @@ namespace TPApp.ViewModel
         public string? Title { get; set; }
         public string? QueryString { get; set; }
         public DateTime? PublishedDate { get; set; }
+
+        /// <summary>Builds the canonical URL: {domain}{MenuId}/{QueryString}-{Id}.html</summary>
+        public string DetailUrl(string domain) =>
+            $"{domain}{MenuId}/{QueryString}-{Id}.html";
     }
 
     public class NewsCategoryVm

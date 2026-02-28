@@ -345,11 +345,24 @@ namespace TPApp.Controllers
         public string CookedImageURL(string size, string? imageUrl) => CookedImageURL(size, imageUrl, _mainDomain);
 
         public static string CookedImageURL(string size, string? imageUrl, string mainDomain) {
-             if (string.IsNullOrWhiteSpace(imageUrl)) return $"{mainDomain.TrimEnd('/')}/images/{size}_noImage.jpg";
-            if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)) imageUrl = $"{mainDomain.TrimEnd('/')}/{imageUrl.TrimStart('/')}";
-            var fileName = Path.GetFileName(imageUrl);
-            if (fileName.StartsWith(size + "-", StringComparison.OrdinalIgnoreCase)) return imageUrl;
-            return imageUrl.Replace(fileName, $"{size}-{fileName}");
+            if (string.IsNullOrWhiteSpace(imageUrl)) return $"{mainDomain.TrimEnd('/')}/images/{size}_noImage.jpg";
+
+            // Nếu URL absolute → vẫn thêm prefix size vào filename
+            if (imageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                imageUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                var fileName = Path.GetFileName(imageUrl);
+                if (string.Equals(size, "org", StringComparison.OrdinalIgnoreCase)) return imageUrl;
+                if (fileName.StartsWith(size + "-", StringComparison.OrdinalIgnoreCase)) return imageUrl;
+                return imageUrl.Replace(fileName, $"{size}-{fileName}");
+            }
+
+            // Relative path → ghép domain
+            imageUrl = $"{mainDomain.TrimEnd('/')}/{imageUrl.TrimStart('/')}";
+            var fn = Path.GetFileName(imageUrl);
+            if (string.Equals(size, "org", StringComparison.OrdinalIgnoreCase)) return imageUrl;
+            if (fn.StartsWith(size + "-", StringComparison.OrdinalIgnoreCase)) return imageUrl;
+            return imageUrl.Replace(fn, $"{size}-{fn}");
         }
         
         public static string MakeURLFriendly(string? input) {

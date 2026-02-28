@@ -8,6 +8,25 @@ namespace TPApp.Web.Helpers
     public static class ImageHtmlHelper
     {
         // ===============================
+        // RESOLVE IMAGE URL (handle absolute / relative)
+        // ===============================
+        /// <summary>
+        /// Returns the full image URL. If imageUrl is already absolute (http/https),
+        /// returns it as-is. Otherwise prepends mainDomain. Falls back to fallback URL.
+        /// </summary>
+        public static string ResolveImageUrl(string? imageUrl, string mainDomain, string fallback = "image/NoImages.jpg")
+        {
+            if (string.IsNullOrEmpty(imageUrl))
+                return $"{mainDomain.TrimEnd('/')}/{fallback.TrimStart('/')}";
+
+            if (imageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                imageUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                return imageUrl;
+
+            return $"{mainDomain.TrimEnd('/')}/{imageUrl.TrimStart('/')}";
+        }
+
+        // ===============================
         // IMAGE URL (giữ logic WebForms)
         // ===============================
         public static string CookedImageURL(
@@ -26,10 +45,18 @@ namespace TPApp.Web.Helpers
                 return $"{mainDomain.TrimEnd('/')}/images/{size}_noImage.jpg";
             }
 
-            if (!imageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            // ✅ Nếu URL đã là absolute → vẫn thêm prefix size vào filename
+            if (imageUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                imageUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
-                imageUrl = $"{mainDomain.TrimEnd('/')}/{imageUrl.TrimStart('/')}";
+                var fn = Path.GetFileName(imageUrl);
+                if (string.Equals(size, "org", StringComparison.OrdinalIgnoreCase)) return imageUrl;
+                if (fn.StartsWith(size + "-", StringComparison.OrdinalIgnoreCase)) return imageUrl;
+                return imageUrl.Replace(fn, $"{size}-{fn}");
             }
+
+            // Relative path → ghép domain
+            imageUrl = $"{mainDomain.TrimEnd('/')}/{imageUrl.TrimStart('/')}";
 
             var fileName = Path.GetFileName(imageUrl);
 

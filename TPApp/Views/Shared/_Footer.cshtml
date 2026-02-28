@@ -1,6 +1,6 @@
-﻿@inject IHttpContextAccessor HttpContextAccessor
+﻿@using TPApp.Web.Helpers
 @{
-    var MainDomain = "https://localhost:7232/";
+    var MainDomain = Html.MainDomain();
 }
 
 <footer class="hp-footer">
@@ -11,12 +11,12 @@
                 <div class="hp-footer-logo-row">
                     <img src="~/image/logofooter.png" alt="Techport" class="hp-footer-logo" onerror="this.src='/image/footer-logo.png'">
                     <div class="hp-footer-copyright-text">
-                        BẢN QUYỀN CỦA TRUNG TÂM THÔNG TIN THỐNG KÊ VÀ ỨNG<br>
-                        DỤNG TIẾN BỘ KH&CN THÀNH PHỐ HỒ CHÍ MINH
+                        BẢN QUYỀN CỦA TRUNG TÂM THÔNG TIN THỐNG KÊ<br>
+                        VÀ ỨNG DỤNG TIẾN BỘ KHOA HỌC VÀ CÔNG NGHỆ TP.HCM
                     </div>
                 </div>
 
-                <h6 class="text-white mt-4 mb-3">SỞ KHOA HỌC VÀ CÔNG NGHỆ TP.HCM</h6>
+                <h6 class="text-white mt-4 mb-3">CƠ QUAN CHỦ QUẢN: SỞ KHOA HỌC VÀ CÔNG NGHỆ TP.HCM</h6>
                 
                 <div class="hp-footer-info-row">
                     <i class="bi bi-geo-alt"></i>
@@ -36,11 +36,11 @@
             <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
                 <h6>Menu</h6>
                 <ul class="hp-footer-menu-list">
-                    <li><a href="~/gioi-thieu-chung-3.html">Giới thiệu</a></li>
-                    <li><a href="https://techport.vn/startup-products/">Sản phẩm khởi nghiệp</a></li>
-                    <li><a href="https://techport.vn/tech-event/">Tech event</a></li>
-                    <li><a href="~/thao-luan.html">Thảo luận</a></li>
-                    <li><a href="~/lien-he-74.html">Liên hệ</a></li>
+                    <li><a href="@($"{MainDomain}gioi-thieu-chung-3.html")">Giới thiệu</a></li>
+                    <li><a href="@($"{MainDomain}video.html")">Tech Event</a></li>
+                    <li><a href="@($"{MainDomain}tin-su-kien-44.html")">Tin KH&amp;CN</a></li>
+                    <li><a href="@($"{MainDomain}thao-luan.html")">Thảo luận</a></li>
+                    <li><a href="@($"{MainDomain}lien-he-74.html")">Liên hệ</a></li>
                 </ul>
             </div>
 

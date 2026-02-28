@@ -135,20 +135,6 @@
                                                 <td>@Model.ChucVu</td>
                                             </tr>
                                         }
-                                        @if (!string.IsNullOrEmpty(Model.LinhVucText))
-                                        {
-                                            <tr>
-                                                <td class="fw-bold">Lĩnh vực:</td>
-                                                <td>@Html.Raw(Model.LinhVucText)</td>
-                                            </tr>
-                                        }
-                                        @if (!string.IsNullOrEmpty(Model.DichVuText))
-                                        {
-                                            <tr>
-                                                <td class="fw-bold">Dịch vụ:</td>
-                                                <td>@Html.Raw(Model.DichVuText)</td>
-                                            </tr>
-                                        }
                                     </tbody>
                                 </table>
                             </div>
@@ -156,21 +142,84 @@
                     </div>
                 </div>
 
-                @* Main function *@
+                @* ── LĨNH VỰC ── *@
+                @if (!string.IsNullOrEmpty(Model.LinhVucText))
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header fw-bold">Lĩnh vực</div>
+                        <div class="card-body">@Html.Raw(Model.LinhVucText)</div>
+                    </div>
+                }
+
+                @* ── CHỨC NĂNG ── *@
                 @if (!string.IsNullOrEmpty(Model.ChucNang))
                 {
                     <div class="card shadow-sm mb-4">
-                        <div class="card-header fw-bold">Chức năng chính</div>
+                        <div class="card-header fw-bold">Chức năng</div>
                         <div class="card-body">@Html.Raw(Model.ChucNang)</div>
                     </div>
                 }
 
-                @* Products *@
-                @if (!string.IsNullOrEmpty(Model.SanPham))
+                @* ── DỊCH VỤ CUNG CẤP ── *@
+                @if (!string.IsNullOrEmpty(Model.DichVuText))
                 {
                     <div class="card shadow-sm mb-4">
-                        <div class="card-header fw-bold">Sản phẩm / Dịch vụ</div>
-                        <div class="card-body">@Html.Raw(Model.SanPham)</div>
+                        <div class="card-header fw-bold">Dịch vụ cung cấp</div>
+                        <div class="card-body">@Html.Raw(Model.DichVuText)</div>
+                    </div>
+                }
+
+                @* ── SẢN PHẨM ── *@
+                @if (Model.Products.Any() || !string.IsNullOrEmpty(Model.SanPham))
+                {
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header fw-bold">Sản phẩm</div>
+                        <div class="card-body">
+                            @if (Model.Products.Any())
+                            {
+                                <div class="row g-3">
+                                    @foreach (var p in Model.Products)
+                                    {
+                                        <div class="col-6 col-md-4 col-lg-3">
+                                            <div class="card h-100 border product-card">
+                                                <a href="@p.Url">
+                                                    <img src="@p.ImageUrl"
+                                                         alt="@p.Title"
+                                                         class="card-img-top"
+                                                         style="height:140px;object-fit:contain;padding:8px;background:#f8f8f8;"
+                                                         onerror="this.src='/images/254-170_noImage.jpg';" />
+                                                </a>
+                                                <div class="card-body p-2">
+                                                    <a href="@p.Url" class="text-decoration-none text-dark">
+                                                        <h6 class="card-title mb-1" style="font-size:13px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                                                            @p.Title
+                                                        </h6>
+                                                    </a>
+                                                    @if (!string.IsNullOrEmpty(p.PriceText))
+                                                    {
+                                                        <div class="text-danger fw-bold" style="font-size:13px;">@p.PriceText</div>
+                                                    }
+                                                    <div style="color:gold;font-size:12px;">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            @(i <= p.Rating ? "★" : "☆")
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(p.Code))
+                                                    {
+                                                        <small class="text-muted">Mã: @p.Code</small>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                @Html.Raw(Model.SanPham)
+                            }
+                        </div>
                     </div>
                 }
 

@@ -30,6 +30,7 @@ namespace TPApp.Controllers
         {
 
             var p = await _context.Contents
+                .AsNoTracking()
                 .Where(x => x.Id == id && x.StatusId == 3)
                 .OrderByDescending(x => x.PublishedDate)
                 .FirstOrDefaultAsync();
@@ -59,6 +60,7 @@ namespace TPApp.Controllers
             if (p.TypeId == 4)
             {
                 images = await _context.Albums
+                    .AsNoTracking()
                     .Where(x => x.ContensID == p.Id)
                     .ToListAsync();
             }
@@ -87,14 +89,17 @@ namespace TPApp.Controllers
             var langId = HttpContext.Session.GetInt32("LanguageId") ?? 1;
 
             var subMenus = _context
-                .UspSelectSubMenu(p.MenuId ?? 0)
-                .ToList();
+                .UspSelectSubMenu(p.MenuId ?? 0);
+
+            // Include parent menuId itself
+            var allMenuIds = subMenus.Append(p.MenuId ?? 0).ToHashSet();
 
             var related = await _context.Contents
+                .AsNoTracking()
                 .Where(x =>
                     x.Id != id &&
                     x.StatusId == 3 &&
-                    (x.MenuId == p.MenuId || subMenus.Contains(x.MenuId ?? 0)) &&
+                    allMenuIds.Contains(x.MenuId ?? 0) &&
                     x.LanguageId == langId)
                 .OrderByDescending(x => x.PublishedDate)
                 .Take(5)
@@ -139,10 +144,11 @@ namespace TPApp.Controllers
                 return Redirect($"{_mainDomain}Errors/404.aspx");
 
             var subMenuIds = GetSubMenuIds(menuId);
+            // Include the root menuId itself so we don't miss top-level articles
+            var allMenuIds = subMenuIds.Append(menuId).ToHashSet();
 
             var (items, total) = await GetNewsByMenuAsync(
-                menuId,
-                subMenuIds,
+                allMenuIds,
                 langId,
                 page,
                 pageSize
@@ -167,6 +173,7 @@ namespace TPApp.Controllers
         private async Task<Menu?> GetMenuAsync(int menuId)
         {
             return await _context.Menus
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.MenuId == menuId);
         }
 
@@ -182,17 +189,18 @@ namespace TPApp.Controllers
 
         private async Task<(List<NewsItemVm> Items, int Total)>
     GetNewsByMenuAsync(
-        int menuId,
-        List<int> subMenus,
+        HashSet<int> allMenuIds,
         int langId,
         int page,
         int pageSize)
         {
             var now = DateTime.Now;
 
+            // Single filtered query — reused for both COUNT and SELECT
             var query = _context.Contents
+                .AsNoTracking()
                 .Where(q =>
-                    (q.MenuId == menuId || subMenus.Contains(q.MenuId ?? 0)) &&
+                    allMenuIds.Contains(q.MenuId ?? 0) &&
                     q.LanguageId == langId &&
                     q.StatusId == 3 &&
                     q.IsReport == false &&
@@ -200,6 +208,7 @@ namespace TPApp.Controllers
                     (q.eEffectiveDate == null || q.eEffectiveDate >= now)
                 );
 
+            // Sequential — EF Core DbContext không thread-safe, không dùng Task.WhenAll trên cùng context
             var total = await query.CountAsync();
 
             var items = await query
@@ -219,6 +228,7 @@ namespace TPApp.Controllers
                 .ToListAsync();
 
             return (items, total);
+
         }
 
 

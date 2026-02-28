@@ -79,8 +79,26 @@ namespace TPApp.ViewModel
         public int LuotXem     { get; set; }
         public int LuotDanhGia { get; set; }
 
+        // Products of this supplier
+        public List<NhaCungUngProductVm> Products { get; set; } = new();
+
         // Sidebar
         public List<NhaCungUngItemVm> NhaCungUngKhac { get; set; } = new();
         public List<NhaCungUngCateVm> Categories     { get; set; } = new();
+    }
+
+    // =====================================================================
+    // NHA CUNG UNG — PRODUCT ITEM (for detail page product grid)
+    // =====================================================================
+    public class NhaCungUngProductVm
+    {
+        public int    Id       { get; set; }
+        public string Title    { get; set; } = "";
+        public string Code     { get; set; } = "";
+        public string ImageUrl { get; set; } = "";
+        public string Url      { get; set; } = "";
+        public string PriceText { get; set; } = "";
+        public int    Rating   { get; set; }
+        public int    ProductType { get; set; }
     }
 }

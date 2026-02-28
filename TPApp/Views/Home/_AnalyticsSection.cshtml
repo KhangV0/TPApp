@@ -2,8 +2,6 @@
 @model HomeAnalyticsVm
 @{
     string Fmt(int n) => n > 0 ? n.ToString("N0") : "---";
-    string MomBadge(int p)    => p > 0 ? $"▲ +{p}% MoM" : p < 0 ? "↓ so với tháng trước" : "Ổn định";
-    string MomCss(int p)      => p >= 0 ? "up" : "flat";
 }
 
 <section class="tp-metrics yc-section" aria-label="Techport trong con số">
@@ -31,9 +29,6 @@
               <div class="tp-card__value js-cu" data-target="@Model.TotalProducts">@Fmt(Model.TotalProducts)</div>
               <div class="tp-card__label">Sản phẩm Công nghệ</div>
             </div>
-            <div class="tp-card__delta @MomCss(Model.MomProducts)">
-              @MomBadge(Model.MomProducts)
-            </div>
           </div>
 
           <div class="tp-card">
@@ -43,9 +38,6 @@
             <div class="tp-card__meta">
               <div class="tp-card__value js-cu" data-target="@Model.TotalProjects">@Fmt(Model.TotalProjects)</div>
               <div class="tp-card__label">Dự án Chuyển giao</div>
-            </div>
-            <div class="tp-card__delta @MomCss(Model.MomProjects)">
-              @MomBadge(Model.MomProjects)
             </div>
           </div>
 
@@ -57,9 +49,6 @@
               <div class="tp-card__value js-cu" data-target="@Model.TotalSuppliers">@Fmt(Model.TotalSuppliers)</div>
               <div class="tp-card__label">Nhà Cung ứng</div>
             </div>
-            <div class="tp-card__delta @MomCss(Model.MomSuppliers)">
-              @MomBadge(Model.MomSuppliers)
-            </div>
           </div>
 
           <div class="tp-card">
@@ -69,9 +58,6 @@
             <div class="tp-card__meta">
               <div class="tp-card__value js-cu" data-target="@Model.TotalExperts">@Fmt(Model.TotalExperts)</div>
               <div class="tp-card__label">Chuyên gia Tư vấn</div>
-            </div>
-            <div class="tp-card__delta @MomCss(Model.MomExperts)">
-              @MomBadge(Model.MomExperts)
             </div>
           </div>
 
@@ -94,11 +80,9 @@
 
         <div class="tp-analytics__head">
           <div>
-            <div class="tp-overline">TĂNG TRƯỞNG &amp; PHÂN BỔ</div>
             <h2 class="tp-title">Sự phát triển của Techport</h2>
             <p class="tp-sub">Xu hướng theo tháng và cơ cấu sản phẩm trên nền tảng.</p>
           </div>
-          <a class="tp-btn" href="/san-pham">Khám phá →</a>
         </div>
 
         <div class="tp-analytics__row">

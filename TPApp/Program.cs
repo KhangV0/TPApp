@@ -360,6 +360,18 @@ app.MapGet("8-dich-vu-cung-ung.html", ctx =>
     return Task.CompletedTask;
 });
 
+// Video routes — /video và /video.html cùng trỏ vào VideoController.Index
+app.MapControllerRoute(
+    name: "video_html",
+    pattern: "video.html",
+    defaults: new { controller = "Video", action = "Index" }
+);
+app.MapControllerRoute(
+    name: "video_clean",
+    pattern: "video",
+    defaults: new { controller = "Video", action = "Index" }
+);
+
 // ROUTE MẶC ĐỊNH
 
 app.MapControllerRoute(

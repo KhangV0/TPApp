@@ -7,12 +7,13 @@ using TPApp.ViewModel;
 
 namespace TPApp.Controllers
 {
-
     public class FeedbackController : Controller
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
         private readonly string _mainDomain;
+
+        private const string CaptchaSessionKey = "MathCaptchaAnswer";
 
         // ===== GIỮ NGUYÊN LOGIC WEBFORMS =====
         private int SiteId => 1;
@@ -20,11 +21,14 @@ namespace TPApp.Controllers
 
         public FeedbackController(AppDbContext context, IConfiguration config, IOptions<AppSettings> appSettings)
         {
-            _context = context;
-            _config = config;
+            _context   = context;
+            _config    = config;
             _mainDomain = appSettings.Value.MainDomain;
         }
 
+        // ──────────────────────────────────────────────────────
+        // GET: /lien-he-74.html
+        // ──────────────────────────────────────────────────────
         [HttpGet]
         public IActionResult Index()
         {
@@ -38,7 +42,7 @@ namespace TPApp.Controllers
                 if (user != null)
                 {
                     vm.FullName = user.FullName ?? "";
-                    vm.Email = user.Email ?? "";
+                    vm.Email    = user.Email    ?? "";
                 }
             }
 
@@ -46,23 +50,45 @@ namespace TPApp.Controllers
             var menu = _context.Menus.FirstOrDefault(x => x.MenuId == 74);
             if (menu != null)
             {
-                vm.Title = menu.Title;
+                vm.Title       = menu.Title;
                 vm.Description = menu.Description;
             }
+
+            // ===== SINH MATH CAPTCHA =====
+            vm.CaptchaQuestion = GenerateCaptcha();
 
             return View("Index", vm);
         }
 
-        // =====================================================
+        // ──────────────────────────────────────────────────────
         // POST: /lien-he-74.html
-        // =====================================================
+        // ──────────────────────────────────────────────────────
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Index(FeedbackCreateViewModel vm)
         {
             var languageId = HttpContext.Session.GetInt32("LanguageId") ?? 1;
-            var lastPost = HttpContext.Session.GetString("PostedFeedback");
+            var lastPost   = HttpContext.Session.GetString("PostedFeedback");
             var settingTime = _config.GetValue<int>("SettingTimeUpdatePageView");
+
+            // ===== VALIDATE MATH CAPTCHA (server-side) =====
+            var correctAnswer = HttpContext.Session.GetString(CaptchaSessionKey);
+            var userAnswer    = vm.CaptchaAnswer?.Trim() ?? "";
+
+            if (string.IsNullOrEmpty(correctAnswer) || userAnswer != correctAnswer)
+            {
+                // Regenerate question for re-display
+                vm.CaptchaQuestion = GenerateCaptcha();
+                ModelState.AddModelError("CaptchaAnswer",
+                    languageId == 1
+                        ? "Mã xác thực không đúng. Vui lòng tính lại."
+                        : "Incorrect captcha. Please try again.");
+                LoadMenuDescription(vm);
+                return View("Index", vm);
+            }
+
+            // Xoá session answer sau khi dùng (one-time use)
+            HttpContext.Session.Remove(CaptchaSessionKey);
 
             // ===== CHỐNG SPAM =====
             if (lastPost != null &&
@@ -80,39 +106,65 @@ namespace TPApp.Controllers
                 var feedback = new Feedback
                 {
                     FullName = vm.FullName,
-                    Email = vm.Email,
-                    Address = vm.Address,
-                    Phone = vm.Phone,
-                    Content = vm.Content,
-                    Created = DateTime.Now,
+                    Email    = vm.Email,
+                    Address  = vm.Address,
+                    Phone    = vm.Phone,
+                    Title    = vm.Title,
+                    Content  = vm.Content,
+                    Created  = DateTime.Now,
                     StatusId = 2,
-                    SiteId = SiteId,
-                    Domain = DomainName
+                    SiteId   = SiteId,
+                    Domain   = DomainName
                 };
 
                 _context.Feedbacks.Add(feedback);
                 _context.SaveChanges();
 
                 // ===== SAVE POST TIME =====
-                HttpContext.Session.SetString(
-                    "PostedFeedback",
-                    DateTime.Now.ToString("O")
-                );
+                HttpContext.Session.SetString("PostedFeedback", DateTime.Now.ToString("O"));
 
                 TempData["Alert"] = languageId == 1
                     ? "Ý kiến của bạn đã được gửi. Cám ơn bạn đã đóng góp!"
-                    : "Your comment has been submitted. Thanks for your contribution!";
+                    : "Your comment has been submitted. Thanks!";
 
                 return Redirect("/lien-he-74.html");
             }
             catch
             {
                 TempData["Alert"] = languageId == 1
-                    ? "Lưu thất bại hãy kiểm tra lại"
-                    : "Save failed check";
+                    ? "Lưu thất bại. Vui lòng kiểm tra lại."
+                    : "Save failed. Please try again.";
 
                 return Redirect("/lien-he-74.html");
             }
+        }
+
+        // ──────────────────────────────────────────────────────
+        // Helper: sinh phép tính + lưu đáp án vào Session
+        // ──────────────────────────────────────────────────────
+        private string GenerateCaptcha()
+        {
+            var rng = new Random();
+            int a   = rng.Next(2, 12);
+            int b   = rng.Next(1, 10);
+
+            // Chỉ dùng + hoặc - (không âm)
+            bool add    = rng.Next(0, 2) == 0 || a < b;
+            int answer  = add ? a + b : a - b;
+            string op   = add ? "+" : "-";
+            if (!add) { int tmp = a; a = Math.Max(a, b); b = Math.Min(tmp, b); }
+            answer = add ? a + b : a - b;
+
+            string question = $"{a} {op} {b}";
+            HttpContext.Session.SetString(CaptchaSessionKey, answer.ToString());
+
+            return question;
+        }
+
+        private void LoadMenuDescription(FeedbackCreateViewModel vm)
+        {
+            var menu = _context.Menus.FirstOrDefault(x => x.MenuId == 74);
+            if (menu != null) vm.Description = menu.Description;
         }
     }
 }

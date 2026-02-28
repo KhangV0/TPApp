@@ -60,8 +60,8 @@
     @await Html.PartialAsync("_TinSuKien", Model.TinSuKien)
 
     @* Hệ thống sàn giao dịch công nghệ *@
-    @await Html.PartialAsync("_HeThongSanGD")
-
     @* Đối tác *@
-    @await Html.PartialAsync("_Partner")
+    @* Đơn vị tư vấn *@
+    @* → Gộp vào _ManLuoiDoiTac *@
+    @await Html.PartialAsync("_ManLuoiDoiTac")
 </div>
