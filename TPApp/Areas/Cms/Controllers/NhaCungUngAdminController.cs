@@ -52,6 +52,14 @@ namespace TPApp.Areas.Cms.Controllers
         public int? SiteId { get; set; }
         public string? CreatedBy { get; set; }
         public DateTime? Created { get; set; }
+
+        // New fields
+        public string? TenVietTat { get; set; }
+        public string? LoaiHinhToChuc { get; set; }
+        public string? MaSoThue { get; set; }
+        public string? Logo { get; set; }
+        public string? VideoUrl { get; set; }
+        public string? ChungNhan { get; set; }
     }
 
     // ── Controller ──
@@ -263,6 +271,12 @@ namespace TPApp.Areas.Cms.Controllers
             entity.ParentId = vm.ParentId;
             entity.Keywords = vm.Keywords;
             entity.SiteId = vm.SiteId;
+            entity.TenVietTat = vm.TenVietTat;
+            entity.LoaiHinhToChuc = vm.LoaiHinhToChuc;
+            entity.MaSoThue = vm.MaSoThue;
+            entity.Logo = vm.Logo;
+            entity.VideoUrl = vm.VideoUrl;
+            entity.ChungNhan = vm.ChungNhan;
             entity.Modified = DateTime.Now;
             entity.Modifier = User.Identity?.Name;
 
@@ -334,7 +348,13 @@ namespace TPApp.Areas.Cms.Controllers
             LanguageId = vm.LanguageId,
             Keywords = vm.Keywords,
             Domain = vm.Domain,
-            SiteId = vm.SiteId
+            SiteId = vm.SiteId,
+            TenVietTat = vm.TenVietTat,
+            LoaiHinhToChuc = vm.LoaiHinhToChuc,
+            MaSoThue = vm.MaSoThue,
+            Logo = vm.Logo,
+            VideoUrl = vm.VideoUrl,
+            ChungNhan = vm.ChungNhan
         };
 
         private NhaCungUngFormVm MapToVm(NhaCungUng e) => new()
@@ -363,7 +383,13 @@ namespace TPApp.Areas.Cms.Controllers
             Domain = e.Domain,
             SiteId = e.SiteId,
             CreatedBy = e.CreatedBy,
-            Created = e.Created
+            Created = e.Created,
+            TenVietTat = e.TenVietTat,
+            LoaiHinhToChuc = e.LoaiHinhToChuc,
+            MaSoThue = e.MaSoThue,
+            Logo = e.Logo,
+            VideoUrl = e.VideoUrl,
+            ChungNhan = e.ChungNhan
         };
     }
 }

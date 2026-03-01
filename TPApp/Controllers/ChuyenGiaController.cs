@@ -63,6 +63,7 @@ namespace TPApp.Controllers
             var items = orderedQuery
                 .Skip((page - 1) * DefaultPageSize)
                 .Take(DefaultPageSize)
+                .AsEnumerable()
                 .Select(x => new ChuyenGiaItemVm
                 {
                     Id       = x.TuVanId,
@@ -73,7 +74,7 @@ namespace TPApp.Controllers
                     Phone    = x.Phone    ?? "",
                     Email    = x.Email    ?? "",
                     Rating   = x.Rating   ?? 0,
-                    ImageUrl = ImageHtmlHelper.ResolveImageUrl(x.HinhDaiDien, _mainDomain, "image/NoAvarta.jpg")
+                    ImageUrl = ProductController.CookedImageURL("254-170", x.HinhDaiDien, _mainDomain)
                 })
                 .ToList();
 
@@ -123,6 +124,7 @@ namespace TPApp.Controllers
                 .Where(x => x.TuVanId != id && x.LanguageId == LangId && x.StatusId == 3)
                 .OrderByDescending(x => x.Created)
                 .Take(8)
+                .AsEnumerable()
                 .Select(x => new ChuyenGiaItemVm
                 {
                     Id       = x.TuVanId,
@@ -132,7 +134,7 @@ namespace TPApp.Controllers
                     Phone    = x.Phone  ?? "",
                     Email    = x.Email  ?? "",
                     Rating   = x.Rating ?? 0,
-                    ImageUrl = ImageHtmlHelper.ResolveImageUrl(x.HinhDaiDien, _mainDomain, "image/NoAvarta.jpg")
+                    ImageUrl = ProductController.CookedImageURL("254-170", x.HinhDaiDien, _mainDomain)
                 })
                 .ToList();
 
@@ -143,6 +145,9 @@ namespace TPApp.Controllers
                 .OrderBy(x => x.Sort)
                 .Select(x => new ChuyenGiaCateVm { Id = x.CatId, Title = x.Title })
                 .ToList();
+
+            var luotDanhGia = _context.EntityRatings
+                .Count(x => x.EntityId == id && x.EntityType == TPApp.Enums.EntityTypes.NhaTuVan && x.StatusId == 1);
 
             var vm = new ChuyenGiaDetailVm
             {
@@ -161,7 +166,22 @@ namespace TPApp.Controllers
                 KetQuaNghienCuu = entity.KetQuaNghienCuu ?? "",
                 Rating      = entity.Rating  ?? 0,
                 LuotXem     = entity.Viewed  ?? 0,
+                LuotDanhGia = luotDanhGia,
                 ImageUrl    = ImageHtmlHelper.ResolveImageUrl(entity.HinhDaiDien, _mainDomain, "image/NoAvarta.jpg"),
+
+                // New fields
+                MaDinhDanh = entity.MaDinhDanh,
+                TongTrichDan = entity.TongTrichDan,
+                HIndex = entity.HIndex,
+                QuaTrinhDaoTao = entity.QuaTrinhDaoTao,
+                QuaTrinhCongTac = entity.QuaTrinhCongTac,
+                CongBoKhoaHoc = entity.CongBoKhoaHoc,
+                SangChe = entity.SangChe,
+                DuAnNghienCuu = entity.DuAnNghienCuu,
+                KinhNghiem = entity.KinhNghiem,
+                HoSoDinhKem = entity.HoSoDinhKem,
+                HiepHoiKhoaHoc = entity.HiepHoiKhoaHoc,
+
                 TuKhoa = string.IsNullOrWhiteSpace(entity.Keywords)
                     ? new List<string>()
                     : entity.Keywords.Split(';', StringSplitOptions.RemoveEmptyEntries).ToList(),

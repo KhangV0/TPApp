@@ -1,6 +1,7 @@
 ﻿@model TPApp.ViewModel.ChiTietNhaCungUngVm
 @{
     Layout = "_Layout";
+    ViewData["Title"] = Model.FullName;
 }
 
 <div class="columns-container">
@@ -11,88 +12,192 @@
             <div class="center_column col-xs-12 col-sm-9" id="center_column">
                 <div id="product">
 
-                    <!-- IMAGE + INFO -->
-                    <div class="product-images images zoom-enabled pic-pro img-box">
-                        <div class="pb-left-column col-xs-12 col-sm-6">
-                            <div class="product-image">
-                                <div class="product-full">
-                                    <a href="@Model.ImageUrl" class="simpleLens-lens-image">
-                                        <img src="@Model.ImageUrl"
-                                             class="simpleLens-big-image"
-                                             data-big-image="@Model.ImageUrl" />
-                                    </a>
-                                </div>
+                    <!-- ══════════ HEADER ══════════ -->
+                    <div class="detail-header row mb-4 g-4">
+                        <!-- Image -->
+                        <div class="col-md-5">
+                            <div class="mb-2">
+                                <img src="@Model.ImageUrl"
+                                     class="img-fluid rounded shadow-sm w-100"
+                                     alt="@Model.FullName"
+                                     style="max-height:350px; object-fit:cover;" />
                             </div>
+                            @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                            {
+                                <div class="text-center mt-2">
+                                    <img src="@Model.LogoUrl" alt="Logo" style="max-height:60px;" class="rounded" />
+                                </div>
+                            }
                         </div>
 
-                        <div class="pb-right-column col-xs-12 col-sm-6">
-                            <h1 class="product-name">@Model.FullName</h1>
+                        <!-- Info -->
+                        <div class="col-md-7">
+                            <h1 class="fw-bold fs-4 mb-1">@Model.FullName</h1>
 
-                            <div class="product-desc">
-                                <div class="product-star">
-                                    <span style="color:gold">
-                                        @Html.Raw(new string('★', (int)Model.Rating) + new string('☆', 5 - (int)Model.Rating))
-                                    </span>
-                                    <span>@Model.LuotDanhGia</span>
-                                    <span class="author">
-                                        <i class="fa fa-user"></i> @Model.LuotXem
-                                    </span>
-                                </div>
-                                Địa chỉ: @Model.DiaChi
+                            @if (!string.IsNullOrEmpty(Model.TenVietTat))
+                            {
+                                <p class="text-muted mb-2" style="font-size:14px;">@Model.TenVietTat</p>
+                            }
+
+                            <!-- Meta line -->
+                            <div class="tp-meta-line" id="headerMetaLine"
+                                 data-entity-type="NhaCungUng" data-entity-id="@Model.Id">
+                                <span class="tp-rating">
+                                    <i class="fa fa-star"></i>
+                                    <strong id="headerRatingAvg">@(Model.Rating > 0 ? Model.Rating.ToString("0.0") : "—")</strong>
+                                    <span class="tp-muted">(<span id="headerRatingCount">@Model.LuotDanhGia</span> đánh giá)</span>
+                                </span>
+                                <span class="tp-dot">·</span>
+                                <span class="tp-view">
+                                    <i class="fa fa-eye"></i>
+                                    <span id="headerViewCount">@Model.LuotXem.ToString("N0")</span> lượt xem
+                                </span>
                             </div>
 
-                            <div>Điện thoại: <i>@Model.Phone</i></div>
-                            <div>Fax: <i>@Model.Fax</i></div>
-                            <div>Email: <i>@Model.Email</i></div>
-                            <div>Website: <i>@Model.Website</i></div>
-                            <div>Người đại diện: <i>@Model.NguoiDaiDien</i></div>
-                            <div>Chức vụ: <i>@Model.ChucVu</i></div>
+                            @if (!string.IsNullOrEmpty(Model.LoaiHinhToChucText))
+                            {
+                                <p class="mb-2">
+                                    <i class="fa fa-tag me-1 text-secondary"></i>
+                                    <strong>Loại hình:</strong> @Model.LoaiHinhToChucText
+                                </p>
+                            }
 
-                            <div class="form-action">
-                                <div class="button-group">
-                                    <a class="btn-add-cart" href="#">Chọn nhà cung ứng</a>
-                                </div>
+                            <table class="table table-sm table-borderless mb-3" style="font-size:14px;">
+                                @if (!string.IsNullOrEmpty(Model.DiaChi))
+                                {
+                                    <tr><td style="width:120px;"><i class="fa fa-map-marker-alt me-1 text-secondary"></i><strong>Địa chỉ</strong></td><td>@Model.DiaChi</td></tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.Phone))
+                                {
+                                    <tr><td><i class="fa fa-phone me-1 text-secondary"></i><strong>Điện thoại</strong></td><td>@Model.Phone</td></tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.Email))
+                                {
+                                    <tr><td><i class="fa fa-envelope me-1 text-secondary"></i><strong>Email</strong></td><td><a href="mailto:@Model.Email">@Model.Email</a></td></tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.Website))
+                                {
+                                    <tr><td><i class="fa fa-globe me-1 text-secondary"></i><strong>Website</strong></td><td><a href="@Model.Website" target="_blank" rel="noopener">@Model.Website</a></td></tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.MaSoThue))
+                                {
+                                    <tr><td><i class="fa fa-file-alt me-1 text-secondary"></i><strong>Mã số thuế</strong></td><td>@Model.MaSoThue</td></tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.Fax))
+                                {
+                                    <tr><td><i class="fa fa-fax me-1 text-secondary"></i><strong>Fax</strong></td><td>@Model.Fax</td></tr>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.NguoiDaiDien))
+                                {
+                                    <tr><td><i class="fa fa-user me-1 text-secondary"></i><strong>Đại diện</strong></td><td>@Model.NguoiDaiDien @(!string.IsNullOrEmpty(Model.ChucVu) ? $"— {Model.ChucVu}" : "")</td></tr>
+                                }
+                            </table>
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a class="btn btn-primary btn-sm" href="#"><i class="fa fa-check me-1"></i>Chọn nhà cung ứng</a>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa fa-print me-1"></i>In trang</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- TAB -->
-                    <div class="tab-container product-tabModify">
+                    <!-- ══════════ TABS ══════════ -->
+                    <ul class="nav nav-tabs mb-0" role="tablist">
+                        @if (!string.IsNullOrEmpty(Model.LinhVucText))
+                        {
+                            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tabLinhVuc">Lĩnh vực</a></li>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.ChucNang))
+                        {
+                            <li class="nav-item"><a class="nav-link @(string.IsNullOrEmpty(Model.LinhVucText) ? "active" : "")" data-bs-toggle="tab" href="#tabChucNang">Chức năng</a></li>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.DichVuText))
+                        {
+                            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabDichVu">Dịch vụ</a></li>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.SanPham))
+                        {
+                            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabSanPham">Sản phẩm</a></li>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.VideoUrl) || !string.IsNullOrEmpty(Model.ChungNhan))
+                        {
+                            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tabHoSo">Hồ sơ năng lực</a></li>
+                        }
+                    </ul>
 
-                        <li class="activedTitle">
-                            <a href="#product-detail">LĨNH VỰC</a>
-                        </li>
-                        <div id="product-detail" class="tab-panel active">
-                            @Html.Raw(Model.LinhVucText)
-                        </div>
+                    <div class="tab-content border border-top-0 rounded-bottom p-3 mb-4">
+                        @if (!string.IsNullOrEmpty(Model.LinhVucText))
+                        {
+                            <div class="tab-pane fade show active" id="tabLinhVuc">
+                                @Html.Raw(Model.LinhVucText)
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.ChucNang))
+                        {
+                            <div class="tab-pane fade @(string.IsNullOrEmpty(Model.LinhVucText) ? "show active" : "")" id="tabChucNang">
+                                @Html.Raw(Model.ChucNang)
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.DichVuText))
+                        {
+                            <div class="tab-pane fade" id="tabDichVu">
+                                @Html.Raw(Model.DichVuText)
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.SanPham))
+                        {
+                            <div class="tab-pane fade" id="tabSanPham">
+                                @Html.Raw(Model.SanPham)
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.VideoUrl) || !string.IsNullOrEmpty(Model.ChungNhan))
+                        {
+                            <div class="tab-pane fade" id="tabHoSo">
+                                @if (!string.IsNullOrEmpty(Model.VideoUrl))
+                                {
+                                    // Extract YouTube ID
+                                    var videoId = "";
+                                    if (Model.VideoUrl.Contains("watch?v="))
+                                    {
+                                        videoId = Model.VideoUrl.Split("watch?v=").Last().Split('&').First();
+                                    }
+                                    else if (Model.VideoUrl.Contains("youtu.be/"))
+                                    {
+                                        videoId = Model.VideoUrl.Split("youtu.be/").Last().Split('?').First();
+                                    }
 
-                        <li class="activedTitle">
-                            <a href="#product-detail">CHỨC NĂNG</a>
-                        </li>
-                        <div id="product-detail" class="tab-panel active">
-                            @Html.Raw(Model.ChucNang)
-                        </div>
-
-                        <li class="activedTitle">
-                            <a href="#information">DỊCH VỤ</a>
-                        </li>
-                        <div id="information" class="tab-panel active">
-                            @Html.Raw(Model.DichVuText)
-                        </div>
-
-                        <li class="activedTitle">
-                            <a href="#reviews">SẢN PHẨM</a>
-                        </li>
-                        <div id="reviews" class="tab-panel active">
-                            @Html.Raw(Model.SanPham)
-                        </div>
-
+                                    if (!string.IsNullOrEmpty(videoId))
+                                    {
+                                        <h6 class="fw-semibold mb-2"><i class="fab fa-youtube text-danger me-1"></i>Video giới thiệu</h6>
+                                        <div class="ratio ratio-16x9 mb-3" style="max-width:560px;">
+                                            <iframe src="https://www.youtube.com/embed/@videoId" allowfullscreen></iframe>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p><a href="@Model.VideoUrl" target="_blank" rel="noopener"><i class="fa fa-video me-1"></i>Xem video giới thiệu</a></p>
+                                    }
+                                }
+                                @if (!string.IsNullOrEmpty(Model.ChungNhan))
+                                {
+                                    <h6 class="fw-semibold mb-2"><i class="fa fa-certificate text-warning me-1"></i>Chứng nhận năng lực</h6>
+                                    @Html.Raw(Model.ChungNhan)
+                                }
+                            </div>
+                        }
                     </div>
 
-                    <!-- NHÀ CUNG ỨNG KHÁC -->
+                    <!-- ══════════ RATING + VIEW WIDGET ══════════ -->
+                    <div class="mt-4">
+                        @await Html.PartialAsync("_EntityRating", null, new ViewDataDictionary(ViewData) {
+                            { "EntityType", "NhaCungUng" },
+                            { "EntityId", Model.Id }
+                        })
+                    </div>
+
+                    <!-- ══════════ NHÀ CUNG ỨNG KHÁC ══════════ -->
                     @if (Model.NhaCungUngKhac?.Any() == true)
                     {
-                        <div class="page-product-box">
+                        <div class="page-product-box mt-4">
                             <h2 class="brand-showcase-title">NHÀ CUNG ỨNG KHÁC</h2>
                             <ul class="product-list owl-carousel"
                                 data-dots="false"
@@ -160,10 +265,6 @@
                 function () { $(this).find(".button-group").show(); },
                 function () { $(this).find(".button-group").hide(); }
             );
-
-            $("#product-detail p, #product-detail span, #product-detail div").removeAttr("style");
-            $("#information p, #information span, #information div").removeAttr("style");
-            $("#reviews p, #reviews span, #reviews div").removeAttr("style");
 
             $(".owl-carousel").owlCarousel({
                 items: 4,

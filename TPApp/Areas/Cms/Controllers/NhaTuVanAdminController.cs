@@ -52,6 +52,19 @@ namespace TPApp.Areas.Cms.Controllers
         public int? SiteId { get; set; }
         public string? CreatedBy { get; set; }
         public DateTime? Created { get; set; }
+
+        // New fields
+        public string? MaDinhDanh { get; set; }
+        public int? TongTrichDan { get; set; }
+        public int? HIndex { get; set; }
+        public string? QuaTrinhDaoTao { get; set; }
+        public string? QuaTrinhCongTac { get; set; }
+        public string? CongBoKhoaHoc { get; set; }
+        public string? SangChe { get; set; }
+        public string? DuAnNghienCuu { get; set; }
+        public string? KinhNghiem { get; set; }
+        public string? HoSoDinhKem { get; set; }
+        public string? HiepHoiKhoaHoc { get; set; }
     }
 
     // ── Controller ──
@@ -263,6 +276,17 @@ namespace TPApp.Areas.Cms.Controllers
             entity.ParentId = vm.ParentId;
             entity.Keywords = vm.Keywords;
             entity.SiteId = vm.SiteId;
+            entity.MaDinhDanh = vm.MaDinhDanh;
+            entity.TongTrichDan = vm.TongTrichDan;
+            entity.HIndex = vm.HIndex;
+            entity.QuaTrinhDaoTao = vm.QuaTrinhDaoTao;
+            entity.QuaTrinhCongTac = vm.QuaTrinhCongTac;
+            entity.CongBoKhoaHoc = vm.CongBoKhoaHoc;
+            entity.SangChe = vm.SangChe;
+            entity.DuAnNghienCuu = vm.DuAnNghienCuu;
+            entity.KinhNghiem = vm.KinhNghiem;
+            entity.HoSoDinhKem = vm.HoSoDinhKem;
+            entity.HiepHoiKhoaHoc = vm.HiepHoiKhoaHoc;
             entity.Modified = DateTime.Now;
             entity.Modifier = User.Identity?.Name;
 
@@ -333,7 +357,18 @@ namespace TPApp.Areas.Cms.Controllers
             LanguageId = vm.LanguageId,
             Keywords = vm.Keywords,
             Domain = vm.Domain,
-            SiteId = vm.SiteId
+            SiteId = vm.SiteId,
+            MaDinhDanh = vm.MaDinhDanh,
+            TongTrichDan = vm.TongTrichDan,
+            HIndex = vm.HIndex,
+            QuaTrinhDaoTao = vm.QuaTrinhDaoTao,
+            QuaTrinhCongTac = vm.QuaTrinhCongTac,
+            CongBoKhoaHoc = vm.CongBoKhoaHoc,
+            SangChe = vm.SangChe,
+            DuAnNghienCuu = vm.DuAnNghienCuu,
+            KinhNghiem = vm.KinhNghiem,
+            HoSoDinhKem = vm.HoSoDinhKem,
+            HiepHoiKhoaHoc = vm.HiepHoiKhoaHoc
         };
 
         private NhaTuVanFormVm MapToVm(NhaTuVan e) => new()
@@ -361,7 +396,18 @@ namespace TPApp.Areas.Cms.Controllers
             Domain = e.Domain,
             SiteId = e.SiteId,
             CreatedBy = e.CreatedBy,
-            Created = e.Created
+            Created = e.Created,
+            MaDinhDanh = e.MaDinhDanh,
+            TongTrichDan = e.TongTrichDan,
+            HIndex = e.HIndex,
+            QuaTrinhDaoTao = e.QuaTrinhDaoTao,
+            QuaTrinhCongTac = e.QuaTrinhCongTac,
+            CongBoKhoaHoc = e.CongBoKhoaHoc,
+            SangChe = e.SangChe,
+            DuAnNghienCuu = e.DuAnNghienCuu,
+            KinhNghiem = e.KinhNghiem,
+            HoSoDinhKem = e.HoSoDinhKem,
+            HiepHoiKhoaHoc = e.HiepHoiKhoaHoc
         };
     }
 }

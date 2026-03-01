@@ -67,5 +67,19 @@ namespace TPApp.Entities
         public string? Keywords { get; set; }
 
         public int? SiteId { get; set; }
+
+        // ── New fields (Phiếu thông tin NhaTuVan) ──
+        public string? MaDinhDanh { get; set; }       // ORCID, Scholar, ResearchGate links
+        public int? TongTrichDan { get; set; }
+        public int? HIndex { get; set; }
+        public string? QuaTrinhDaoTao { get; set; }    // HTML table
+        public string? QuaTrinhCongTac { get; set; }   // HTML table
+        public string? CongBoKhoaHoc { get; set; }     // HTML: sách + bài báo
+        public string? SangChe { get; set; }           // HTML table
+        public string? DuAnNghienCuu { get; set; }     // HTML table
+        public string? KinhNghiem { get; set; }        // HTML table
+        public string? HoSoDinhKem { get; set; }       // file paths / HTML
+        [MaxLength(500)]
+        public string? HiepHoiKhoaHoc { get; set; }
     }
 }

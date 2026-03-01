@@ -4,139 +4,209 @@
     var dichVuItems = (List<SelectListItem>?)ViewBag.DichVuList;
 }
 
-<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab1"><i class="fas fa-id-card me-1"></i>I. Thông tin định danh</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab2"><i class="fas fa-chart-line me-1"></i>II. Chỉ số khoa học</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab3"><i class="fas fa-graduation-cap me-1"></i>III. Đào tạo & Công tác</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab4"><i class="fas fa-book me-1"></i>IV. Công bố & SHTT</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab5"><i class="fas fa-briefcase me-1"></i>V. Tư vấn & Dự án</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab6"><i class="fas fa-certificate me-1"></i>VI. Minh chứng</a></li>
+</ul>
 
 <div class="row g-3">
-    <!-- Left column -->
-    <div class="col-md-8">
-        <div class="mb-3">
-            <label asp-for="FullName" class="form-label fw-semibold">Họ tên <span class="text-danger">*</span></label>
-            <input asp-for="FullName" class="form-control" placeholder="Nhập họ tên nhà tư vấn..." />
-            <span asp-validation-for="FullName" class="text-danger small"></span>
-        </div>
+    <div class="col-md-9">
+        <div class="tab-content">
 
-        <div class="row g-3 mb-3">
-            <div class="col-md-4">
-                <label asp-for="DateOfBirth" class="form-label fw-semibold">Ngày sinh</label>
-                <input asp-for="DateOfBirth" class="form-control form-control-sm" placeholder="dd/MM/yyyy" />
+            <!-- ══════════ TAB 1: THÔNG TIN ĐỊNH DANH ══════════ -->
+            <div class="tab-pane fade show active" id="tab1">
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label fw-semibold">1. Họ và tên <span class="text-danger">*</span></label>
+                    <input asp-for="FullName" class="form-control" placeholder="Nhập họ và tên..." />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="HocHam" class="form-label fw-semibold">2. Học hàm / Học vị</label>
+                        <input asp-for="HocHam" class="form-control form-control-sm" placeholder="PGS.TS., ThS., ..." />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DateOfBirth" class="form-label fw-semibold">Ngày sinh</label>
+                        <input asp-for="DateOfBirth" class="form-control form-control-sm" placeholder="dd/MM/yyyy" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="HinhDaiDien" class="form-label fw-semibold">3. Ảnh đại diện</label>
+                    <div class="input-group">
+                        <input asp-for="HinhDaiDien" class="form-control form-control-sm" placeholder="/images/avatar.jpg" id="inputHinhDaiDien" />
+                        <button type="button" class="btn btn-outline-primary btn-upload-field" data-target="inputHinhDaiDien">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                    </div>
+                    <div id="previewHinhDaiDien" class="mt-2">
+                        @if (!string.IsNullOrEmpty(Model.HinhDaiDien))
+                        {
+                            <img src="@Model.HinhDaiDien" class="rounded" style="max-height:120px" />
+                        }
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="CoQuan" class="form-label fw-semibold">4. Cơ quan công tác hiện tại</label>
+                    <input asp-for="CoQuan" class="form-control form-control-sm" placeholder="Cơ quan..." />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ChucVu" class="form-label fw-semibold">5. Chức vụ / Chức danh chuyên môn</label>
+                    <input asp-for="ChucVu" class="form-control form-control-sm" placeholder="Chức vụ..." />
+                </div>
+                <fieldset class="border rounded p-3 mb-3">
+                    <legend class="float-none w-auto px-2 fs-6 fw-semibold">Thông tin liên hệ</legend>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="Phone" class="form-label fw-semibold">Điện thoại</label>
+                            <input asp-for="Phone" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                            <input asp-for="Email" type="email" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="DiaChi" class="form-label fw-semibold">Địa chỉ</label>
+                            <input asp-for="DiaChi" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="mb-3">
+                    <label asp-for="MaDinhDanh" class="form-label fw-semibold">6. Mã định danh quốc tế</label>
+                    <textarea asp-for="MaDinhDanh" class="form-control form-control-sm" rows="3" placeholder="ORCID, Google Scholar, ResearchGate, Scopus...&#10;Mỗi dòng 1 link"></textarea>
+                    <small class="text-muted">Mỗi link trên 1 dòng riêng.</small>
+                </div>
             </div>
-            <div class="col-md-4">
-                <label asp-for="HocHam" class="form-label fw-semibold">Học hàm / Học vị</label>
-                <input asp-for="HocHam" class="form-control form-control-sm" placeholder="TS., PGS., GS...." />
-            </div>
-            <div class="col-md-4">
-                <label asp-for="ChucVu" class="form-label fw-semibold">Chức vụ</label>
-                <input asp-for="ChucVu" class="form-control form-control-sm" placeholder="Chức vụ..." />
-            </div>
-        </div>
 
-        <div class="mb-3">
-            <label asp-for="CoQuan" class="form-label fw-semibold">Cơ quan công tác</label>
-            <input asp-for="CoQuan" class="form-control form-control-sm" placeholder="Tên cơ quan / tổ chức..." />
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="DiaChi" class="form-label fw-semibold">Địa chỉ</label>
-            <input asp-for="DiaChi" class="form-control form-control-sm" placeholder="Địa chỉ..." />
-        </div>
-
-        <div class="row g-3 mb-3">
-            <div class="col-md-6">
-                <label asp-for="Phone" class="form-label fw-semibold">Điện thoại</label>
-                <input asp-for="Phone" class="form-control form-control-sm" placeholder="Số điện thoại..." />
-            </div>
-            <div class="col-md-6">
-                <label asp-for="Email" class="form-label fw-semibold">Email</label>
-                <input asp-for="Email" type="email" class="form-control form-control-sm" placeholder="Email..." />
-            </div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Dịch vụ tư vấn</label>
-            <input type="hidden" asp-for="DichVu" id="hdnDichVu" />
-            @if (dichVuItems != null && dichVuItems.Any())
-            {
-                var currentDV = Model.DichVu?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
-                <div class="row g-2">
-                    @foreach (var item in dichVuItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+            <!-- ══════════ TAB 2: CHỈ SỐ ẢNH HƯỞNG KHOA HỌC ══════════ -->
+            <div class="tab-pane fade" id="tab2">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="TongTrichDan" class="form-label fw-semibold">7. Tổng số trích dẫn</label>
+                        <input asp-for="TongTrichDan" type="number" class="form-control form-control-sm" placeholder="0" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="HIndex" class="form-label fw-semibold">Chỉ số h-index</label>
+                        <input asp-for="HIndex" type="number" class="form-control form-control-sm" placeholder="0" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">8. Lĩnh vực nghiên cứu trọng tâm</label>
+                    <input type="hidden" asp-for="LinhVucId" id="hdnLinhVucId" />
+                    @if (linhVucItems != null && linhVucItems.Any())
                     {
-                        var chk = currentDV.Contains(item.Value) ? "checked" : "";
-                        <div class="col-md-4 col-lg-3">
-                            <div class="form-check">
-                                <input class="form-check-input chk-dichvu" type="checkbox"
-                                       value="@item.Value" id="dv_@item.Value" @chk />
-                                <label class="form-check-label" for="dv_@item.Value">@item.Text</label>
-                            </div>
+                        var currentLV = Model.LinhVucId?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                        <div class="row g-2">
+                            @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+                            {
+                                var chk = currentLV.Contains(item.Value) ? "checked" : "";
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input chk-linhvuc" type="checkbox"
+                                               value="@item.Value" id="lv_@item.Value" @chk />
+                                        <label class="form-check-label" for="lv_@item.Value">@item.Text</label>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
-            }
-            else
-            {
-                <small class="text-muted">Chưa có dữ liệu dịch vụ.</small>
-            }
-        </div>
+            </div>
 
-        <div class="mb-3">
-            <label class="form-label fw-semibold">Lĩnh vực</label>
-            <input type="hidden" asp-for="LinhVucId" id="hdnLinhVucId" />
-            @if (linhVucItems != null && linhVucItems.Any())
-            {
-                var currentLV = Model.LinhVucId?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
-                <div class="row g-2">
-                    @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+            <!-- ══════════ TAB 3: ĐÀO TẠO & CÔNG TÁC ══════════ -->
+            <div class="tab-pane fade" id="tab3">
+                <div class="mb-3">
+                    <label asp-for="QuaTrinhDaoTao" class="form-label fw-semibold">9. Quá trình đào tạo</label>
+                    <textarea asp-for="QuaTrinhDaoTao" id="editorDaoTao" class="form-control" rows="6"></textarea>
+                    <small class="text-muted">Dạng bảng: Năm tốt nghiệp | Bậc | Chuyên ngành | Cơ sở đào tạo</small>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="QuaTrinhCongTac" class="form-label fw-semibold">10. Quá trình công tác</label>
+                    <textarea asp-for="QuaTrinhCongTac" id="editorCongTac" class="form-control" rows="6"></textarea>
+                    <small class="text-muted">Dạng bảng: Thời gian | Đơn vị công tác | Vị trí chuyên môn</small>
+                </div>
+            </div>
+
+            <!-- ══════════ TAB 4: CÔNG BỐ & SHTT ══════════ -->
+            <div class="tab-pane fade" id="tab4">
+                <div class="mb-3">
+                    <label asp-for="CongBoKhoaHoc" class="form-label fw-semibold">11–12. Sách & Bài báo khoa học</label>
+                    <textarea asp-for="CongBoKhoaHoc" id="editorCongBo" class="form-control" rows="8"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="SangChe" class="form-label fw-semibold">13. Bằng độc quyền Sáng chế / Tác quyền</label>
+                    <textarea asp-for="SangChe" id="editorSangChe" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="KetQuaNghienCuu" class="form-label fw-semibold">Kết quả nghiên cứu (legacy)</label>
+                    <textarea asp-for="KetQuaNghienCuu" id="editorKetQua" class="form-control" rows="5"></textarea>
+                </div>
+            </div>
+
+            <!-- ══════════ TAB 5: TƯ VẤN & DỰ ÁN ══════════ -->
+            <div class="tab-pane fade" id="tab5">
+                <div class="mb-3">
+                    <label asp-for="DuAnNghienCuu" class="form-label fw-semibold">14. Dự án nghiên cứu đã chủ trì</label>
+                    <textarea asp-for="DuAnNghienCuu" id="editorDuAn" class="form-control" rows="6"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">15. Dịch vụ tư vấn chuyên sâu</label>
+                    <input type="hidden" asp-for="DichVu" id="hdnDichVu" />
+                    @if (dichVuItems != null && dichVuItems.Any())
                     {
-                        var chk = currentLV.Contains(item.Value) ? "checked" : "";
-                        <div class="col-md-4 col-lg-3">
-                            <div class="form-check">
-                                <input class="form-check-input chk-linhvuc" type="checkbox"
-                                       value="@item.Value" id="lv_@item.Value" @chk />
-                                <label class="form-check-label" for="lv_@item.Value">@item.Text</label>
-                            </div>
+                        var currentDV = Model.DichVu?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                        <div class="row g-2">
+                            @foreach (var item in dichVuItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+                            {
+                                var chk = currentDV.Contains(item.Value) ? "checked" : "";
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input chk-dichvu" type="checkbox"
+                                               value="@item.Value" id="dv_@item.Value" @chk />
+                                        <label class="form-check-label" for="dv_@item.Value">@item.Text</label>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
-            }
-            else
-            {
-                <small class="text-muted">Chưa có dữ liệu lĩnh vực.</small>
-            }
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="KetQuaNghienCuu" class="form-label fw-semibold">Kết quả nghiên cứu</label>
-            <textarea asp-for="KetQuaNghienCuu" id="editorKetQuaNghienCuu" class="form-control" rows="5"></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="Keywords" class="form-label fw-semibold">Từ khóa</label>
-            <textarea asp-for="Keywords" class="form-control form-control-sm" rows="2" placeholder="Từ khóa SEO, phân cách bằng dấu phẩy..."></textarea>
-        </div>
-
-        <div class="mb-3">
-            <label asp-for="HinhDaiDien" class="form-label fw-semibold">Hình đại diện</label>
-            <div class="input-group">
-                <input asp-for="HinhDaiDien" class="form-control form-control-sm" placeholder="/images/consultant.jpg" id="inputHinhDaiDien" />
-                <button type="button" class="btn btn-outline-primary btn-upload-field" data-target="inputHinhDaiDien">
-                    <i class="fas fa-upload"></i> Upload
-                </button>
+                <div class="mb-3">
+                    <label asp-for="KinhNghiem" class="form-label fw-semibold">16. Kinh nghiệm thực chiến tại Doanh nghiệp</label>
+                    <textarea asp-for="KinhNghiem" id="editorKinhNghiem" class="form-control" rows="5"></textarea>
+                </div>
             </div>
-            <div id="previewHinhDaiDien" class="mt-2">
-                @if (!string.IsNullOrEmpty(Model.HinhDaiDien))
-                {
-                    <img src="@Model.HinhDaiDien" class="rounded" style="max-height:150px" />
-                }
-            </div>
-        </div>
 
-        <div class="mb-3">
-            <label asp-for="QueryString" class="form-label fw-semibold">Query String (URL slug)</label>
-            <input asp-for="QueryString" class="form-control form-control-sm" placeholder="url-slug..." />
+            <!-- ══════════ TAB 6: MINH CHỨNG ══════════ -->
+            <div class="tab-pane fade" id="tab6">
+                <div class="mb-3">
+                    <label asp-for="HoSoDinhKem" class="form-label fw-semibold">17. Hồ sơ đính kèm</label>
+                    <textarea asp-for="HoSoDinhKem" id="editorHoSo" class="form-control" rows="4" placeholder="Bản scan bằng cấp, giấy chứng nhận giải thưởng, CV..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="HiepHoiKhoaHoc" class="form-label fw-semibold">18. Thành viên các hiệp hội khoa học</label>
+                    <input asp-for="HiepHoiKhoaHoc" class="form-control form-control-sm" placeholder="IEEE, ACS, VUSTA..." />
+                </div>
+                <hr />
+                <div class="mb-3">
+                    <label asp-for="Keywords" class="form-label fw-semibold">Từ khóa SEO</label>
+                    <textarea asp-for="Keywords" class="form-control form-control-sm" rows="2" placeholder="Từ khóa, phân cách bằng dấu phẩy..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="QueryString" class="form-label fw-semibold">Query String (URL slug)</label>
+                    <input asp-for="QueryString" class="form-control form-control-sm" placeholder="url-slug..." />
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Right column -->
-    <div class="col-md-4">
+    <!-- Right column: Config -->
+    <div class="col-md-3">
         <div class="card card-outline card-secondary mb-3">
             <div class="card-header py-2">
                 <h3 class="card-title mb-0 small fw-bold">Cấu hình</h3>
@@ -146,7 +216,6 @@
                     <label asp-for="StatusId" class="form-label fw-semibold small">Trạng thái</label>
                     <select asp-for="StatusId" asp-items="(SelectList)ViewBag.Statuses" class="form-select form-select-sm"></select>
                 </div>
-
                 <div class="mb-3">
                     <label class="form-label fw-semibold small">Kích hoạt</label>
                     <div class="form-check form-switch">
@@ -158,9 +227,21 @@
                 </div>
             </div>
         </div>
-
         <input type="hidden" asp-for="LanguageId" />
         <input type="hidden" asp-for="Domain" />
         <input type="hidden" asp-for="SiteId" />
     </div>
 </div>
+
+<script>
+    function syncCheckboxes(cls, hiddenId) {
+        document.querySelectorAll('.' + cls).forEach(c => {
+            c.addEventListener('change', () => {
+                const vals = [...document.querySelectorAll('.' + cls + ':checked')].map(x => x.value);
+                document.getElementById(hiddenId).value = vals.join(';');
+            });
+        });
+    }
+    syncCheckboxes('chk-linhvuc', 'hdnLinhVucId');
+    syncCheckboxes('chk-dichvu', 'hdnDichVu');
+</script>

@@ -81,14 +81,6 @@
                     </li>
 
                     <li class="nav-item">
-                        <a asp-area="Cms" asp-controller="AdminAnalytics" asp-action="Index"
-                           class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "AdminAnalytics" ? "active" : "")">
-                            <i class="nav-icon fas fa-chart-line"></i>
-                            <p>Analytics</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
                         <a asp-area="Cms" asp-controller="Users" asp-action="Index"
                            class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")">
                             <i class="nav-icon fas fa-users-cog"></i>
@@ -202,14 +194,6 @@
                            class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "NhaTuVanAdmin" ? "active" : "")">
                             <i class="nav-icon fas fa-user-tie"></i>
                             <p>Nhà tư vấn</p>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a asp-area="Cms" asp-controller="Ads" asp-action="Index"
-                           class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Ads" ? "active" : "")">
-                            <i class="nav-icon fas fa-rectangle-ad"></i>
-                            <p>Menu quảng cáo</p>
                         </a>
                     </li>
 

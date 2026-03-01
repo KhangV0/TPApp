@@ -5,6 +5,18 @@
 @{
 	var MainDomain = Configuration["AppSettings:MainDomain"] ?? "https://localhost:7232/";
 	var userName = HttpContextAccessor.HttpContext.Session.GetString("Username");
+
+	// Fallback: if session expired but Identity cookie still valid
+	if (string.IsNullOrEmpty(userName) && User.Identity?.IsAuthenticated == true)
+	{
+		userName = User.Identity.Name;
+		// Re-sync session
+		if (!string.IsNullOrEmpty(userName))
+		{
+			HttpContextAccessor.HttpContext.Session.SetString("Username", userName);
+		}
+	}
+
 	var userAvatar = "";
 
 	if (!string.IsNullOrEmpty(userName))
@@ -15,6 +27,12 @@
 			userAvatar = user.Img;
 		}
 	}
+
+	// Pre-compute fallback avatar SVG with user initial
+	var userInitial = !string.IsNullOrEmpty(userName) ? userName.Substring(0, 1).ToUpper() : "U";
+	var fallbackSvg = $"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%230056b3'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.35em' fill='white' font-size='18' font-weight='bold'%3E{userInitial}%3C/text%3E%3C/svg%3E";
+	var avatarSrc = !string.IsNullOrEmpty(userAvatar) ? userAvatar : fallbackSvg;
+
 	var canAccessCms = await CmsAccessService.CanAccessCmsAsync(ViewContext.HttpContext.User);
 }
 
@@ -84,11 +102,11 @@
 						   class="hp-user-avatar-btn dropdown-toggle"
 						   data-bs-toggle="dropdown"
 						   aria-expanded="false">
-							<img src="@(!string.IsNullOrEmpty(userAvatar) ? userAvatar : "/image/default-avatar.png")"
+							<img src="@avatarSrc"
 								 alt="@userName"
 								 class="hp-user-avatar"
-								 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2220%22 fill=%22%230056b3%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2218%22 font-weight=%22bold%22%3E@userName.Substring(0, 1).ToUpper()%3C/text%3E%3C/svg%3E'">
-							<span class="hp-user-name d-none">@userName</span>
+								 onerror="this.onerror=null;this.src='@fallbackSvg';">
+							<span class="hp-user-name">@userName</span>
 						</a>
 						<ul class="dropdown-menu dropdown-menu-end hp-user-dropdown">
 							<li>
@@ -279,11 +297,11 @@
 						   class="hp-user-avatar-btn dropdown-toggle"
 						   data-bs-toggle="dropdown"
 						   aria-expanded="false">
-							<img src="@(!string.IsNullOrEmpty(userAvatar) ? userAvatar : "/image/default-avatar.png")"
+							<img src="@avatarSrc"
 								 alt="@userName"
 								 class="hp-user-avatar"
-								 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%2220%22 fill=%22%230056b3%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2218%22 font-weight=%22bold%22%3E@userName.Substring(0, 1).ToUpper()%3C/text%3E%3C/svg%3E'">
-							<span class="hp-user-name d-none">@userName</span>
+								 onerror="this.onerror=null;this.src='@fallbackSvg';">
+							<span class="hp-user-name">@userName</span>
 						</a>
 						<ul class="dropdown-menu dropdown-menu-end hp-user-dropdown">
 							<li>

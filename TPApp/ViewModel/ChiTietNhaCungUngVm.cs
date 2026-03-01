@@ -22,6 +22,14 @@
         public string? LinhVucText { get; set; }
         public string? DichVuText { get; set; }
 
+        // ===== New fields =====
+        public string? TenVietTat { get; set; }
+        public string? LoaiHinhToChucText { get; set; }
+        public string? MaSoThue { get; set; }
+        public string? LogoUrl { get; set; }
+        public string? VideoUrl { get; set; }
+        public string? ChungNhan { get; set; }
+
         // ===== Thống kê =====
         public decimal Rating { get; set; }
         public int LuotDanhGia { get; set; }

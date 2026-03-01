@@ -75,6 +75,19 @@ namespace TPApp.ViewModel
         public string LinhVucText        { get; set; } = "";   // resolved from LinhVucId IDs
         public string KetQuaNghienCuu    { get; set; } = "";
 
+        // New fields
+        public string? MaDinhDanh { get; set; }
+        public int? TongTrichDan { get; set; }
+        public int? HIndex { get; set; }
+        public string? QuaTrinhDaoTao { get; set; }
+        public string? QuaTrinhCongTac { get; set; }
+        public string? CongBoKhoaHoc { get; set; }
+        public string? SangChe { get; set; }
+        public string? DuAnNghienCuu { get; set; }
+        public string? KinhNghiem { get; set; }
+        public string? HoSoDinhKem { get; set; }
+        public string? HiepHoiKhoaHoc { get; set; }
+
         // Stats
         public int Rating      { get; set; }
         public int LuotXem     { get; set; }

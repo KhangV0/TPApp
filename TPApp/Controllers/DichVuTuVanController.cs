@@ -281,14 +281,28 @@ namespace TPApp.Controllers
                 ChucVu = entity.ChucVu,
 
                 Rating = entity.Rating ?? 0,
-                LuotDanhGia = 0,
+                LuotDanhGia = _context.EntityRatings
+                    .Count(x => x.EntityId == id && x.EntityType == TPApp.Enums.EntityTypes.NhaTuVan && x.StatusId == 1),
                 LuotXem = entity.Viewed ?? 0,
 
                 ImageUrl = ImageHtmlHelper.ResolveImageUrl(entity.HinhDaiDien, _mainDomain, "image/NoAvarta.jpg"),
 
                 DichVuText = dichVuText,
                 LinhVucText = linhVucText,
-                KetQuaNghienCuu = entity.KetQuaNghienCuu
+                KetQuaNghienCuu = entity.KetQuaNghienCuu,
+
+                // New fields
+                MaDinhDanh = entity.MaDinhDanh,
+                TongTrichDan = entity.TongTrichDan,
+                HIndex = entity.HIndex,
+                QuaTrinhDaoTao = entity.QuaTrinhDaoTao,
+                QuaTrinhCongTac = entity.QuaTrinhCongTac,
+                CongBoKhoaHoc = entity.CongBoKhoaHoc,
+                SangChe = entity.SangChe,
+                DuAnNghienCuu = entity.DuAnNghienCuu,
+                KinhNghiem = entity.KinhNghiem,
+                HoSoDinhKem = entity.HoSoDinhKem,
+                HiepHoiKhoaHoc = entity.HiepHoiKhoaHoc
             };
 
             // ===== TAGS =====
@@ -313,7 +327,7 @@ namespace TPApp.Controllers
                 {
                     Id = x.TuVanId,
                     FullName = x.FullName,
-                    ImageUrl = ImageHtmlHelper.ResolveImageUrl(x.HinhDaiDien, _mainDomain, "image/NoImages.jpg"),
+                    ImageUrl = ProductController.CookedImageURL("254-170", x.HinhDaiDien, _mainDomain),
                     CoQuan = x.CoQuan,
                     Phone = x.Phone,
                     Email = x.Email,
@@ -394,6 +408,20 @@ namespace TPApp.Controllers
             }
 
             // ================== VIEW MODEL ==================
+            // Resolve LoaiHinhToChuc codes → display text
+            var loaiHinhMap = new Dictionary<string, string> {
+                {"VienNC","Viện/Trung tâm nghiên cứu"}, {"TruongDH","Trường Đại học"},
+                {"DNKHCN","Doanh nghiệp KH&CN"}, {"DNSX","Doanh nghiệp sản xuất"},
+                {"ToChucTG","Tổ chức trung gian/Tư vấn"}, {"Khac","Khác"}
+            };
+            string loaiHinhText = "";
+            if (!string.IsNullOrWhiteSpace(entity.LoaiHinhToChuc))
+            {
+                loaiHinhText = string.Join(", ",
+                    entity.LoaiHinhToChuc.Split(';', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(code => loaiHinhMap.TryGetValue(code, out var t) ? t : code));
+            }
+
             var vm = new ChiTietNhaCungUngVm
             {
                 Id = entity.CungUngId,
@@ -411,10 +439,22 @@ namespace TPApp.Controllers
                 LinhVucText = linhVucText,
                 DichVuText = dichVuText,
 
+                // New fields
+                TenVietTat = entity.TenVietTat,
+                LoaiHinhToChucText = loaiHinhText,
+                MaSoThue = entity.MaSoThue,
+                LogoUrl = !string.IsNullOrEmpty(entity.Logo)
+                    ? ImageHtmlHelper.ResolveImageUrl(entity.Logo, _mainDomain, "image/logoT.png")
+                    : null,
+                VideoUrl = entity.VideoUrl,
+                ChungNhan = entity.ChungNhan,
+
                 Rating = entity.Rating ?? 0,
                 LuotXem = entity.Viewed ?? 0,
 
-                ImageUrl = ImageHtmlHelper.ResolveImageUrl(entity.HinhDaiDien, _mainDomain, "image/logoT.png")
+                ImageUrl = ImageHtmlHelper.ResolveImageUrl(
+                    !string.IsNullOrEmpty(entity.Logo) ? entity.Logo : entity.HinhDaiDien,
+                    _mainDomain, "image/logoT.png")
             };
 
             // ================== NHÀ CUNG ỨNG KHÁC ==================
@@ -436,7 +476,7 @@ namespace TPApp.Controllers
                     Email = x.Email,
                     Website = x.Website,
                     Rating = x.Rating ?? 0,
-                    ImageUrl = ImageHtmlHelper.ResolveImageUrl(x.HinhDaiDien, _mainDomain, "image/NoImages.jpg")
+                    ImageUrl = ProductController.CookedImageURL("254-170", x.HinhDaiDien, _mainDomain)
                 })
                 .ToList();
 
@@ -462,8 +502,8 @@ namespace TPApp.Controllers
             }
 
             // ================== LƯỢT ĐÁNH GIÁ ==================
-            vm.LuotDanhGia = _context.Ratings
-                .Count(x => x.SanPhamId == id && x.TypeID == 8);
+            vm.LuotDanhGia = _context.EntityRatings
+                .Count(x => x.EntityId == id && x.EntityType == TPApp.Enums.EntityTypes.NhaCungUng && x.StatusId == 1);
 
             return View("ChiTietNhaCungUng", vm);
         }

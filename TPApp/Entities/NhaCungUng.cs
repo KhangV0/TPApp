@@ -82,5 +82,25 @@ namespace TPApp.Entities
         public string? Keywords { get; set; }
 
         public int? SiteId { get; set; }
+
+        // ── New fields (Phiếu thông tin mẫu) ──
+        [MaxLength(300)]
+        public string? TenVietTat { get; set; }
+
+        /// <summary>Semicolon-separated: "VienNC;TruongDH;DNKHCN;..."</summary>
+        [MaxLength(500)]
+        public string? LoaiHinhToChuc { get; set; }
+
+        [MaxLength(50)]
+        public string? MaSoThue { get; set; }
+
+        [MaxLength(500)]
+        public string? Logo { get; set; }
+
+        [MaxLength(500)]
+        public string? VideoUrl { get; set; }
+
+        /// <summary>HTML or file paths for certificates</summary>
+        public string? ChungNhan { get; set; }
     }
 }
