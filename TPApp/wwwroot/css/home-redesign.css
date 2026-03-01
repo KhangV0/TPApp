@@ -143,6 +143,10 @@
         background: #fff;
         padding: 10px 10px;
     }
+    ..tp-analytics__row,
+    .tp-metrics__grid {
+        display: block;
+    }
 }
 
 .header-mobile {
