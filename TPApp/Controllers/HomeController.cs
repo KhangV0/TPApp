@@ -15,7 +15,7 @@ namespace TPApp.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IProductService _productService;
-        private readonly IHomeAnalyticsService _analyticsService;
+        // Analytics section is now static — no analytics service needed
         private readonly string _mainDomain;
         
         // ===== CONSTANT =====
@@ -26,12 +26,10 @@ namespace TPApp.Controllers
         public HomeController(
             AppDbContext context,
             IProductService productService,
-            IHomeAnalyticsService analyticsService,
             IOptions<AppSettings> appSettings)
         {
             _context          = context;
             _productService   = productService;
-            _analyticsService = analyticsService;
             _mainDomain       = appSettings.Value.MainDomain;
         }
 
@@ -51,9 +49,6 @@ namespace TPApp.Controllers
             var newProducts = await _productService.GetNewProductsAsync(12);
             ViewBag.NewTech     = newProducts.Take(10).ToList();
             ViewBag.NewProducts = newProducts;
-
-            // ── Enterprise Analytics (cached, max 2 DB queries) ─────
-            model.Analytics = await _analyticsService.GetHomeAnalyticsAsync();
 
             return View(model);
         }
