@@ -9,7 +9,7 @@
     @await Html.PartialAsync("_MainIcon")
 
     @* ── Enterprise Analytics Section ── *@
-    @await Html.PartialAsync("_AnalyticsSection", Model.Analytics)
+    @await Html.PartialAsync("_AnalyticsSection")
 
     <h3 class="hp-section-title">Công nghệ nổi bật</h3>
     <ul class="nav nav-tabs justify-content-center mb-4" role="tablist">
@@ -65,3 +65,8 @@
     @* → Gộp vào _ManLuoiDoiTac *@
     @await Html.PartialAsync("_ManLuoiDoiTac")
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="~/js/home-analytics.js" asp-append-version="true"></script>
+}
