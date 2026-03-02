@@ -92,9 +92,15 @@
                         <label class="form-label fw-semibold">
                             <i class="fas fa-money-bill-wave me-1 text-success"></i>Số tiền tạm ứng (VNĐ) <span class="text-danger">*</span>
                         </label>
-                        <input type="number" class="form-control" name="SoTienTamUng" id="s8SoTien"
-                               value="@(payment?.SoTienTamUng.ToString("0") ?? "")"
-                               placeholder="Nhập số tiền" min="0" step="1000" required />
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="s8SoTienDisplay"
+                                   value="@(payment != null ? payment.SoTienTamUng.ToString("N0") : "")"
+                                   placeholder="Ví dụ: 50.000.000" required
+                                   oninput="s8_formatMoney(this)" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <input type="hidden" name="SoTienTamUng" id="s8SoTien"
+                               value="@(payment?.SoTienTamUng.ToString("0") ?? "")" />
                     </div>
 
                     <div class="col-md-6">
@@ -175,6 +181,8 @@
 
     async function s8_save() {
         const form = document.getElementById('s8PaymentForm');
+        // Sync formatted display to hidden raw value
+        s8_syncRawValue();
         const soTien = document.getElementById('s8SoTien').value;
         const ngayChuyen = document.getElementById('s8NgayChuyen').value;
 
@@ -230,5 +238,21 @@
             <button class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
         document.body.appendChild(t);
         setTimeout(() => t.remove(), 5000);
+    }
+
+    // Format money: 50000000 → 50.000.000
+    function s8_formatMoney(el) {
+        let raw = el.value.replace(/\D/g, ''); // strip non-digits
+        if (raw === '') { el.value = ''; document.getElementById('s8SoTien').value = ''; return; }
+        let num = parseInt(raw, 10);
+        el.value = num.toLocaleString('vi-VN');
+        document.getElementById('s8SoTien').value = num.toString();
+    }
+
+    // Sync display → hidden before submit
+    function s8_syncRawValue() {
+        let display = document.getElementById('s8SoTienDisplay').value;
+        let raw = display.replace(/\D/g, '');
+        document.getElementById('s8SoTien').value = raw;
     }
 </script>

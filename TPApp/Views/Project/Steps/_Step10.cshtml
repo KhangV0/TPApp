@@ -1,77 +1,225 @@
 @model TPApp.ViewModel.StepContentVm
+@using System.IO
+@using Microsoft.EntityFrameworkCore
+@inject TPApp.Data.AppDbContext DbCtx
 
 @{
     var handover = Model.StepData as TPApp.Entities.HandoverReport;
+    if (handover == null)
+    {
+        handover = await DbCtx.HandoverReports
+            .FirstOrDefaultAsync(x => x.ProjectId == Model.ProjectId);
+    }
+    bool hasData = handover != null;
 }
 
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-handshake"></i> Bước 10: Bàn giao</h5>
-        @if (handover != null)
+        <h5 class="mb-0"><i class="fas fa-handshake"></i> Bước 10: Bàn giao &amp; triển khai thiết bị</h5>
+        @if (hasData)
         {
-            <button class="btn btn-light btn-sm edit-step-btn" data-step="10" data-project-id="@Model.ProjectId">
+            <button class="btn btn-light btn-sm" id="s10EditToggle" onclick="s10_toggleEdit()">
                 <i class="fas fa-edit"></i> Chỉnh sửa
             </button>
         }
     </div>
     <div class="card-body">
-        @if (handover != null)
-        {
-            <dl class="row">
-                <dt class="col-sm-3">Đã hoàn thành đào tạo:</dt>
-                <dd class="col-sm-9">
-                    @if (handover.DaHoanThanhDaoTao)
-                    {
-                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã hoàn thành</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning"><i class="fas fa-times"></i> Chưa hoàn thành</span>
-                    }
-                </dd>
 
-                <dt class="col-sm-3">Đánh giá:</dt>
-                <dd class="col-sm-9">
-                    @if (handover.DanhGiaSao.HasValue)
-                    {
-                        for (int i = 1; i <= 5; i++)
+        <!-- ═══ Display Mode ═══ -->
+        <div id="s10Display" class="@(!hasData ? "d-none" : "")">
+            @if (hasData)
+            {
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Đã hoàn thành đào tạo:</dt>
+                    <dd class="col-sm-8">
+                        @if (handover!.DaHoanThanhDaoTao)
                         {
-                            if (i <= handover.DanhGiaSao.Value)
-                            {
-                                <i class="fas fa-star text-warning"></i>
-                            }
-                            else
-                            {
-                                <i class="far fa-star text-warning"></i>
-                            }
+                            <span class="badge bg-success"><i class="fas fa-check"></i> Đã hoàn thành</span>
                         }
-                        <span class="ms-2">(@handover.DanhGiaSao.Value/5)</span>
-                    }
-                    else
-                    {
-                        <span class="text-muted">Chưa đánh giá</span>
-                    }
-                </dd>
+                        else
+                        {
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Chưa hoàn thành</span>
+                        }
+                    </dd>
 
-                <dt class="col-sm-3">Nhận xét:</dt>
-                <dd class="col-sm-9">@(handover.NhanXet ?? "Chưa có nhận xét")</dd>
-            </dl>
-        }
-        else
-        {
-            <p class="text-muted">Chưa có dữ liệu cho bước này.</p>
-        }
+                    <dt class="col-sm-4">Đánh giá:</dt>
+                    <dd class="col-sm-8">
+                        @if (handover.DanhGiaSao.HasValue)
+                        {
+                            for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= handover.DanhGiaSao.Value)
+                                {
+                                    <i class="fas fa-star text-warning"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-star text-warning"></i>
+                                }
+                            }
+                            <span class="ms-2 fw-semibold">(@handover.DanhGiaSao.Value/5)</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa đánh giá</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Nhận xét:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(handover.NhanXet))
+                        {
+                            <div class="border rounded p-2 bg-light">@Html.Raw(handover.NhanXet.Replace("\n", "<br />"))</div>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa có nhận xét</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Ngày tạo:</dt>
+                    <dd class="col-sm-8">@handover.NgayTao.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    @if (handover.NgaySua.HasValue)
+                    {
+                        <dt class="col-sm-4">Cập nhật lần cuối:</dt>
+                        <dd class="col-sm-8">@handover.NgaySua.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                </dl>
+            }
+        </div>
+
+        <!-- ═══ Form Mode ═══ -->
+        <div id="s10Form" class="@(hasData ? "d-none" : "")">
+            <form id="s10HandoverForm">
+                <input type="hidden" name="projectId" value="@Model.ProjectId" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-graduation-cap me-1 text-primary"></i>Đã hoàn thành đào tạo
+                        </label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="DaHoanThanhDaoTao" id="s10DaoTao"
+                                   @(handover?.DaHoanThanhDaoTao == true ? "checked" : "") />
+                            <label class="form-check-label" for="s10DaoTao">Đã hoàn thành đào tạo vận hành</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-star me-1 text-warning"></i>Đánh giá (1-5 sao)
+                        </label>
+                        <div id="s10StarRating" class="d-flex gap-1 mt-1">
+                            @{
+                                int curStar = handover?.DanhGiaSao ?? 0;
+                            }
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="@(i <= curStar ? "fas" : "far") fa-star text-warning fs-4"
+                                   style="cursor:pointer" data-star="@i" onclick="s10_setStar(@i)"></i>
+                            }
+                        </div>
+                        <input type="hidden" name="DanhGiaSao" id="s10DanhGiaSao" value="@curStar" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-comment-alt me-1 text-info"></i>Nhận xét
+                        </label>
+                        <textarea class="form-control" name="NhanXet" id="s10NhanXet" rows="3"
+                                  placeholder="Nhận xét về quá trình bàn giao...">@(handover?.NhanXet ?? "")</textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="button" class="btn btn-primary px-4" onclick="s10_save()">
+                        <i class="fas fa-save me-1"></i>@(hasData ? "Cập nhật" : "Lưu")
+                    </button>
+                    @if (hasData)
+                    {
+                        <button type="button" class="btn btn-outline-secondary" onclick="s10_cancelEdit()">
+                            <i class="fas fa-times me-1"></i>Hủy
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
+
     </div>
-    <div class="card-footer">
-        <button class="btn btn-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
-            <i class="fas fa-arrow-left"></i> Quay lại
+    <div class="card-footer bg-white d-flex justify-content-between">
+        <button class="btn btn-outline-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
+            <i class="fas fa-arrow-left"></i> Quay lại bước trước
         </button>
-        @if (Model.StepNumber < 11 && Model.Steps[Model.StepNumber].IsAccessible)
+        @if (Model.StepNumber < 14 && Model.Steps.Count > Model.StepNumber && Model.Steps[Model.StepNumber].IsAccessible)
         {
             <button class="btn btn-primary step-nav-btn" data-step="@(Model.StepNumber + 1)">
-                Tiếp tục <i class="fas fa-arrow-right"></i>
+                Tiếp tục bước @(Model.StepNumber + 1) <i class="fas fa-arrow-right"></i>
             </button>
         }
     </div>
 </div>
 
+<script>
+    function s10_toggleEdit() {
+        document.getElementById('s10Display').classList.add('d-none');
+        document.getElementById('s10Form').classList.remove('d-none');
+        document.getElementById('s10EditToggle').classList.add('d-none');
+    }
+
+    function s10_cancelEdit() {
+        document.getElementById('s10Display').classList.remove('d-none');
+        document.getElementById('s10Form').classList.add('d-none');
+        document.getElementById('s10EditToggle').classList.remove('d-none');
+    }
+
+    function s10_setStar(n) {
+        document.getElementById('s10DanhGiaSao').value = n;
+        const stars = document.querySelectorAll('#s10StarRating i');
+        stars.forEach((s, idx) => {
+            s.className = (idx < n ? 'fas' : 'far') + ' fa-star text-warning fs-4';
+        });
+    }
+
+    async function s10_save() {
+        const form = document.getElementById('s10HandoverForm');
+        const fd = new FormData(form);
+        fd.set('DaHoanThanhDaoTao', document.getElementById('s10DaoTao').checked ? 'true' : 'false');
+
+        const btn = event.target.closest('button');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang lưu...';
+
+        try {
+            const r = await fetch('/Handover/SaveInline', { method: 'POST', body: fd });
+            const d = await r.json();
+
+            if (d.success) {
+                s10_toast(d.message || '✅ Đã lưu thành công!', 'success');
+                setTimeout(() => {
+                    const stepBtn = document.querySelector('.step-nav-btn[data-step="10"], [data-step-number="10"]');
+                    if (stepBtn) stepBtn.click();
+                    else location.reload();
+                }, 1000);
+            } else {
+                s10_toast(d.message || 'Lỗi khi lưu.', 'danger');
+            }
+        } catch (e) {
+            s10_toast('Lỗi kết nối: ' + e.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+
+    function s10_toast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+        t.style = 'z-index:9999;min-width:280px';
+        t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 5000);
+    }
+</script>

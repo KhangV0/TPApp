@@ -14,13 +14,17 @@ namespace TPApp.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly Services.INotificationQueueService _notifQueue;
 
-        public LiquidationController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment, Services.IWorkflowService workflowService)
+        public LiquidationController(AppDbContext context, UserManager<ApplicationUser> userManager,
+            IWebHostEnvironment environment, Services.IWorkflowService workflowService,
+            Services.INotificationQueueService notifQueue)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
             _workflowService = workflowService;
+            _notifQueue = notifQueue;
         }
 
         // Helper method to get current user ID as int
@@ -205,6 +209,88 @@ namespace TPApp.Controllers
             else if (extension == ".xlsx") contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
             return File(memory, contentType, Path.GetFileName(filePath));
+        }
+
+        // POST: /Liquidation/SaveInline (AJAX from Step 14)
+        [HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SaveInline(
+            int projectId, string? GiaTriThanhToanConLai, string? SoHoaDon,
+            string? SanDaChuyenTien, string? HopDongClosed,
+            IFormFile? HoaDonUpload)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var entity = await _context.LiquidationReports
+                    .FirstOrDefaultAsync(x => x.ProjectId == projectId);
+
+                bool isNew = entity == null;
+                if (isNew)
+                {
+                    entity = new LiquidationReport
+                    {
+                        ProjectId = projectId,
+                        NguoiTao = userId,
+                        NgayTao = DateTime.Now
+                    };
+                }
+
+                // Parse money
+                if (!string.IsNullOrWhiteSpace(GiaTriThanhToanConLai))
+                {
+                    var clean = GiaTriThanhToanConLai.Replace(".", "").Replace(",", "").Trim();
+                    if (decimal.TryParse(clean, out decimal val))
+                        entity.GiaTriThanhToanConLai = val;
+                }
+
+                entity.SoHoaDon = SoHoaDon;
+                entity.SanDaChuyenTien = SanDaChuyenTien == "true";
+                entity.HopDongClosed = HopDongClosed == "true";
+                entity.StatusId = entity.SanDaChuyenTien ? 2 : 1;
+                entity.NguoiSua = userId;
+                entity.NgaySua = DateTime.Now;
+
+                // Handle invoice file
+                if (HoaDonUpload != null && HoaDonUpload.Length > 0)
+                {
+                    if (HoaDonUpload.Length > 10 * 1024 * 1024)
+                        return Json(new { success = false, message = "File hóa đơn không được quá 10MB." });
+
+                    var folder = Path.Combine(_environment.WebRootPath, "uploads", "liquidations");
+                    Directory.CreateDirectory(folder);
+                    var ext = Path.GetExtension(HoaDonUpload.FileName).ToLowerInvariant();
+                    var name = $"{Guid.NewGuid()}{ext}";
+                    using (var stream = new FileStream(Path.Combine(folder, name), FileMode.Create))
+                        await HoaDonUpload.CopyToAsync(stream);
+                    entity.HoaDonFile = $"/uploads/liquidations/{name}";
+                }
+
+                if (isNew)
+                    _context.LiquidationReports.Add(entity);
+
+                await _context.SaveChangesAsync();
+
+                if (entity.ProjectId.HasValue)
+                    await _workflowService.CompleteStep(entity.ProjectId.Value, 14);
+
+                // Notify project members
+                var proj = await _context.Projects.FindAsync(projectId);
+                if (proj != null)
+                {
+                    var msg = $"Thanh lý đã được {(isNew ? "tạo" : "cập nhật")}. {(entity.HopDongClosed ? "Hợp đồng đã đóng." : "")}";
+                    if (proj.CreatedBy.HasValue)
+                        await _notifQueue.QueueAsync(proj.CreatedBy.Value, projectId, "💵 Bước 14: Thanh lý", msg);
+                    if (proj.SelectedSellerId.HasValue)
+                        await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, projectId, "💵 Bước 14: Thanh lý", msg);
+                }
+
+                return Json(new { success = true, message = isNew ? "✅ Đã lưu thanh lý." : "✅ Đã cập nhật thành công." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
         }
     }
 }

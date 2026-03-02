@@ -14,12 +14,15 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly Services.INotificationQueueService _notifQueue;
 
-        public HandoverController(AppDbContext context, UserManager<ApplicationUser> userManager, Services.IWorkflowService workflowService)
+        public HandoverController(AppDbContext context, UserManager<ApplicationUser> userManager,
+            Services.IWorkflowService workflowService, Services.INotificationQueueService notifQueue)
         {
             _context = context;
             _userManager = userManager;
             _workflowService = workflowService;
+            _notifQueue = notifQueue;
         }
 
         // Helper method to get current user ID as int
@@ -107,6 +110,65 @@ namespace TPApp.Controllers
             }
 
             return View(report);
+        }
+
+        // POST: /Handover/SaveInline (AJAX from Step 10)
+        [HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SaveInline(
+            int projectId, string? DaHoanThanhDaoTao,
+            int? DanhGiaSao, string? NhanXet)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var entity = await _context.HandoverReports
+                    .FirstOrDefaultAsync(x => x.ProjectId == projectId);
+
+                bool isNew = entity == null;
+                if (isNew)
+                {
+                    entity = new HandoverReport
+                    {
+                        ProjectId = projectId,
+                        NguoiTao = userId,
+                        NgayTao = DateTime.Now
+                    };
+                }
+
+                entity.DaHoanThanhDaoTao = DaHoanThanhDaoTao == "true";
+                entity.DanhGiaSao = DanhGiaSao;
+                entity.NhanXet = NhanXet;
+                entity.StatusId = 1;
+                entity.NguoiSua = userId;
+                entity.NgaySua = DateTime.Now;
+
+                if (isNew)
+                    _context.HandoverReports.Add(entity);
+
+                await _context.SaveChangesAsync();
+
+                // Complete Step 10
+                if (entity.ProjectId.HasValue)
+                    await _workflowService.CompleteStep(entity.ProjectId.Value, 10);
+
+                // Notify project members
+                var proj = await _context.Projects.FindAsync(projectId);
+                if (proj != null)
+                {
+                    var msg = $"Bàn giao đã được {(isNew ? "tạo" : "cập nhật")}. Đánh giá: {DanhGiaSao ?? 0} sao";
+                    if (proj.CreatedBy.HasValue)
+                        await _notifQueue.QueueAsync(proj.CreatedBy.Value, projectId, "🤝 Bước 10: Bàn giao", msg);
+                    if (proj.SelectedSellerId.HasValue)
+                        await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, projectId, "🤝 Bước 10: Bàn giao", msg);
+                }
+
+                return Json(new { success = true, message = isNew ? "✅ Đã lưu bàn giao." : "✅ Đã cập nhật thành công." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
         }
     }
 }

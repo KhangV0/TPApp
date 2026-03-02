@@ -18,11 +18,13 @@ namespace TPApp.Controllers
         private readonly IContractAuditService     _audit;
         private readonly ISystemParameterService   _sysParams;
         private readonly ILogger<SigningController> _logger;
+        private readonly Services.INotificationQueueService _notifQueue;
 
         public SigningController(
             AppDbContext context, UserManager<ApplicationUser> userManager,
             IContractSigningService signing, IContractAuditService audit,
-            ISystemParameterService sysParams, ILogger<SigningController> logger)
+            ISystemParameterService sysParams, ILogger<SigningController> logger,
+            Services.INotificationQueueService notifQueue)
         {
             _context    = context;
             _userManager = userManager;
@@ -30,6 +32,7 @@ namespace TPApp.Controllers
             _audit      = audit;
             _sysParams  = sysParams;
             _logger     = logger;
+            _notifQueue = notifQueue;
         }
 
         private int GetUserId()
@@ -108,6 +111,25 @@ namespace TPApp.Controllers
                 var ip     = HttpContext.Connection.RemoteIpAddress?.ToString();
                 var ua     = Request.Headers["User-Agent"].ToString();
                 var (ok, msg) = await _signing.ConfirmBuyerOtpAsync(dto.RequestId, userId, dto.OtpCode, ip, ua);
+
+                // Notify on successful sign
+                if (ok)
+                {
+                    var contract = await _context.ProjectContracts.FindAsync(dto.ContractId);
+                    if (contract?.ProjectId != null)
+                    {
+                        var proj = await _context.Projects.FindAsync(contract.ProjectId);
+                        if (proj != null)
+                        {
+                            var notifMsg = "Bên A (Đơn vị mua) đã ký số hợp đồng thành công.";
+                            if (proj.CreatedBy.HasValue)
+                                await _notifQueue.QueueAsync(proj.CreatedBy.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                            if (proj.SelectedSellerId.HasValue)
+                                await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                        }
+                    }
+                }
+
                 return Json(new { success = ok, message = msg });
             }
             catch (Exception ex)
@@ -145,6 +167,25 @@ namespace TPApp.Controllers
                 var ip     = HttpContext.Connection.RemoteIpAddress?.ToString();
                 var ua     = Request.Headers["User-Agent"].ToString();
                 var (ok, msg) = await _signing.ConfirmSellerOtpAsync(dto.RequestId, userId, dto.OtpCode, ip, ua);
+
+                // Notify on successful sign
+                if (ok)
+                {
+                    var contract = await _context.ProjectContracts.FindAsync(dto.ContractId);
+                    if (contract?.ProjectId != null)
+                    {
+                        var proj = await _context.Projects.FindAsync(contract.ProjectId);
+                        if (proj != null)
+                        {
+                            var notifMsg = "Bên B (Đơn vị cung cấp) đã ký số hợp đồng thành công.";
+                            if (proj.CreatedBy.HasValue)
+                                await _notifQueue.QueueAsync(proj.CreatedBy.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                            if (proj.SelectedSellerId.HasValue)
+                                await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                        }
+                    }
+                }
+
                 return Json(new { success = ok, message = msg });
             }
             catch (Exception ex)

@@ -1,117 +1,276 @@
 @model TPApp.ViewModel.StepContentVm
+@using System.IO
+@using Microsoft.EntityFrameworkCore
+@inject TPApp.Data.AppDbContext DbCtx
 
 @{
     var training = Model.StepData as TPApp.Entities.TrainingHandover;
+    if (training == null)
+    {
+        training = await DbCtx.TrainingHandovers
+            .FirstOrDefaultAsync(x => x.ProjectId == Model.ProjectId);
+    }
+    bool hasData = training != null;
 }
 
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-            <i class="fas fa-chalkboard-teacher"></i> Bước 11: Đào tạo & Chuyển giao Vận hành
+            <i class="fas fa-chalkboard-teacher"></i> Bước 11: Đào tạo &amp; Chuyển giao Vận hành
         </h5>
-        @if (training != null)
+        @if (hasData)
         {
-            <button class="btn btn-light btn-sm edit-step-btn" data-step="11" data-project-id="@Model.ProjectId">
+            <button class="btn btn-light btn-sm" id="s11EditToggle" onclick="s11_toggleEdit()">
                 <i class="fas fa-edit"></i> Chỉnh sửa
             </button>
         }
     </div>
     <div class="card-body">
-        @if (training != null)
-        {
-            <dl class="row">
-                <dt class="col-sm-3">Nội dung đào tạo:</dt>
-                <dd class="col-sm-9">
-                    <div class="border rounded p-2 bg-light">
-                        @Html.Raw(training.NoiDungDaoTao.Replace("\n", "<br />"))
+
+        <!-- ═══ Display Mode ═══ -->
+        <div id="s11Display" class="@(!hasData ? "d-none" : "")">
+            @if (hasData)
+            {
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Nội dung đào tạo:</dt>
+                    <dd class="col-sm-8">
+                        <div class="border rounded p-2 bg-light">
+                            @Html.Raw(training!.NoiDungDaoTao?.Replace("\n", "<br />") ?? "")
+                        </div>
+                    </dd>
+
+                    @if (training.SoNguoiThamGia.HasValue)
+                    {
+                        <dt class="col-sm-4">Số người tham gia:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-info fs-6"><i class="fas fa-users"></i> @training.SoNguoiThamGia.Value người</span>
+                        </dd>
+                    }
+
+                    @if (training.SoGioDaoTao.HasValue)
+                    {
+                        <dt class="col-sm-4">Số giờ đào tạo:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-primary fs-6"><i class="fas fa-clock"></i> @training.SoGioDaoTao.Value giờ</span>
+                        </dd>
+                    }
+
+                    <dt class="col-sm-4">Tài liệu đào tạo:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(training.TaiLieuDaoTao))
+                        {
+                            <a href="@training.TaiLieuDaoTao" target="_blank" class="text-decoration-none">
+                                <i class="fas fa-file-pdf text-danger"></i> <strong>@System.IO.Path.GetFileName(training.TaiLieuDaoTao)</strong>
+                            </a>
+                        }
+                        else { <span class="text-muted">Chưa có file</span> }
+                    </dd>
+
+                    <dt class="col-sm-4">Video hướng dẫn:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(training.VideoHuongDan))
+                        {
+                            @if (training.VideoHuongDan.Contains("youtube.com") || training.VideoHuongDan.Contains("youtu.be"))
+                            {
+                                var vid = training.VideoHuongDan;
+                                var ytId = "";
+                                if (vid.Contains("v=")) { ytId = vid.Split("v=")[1].Split("&")[0]; }
+                                else if (vid.Contains("youtu.be/")) { ytId = vid.Split("youtu.be/")[1].Split("?")[0]; }
+
+                                if (!string.IsNullOrEmpty(ytId))
+                                {
+                                    <div class="ratio ratio-16x9" style="max-width:480px">
+                                        <iframe src="https://www.youtube.com/embed/@ytId" allowfullscreen></iframe>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <a href="@training.VideoHuongDan" target="_blank" class="text-decoration-none">
+                                        <i class="fab fa-youtube text-danger"></i> <strong>Xem video trên YouTube</strong>
+                                    </a>
+                                }
+                            }
+                            else
+                            {
+                                <a href="@training.VideoHuongDan" target="_blank" class="text-decoration-none">
+                                    <i class="fas fa-video text-primary"></i> <strong>@System.IO.Path.GetFileName(training.VideoHuongDan)</strong>
+                                </a>
+                            }
+                        }
+                        else { <span class="text-muted">Chưa có video</span> }
+                    </dd>
+
+                    <dt class="col-sm-4">Đã hoàn thành:</dt>
+                    <dd class="col-sm-8">
+                        @if (training.DaHoanThanh)
+                        {
+                            <span class="badge bg-success"><i class="fas fa-check"></i> Đã hoàn thành</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Đang thực hiện</span>
+                        }
+                    </dd>
+
+                    @if (training.NgayBatDau.HasValue)
+                    {
+                        <dt class="col-sm-4">Ngày bắt đầu:</dt>
+                        <dd class="col-sm-8">@training.NgayBatDau.Value.ToString("dd/MM/yyyy")</dd>
+                    }
+                    @if (training.NgayKetThuc.HasValue)
+                    {
+                        <dt class="col-sm-4">Ngày kết thúc:</dt>
+                        <dd class="col-sm-8">@training.NgayKetThuc.Value.ToString("dd/MM/yyyy")</dd>
+                    }
+
+                    <dt class="col-sm-4">Ngày tạo:</dt>
+                    <dd class="col-sm-8">@training.NgayTao.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    @if (training.NgaySua.HasValue)
+                    {
+                        <dt class="col-sm-4">Cập nhật lần cuối:</dt>
+                        <dd class="col-sm-8">@training.NgaySua.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                </dl>
+            }
+        </div>
+
+        <!-- ═══ Form Mode ═══ -->
+        <div id="s11Form" class="@(hasData ? "d-none" : "")">
+            <form id="s11TrainingForm" enctype="multipart/form-data">
+                <input type="hidden" name="projectId" value="@Model.ProjectId" />
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-book-open me-1 text-primary"></i>Nội dung đào tạo <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" name="NoiDungDaoTao" id="s11NoiDung" rows="3"
+                                  placeholder="Mô tả nội dung đào tạo..." required>@(training?.NoiDungDaoTao ?? "")</textarea>
                     </div>
-                </dd>
 
-                @if (training.SoNguoiThamGia.HasValue)
-                {
-                    <dt class="col-sm-3">Số người tham gia:</dt>
-                    <dd class="col-sm-9">
-                        <span class="badge bg-info fs-6">
-                            <i class="fas fa-users"></i> @training.SoNguoiThamGia.Value người
-                        </span>
-                    </dd>
-                }
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-users me-1 text-info"></i>Số người tham gia
+                        </label>
+                        <input type="number" class="form-control" name="SoNguoiThamGia"
+                               value="@(training?.SoNguoiThamGia?.ToString() ?? "")" min="1" placeholder="VD: 10" />
+                    </div>
 
-                @if (training.SoGioDaoTao.HasValue)
-                {
-                    <dt class="col-sm-3">Số giờ đào tạo:</dt>
-                    <dd class="col-sm-9">
-                        <span class="badge bg-primary fs-6">
-                            <i class="fas fa-clock"></i> @training.SoGioDaoTao.Value giờ
-                        </span>
-                    </dd>
-                }
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-clock me-1 text-primary"></i>Số giờ đào tạo
+                        </label>
+                        <input type="number" class="form-control" name="SoGioDaoTao"
+                               value="@(training?.SoGioDaoTao?.ToString() ?? "")" min="1" placeholder="VD: 40" />
+                    </div>
 
-                <dt class="col-sm-3">Tài liệu đào tạo:</dt>
-                <dd class="col-sm-9">
-                    @if (!string.IsNullOrEmpty(training.TaiLieuDaoTao))
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-check-double me-1 text-success"></i>Hoàn thành
+                        </label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="DaHoanThanh" id="s11DaHoanThanh"
+                                   @(training?.DaHoanThanh == true ? "checked" : "") />
+                            <label class="form-check-label" for="s11DaHoanThanh">Đã hoàn thành đào tạo</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-calendar-alt me-1 text-primary"></i>Ngày bắt đầu
+                        </label>
+                        <input type="date" class="form-control" name="NgayBatDau"
+                               value="@(training?.NgayBatDau?.ToString("yyyy-MM-dd") ?? "")" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-calendar-check me-1 text-success"></i>Ngày kết thúc
+                        </label>
+                        <input type="date" class="form-control" name="NgayKetThuc"
+                               value="@(training?.NgayKetThuc?.ToString("yyyy-MM-dd") ?? "")" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-file-upload me-1 text-warning"></i>Tài liệu đào tạo
+                        </label>
+                        <input type="file" class="form-control" name="TaiLieuFile"
+                               accept=".pdf,.doc,.docx,.ppt,.pptx" />
+                        <small class="text-muted">PDF, Word, PowerPoint — tối đa 10MB</small>
+                        @if (hasData && !string.IsNullOrEmpty(training!.TaiLieuDaoTao))
+                        {
+                            <div class="mt-1 small text-success">
+                                <i class="fas fa-check-circle me-1"></i>File hiện tại: @System.IO.Path.GetFileName(training.TaiLieuDaoTao)
+                            </div>
+                        }
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-video me-1 text-danger"></i>Video hướng dẫn
+                        </label>
+                        <!-- Tab toggle -->
+                        <ul class="nav nav-tabs nav-fill mb-2" id="s11VideoTabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" onclick="s11_switchVideoTab('upload'); return false;">
+                                    <i class="fas fa-upload me-1"></i>Upload file
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="s11_switchVideoTab('youtube'); return false;">
+                                    <i class="fab fa-youtube me-1 text-danger"></i>YouTube
+                                </a>
+                            </li>
+                        </ul>
+                        <div id="s11VideoUpload">
+                            <input type="file" class="form-control" name="VideoFile"
+                                   accept=".mp4,.avi,.mov,.wmv" />
+                            <small class="text-muted">MP4, AVI, MOV — tối đa 50MB</small>
+                        </div>
+                        <div id="s11VideoYoutube" class="d-none">
+                            <input type="url" class="form-control" name="VideoYoutubeUrl" id="s11YoutubeUrl"
+                                   value="@(hasData && training!.VideoHuongDan != null && (training.VideoHuongDan.Contains("youtube") || training.VideoHuongDan.Contains("youtu.be")) ? training.VideoHuongDan : "")"
+                                   placeholder="https://www.youtube.com/watch?v=..." />
+                            <small class="text-muted">Dán link YouTube của video hướng dẫn</small>
+                        </div>
+                        @if (hasData && !string.IsNullOrEmpty(training!.VideoHuongDan))
+                        {
+                            <div class="mt-1 small text-success">
+                                @if (training.VideoHuongDan.Contains("youtube") || training.VideoHuongDan.Contains("youtu.be"))
+                                {
+                                    <span><i class="fab fa-youtube me-1"></i>Video hiện tại: @training.VideoHuongDan</span>
+                                }
+                                else
+                                {
+                                    <span><i class="fas fa-check-circle me-1"></i>Video hiện tại: @System.IO.Path.GetFileName(training.VideoHuongDan)</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="button" class="btn btn-primary px-4" onclick="s11_save()">
+                        <i class="fas fa-save me-1"></i>@(hasData ? "Cập nhật" : "Lưu")
+                    </button>
+                    @if (hasData)
                     {
-                        <i class="fas fa-file-pdf text-danger"></i>
-                        <strong>@System.IO.Path.GetFileName(training.TaiLieuDaoTao)</strong>
+                        <button type="button" class="btn btn-outline-secondary" onclick="s11_cancelEdit()">
+                            <i class="fas fa-times me-1"></i>Hủy
+                        </button>
                     }
-                    else
-                    {
-                        <span class="text-muted">Chưa có file</span>
-                    }
-                </dd>
+                </div>
+            </form>
+        </div>
 
-                <dt class="col-sm-3">Video hướng dẫn:</dt>
-                <dd class="col-sm-9">
-                    @if (!string.IsNullOrEmpty(training.VideoHuongDan))
-                    {
-                        <i class="fas fa-video text-primary"></i>
-                        <strong>@System.IO.Path.GetFileName(training.VideoHuongDan)</strong>
-                    }
-                    else
-                    {
-                        <span class="text-muted">Chưa có video</span>
-                    }
-                </dd>
-
-                <dt class="col-sm-3">Đã hoàn thành:</dt>
-                <dd class="col-sm-9">
-                    @if (training.DaHoanThanh)
-                    {
-                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã hoàn thành</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning"><i class="fas fa-clock"></i> Đang thực hiện</span>
-                    }
-                </dd>
-
-                @if (training.NgayBatDau.HasValue)
-                {
-                    <dt class="col-sm-3">Ngày bắt đầu:</dt>
-                    <dd class="col-sm-9">@training.NgayBatDau.Value.ToString("dd/MM/yyyy")</dd>
-                }
-
-                @if (training.NgayKetThuc.HasValue)
-                {
-                    <dt class="col-sm-3">Ngày kết thúc:</dt>
-                    <dd class="col-sm-9">@training.NgayKetThuc.Value.ToString("dd/MM/yyyy")</dd>
-                }
-            </dl>
-        }
-        else
-        {
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                <strong>Mô tả:</strong> Đào tạo đội ngũ vận hành và chuyển giao kiến thức
-            </div>
-            <p class="text-muted">Chưa có dữ liệu cho bước này.</p>
-        }
     </div>
-    <div class="card-footer">
-        <button class="btn btn-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
+    <div class="card-footer bg-white d-flex justify-content-between">
+        <button class="btn btn-outline-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
             <i class="fas fa-arrow-left"></i> Quay lại bước trước
         </button>
-        @if (Model.StepNumber < 14 && Model.Steps[Model.StepNumber].IsAccessible)
+        @if (Model.StepNumber < 14 && Model.Steps.Count > Model.StepNumber && Model.Steps[Model.StepNumber].IsAccessible)
         {
             <button class="btn btn-primary step-nav-btn" data-step="@(Model.StepNumber + 1)">
                 Tiếp tục bước @(Model.StepNumber + 1) <i class="fas fa-arrow-right"></i>
@@ -120,3 +279,73 @@
     </div>
 </div>
 
+<script>
+    function s11_toggleEdit() {
+        document.getElementById('s11Display').classList.add('d-none');
+        document.getElementById('s11Form').classList.remove('d-none');
+        document.getElementById('s11EditToggle').classList.add('d-none');
+    }
+
+    function s11_cancelEdit() {
+        document.getElementById('s11Display').classList.remove('d-none');
+        document.getElementById('s11Form').classList.add('d-none');
+        document.getElementById('s11EditToggle').classList.remove('d-none');
+    }
+
+    function s11_switchVideoTab(tab) {
+        const tabs = document.querySelectorAll('#s11VideoTabs .nav-link');
+        tabs.forEach(t => t.classList.remove('active'));
+        if (tab === 'upload') {
+            tabs[0].classList.add('active');
+            document.getElementById('s11VideoUpload').classList.remove('d-none');
+            document.getElementById('s11VideoYoutube').classList.add('d-none');
+        } else {
+            tabs[1].classList.add('active');
+            document.getElementById('s11VideoUpload').classList.add('d-none');
+            document.getElementById('s11VideoYoutube').classList.remove('d-none');
+        }
+    }
+
+    async function s11_save() {
+        const form = document.getElementById('s11TrainingForm');
+        const noiDung = document.getElementById('s11NoiDung').value.trim();
+        if (!noiDung) { s11_toast('Vui lòng nhập nội dung đào tạo.', 'warning'); return; }
+
+        const fd = new FormData(form);
+        fd.set('DaHoanThanh', document.getElementById('s11DaHoanThanh').checked ? 'true' : 'false');
+
+        const btn = event.target.closest('button');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang lưu...';
+
+        try {
+            const r = await fetch('/Training/SaveInline', { method: 'POST', body: fd });
+            const d = await r.json();
+            if (d.success) {
+                s11_toast(d.message || '✅ Đã lưu!', 'success');
+                setTimeout(() => {
+                    const stepBtn = document.querySelector('.step-nav-btn[data-step="11"], [data-step-number="11"]');
+                    if (stepBtn) stepBtn.click(); else location.reload();
+                }, 1000);
+            } else {
+                s11_toast(d.message || 'Lỗi khi lưu.', 'danger');
+            }
+        } catch (e) {
+            s11_toast('Lỗi kết nối: ' + e.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+
+    function s11_toast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+        t.style = 'z-index:9999;min-width:280px';
+        t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 5000);
+    }
+</script>

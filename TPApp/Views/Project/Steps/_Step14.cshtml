@@ -1,72 +1,250 @@
 @model TPApp.ViewModel.StepContentVm
+@using Microsoft.EntityFrameworkCore
+@inject TPApp.Data.AppDbContext DbCtx
 
 @{
-    var liquidation = Model.StepData as TPApp.Entities.LiquidationReport;
+    var liq = Model.StepData as TPApp.Entities.LiquidationReport;
+    if (liq == null)
+    {
+        liq = await DbCtx.LiquidationReports
+            .FirstOrDefaultAsync(x => x.ProjectId == Model.ProjectId);
+    }
+    bool hasData = liq != null;
 }
 
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Bước 14: Thanh lý</h5>
-        @if (liquidation != null)
+        <h5 class="mb-0">
+            <i class="fas fa-file-invoice-dollar"></i> Bước 14: Thanh lý
+        </h5>
+        @if (hasData)
         {
-            <button class="btn btn-light btn-sm edit-step-btn" data-step="14" data-project-id="@Model.ProjectId">
+            <button class="btn btn-light btn-sm" id="s14EditToggle" onclick="s14_toggleEdit()">
                 <i class="fas fa-edit"></i> Chỉnh sửa
             </button>
         }
     </div>
     <div class="card-body">
-        @if (liquidation != null)
-        {
-            <dl class="row">
-                <dt class="col-sm-3">Giá trị thanh toán còn lại:</dt>
-                <dd class="col-sm-9">
-                    @if (liquidation.GiaTriThanhToanConLai.HasValue)
-                    {
-                        <span class="badge bg-info fs-6">@liquidation.GiaTriThanhToanConLai.Value.ToString("N0") VNĐ</span>
-                    }
-                    else
-                    {
-                        <span class="text-muted">0 VNĐ</span>
-                    }
-                </dd>
 
-                <dt class="col-sm-3">Số hóa đơn:</dt>
-                <dd class="col-sm-9"><strong>@(liquidation.SoHoaDon ?? "Chưa có")</strong></dd>
+        <!-- ═══ Display Mode ═══ -->
+        <div id="s14Display" class="@(!hasData ? "d-none" : "")">
+            @if (hasData)
+            {
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Giá trị thanh toán còn lại:</dt>
+                    <dd class="col-sm-8">
+                        @if (liq!.GiaTriThanhToanConLai.HasValue)
+                        {
+                            <span class="badge bg-info fs-6">@liq.GiaTriThanhToanConLai.Value.ToString("N0") VNĐ</span>
+                        }
+                        else { <span class="text-muted">0 VNĐ</span> }
+                    </dd>
 
-                <dt class="col-sm-3">Đã chuyển tiền:</dt>
-                <dd class="col-sm-9">
-                    @if (liquidation.SanDaChuyenTien)
-                    {
-                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã chuyển</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning"><i class="fas fa-times"></i> Chưa chuyển</span>
-                    }
-                </dd>
+                    <dt class="col-sm-4">Số hóa đơn:</dt>
+                    <dd class="col-sm-8"><strong>@(liq.SoHoaDon ?? "Chưa có")</strong></dd>
 
-                <dt class="col-sm-3">Hợp đồng đã đóng:</dt>
-                <dd class="col-sm-9">
-                    @if (liquidation.HopDongClosed)
+                    <dt class="col-sm-4">Hóa đơn:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(liq.HoaDonFile))
+                        {
+                            <a href="@liq.HoaDonFile" target="_blank" class="text-decoration-none">
+                                <i class="fas fa-file-invoice text-primary me-1"></i><strong>@System.IO.Path.GetFileName(liq.HoaDonFile)</strong>
+                            </a>
+                        }
+                        else { <span class="text-muted">Chưa có file</span> }
+                    </dd>
+
+                    <dt class="col-sm-4">Đã chuyển tiền:</dt>
+                    <dd class="col-sm-8">
+                        @if (liq.SanDaChuyenTien)
+                        {
+                            <span class="badge bg-success"><i class="fas fa-check"></i> Đã chuyển</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Chưa chuyển</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Hợp đồng đã đóng:</dt>
+                    <dd class="col-sm-8">
+                        @if (liq.HopDongClosed)
+                        {
+                            <span class="badge bg-success"><i class="fas fa-check"></i> Đã đóng</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary"><i class="fas fa-clock"></i> Chưa đóng</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Ngày tạo:</dt>
+                    <dd class="col-sm-8">@liq.NgayTao.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    @if (liq.NgaySua.HasValue)
                     {
-                        <span class="badge bg-success"><i class="fas fa-check"></i> Đã đóng</span>
+                        <dt class="col-sm-4">Cập nhật lần cuối:</dt>
+                        <dd class="col-sm-8">@liq.NgaySua.Value.ToString("dd/MM/yyyy HH:mm")</dd>
                     }
-                    else
+                </dl>
+            }
+        </div>
+
+        <!-- ═══ Form Mode ═══ -->
+        <div id="s14Form" class="@(hasData ? "d-none" : "")">
+            <form id="s14LiqForm" enctype="multipart/form-data">
+                <input type="hidden" name="projectId" value="@Model.ProjectId" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-money-bill-wave me-1 text-success"></i>Giá trị thanh toán còn lại (VNĐ)
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="s14GiaTriDisplay"
+                                   value="@(liq?.GiaTriThanhToanConLai.HasValue == true ? liq.GiaTriThanhToanConLai.Value.ToString("N0") : "")"
+                                   placeholder="VD: 50.000.000"
+                                   oninput="s14_formatMoney(this)" />
+                            <span class="input-group-text">VNĐ</span>
+                        </div>
+                        <input type="hidden" name="GiaTriThanhToanConLai" id="s14GiaTri"
+                               value="@(liq?.GiaTriThanhToanConLai?.ToString("0") ?? "")" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-receipt me-1 text-primary"></i>Số hóa đơn
+                        </label>
+                        <input type="text" class="form-control" name="SoHoaDon"
+                               value="@(liq?.SoHoaDon ?? "")"
+                               placeholder="VD: HD-2026-001" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-file-upload me-1 text-warning"></i>File hóa đơn
+                        </label>
+                        <input type="file" class="form-control" name="HoaDonUpload"
+                               accept=".pdf,.jpg,.jpeg,.png" />
+                        <small class="text-muted">PDF, JPG, PNG — tối đa 10MB</small>
+                        @if (hasData && !string.IsNullOrEmpty(liq!.HoaDonFile))
+                        {
+                            <div class="mt-1 small text-success">
+                                <span><i class="fas fa-check-circle me-1"></i>File hiện tại: @System.IO.Path.GetFileName(liq.HoaDonFile)</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-money-check me-1 text-success"></i>Chuyển tiền
+                        </label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="SanDaChuyenTien" id="s14DaChuyen"
+                                   @(liq?.SanDaChuyenTien == true ? "checked" : "") />
+                            <label class="form-check-label" for="s14DaChuyen">Đã chuyển tiền</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-lock me-1 text-danger"></i>Đóng hợp đồng
+                        </label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="HopDongClosed" id="s14HopDongClosed"
+                                   @(liq?.HopDongClosed == true ? "checked" : "") />
+                            <label class="form-check-label" for="s14HopDongClosed">Hợp đồng đã đóng</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="button" class="btn btn-primary px-4" onclick="s14_save()">
+                        <i class="fas fa-save me-1"></i>@(hasData ? "Cập nhật" : "Lưu")
+                    </button>
+                    @if (hasData)
                     {
-                        <span class="badge bg-secondary"><i class="fas fa-clock"></i> Chưa đóng</span>
+                        <button type="button" class="btn btn-outline-secondary" onclick="s14_cancelEdit()">
+                            <i class="fas fa-times me-1"></i>Hủy
+                        </button>
                     }
-                </dd>
-            </dl>
-        }
-        else
-        {
-            <p class="text-muted">Chưa có dữ liệu cho bước này.</p>
-        }
+                </div>
+            </form>
+        </div>
+
     </div>
-    <div class="card-footer">
-        <button class="btn btn-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
-            <i class="fas fa-arrow-left"></i> Quay lại
+    <div class="card-footer bg-white">
+        <button class="btn btn-outline-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
+            <i class="fas fa-arrow-left"></i> Quay lại bước trước
         </button>
     </div>
 </div>
 
+<script>
+    function s14_toggleEdit() {
+        document.getElementById('s14Display').classList.add('d-none');
+        document.getElementById('s14Form').classList.remove('d-none');
+        document.getElementById('s14EditToggle').classList.add('d-none');
+    }
+    function s14_cancelEdit() {
+        document.getElementById('s14Display').classList.remove('d-none');
+        document.getElementById('s14Form').classList.add('d-none');
+        document.getElementById('s14EditToggle').classList.remove('d-none');
+    }
+
+    function s14_formatMoney(el) {
+        let raw = el.value.replace(/\D/g, '');
+        if (raw === '') { el.value = ''; document.getElementById('s14GiaTri').value = ''; return; }
+        let num = parseInt(raw, 10);
+        el.value = num.toLocaleString('vi-VN');
+        document.getElementById('s14GiaTri').value = num.toString();
+    }
+
+    function s14_syncRawValue() {
+        let display = document.getElementById('s14GiaTriDisplay').value;
+        let raw = display.replace(/\D/g, '');
+        document.getElementById('s14GiaTri').value = raw;
+    }
+
+    async function s14_save() {
+        s14_syncRawValue();
+        const form = document.getElementById('s14LiqForm');
+        const fd = new FormData(form);
+        fd.set('SanDaChuyenTien', document.getElementById('s14DaChuyen').checked ? 'true' : 'false');
+        fd.set('HopDongClosed', document.getElementById('s14HopDongClosed').checked ? 'true' : 'false');
+
+        const btn = event.target.closest('button');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang lưu...';
+
+        try {
+            const r = await fetch('/Liquidation/SaveInline', { method: 'POST', body: fd });
+            const d = await r.json();
+            if (d.success) {
+                s14_toast(d.message || '✅ Đã lưu!', 'success');
+                setTimeout(() => {
+                    const stepBtn = document.querySelector('.step-nav-btn[data-step="14"], [data-step-number="14"]');
+                    if (stepBtn) stepBtn.click(); else location.reload();
+                }, 1000);
+            } else {
+                s14_toast(d.message || 'Lỗi khi lưu.', 'danger');
+            }
+        } catch (e) {
+            s14_toast('Lỗi kết nối: ' + e.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+
+    function s14_toast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+        t.style = 'z-index:9999;min-width:280px';
+        t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 5000);
+    }
+</script>

@@ -14,13 +14,17 @@ namespace TPApp.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IWebHostEnvironment _environment;
         private readonly Services.IWorkflowService _workflowService;
+        private readonly Services.INotificationQueueService _notifQueue;
 
-        public AdvancePaymentController(AppDbContext context, UserManager<ApplicationUser> userManager, IWebHostEnvironment environment, Services.IWorkflowService workflowService)
+        public AdvancePaymentController(AppDbContext context, UserManager<ApplicationUser> userManager,
+            IWebHostEnvironment environment, Services.IWorkflowService workflowService,
+            Services.INotificationQueueService notifQueue)
         {
             _context = context;
             _userManager = userManager;
             _environment = environment;
             _workflowService = workflowService;
+            _notifQueue = notifQueue;
         }
 
         // Helper method to get current user ID as int
@@ -202,6 +206,17 @@ namespace TPApp.Controllers
                 // Complete Step 8
                 if (entity.ProjectId.HasValue)
                     await _workflowService.CompleteStep(entity.ProjectId.Value, 8);
+
+                // Notify project members
+                var proj = await _context.Projects.FindAsync(projectId);
+                if (proj != null)
+                {
+                    var msg = $"Xác nhận tạm ứng {SoTienTamUng:N0} VNĐ đã được {(isNew ? "tạo" : "cập nhật")}";
+                    if (proj.CreatedBy.HasValue)
+                        await _notifQueue.QueueAsync(proj.CreatedBy.Value, projectId, "💰 Bước 8: Tạm ứng", msg);
+                    if (proj.SelectedSellerId.HasValue)
+                        await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, projectId, "💰 Bước 8: Tạm ứng", msg);
+                }
 
                 return Json(new { success = true, message = isNew ? "✅ Đã lưu xác nhận tạm ứng." : "✅ Đã cập nhật thành công." });
             }
