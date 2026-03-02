@@ -31,7 +31,7 @@
     };
 
     /* parse comma-separated values */
-    var selectedCats = Model.CategoryId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+    var selectedCats = Model.CategoryId?.Split(new[]{',',';'}, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
     var selectedGoals = Model.InvestmentGoal?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
     var selectedTransfer = Model.TransferMethod?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
 

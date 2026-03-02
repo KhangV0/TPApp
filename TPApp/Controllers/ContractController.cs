@@ -113,7 +113,7 @@ namespace TPApp.Controllers
                 var (role, canAccess) = await GetRoleAsync(projectId, userId);
                 if (!canAccess || role > 2) return Forbid();
 
-                if (contractFile == null) return RedirectToAction("Index", new { projectId });
+                if (contractFile == null) return Redirect($"/Project/Details/{projectId}?step=6");
 
                 await _contracts.UploadDraftAsync(projectId, userId, contractFile, _env);
                 TempData["Success"] = "📎 Hợp đồng đã được tải lên thành công.";
@@ -122,7 +122,7 @@ namespace TPApp.Controllers
             {
                 TempData["Error"] = ex.Message;
             }
-            return RedirectToAction("Index", new { projectId });
+            return Redirect($"/Project/Details/{projectId}?step=6");
         }
 
         // ─── POST /Contract/Approve  (AJAX) ───────────────────────────────────
@@ -196,6 +196,7 @@ namespace TPApp.Controllers
 
         // ─── GET /Contract/Download/{contractId}/{type} ───────────────────────
         [HttpGet]
+        [Route("Contract/Download/{contractId}/{type?}")]
         public async Task<IActionResult> Download(int contractId, string type = "original")
         {
             var userId = GetUserId();
@@ -206,13 +207,28 @@ namespace TPApp.Controllers
             else
                 file = await _contracts.GetDownloadOriginalAsync(contractId, userId);
 
-            if (string.IsNullOrEmpty(file.Path) || !System.IO.File.Exists(file.Path))
+            if (string.IsNullOrEmpty(file.Path))
                 return NotFound("File không tồn tại.");
 
-            var bytes = await System.IO.File.ReadAllBytesAsync(file.Path);
-            var mime  = file.Name?.EndsWith(".pdf") == true ? "application/pdf"
+            // Support both absolute and relative paths
+            var fullPath = file.Path;
+            if (!System.IO.File.Exists(fullPath))
+            {
+                // Try as relative path under wwwroot
+                fullPath = System.IO.Path.Combine(_env.WebRootPath, file.Path.TrimStart('/').Replace('/', System.IO.Path.DirectorySeparatorChar));
+            }
+            if (!System.IO.File.Exists(fullPath))
+                return NotFound($"File không tồn tại: {file.Name}");
+
+            var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+            var isPdf = file.Name?.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) == true;
+            var mime  = isPdf ? "application/pdf"
                       : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-            return File(bytes, mime, file.Name ?? "contract.pdf");
+            // PDF: return inline (no filename) so iframe/embed can render it
+            // Non-PDF: return as download
+            if (isPdf)
+                return File(bytes, mime);
+            return File(bytes, mime, file.Name ?? "contract.docx");
         }
     }
 

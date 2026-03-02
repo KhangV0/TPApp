@@ -121,7 +121,7 @@
                         <div class="row g-2">
                             @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
                             {
-                                var currentCats = Model.CategoryId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                                var currentCats = Model.CategoryId?.Split(new[]{',',';'}, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
                                 var chk = currentCats.Contains(item.Value) ? "checked" : "";
                                 <div class="col-md-4 col-lg-3">
                                     <div class="form-check">
@@ -442,7 +442,7 @@ $(function(){
     function syncCategoryCheckboxes() {
         var vals = [];
         $('.chk-linhvuc:checked').each(function(){ vals.push($(this).val()); });
-        $('#hdnCategoryId').val(vals.join(','));
+        $('#hdnCategoryId').val(vals.join(';'));
     }
     $(document).on('change', '.chk-linhvuc', syncCategoryCheckboxes);
     syncCategoryCheckboxes();

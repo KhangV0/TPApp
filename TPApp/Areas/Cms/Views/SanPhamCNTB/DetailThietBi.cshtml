@@ -116,7 +116,7 @@
                 <div class="mb-3">
                     <span class="small text-muted d-block mb-1">4. Lĩnh vực áp dụng</span>
                     @{
-                        var currentCatIds = Model.CategoryId?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                        var currentCatIds = Model.CategoryId?.Split(new[]{',',';'}, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
                     }
                     @if (linhVucItems != null && linhVucItems.Any(x => !string.IsNullOrEmpty(x.Value)))
                     {

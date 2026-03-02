@@ -10,6 +10,12 @@ namespace TPApp.Interfaces
         /// <summary>Verify OTP and record completed Buyer signature.</summary>
         Task<(bool ok, string message)> ConfirmBuyerOtpAsync(int requestId, int userId, string otpCode, string? ipAddress, string? userAgent);
 
+        /// <summary>Initiate OTP e-sign flow for Seller.</summary>
+        Task<(bool ok, string message, int requestId)> StartSellerOtpAsync(int contractId, int userId, string? ipAddress);
+
+        /// <summary>Verify OTP and record completed Seller signature.</summary>
+        Task<(bool ok, string message)> ConfirmSellerOtpAsync(int requestId, int userId, string otpCode, string? ipAddress, string? userAgent);
+
         /// <summary>Initiate CA remote signing for Seller via provider adapter.</summary>
         Task<(bool ok, string message, int requestId)> StartSellerCAAsync(int contractId, int userId, string provider, string callbackUrl, string? ipAddress);
 

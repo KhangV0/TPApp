@@ -5,6 +5,8 @@
     var linhVucList = ViewBag.LinhVucList as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new();
     var defaultLinhVuc = ViewBag.DefaultLinhVuc as string ?? "";
     var autoMaRFQ = ViewBag.AutoMaRFQ as string ?? "RFQ-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+    var hasFromId = (bool?)ViewBag.HasFromId ?? false;
+    var isConsultant = Model.UserRole == 3; // Only consultant sees search controls
 }
 
 <div class="card shadow-sm">
@@ -160,9 +162,11 @@
             @* Searchable Supplier Invitation Section *@
             <hr class="my-4" />
             <div class="p-3 bg-light border rounded">
-                <h6 class="mb-3"><i class="fas fa-search"></i> Tìm nhà cung ứng chưa được mời</h6>
-                <p class="text-muted small">Tìm và chọn nhà cung ứng để gửi yêu cầu báo giá. Họ sẽ nhận được thông báo.</p>
+                <h6 class="mb-3"><i class="fas fa-search"></i> Nhà cung ứng phù hợp</h6>
+                <p class="text-muted small">Nhà cung ứng phù hợp, trường hợp bạn muốn tìm thêm nhà cung ứng vui lòng liên hệ với tư vấn của Sàn.</p>
 
+                @if (isConsultant)
+                {
                 <div class="row g-3 mb-3">
                     <div class="col-md-5">
                         <label class="form-label fw-semibold small">Tìm theo tên / Email / SĐT</label>
@@ -191,12 +195,30 @@
                         </button>
                     </div>
                 </div>
+                }
 
                 <div id="supplierSearchResults">
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-users fa-2x d-block mb-2"></i>
-                        Nhấn <strong>Tìm</strong> để hiển thị nhà cung ứng
-                    </div>
+                    @if (!isConsultant && hasFromId)
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x d-block mb-2"></i>
+                            Đang tải nhà cung ứng phù hợp...
+                        </div>
+                    }
+                    else if (!isConsultant && !hasFromId)
+                    {
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Chưa có nhà cung ứng phù hợp. Vui lòng liên hệ tư vấn của Sàn.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-users fa-2x d-block mb-2"></i>
+                            Nhấn <strong>Tìm</strong> để hiển thị nhà cung ứng
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -204,6 +226,25 @@
                 (function () {
                     var projectId = @Model.ProjectId;
                     var rfqId = @rfq.Id;
+
+                    // Local showToast: delegates to parent page's showToast if available, else self-creates
+                    function showToast(type, message) {
+                        if (typeof window.showToast === 'function' && window.showToast !== showToast) {
+                            window.showToast(type, message);
+                            return;
+                        }
+                        var typeMap = {
+                            'success': 'bg-success text-white',
+                            'warning': 'bg-warning text-dark',
+                            'danger': 'bg-danger text-white',
+                            'error': 'bg-danger text-white',
+                            'info': 'bg-info text-white'
+                        };
+                        var cls = typeMap[type] || typeMap['info'];
+                        var $t = $('<div class="position-fixed top-0 end-0 p-3" style="z-index:9999"><div class="toast show ' + cls + '" role="alert"><div class="toast-body"><i class="fas fa-info-circle"></i> ' + message + '</div></div></div>');
+                        $('body').append($t);
+                        setTimeout(function () { $t.fadeOut(function () { $(this).remove(); }); }, 3000);
+                    }
 
                     // Select2 for category filter
                     $('#selectFilterLinhVuc').select2({
@@ -214,10 +255,12 @@
                     });
 
                     var currentPage = 1;
+                    var hasFromId = @(hasFromId ? "true" : "false");
+                    var isConsultant = @(isConsultant ? "true" : "false");
 
-                    // Auto-search on load if default lĩnh vực is set
+                    // Auto-search: for non-consultant with FromId, or consultant with default lĩnh vực
                     var defaultLV = '@Html.Raw(defaultLinhVuc)';
-                    if (defaultLV) {
+                    if ((!isConsultant && hasFromId) || (isConsultant && defaultLV)) {
                         searchSuppliers(1);
                     }
 
@@ -460,11 +503,52 @@
 
 <script>
     // Set minimum date to today for deadline picker
-    document.addEventListener('DOMContentLoaded', function() {
-        const dateInput = document.getElementById('hanChotNopHoSo');
+    (function setMinDate() {
+        var dateInput = document.getElementById('hanChotNopHoSo');
         if (dateInput) {
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.setAttribute('min', today);
+            dateInput.setAttribute('min', new Date().toISOString().split('T')[0]);
         }
-    });
+    })();
+
+    // Wait for jQuery then bind AJAX submit
+    (function waitForJQuery() {
+        if (typeof $ === 'undefined' || typeof jQuery === 'undefined') {
+            setTimeout(waitForJQuery, 50);
+            return;
+        }
+
+        // AJAX submit for RFQ creation form
+        $(document).on('submit', '#createRfqForm', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var btn = form.find('button[type="submit"]');
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Đang tạo...');
+
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function(resp) {
+                    if (resp.success) {
+                        if (typeof showToast === 'function') showToast('success', resp.message);
+                        else alert('✅ ' + resp.message);
+                        // Reload step 3 content
+                        $.get('/Project/Step', { projectId: @Model.ProjectId, stepNumber: 3 }, function(data) {
+                            $('#step-content').html(data);
+                        });
+                    } else {
+                        if (typeof showToast === 'function') showToast('error', resp.message || 'Có lỗi xảy ra.');
+                        else alert('❌ ' + (resp.message || 'Có lỗi xảy ra.'));
+                        btn.prop('disabled', false).html('<i class="fas fa-save"></i> Tạo Yêu cầu Báo giá');
+                    }
+                },
+                error: function() {
+                    if (typeof showToast === 'function') showToast('error', 'Lỗi kết nối. Vui lòng thử lại.');
+                    else alert('❌ Lỗi kết nối.');
+                    btn.prop('disabled', false).html('<i class="fas fa-save"></i> Tạo Yêu cầu Báo giá');
+                }
+            });
+        });
+    })();
 </script>

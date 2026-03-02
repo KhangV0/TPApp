@@ -1385,3 +1385,72 @@
         padding-top: 135px;
     }
 }
+
+/* ====================================================
+   MOBILE RESPONSIVE FIXES (smartphones ≤ 480px)
+   ==================================================== */
+@media (max-width: 480px) {
+
+    /* Prevent bottom nav from covering content */
+    body {
+        padding-bottom: 65px;
+    }
+
+    .hp-footer {
+        padding-bottom: 70px;
+    }
+
+    /* Section padding - prevent content touching screen edges */
+    .hp-section,
+    .home-page-container .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    /* Section title spacing */
+    .hp-section-title {
+        margin-top: 30px;
+        font-size: 1.4rem;
+        padding: 0 8px;
+    }
+
+    /* Stats cards - better spacing in 2-column grid */
+    .hp-stat-item {
+        padding: 12px 8px;
+    }
+
+    .hp-stat-number {
+        font-size: 1.8rem;
+    }
+
+    /* Chart legend readability */
+    .chart-container,
+    canvas {
+        max-width: 100%;
+    }
+
+    /* Yeu cau cong nghe cards */
+    .yc-card {
+        height: 220px;
+        margin-bottom: 16px;
+    }
+
+    .yc-name {
+        font-size: 0.9rem;
+    }
+
+    .yc-btn {
+        padding: 6px 14px;
+        font-size: 0.85rem;
+    }
+
+    /* Search container on mobile header */
+    .hp-header-search-container.mobile {
+        max-width: 160px;
+    }
+
+    .hp-header-search-input {
+        font-size: 0.8rem;
+        padding: 5px 10px 5px 30px;
+    }
+}

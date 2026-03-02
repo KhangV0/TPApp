@@ -1,38 +1,68 @@
 @model TPApp.ViewModel.StepContentVm
 @using TPApp.Entities
+@using TPApp.Interfaces
+@using Microsoft.EntityFrameworkCore
+@inject TPApp.Data.AppDbContext DbCtx
 
 @{
     int projectId = Model.ProjectId;
 
-    // Tìm contract active cho project này
+    // Load contract — fallback to DB if StepData is null (initial page load)
     var contract = Model.StepData as ProjectContract;
+    if (contract == null)
+    {
+        contract = await DbCtx.ProjectContracts
+            .Where(x => x.ProjectId == projectId && x.IsActive)
+            .OrderByDescending(x => x.VersionNumber)
+            .FirstOrDefaultAsync();
+    }
 
     bool isLocked = Model.Steps.Count >= 7 && !Model.Steps[6].IsAccessible;
+
+    // Derive buyer/seller from project
+    var proj7 = await DbCtx.Projects.FindAsync(projectId);
+    var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+    int currentUserId = int.TryParse(userIdStr, out int uid7) ? uid7 : 0;
+
+    bool isBuyer  = proj7?.CreatedBy == currentUserId;
+    bool isSeller = proj7?.SelectedSellerId == currentUserId;
+
+    // Lookup actual user names (same pattern as Step 6)
+    var buyerName = proj7?.CreatedBy.HasValue == true
+        ? (await DbCtx.Users.AsNoTracking().Where(u => u.Id == proj7.CreatedBy.Value).Select(u => u.FullName ?? u.UserName).FirstOrDefaultAsync()) ?? "Buyer"
+        : "Buyer";
+    var sellerName = proj7?.SelectedSellerId.HasValue == true
+        ? (await DbCtx.Users.AsNoTracking().Where(u => u.Id == proj7.SelectedSellerId.Value).Select(u => u.FullName ?? u.UserName).FirstOrDefaultAsync()) ?? "Seller"
+        : "Seller";
+
+    var status    = ViewBag.SigningStatus as ContractSigningStatusDto ?? new ContractSigningStatusDto();
+    var provider  = (string)(ViewBag.Provider ?? "VNPT");
+    var auditLogs = ViewBag.AuditLogs as List<ContractAuditLog> ?? new();
 }
 
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-gradient d-flex justify-content-between align-items-center"
-         style="background: linear-gradient(135deg,#1a3c6e,#2563eb); color:#fff">
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-            <i class="fas fa-signature me-2"></i>Bước 7: Ký số hợp đồng (CA / e-Sign OTP)
+            <i class="fas fa-signature me-2"></i>Bước 7: Ký số hợp đồng
         </h5>
-        @if (contract != null && contract.StatusId >= 5)
+        @if (status.FullySigned)
         {
-            <span class="badge bg-success fs-6">
-                <i class="fas fa-check-double me-1"></i>Đã ký đầy đủ
-            </span>
+            <span class="badge bg-success fs-6"><i class="fas fa-check-double me-1"></i>Đã ký đầy đủ</span>
+        }
+        else if (contract != null && contract.StatusId >= 3)
+        {
+            <span class="badge bg-warning text-dark fs-6"><i class="fas fa-clock me-1"></i>Đang chờ ký</span>
         }
     </div>
 
     <div class="card-body">
-
         @if (isLocked)
         {
             <div class="alert alert-warning d-flex gap-2 align-items-start">
                 <i class="fas fa-lock fa-2x mt-1"></i>
                 <div>
                     <strong>Bước này chưa được mở khóa.</strong><br/>
-                    Vui lòng hoàn thành Bước 6 (Kiểm tra pháp lý – tất cả 3 bên đã duyệt và chốt ReadyToSign).
+                    Vui lòng hoàn thành Bước 6 (tất cả 3 bên đã duyệt và chốt ReadyToSign).
                 </div>
             </div>
         }
@@ -42,13 +72,19 @@
                 <i class="fas fa-info-circle fa-2x"></i>
                 <div>
                     <strong>Hợp đồng chưa được chuẩn bị.</strong><br/>
-                    Quay về Bước 6, tạo / upload hợp đồng và đảm bảo tất cả các bên đã phê duyệt trước khi ký.
+                    Quay về Bước 6, tạo / upload hợp đồng và đảm bảo tất cả các bên đã phê duyệt.
                 </div>
             </div>
-
-            <a href="/Contract/Index?projectId=@projectId" class="btn btn-outline-primary mt-2">
-                <i class="fas fa-arrow-left me-1"></i>Quay về Bước 6
-            </a>
+        }
+        else if (contract.StatusId < 3)
+        {
+            <div class="alert alert-warning d-flex gap-2 align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                <div>
+                    <strong>Hợp đồng chưa ở trạng thái ReadyToSign.</strong><br/>
+                    Quay về Bước 6 để hoàn tất phê duyệt 3 bên.
+                </div>
+            </div>
         }
         else
         {
@@ -75,11 +111,6 @@
                                     }
                                     <span class="badge @cls">@lbl</span>
                                 </dd>
-                                @if (contract.ReadyToSignAt.HasValue)
-                                {
-                                    <dt class="col-5">ReadyToSign:</dt>
-                                    <dd class="col-7">@contract.ReadyToSignAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
-                                }
                             </dl>
                         </div>
                     </div>
@@ -109,35 +140,229 @@
                 </div>
             </div>
 
-            <!-- Main CTA -->
-            @if (contract.StatusId == 5)
+            <!-- Contract file preview (like Step 6) -->
+            @if (!string.IsNullOrEmpty(contract.HtmlContent) || !string.IsNullOrEmpty(contract.OriginalFilePath))
             {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+                        <i class="fas fa-file-alt text-primary"></i>
+                        <strong>Nội dung hợp đồng</strong>
+                        <div class="ms-auto d-flex gap-2">
+                            @if (!string.IsNullOrEmpty(contract.OriginalFilePath))
+                            {
+                                <a href="/Contract/Download/@contract.Id/original" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>Tải gốc
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(contract.SignedFilePath))
+                            {
+                                <a href="/Contract/Download/@contract.Id/signed" class="btn btn-sm btn-success">
+                                    <i class="fas fa-file-signature me-1"></i>Tải bản ký
+                                </a>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body p-0" style="min-height:300px;max-height:600px;overflow:auto">
+                        @if (!string.IsNullOrEmpty(contract.HtmlContent))
+                        {
+                            <div class="p-3">@Html.Raw(contract.HtmlContent)</div>
+                        }
+                        else if (!string.IsNullOrEmpty(contract.OriginalFilePath))
+                        {
+                            var ext7 = System.IO.Path.GetExtension(contract.OriginalFileName ?? "").ToLowerInvariant();
+                            if (ext7 == ".pdf")
+                            {
+                                <iframe src="/Contract/Download/@contract.Id/original"
+                                        style="width:100%;height:500px;border:none;"
+                                        title="Xem hợp đồng PDF"></iframe>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-column align-items-center justify-content-center h-100 py-5 text-muted">
+                                    <i class="fas fa-file-word fa-4x text-primary mb-3"></i>
+                                    <p>@System.IO.Path.GetFileName(contract.OriginalFilePath)</p>
+                                    <a href="/Contract/Download/@contract.Id/original" class="btn btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i>Tải xuống để xem
+                                    </a>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!status.FullySigned)
+            {
+                <!-- Legal disclaimer — only show when not fully signed -->
+                <div class="alert alert-info d-flex gap-2 mb-4">
+                    <i class="fas fa-balance-scale fs-4"></i>
+                    <div>
+                        <strong>Thông báo pháp lý – Luật Giao dịch điện tử 2023</strong><br/>
+                        Hợp đồng điện tử có giá trị pháp lý tương đương văn bản giấy sau khi cả 2 bên ký số theo quy định.
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="legalAck" required />
+                            <label class="form-check-label fw-semibold" for="legalAck">
+                                Tôi xác nhận đã đọc và đồng ý với điều khoản pháp lý trên
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (status.FullySigned)
+            {
+                <!-- Both signed -->
                 <div class="alert alert-success d-flex align-items-center gap-3">
                     <i class="fas fa-check-circle fa-3x"></i>
                     <div>
                         <strong class="d-block fs-5">Hợp đồng đã được ký số đầy đủ!</strong>
-                        Cả Buyer và Seller đã ký số thành công. Quy trình pháp lý hoàn tất.
+                        @buyerName (Buyer) ký lúc: @(status.BuyerSignedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—") &nbsp;|&nbsp;
+                        @sellerName (Seller) ký lúc: @(status.SellerSignedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "—")
                     </div>
                 </div>
                 @if (!string.IsNullOrEmpty(contract.SignedFilePath))
                 {
-                    <a href="/Contract/Download/@contract.Id/signed" class="btn btn-success">
+                    <a href="/Contract/Download/@contract.Id/signed" class="btn btn-success btn-lg mt-2">
                         <i class="fas fa-download me-1"></i>Tải hợp đồng đã ký
                     </a>
                 }
             }
             else
             {
-                <div class="d-grid gap-2">
-                    <a href="/Signing/Index?projectId=@projectId"
-                       class="btn btn-primary btn-lg py-3">
-                        <i class="fas fa-signature me-2"></i>
-                        Đến trang Ký số hợp đồng
-                        <i class="fas fa-arrow-right ms-2"></i>
-                    </a>
-                    <small class="text-muted text-center">
-                        Buyer ký qua OTP · Seller ký qua CA (VNPT / FPT / Viettel) · Tuân theo Luật GDĐT 2023
-                    </small>
+                <div class="row g-4">
+                    <!-- Buyer OTP eSign -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm @(status.BuyerSigned ? "border-success" : "")">
+                            <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+                                <i class="fas fa-user text-primary"></i>
+                                <strong>@buyerName (Buyer) – Ký OTP</strong>
+                                @if (status.BuyerSigned)
+                                {<span class="badge bg-success ms-auto">✓ Đã ký @status.BuyerSignedAt?.ToLocalTime().ToString("dd/MM HH:mm")</span>}
+                            </div>
+                            <div class="card-body">
+                                @if (status.BuyerSigned)
+                                {
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                                        <p class="text-success fw-bold">@buyerName đã ký thành công</p>
+                                    </div>
+                                }
+                                else if (isBuyer)
+                                {
+                                    <h6 class="card-title mb-3"><i class="fas fa-shield-alt me-1"></i>Ký xác nhận bằng OTP</h6>
+                                    <div class="d-flex gap-3 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="buyerOtpChannel" id="buyerChannelEmail" value="email" checked />
+                                            <label class="form-check-label" for="buyerChannelEmail">
+                                                <i class="fas fa-envelope me-1"></i>Email
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="buyerOtpChannel" id="buyerChannelSms" value="sms" />
+                                            <label class="form-check-label" for="buyerChannelSms">
+                                                <i class="fas fa-sms me-1"></i>SMS
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div id="buyerSmsSection" class="mb-3" style="display:none;">
+                                        <label class="form-label small">Số điện thoại nhận OTP:</label>
+                                        <input type="tel" class="form-control" id="buyerPhoneNumber" placeholder="0912345678" />
+                                    </div>
+                                    <div id="buyerStep1">
+                                        <button class="btn btn-primary w-100 py-2" onclick="s7_requestOtp('buyer')">
+                                            <i class="fas fa-pen-nib me-1"></i>Gửi OTP & Ký xác nhận
+                                        </button>
+                                    </div>
+                                    <div id="buyerStep2" class="d-none">
+                                        <label class="form-label fw-semibold">Nhập mã OTP</label>
+                                        <div class="input-group mb-2">
+                                            <input type="text" id="buyerOtpInput" class="form-control form-control-lg text-center fw-bold"
+                                                   placeholder="_ _ _ _ _ _" maxlength="6" inputmode="numeric" style="letter-spacing:6px" />
+                                            <button class="btn btn-outline-secondary" onclick="s7_requestOtp('buyer')">Gửi lại</button>
+                                        </div>
+                                        <div id="buyerOtpTimer" class="text-muted small text-center mb-3"></div>
+                                        <button class="btn btn-success w-100 py-2" onclick="s7_verifyOtp('buyer')">
+                                            <i class="fas fa-lock me-1"></i>Xác nhận & Ký
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-4 text-muted">
+                                        <i class="fas fa-clock fa-2x mb-2"></i>
+                                        <p>Đang chờ @buyerName (Buyer) ký…</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seller OTP Sign -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm @(status.SellerSigned ? "border-success" : "")">
+                            <div class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+                                <i class="fas fa-building text-warning"></i>
+                                <strong>@sellerName (Seller) – Ký OTP</strong>
+                                @if (status.SellerSigned)
+                                {<span class="badge bg-success ms-auto">✓ Đã ký @status.SellerSignedAt?.ToLocalTime().ToString("dd/MM HH:mm")</span>}
+                            </div>
+                            <div class="card-body">
+                                @if (status.SellerSigned)
+                                {
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                                        <p class="text-success fw-bold">@sellerName đã ký thành công</p>
+                                    </div>
+                                }
+                                else if (isSeller)
+                                {
+                                    <h6 class="card-title mb-3"><i class="fas fa-shield-alt me-1"></i>Ký xác nhận bằng OTP</h6>
+                                    <div class="d-flex gap-3 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="sellerOtpChannel" id="sellerChannelEmail" value="email" checked />
+                                            <label class="form-check-label" for="sellerChannelEmail">
+                                                <i class="fas fa-envelope me-1"></i>Email
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="sellerOtpChannel" id="sellerChannelSms" value="sms" />
+                                            <label class="form-check-label" for="sellerChannelSms">
+                                                <i class="fas fa-sms me-1"></i>SMS
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div id="sellerSmsSection" class="mb-3" style="display:none;">
+                                        <label class="form-label small">Số điện thoại nhận OTP:</label>
+                                        <input type="tel" class="form-control" id="sellerPhoneNumber" placeholder="0912345678" />
+                                    </div>
+                                    <div id="sellerStep1">
+                                        <button class="btn btn-warning w-100 py-2" onclick="s7_requestOtp('seller')">
+                                            <i class="fas fa-pen-nib me-1"></i>Gửi OTP & Ký xác nhận
+                                        </button>
+                                    </div>
+                                    <div id="sellerStep2" class="d-none">
+                                        <label class="form-label fw-semibold">Nhập mã OTP</label>
+                                        <div class="input-group mb-2">
+                                            <input type="text" id="sellerOtpInput" class="form-control form-control-lg text-center fw-bold"
+                                                   placeholder="_ _ _ _ _ _" maxlength="6" inputmode="numeric" style="letter-spacing:6px" />
+                                            <button class="btn btn-outline-secondary" onclick="s7_requestOtp('seller')">Gửi lại</button>
+                                        </div>
+                                        <div id="sellerOtpTimer" class="text-muted small text-center mb-3"></div>
+                                        <button class="btn btn-success w-100 py-2" onclick="s7_verifyOtp('seller')">
+                                            <i class="fas fa-lock me-1"></i>Xác nhận & Ký
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-4 text-muted">
+                                        <i class="fas fa-clock fa-2x mb-2"></i>
+                                        <p>Đang chờ @sellerName (Seller) ký…</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
                 </div>
             }
         }
@@ -147,7 +372,7 @@
         <button class="btn btn-outline-secondary step-nav-btn" data-step="@(Model.StepNumber - 1)">
             <i class="fas fa-arrow-left"></i> Quay lại bước trước
         </button>
-        @if (Model.StepNumber < 11 && Model.Steps.Count > Model.StepNumber && Model.Steps[Model.StepNumber].IsAccessible)
+        @if (Model.StepNumber < 14 && Model.Steps.Count > Model.StepNumber && Model.Steps[Model.StepNumber].IsAccessible)
         {
             <button class="btn btn-primary step-nav-btn" data-step="@(Model.StepNumber + 1)">
                 Tiếp tục bước @(Model.StepNumber + 1) <i class="fas fa-arrow-right"></i>
@@ -155,3 +380,162 @@
         }
     </div>
 </div>
+
+<script>
+    const s7_contractId = @(contract?.Id ?? 0);
+    const s7_projectId = @Model.ProjectId;
+    let s7_timers = {};
+    let s7_requestIds = {};  // store requestId per role from Start response
+
+    function checkLegalAck() {
+        const el = document.getElementById('legalAck');
+        if (!el || !el.checked) {
+            s7_toast('Vui lòng xác nhận điều khoản pháp lý trước.', 'warning');
+            return false;
+        }
+        return true;
+    }
+
+    // Toggle SMS phone input
+    ['buyer', 'seller'].forEach(role => {
+        document.querySelectorAll(`input[name="${role}OtpChannel"]`).forEach(radio => {
+            radio.addEventListener('change', function() {
+                const section = document.getElementById(`${role}SmsSection`);
+                if (section) section.style.display = this.value === 'sms' ? 'block' : 'none';
+            });
+        });
+    });
+
+    // Request OTP (unified for buyer/seller)
+    async function s7_requestOtp(role) {
+        if (!checkLegalAck()) return;
+
+        const channel = document.querySelector(`input[name="${role}OtpChannel"]:checked`)?.value || 'email';
+        const phoneNumber = document.getElementById(`${role}PhoneNumber`)?.value || '';
+
+        if (channel === 'sms' && !phoneNumber) {
+            s7_toast('Vui lòng nhập số điện thoại nhận OTP.', 'warning');
+            return;
+        }
+
+        const endpoint = role === 'buyer' ? '/Signing/BuyerStart' : '/Signing/SellerStart';
+        const btn = event.target.closest('button');
+        const origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
+
+        try {
+            const r = await fetch(endpoint, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ contractId: s7_contractId, channel, phoneNumber })
+            });
+            const d = await r.json();
+
+            if (d.success) {
+                s7_requestIds[role] = d.requestId;  // save for Confirm
+                const sentMsg = channel === 'email'
+                    ? 'Mã OTP đã được gửi đến email của bạn.'
+                    : `Mã OTP đã được gửi đến số ${phoneNumber}.`;
+                s7_toast(sentMsg, 'info');
+
+                document.getElementById(`${role}Step1`).classList.add('d-none');
+                document.getElementById(`${role}Step2`).classList.remove('d-none');
+                document.getElementById(`${role}OtpInput`).value = '';
+                s7_startCountdown(role, 300);
+            } else {
+                s7_toast(d.message || 'Lỗi gửi OTP.', 'danger');
+            }
+        } catch (e) {
+            s7_toast('Lỗi kết nối: ' + e.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+
+    // Countdown timer
+    function s7_startCountdown(role, seconds) {
+        if (s7_timers[role]) clearInterval(s7_timers[role]);
+        const el = document.getElementById(`${role}OtpTimer`);
+        let remaining = seconds;
+
+        s7_timers[role] = setInterval(() => {
+            remaining--;
+            const m = Math.floor(remaining / 60);
+            const s = remaining % 60;
+            el.innerHTML = `OTP hết hạn sau: <strong class="text-danger">${m}:${s.toString().padStart(2,'0')}</strong>`;
+            if (remaining <= 0) {
+                clearInterval(s7_timers[role]);
+                el.innerHTML = '<span class="text-danger">OTP đã hết hạn. Vui lòng gửi lại.</span>';
+            }
+        }, 1000);
+    }
+
+    // Verify OTP (unified for buyer/seller)
+    async function s7_verifyOtp(role) {
+        const otp = document.getElementById(`${role}OtpInput`).value.trim();
+        if (!otp || otp.length !== 6) {
+            s7_toast('Vui lòng nhập đủ 6 chữ số OTP.', 'warning');
+            return;
+        }
+
+        const endpoint = role === 'buyer' ? '/Signing/BuyerConfirm' : '/Signing/SellerConfirm';
+        const btn = event.target.closest('button');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xác nhận...';
+
+        try {
+            const r = await fetch(endpoint, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ contractId: s7_contractId, requestId: s7_requestIds[role] || 0, otpCode: otp })
+            });
+            const d = await r.json();
+
+            if (d.success) {
+                clearInterval(s7_timers[role]);
+                s7_toast(d.message || '✅ Ký thành công!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                s7_toast(d.message || 'OTP không hợp lệ.', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock me-1"></i>Xác nhận & Ký';
+            }
+        } catch (e) {
+            s7_toast('Lỗi kết nối: ' + e.message, 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock me-1"></i>Xác nhận & Ký';
+        }
+    }
+
+    // Allow Enter key in OTP inputs
+    ['buyerOtpInput', 'sellerOtpInput'].forEach(id => {
+        document.getElementById(id)?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const role = id.startsWith('buyer') ? 'buyer' : 'seller';
+                s7_verifyOtp(role);
+            }
+        });
+    });
+
+    // Poll signing status
+    async function s7_pollStatus() {
+        const r = await fetch(`/Signing/Status?contractId=${s7_contractId}`);
+        const d = await r.json();
+        if (d.fullySigned) {
+            s7_toast('🎉 Cả hai bên đã ký!', 'success');
+            setTimeout(() => location.reload(), 2000);
+        }
+    }
+
+    function s7_toast(msg, type = 'success') {
+        const t = document.createElement('div');
+        t.className = `toast align-items-center text-bg-${type} border-0 show position-fixed bottom-0 end-0 m-3`;
+        t.style = 'z-index:9999;min-width:280px';
+        t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button></div>`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 5000);
+    }
+</script>

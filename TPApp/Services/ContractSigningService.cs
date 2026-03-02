@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Enums;
@@ -15,13 +17,16 @@ namespace TPApp.Services
         private readonly IContractAuditService    _audit;
         private readonly IWorkflowService         _workflow;
         private readonly ISystemParameterService  _sysParams;
+        private readonly IOtpEmailService         _otpEmail;
+        private readonly IConfiguration            _configuration;
         private readonly ILogger<ContractSigningService> _logger;
 
         public ContractSigningService(
             AppDbContext context, IESignGateway esign,
             ISigningProviderFactory providerFactory, IHashService hash,
             IContractAuditService audit, IWorkflowService workflow,
-            ISystemParameterService sysParams,
+            ISystemParameterService sysParams, IOtpEmailService otpEmail,
+            IConfiguration configuration,
             ILogger<ContractSigningService> logger)
         {
             _context         = context;
@@ -31,6 +36,8 @@ namespace TPApp.Services
             _audit           = audit;
             _workflow        = workflow;
             _sysParams       = sysParams;
+            _otpEmail        = otpEmail;
+            _configuration   = configuration;
             _logger          = logger;
         }
 
@@ -45,17 +52,30 @@ namespace TPApp.Services
             if (contract.StatusId < (int)ContractStatus.ReadyToSign)
                 return (false, "Hợp đồng chưa ở trạng thái ReadyToSign.", 0);
 
-            // Reuse existing ESignGateway OTP infrastructure
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return (false, "Không tìm thấy người dùng.", 0);
 
-            var phone = user.PhoneNumber ?? "";
-            if (string.IsNullOrEmpty(phone))
-                return (false, "Tài khoản chưa có số điện thoại.", 0);
+            var email    = user.Email ?? "";
+            var phone    = user.PhoneNumber ?? "";
+            var fullName = user.FullName ?? user.UserName ?? "Người dùng";
 
-            var otpTtl     = await _sysParams.GetIntAsync("ESIGN_OTP_TTL_SECONDS", 300);
-            var challengeRef = $"BUYER-OTP-{Guid.NewGuid():N}";
-            await _esign.SendOtpAsync(userId, phone);
+            if (string.IsNullOrEmpty(email) && string.IsNullOrEmpty(phone))
+                return (false, "Tài khoản chưa có email hoặc số điện thoại.", 0);
+
+            var otpTtl = await _sysParams.GetIntAsync("ESIGN_OTP_TTL_SECONDS", 300);
+
+            // Generate OTP directly (always available, regardless of TestMode)
+            var otp = new Random().Next(100000, 999999).ToString();
+            var otpHash = HashOtp(otp);
+            var challengeRef = $"BUYER-OTP-{otpHash}"; // store hash for verification
+
+            _logger.LogInformation("Step7 Buyer OTP for user {UserId}: {Otp}", userId, otp);
+
+            // Always send OTP via email
+            if (!string.IsNullOrEmpty(email))
+            {
+                await _otpEmail.SendOtpAsync(email, fullName, otp, "Buyer", contract.ProjectId);
+            }
 
             var req = new ContractSignatureRequest
             {
@@ -74,7 +94,10 @@ namespace TPApp.Services
             await _audit.AppendAsync("ContractSignatureRequest", req.Id.ToString(),
                 "BuyerOtpStarted", new { userId, challengeRef }, userId, ipAddress);
 
-            return (true, $"OTP đã gửi đến {phone[..3]}***{phone[^3..]}. Hiệu lực {otpTtl / 60} phút.", req.Id);
+            var maskedEmail = !string.IsNullOrEmpty(email) && email.Length > 3
+                ? email[..3] + "***" + email[email.IndexOf('@')..]
+                : email;
+            return (true, $"OTP đã gửi đến {maskedEmail}. Hiệu lực {otpTtl / 60} phút.", req.Id);
         }
 
         public async Task<(bool ok, string message)> ConfirmBuyerOtpAsync(
@@ -84,24 +107,19 @@ namespace TPApp.Services
             if (req == null || req.StatusId != (int)ContractSignatureStatus.Pending)
                 return (false, "Phiên ký không hợp lệ hoặc đã hết hạn.");
 
-            // Find the underlying ESign signature for OTP verification
-            // Use ESignGateway's OTP verify flow; we use challengeRef as the marker
-            var esignDoc = await _context.ESignDocuments
-                .FirstOrDefaultAsync(d => d.ProjectId == (
-                    _context.ProjectContracts
-                        .Where(c => c.Id == req.ContractId)
-                        .Select(c => c.ProjectId)
-                        .FirstOrDefault()));
-
-            // Simplified: call VerifyOtp via ESignGateway (reuses existing session mgmt)
-            // If no ESign doc exists for this contract, do basic OTP check stub
-            bool otpOk = true; // TODO: integrate via _esign.VerifyOtpAsync when ESign doc linked
-            if (esignDoc != null)
+            // Verify OTP
+            var isTestMode = _configuration.GetValue<bool>("ESign:TestMode", true);
+            bool otpOk;
+            if (isTestMode)
             {
-                var sigs = await _esign.GetDocumentSignaturesAsync(esignDoc.Id);
-                var signId = sigs.FirstOrDefault(s => s.SignerUserId == userId && s.Status == 0)?.Id ?? 0;
-                if (signId > 0)
-                    otpOk = await _esign.VerifyOtpAsync(signId, otpCode);
+                // TestMode: accept any 6-digit code
+                otpOk = otpCode.Length == 6 && int.TryParse(otpCode, out _);
+            }
+            else
+            {
+                // Production: verify against stored hash in ChallengeRef
+                var expectedHash = req.ChallengeRef?.Replace("BUYER-OTP-", "") ?? "";
+                otpOk = HashOtp(otpCode) == expectedHash;
             }
 
             if (!otpOk)
@@ -144,6 +162,122 @@ namespace TPApp.Services
                 "BuyerSigned", new { userId, ipAddress }, userId, ipAddress);
 
             return (true, "✅ Buyer đã ký thành công.");
+        }
+
+        // ─── Seller OTP e-sign ────────────────────────────────────────────────
+        public async Task<(bool ok, string message, int requestId)> StartSellerOtpAsync(
+            int contractId, int userId, string? ipAddress)
+        {
+            var contract = await _context.ProjectContracts.FindAsync(contractId);
+            if (contract == null)
+                return (false, "Không tìm thấy hợp đồng.", 0);
+
+            if (contract.StatusId < (int)ContractStatus.ReadyToSign)
+                return (false, "Hợp đồng chưa ở trạng thái ReadyToSign.", 0);
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return (false, "Không tìm thấy người dùng.", 0);
+
+            var email    = user.Email ?? "";
+            var phone    = user.PhoneNumber ?? "";
+            var fullName = user.FullName ?? user.UserName ?? "Người dùng";
+
+            if (string.IsNullOrEmpty(email) && string.IsNullOrEmpty(phone))
+                return (false, "Tài khoản chưa có email hoặc số điện thoại.", 0);
+
+            var otpTtl = await _sysParams.GetIntAsync("ESIGN_OTP_TTL_SECONDS", 300);
+
+            var otp = new Random().Next(100000, 999999).ToString();
+            var otpHash = HashOtp(otp);
+            var challengeRef = $"SELLER-OTP-{otpHash}";
+
+            _logger.LogInformation("Step7 Seller OTP for user {UserId}: {Otp}", userId, otp);
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                await _otpEmail.SendOtpAsync(email, fullName, otp, "Seller", contract.ProjectId);
+            }
+
+            var req = new ContractSignatureRequest
+            {
+                ContractId    = contractId,
+                UserId        = userId,
+                Role          = 2, // Seller
+                SignatureType = (int)ContractSignatureType.SellerOtpESign,
+                Provider      = "OTP",
+                StatusId      = (int)ContractSignatureStatus.Pending,
+                ChallengeRef  = challengeRef,
+                CreatedDate   = DateTime.UtcNow
+            };
+            _context.ContractSignatureRequests.Add(req);
+            await _context.SaveChangesAsync();
+
+            await _audit.AppendAsync("ContractSignatureRequest", req.Id.ToString(),
+                "SellerOtpStarted", new { userId, challengeRef }, userId, ipAddress);
+
+            var maskedEmail = !string.IsNullOrEmpty(email) && email.Length > 3
+                ? email[..3] + "***" + email[email.IndexOf('@')..]
+                : email;
+            return (true, $"OTP đã gửi đến {maskedEmail}. Hiệu lực {otpTtl / 60} phút.", req.Id);
+        }
+
+        public async Task<(bool ok, string message)> ConfirmSellerOtpAsync(
+            int requestId, int userId, string otpCode, string? ipAddress, string? userAgent)
+        {
+            var req = await _context.ContractSignatureRequests.FindAsync(requestId);
+            if (req == null || req.StatusId != (int)ContractSignatureStatus.Pending)
+                return (false, "Phiên ký không hợp lệ hoặc đã hết hạn.");
+
+            var isTestMode = _configuration.GetValue<bool>("ESign:TestMode", true);
+            bool otpOk;
+            if (isTestMode)
+            {
+                otpOk = otpCode.Length == 6 && int.TryParse(otpCode, out _);
+            }
+            else
+            {
+                var expectedHash = req.ChallengeRef?.Replace("SELLER-OTP-", "") ?? "";
+                otpOk = HashOtp(otpCode) == expectedHash;
+            }
+
+            if (!otpOk)
+            {
+                req.StatusId     = (int)ContractSignatureStatus.Failed;
+                req.ErrorCode    = "OTP_INVALID";
+                req.ErrorMessage = "Mã OTP không đúng.";
+                req.UpdatedDate  = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return (false, "Mã OTP không đúng hoặc đã hết hạn.");
+            }
+
+            var sig = new ContractSignature
+            {
+                ContractId         = req.ContractId,
+                SignatureRequestId = req.Id,
+                UserId             = req.UserId,
+                Role               = 2, // Seller
+                SignatureType      = (int)ContractSignatureType.SellerOtpESign,
+                Provider           = "OTP",
+                SignedAt           = DateTime.UtcNow,
+                VerificationStatus = 1,
+                IPAddress          = ipAddress,
+                UserAgent          = userAgent
+            };
+            _context.ContractSignatures.Add(sig);
+
+            req.StatusId    = (int)ContractSignatureStatus.Completed;
+            req.UpdatedDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            var contract = await _context.ProjectContracts.FindAsync(req.ContractId);
+            if (contract != null)
+                await TryCompleteStep7Async(contract.ProjectId, req.ContractId);
+
+            await _audit.AppendAsync("ContractSignature", sig.Id.ToString(),
+                "SellerSigned", new { userId, ipAddress }, userId, ipAddress);
+
+            return (true, "✅ Seller đã ký thành công.");
         }
 
         // ─── Seller CA remote signing ─────────────────────────────────────────
@@ -318,6 +452,14 @@ namespace TPApp.Services
 
             _logger.LogInformation("Step 7 completed for project {Id}.", projectId);
             return true;
+        }
+
+        // ─── Helper: hash OTP for storage/comparison ──────────────────────────
+        private static string HashOtp(string otp)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(otp));
+            return BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
         }
     }
 }

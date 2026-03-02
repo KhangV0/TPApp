@@ -50,7 +50,18 @@ namespace TPApp.Controllers
             var existing = await _context.NDAAgreements.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             if (existing != null) return RedirectToAction("Details", "Project", new { id = projectId });
 
-            return View(new NDAAgreement { ProjectId = projectId });
+            // Pre-fill
+            var user = await _userManager.GetUserAsync(User);
+            var model = new NDAAgreement
+            {
+                ProjectId = projectId,
+                BenA = user?.FullName ?? "",
+                BenB = "Trung tâm Thông tin, Thống kê và Ứng dụng tiến bộ khoa học công nghệ",
+                LoaiNDA = "Mẫu chuẩn của Sàn",
+                ThoiHanBaoMat = "3 năm"
+            };
+
+            return View(model);
         }
 
         // POST: /NDA/Create

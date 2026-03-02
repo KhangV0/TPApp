@@ -5,6 +5,7 @@ namespace TPApp.Enums
         BuyerOtpESign         = 1,
         SellerCA_Remote       = 2,
         SellerUSBToken_Local  = 3,
-        SellerHSM             = 4
+        SellerHSM             = 4,
+        SellerOtpESign        = 5
     }
 }

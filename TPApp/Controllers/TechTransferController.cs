@@ -35,9 +35,9 @@ namespace TPApp.Controllers
             return userId;
         }
 
-        // GET: /TechTransfer/Create
+        // GET: /TechTransfer/Create?fromId=18&typeData=1
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int? fromId = null, int? typeData = null)
         {
             ViewBag.LinhVucList = await _context.Categories.AsNoTracking()
                 .Where(c => c.ParentId == 1)
@@ -60,6 +60,36 @@ namespace TPApp.Controllers
                 model.DiaChi = user.DiaChi ?? "";
             }
 
+            // Store source reference
+            model.FromId = fromId;
+            model.TypeData = typeData;
+
+            // Pre-fill product info from SanPhamCNTB (typeData=1)
+            if (fromId.HasValue && (typeData ?? 1) == 1)
+            {
+                var product = await _context.SanPhamCNTBs.AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.ID == fromId.Value);
+
+                if (product != null)
+                {
+                    model.TenCongNghe = product.Name ?? "";
+
+                    // Lookup category title
+                    var catId = await _context.SanPhamCNTBCategories
+                        .Where(x => x.SanPhamCNTBId == fromId.Value)
+                        .Select(x => x.CatId)
+                        .FirstOrDefaultAsync();
+
+                    if (catId > 0)
+                    {
+                        model.LinhVuc = await _context.Categories
+                            .Where(x => x.CatId == catId)
+                            .Select(x => x.Title)
+                            .FirstOrDefaultAsync() ?? "";
+                    }
+                }
+            }
+
             return View(model);
         }
 
@@ -70,16 +100,20 @@ namespace TPApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                using (var transaction = _context.Database.BeginTransaction())
+                using var transaction = await _context.Database.BeginTransactionAsync();
                 {
                    try
                    {
                         var userId = GetCurrentUserId();
 
+                        // Truncate to match DB column limits
+                        var projectName = ("Dự án: " + model.TenCongNghe);
+                        if (projectName.Length > 500) projectName = projectName[..500];
+
                         // 1. Create Project
                         var project = new Project
                         {
-                            ProjectName = "Dự án: " + model.TenCongNghe,
+                            ProjectName = projectName,
                             ProjectCode = "PJ-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
                             Description = model.MoTaNhuCau,
                             StatusId = 1, // Active
@@ -119,14 +153,15 @@ namespace TPApp.Controllers
                              " Dự án đã được tạo",
                              $"Yêu cầu chuyển giao '{model.TenCongNghe}' đã ghi nhận thành công. Tiến hành bước 2: Ký NDA.");
 
-                        transaction.Commit();
+                        await transaction.CommitAsync();
 
                         return RedirectToAction("Details", "Project", new { id = project.Id });
                    }
                    catch (Exception ex)
                    {
-                       transaction.Rollback();
-                       ModelState.AddModelError("", "Lỗi tạo dự án: " + ex.Message);
+                       await transaction.RollbackAsync();
+                       var detail = ex.InnerException?.Message ?? ex.Message;
+                       ModelState.AddModelError("", "Lỗi tạo dự án: " + detail);
                    }
                 }
             }

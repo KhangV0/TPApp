@@ -117,25 +117,39 @@ namespace TPApp.Controllers
             }
         }
 
-        // ─── POST /Signing/SellerStart  (AJAX) ────────────────────────────────
+        // ─── POST /Signing/SellerStart  (AJAX – OTP) ──────────────────────────
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> SellerStart([FromBody] SignContractDto dto)
         {
             try
             {
-                var userId    = GetUserId();
-                var ip        = HttpContext.Connection.RemoteIpAddress?.ToString();
-                var provider  = await _sysParams.GetAsync("SIGNING_PROVIDER_DEFAULT") ?? "VNPT";
-                var callbackUrl = $"{Request.Scheme}://{Request.Host}/Signing/Callback/{provider}";
-
-                var (ok, msg, reqId) = await _signing.StartSellerCAAsync(
-                    dto.ContractId, userId, provider, callbackUrl, ip);
-
+                var userId = GetUserId();
+                var ip     = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var (ok, msg, reqId) = await _signing.StartSellerOtpAsync(dto.ContractId, userId, ip);
                 return Json(new { success = ok, message = msg, requestId = reqId });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "SellerStart error");
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // ─── POST /Signing/SellerConfirm  (AJAX – OTP) ──────────────────────────
+        [HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SellerConfirm([FromBody] ConfirmOtpDto dto)
+        {
+            try
+            {
+                var userId = GetUserId();
+                var ip     = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var ua     = Request.Headers["User-Agent"].ToString();
+                var (ok, msg) = await _signing.ConfirmSellerOtpAsync(dto.RequestId, userId, dto.OtpCode, ip, ua);
+                return Json(new { success = ok, message = msg });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SellerConfirm error");
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -182,8 +196,18 @@ namespace TPApp.Controllers
     }
 
     // ─── DTOs ─────────────────────────────────────────────────────────────────
-    public class SignContractDto { public int ContractId { get; set; } }
-    public class ConfirmOtpDto  { public int RequestId { get; set; } public string OtpCode { get; set; } = ""; }
+    public class SignContractDto
+    {
+        public int ContractId { get; set; }
+        public string Channel { get; set; } = "email";
+        public string PhoneNumber { get; set; } = "";
+    }
+    public class ConfirmOtpDto
+    {
+        public int ContractId { get; set; }
+        public int RequestId { get; set; }  // kept for backward compat
+        public string OtpCode { get; set; } = "";
+    }
     public class ProviderCallbackDto
     {
         public string  RequestRef      { get; set; } = "";

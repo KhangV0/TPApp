@@ -55,5 +55,11 @@ namespace TPApp.Entities
         public int? NguoiSua { get; set; } // int to match Users.UserId
 
         public DateTime? NgaySua { get; set; }
+
+        /// <summary>Source record ID (e.g. SanPhamCNTB.ID)</summary>
+        public int? FromId { get; set; }
+
+        /// <summary>Data type: 1=SanPhamCNTB, 2=... (extensible)</summary>
+        public int? TypeData { get; set; }
     }
 }

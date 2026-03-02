@@ -15,10 +15,9 @@ namespace TPApp.Entities
         public string ProjectCode { get; set; } = null!;
 
         [Required]
-        [StringLength(255)]
+        [StringLength(500)]
         public string ProjectName { get; set; } = null!;
 
-        [StringLength(500)]
         public string? Description { get; set; }
 
         public int StatusId { get; set; } = 1; // 1=Draft, 2=Active, 3=Completed

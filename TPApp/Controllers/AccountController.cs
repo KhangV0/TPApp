@@ -401,6 +401,18 @@ namespace TPApp.Controllers
             else    TempData["ErrorMessage"]   = msg;
             return RedirectToAction(nameof(Profile));
         }
+
+        // ─── POST /Account/UploadDocAjax (AJAX – used from Step 6) ──────────────
+        [Authorize, HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UploadDocAjax(int docType, IFormFile? docFile,
+            [FromServices] IWebHostEnvironment env)
+        {
+            var userId = int.Parse(_userManager.GetUserId(User)!);
+            if (docFile == null)
+                return Json(new { success = false, message = "Vui lòng chọn file." });
+            var (ok, msg) = await _verify.UploadDocAsync(userId, docType, docFile, env);
+            return Json(new { success = ok, message = msg });
+        }
     }
 }
 

@@ -23,6 +23,7 @@ namespace TPApp.Controllers
         private readonly Services.INotificationQueueService _notifQueue;
         private readonly ILegalReviewService _legalReviewService;
         private readonly OtpSettings _otpSettings;
+        private readonly IConfiguration _configuration;
 
         public NegotiationController(
             AppDbContext context,
@@ -33,7 +34,8 @@ namespace TPApp.Controllers
             ISmsSender smsSender,
             Services.INotificationQueueService notifQueue,
             ILegalReviewService legalReviewService,
-            IOptions<OtpSettings> otpSettings)
+            IOptions<OtpSettings> otpSettings,
+            IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
@@ -44,6 +46,7 @@ namespace TPApp.Controllers
             _notifQueue = notifQueue;
             _legalReviewService = legalReviewService;
             _otpSettings = otpSettings.Value;
+            _configuration = configuration;
         }
 
         private int GetCurrentUserId()
@@ -386,7 +389,9 @@ namespace TPApp.Controllers
                     return Json(new { success = false, message = "OTP đã hết hạn. Vui lòng yêu cầu OTP mới." });
                 }
 
-                if (storedOtp != dto.Otp.Trim())
+                // TestMode: accept any 6-digit OTP
+                var isTestMode = _configuration.GetValue<bool>("ESign:TestMode", false);
+                if (!isTestMode && storedOtp != dto.Otp.Trim())
                     return Json(new { success = false, message = "OTP không đúng. Vui lòng kiểm tra lại." });
 
                 // OTP valid → sign
@@ -418,7 +423,7 @@ namespace TPApp.Controllers
                         await _context.SaveChangesAsync();
                         await _workflowService.CompleteStep(dto.ProjectId, 5);
                         // Auto-create Contract Draft (Step 6)
-                        _ = _legalReviewService.AutoCreateDraftAsync(dto.ProjectId);
+                        await _legalReviewService.AutoCreateDraftAsync(dto.ProjectId);
                     }
                     else
                     {
@@ -492,7 +497,7 @@ namespace TPApp.Controllers
                         await _context.SaveChangesAsync();
                         await _workflowService.CompleteStep(dto.ProjectId, 5);
                         // Auto-create Contract Draft (Step 6)
-                        _ = _legalReviewService.AutoCreateDraftAsync(dto.ProjectId);
+                        await _legalReviewService.AutoCreateDraftAsync(dto.ProjectId);
                     }
                     else
                     {
@@ -587,7 +592,7 @@ namespace TPApp.Controllers
                         await _context.SaveChangesAsync();
                         await _workflowService.CompleteStep(projectId, 5);
                         // Auto-create Contract Draft (Step 6)
-                        _ = _legalReviewService.AutoCreateDraftAsync(projectId);
+                        await _legalReviewService.AutoCreateDraftAsync(projectId);
                     }
                     else
                     {
@@ -664,7 +669,7 @@ namespace TPApp.Controllers
                         await _context.SaveChangesAsync();
                         await _workflowService.CompleteStep(dto.ProjectId, 5);
                         // Auto-create Contract Draft (Step 6)
-                        _ = _legalReviewService.AutoCreateDraftAsync(dto.ProjectId);
+                        await _legalReviewService.AutoCreateDraftAsync(dto.ProjectId);
                     }
                     else
                     {

@@ -55,6 +55,57 @@
     };
     string ApprovalLabel(int s) => s switch { 1 => "✅ Đã duyệt", 2 => "❌ Từ chối", _ => "⏳ Chờ" };
     string RoleName(int r)      => r switch { 1 => "Buyer", 2 => "Seller", 3 => "Tư vấn", _ => "?" };
+
+    // Lookup actual user names
+    var buyerName6 = proj?.CreatedBy.HasValue == true
+        ? (await DbCtx.Users.AsNoTracking().Where(u => u.Id == proj.CreatedBy.Value).Select(u => u.FullName ?? u.UserName).FirstOrDefaultAsync()) ?? "Buyer"
+        : "Buyer";
+    var sellerName6 = proj?.SelectedSellerId.HasValue == true
+        ? (await DbCtx.Users.AsNoTracking().Where(u => u.Id == proj.SelectedSellerId.Value).Select(u => u.FullName ?? u.UserName).FirstOrDefaultAsync()) ?? "Seller"
+        : "Seller";
+    var consultantName6 = "Tư vấn";
+    if (proj != null)
+    {
+        var consultantMember = await DbCtx.ProjectMembers
+            .Where(m => m.ProjectId == projectId && m.Role == 3)
+            .Select(m => m.UserId)
+            .FirstOrDefaultAsync();
+        if (consultantMember > 0)
+        {
+            consultantName6 = (await DbCtx.Users.AsNoTracking().Where(u => u.Id == consultantMember).Select(u => u.FullName ?? u.UserName).FirstOrDefaultAsync()) ?? "Tư vấn";
+        }
+    }
+    string DisplayName(int r) => r switch { 1 => $"{buyerName6} (Buyer)", 2 => $"{sellerName6} (Seller)", 3 => $"{consultantName6} (Tư vấn)", _ => "?" };
+
+    // Load buyer/seller account type + verification docs
+    var partyUserIds = new List<int>();
+    if (proj?.CreatedBy.HasValue == true) partyUserIds.Add(proj.CreatedBy.Value);
+    if (proj?.SelectedSellerId.HasValue == true) partyUserIds.Add(proj.SelectedSellerId.Value);
+
+    var partyAccountTypes = new Dictionary<int, int>();
+    if (partyUserIds.Any())
+    {
+        partyAccountTypes = await DbCtx.Users.AsNoTracking()
+            .Where(u => partyUserIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.AccountTypeId);
+    }
+
+    var partyDocs = new List<TPApp.Entities.UserVerificationDoc>();
+    if (partyUserIds.Any())
+    {
+        partyDocs = await DbCtx.Set<TPApp.Entities.UserVerificationDoc>().AsNoTracking()
+            .Where(d => partyUserIds.Contains(d.UserId))
+            .ToListAsync();
+    }
+
+    int GetAccountType(int role) {
+        int uid = role == 1 ? (proj?.CreatedBy ?? 0) : (proj?.SelectedSellerId ?? 0);
+        return partyAccountTypes.ContainsKey(uid) ? partyAccountTypes[uid] : 1;
+    }
+    List<TPApp.Entities.UserVerificationDoc> GetDocs(int role) {
+        int uid = role == 1 ? (proj?.CreatedBy ?? 0) : (proj?.SelectedSellerId ?? 0);
+        return partyDocs.Where(d => d.UserId == uid).ToList();
+    }
 }
 
 <div class="card shadow-sm border-0">
@@ -137,9 +188,9 @@
                                 var ext = System.IO.Path.GetExtension(ct.OriginalFileName ?? "").ToLowerInvariant();
                                 if (ext == ".pdf")
                                 {
-                                    <embed src="/Contract/Download/@ct.Id/original"
-                                           type="application/pdf"
-                                           style="width:100%;height:600px;border:none;" />
+                                    <iframe src="/Contract/Download/@ct.Id/original"
+                                            style="width:100%;height:600px;border:none;"
+                                            title="Xem hợp đồng PDF"></iframe>
                                 }
                                 else
                                 {
@@ -179,7 +230,7 @@
                                 <div class="d-flex align-items-start gap-2 mb-3 pb-2 border-bottom">
                                     <i class="fas fa-user-circle fa-2x @icon mt-1"></i>
                                     <div class="flex-grow-1">
-                                        <div class="fw-bold">@RoleName(r)</div>
+                                        <div class="fw-bold">@DisplayName(r)</div>
                                         <div class="small text-muted">
                                             @(ap != null ? ApprovalLabel(ap.StatusId) : "⏳ Chờ phê duyệt")
                                         </div>
@@ -187,6 +238,104 @@
                                         {<div class="small fst-italic text-secondary mt-1">💬 @ap.Comment</div>}
                                         @if (ap?.DecisionAt != null)
                                         {<div class="small text-muted">@ap.DecisionAt.Value.ToLocalTime().ToString("dd/MM HH:mm")</div>}
+                                        @if (r == 1 || r == 2)
+                                        {
+                                            var acctType = GetAccountType(r);
+                                            var docs = GetDocs(r);
+                                            <div class="mt-2 p-2 bg-light rounded small">
+                                                <div class="text-muted mb-1">
+                                                    <i class="fas @(acctType == 2 ? "fa-building" : "fa-user") me-1"></i>
+                                                    @(acctType == 2 ? "Doanh nghiệp" : "Cá nhân")
+                                                </div>
+                                                @if (acctType == 1)
+                                                {
+                                                    var cccdFront = docs.FirstOrDefault(d => d.DocType == 1);
+                                                    var cccdBack = docs.FirstOrDefault(d => d.DocType == 2);
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        @if (cccdFront != null)
+                                                        {
+                                                            <div>
+                                                                <div class="text-muted" style="font-size:11px">CCCD mặt trước</div>
+                                                                <a href="@cccdFront.FilePath" target="_blank">
+                                                                    <img src="@cccdFront.FilePath" alt="CCCD" style="max-width:120px;max-height:80px;border-radius:4px;border:1px solid #ddd" />
+                                                                </a>
+                                                                @if (userRole == r)
+                                                                {
+                                                                    <br/><a href="#" class="text-primary" style="font-size:11px" onclick="cm_openDocUpload(1, 'CCCD mặt trước'); return false;"><i class="fas fa-redo me-1"></i>Upload lại</a>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        @if (cccdBack != null)
+                                                        {
+                                                            <div>
+                                                                <div class="text-muted" style="font-size:11px">CCCD mặt sau</div>
+                                                                <a href="@cccdBack.FilePath" target="_blank">
+                                                                    <img src="@cccdBack.FilePath" alt="CCCD" style="max-width:120px;max-height:80px;border-radius:4px;border:1px solid #ddd" />
+                                                                </a>
+                                                                @if (userRole == r)
+                                                                {
+                                                                    <br/><a href="#" class="text-primary" style="font-size:11px" onclick="cm_openDocUpload(2, 'CCCD mặt sau'); return false;"><i class="fas fa-redo me-1"></i>Upload lại</a>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        @if (cccdFront == null && cccdBack == null)
+                                                        {
+                                                            <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Chưa upload CCCD</span>
+                                                            @if (userRole == r)
+                                                            {
+                                                                <br/>
+                                                                <button class="btn btn-sm btn-outline-primary mt-1" onclick="cm_openCccdUpload()">
+                                                                    <i class="fas fa-upload me-1"></i>Upload CCCD (mặt trước + mặt sau)
+                                                                </button>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            @if (cccdFront == null && userRole == r)
+                                                            {
+                                                                <button class="btn btn-sm btn-outline-warning mt-1" onclick="cm_openDocUpload(1, 'CCCD mặt trước')">
+                                                                    <i class="fas fa-upload me-1"></i>Thiếu CCCD mặt trước
+                                                                </button>
+                                                            }
+                                                            @if (cccdBack == null && userRole == r)
+                                                            {
+                                                                <button class="btn btn-sm btn-outline-warning mt-1" onclick="cm_openDocUpload(2, 'CCCD mặt sau')">
+                                                                    <i class="fas fa-upload me-1"></i>Thiếu CCCD mặt sau
+                                                                </button>
+                                                            }
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    var bizLic = docs.FirstOrDefault(d => d.DocType == 3);
+                                                    @if (bizLic != null)
+                                                    {
+                                                        <div>
+                                                            <div class="text-muted" style="font-size:11px">Giấy phép kinh doanh</div>
+                                                            <a href="@bizLic.FilePath" target="_blank" class="d-flex align-items-center gap-1">
+                                                                <i class="fas fa-file-contract text-primary"></i> @bizLic.FileName
+                                                            </a>
+                                                            @if (userRole == r)
+                                                            {
+                                                                <a href="#" class="text-primary" style="font-size:11px" onclick="cm_openDocUpload(3, 'Giấy phép kinh doanh'); return false;"><i class="fas fa-redo me-1"></i>Upload lại</a>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Chưa upload giấy phép KD</span>
+                                                        @if (userRole == r)
+                                                        {
+                                                            <br/>
+                                                            <button class="btn btn-sm btn-outline-primary mt-1" onclick="cm_openDocUpload(3, 'Giấy phép kinh doanh')">
+                                                                <i class="fas fa-upload me-1"></i>Upload Giấy phép KD
+                                                            </button>
+                                                        }
+                                                    }
+                                                }
+                                            </div>
+                                        }
                                     </div>
                                     @if (!ctLocked && userRole == r)
                                     {
@@ -222,9 +371,9 @@
                         <div class="card border-0 shadow-sm border-success">
                             <div class="card-body text-center">
                                 <p class="fw-bold text-primary"><i class="fas fa-signature me-1"></i>Sẵn sàng ký số</p>
-                                <a href="/Signing/Index?projectId=@projectId" class="btn btn-success w-100 py-2">
+                                <button class="btn btn-success w-100 py-2 step-nav-btn" data-step="7">
                                     <i class="fas fa-arrow-right me-1"></i>Đến Bước 7 – Ký hợp đồng
-                                </a>
+                                </button>
                             </div>
                         </div>
                     }
@@ -253,36 +402,12 @@
                 </div>
             </div>
 
-            <!-- Audit Log -->
+            @* Audit Log — hidden
             @if (auditLogs.Any())
             {
-                <div class="card border-0 shadow-sm mt-4">
-                    <div class="card-header bg-white border-bottom">
-                        <a data-bs-toggle="collapse" href="#cmAuditCollapse" class="text-decoration-none text-dark">
-                            <i class="fas fa-shield-alt text-muted me-1"></i><strong>Nhật ký kiểm toán</strong>
-                            <i class="fas fa-chevron-down ms-2 small"></i>
-                        </a>
-                    </div>
-                    <div id="cmAuditCollapse" class="collapse">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover mb-0">
-                                <thead class="table-light"><tr><th>Thời gian</th><th>Hành động</th><th>Entity</th><th>Actor</th></tr></thead>
-                                <tbody>
-                                    @foreach (var log in auditLogs)
-                                    {
-                                        <tr>
-                                            <td class="small text-nowrap">@log.CreatedDate.ToLocalTime().ToString("dd/MM HH:mm")</td>
-                                            <td><span class="badge bg-light text-dark">@(log.Action)</span></td>
-                                            <td class="small text-muted">@log.EntityName #@log.EntityId</td>
-                                            <td class="small">@(log.ActorUserId?.ToString() ?? "System")</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                ...
             }
+            *@
         }
     </div>
 
@@ -398,3 +523,127 @@
     }
 </script>
 
+<!-- Doc Upload Modal (single file) -->
+<div class="modal fade" id="cmDocUploadModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title"><i class="fas fa-upload me-1"></i><span id="cmDocUploadLabel">Upload tài liệu</span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="cmDocType" value="0" />
+            <label class="form-label fw-semibold">Chọn file <small class="text-muted">(hình ảnh hoặc PDF, tối đa 5MB)</small></label>
+            <input type="file" class="form-control" id="cmDocFile" accept="image/*,.pdf" />
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="button" class="btn btn-primary" onclick="cm_submitDocUpload()">
+                <i class="fas fa-upload me-1"></i>Upload
+            </button>
+        </div>
+    </div></div>
+</div>
+
+<!-- CCCD Upload Modal (front + back) -->
+<div class="modal fade" id="cmCccdUploadModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title"><i class="fas fa-id-card me-1"></i>Upload CCCD / CMND</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fas fa-id-card me-1"></i>Mặt trước <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="cmCccdFront" accept="image/*,.pdf" required />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold"><i class="fas fa-id-card-alt me-1"></i>Mặt sau <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="cmCccdBack" accept="image/*,.pdf" required />
+            </div>
+            <small class="text-muted">Hình ảnh hoặc PDF, tối đa 5MB mỗi file</small>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+            <button type="button" class="btn btn-primary" id="cmCccdSubmitBtn" onclick="cm_submitCccdUpload()">
+                <i class="fas fa-upload me-1"></i>Upload cả 2 mặt
+            </button>
+        </div>
+    </div></div>
+</div>
+
+<script>
+    function cm_openDocUpload(docType, label) {
+        document.getElementById('cmDocType').value = docType;
+        document.getElementById('cmDocUploadLabel').textContent = 'Upload ' + label;
+        document.getElementById('cmDocFile').value = '';
+        new bootstrap.Modal(document.getElementById('cmDocUploadModal')).show();
+    }
+
+    function cm_openCccdUpload() {
+        document.getElementById('cmCccdFront').value = '';
+        document.getElementById('cmCccdBack').value = '';
+        new bootstrap.Modal(document.getElementById('cmCccdUploadModal')).show();
+    }
+
+    async function cm_submitDocUpload() {
+        const docType = document.getElementById('cmDocType').value;
+        const fileInput = document.getElementById('cmDocFile');
+        if (!fileInput.files.length) { cm_toast('Vui lòng chọn file.', 'warning'); return; }
+
+        const formData = new FormData();
+        formData.append('docType', docType);
+        formData.append('docFile', fileInput.files[0]);
+
+        try {
+            const res = await fetch('/Account/UploadDocAjax', { method: 'POST', body: formData });
+            const d = await res.json();
+            cm_toast(d.message, d.success ? 'success' : 'danger');
+            if (d.success) {
+                bootstrap.Modal.getInstance(document.getElementById('cmDocUploadModal')).hide();
+                setTimeout(() => location.reload(), 1500);
+            }
+        } catch (e) {
+            cm_toast('Lỗi: ' + e.message, 'danger');
+        }
+    }
+
+    async function cm_submitCccdUpload() {
+        const frontFile = document.getElementById('cmCccdFront');
+        const backFile = document.getElementById('cmCccdBack');
+        if (!frontFile.files.length || !backFile.files.length) {
+            cm_toast('Vui lòng chọn cả 2 file: mặt trước và mặt sau.', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('cmCccdSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang upload...';
+
+        try {
+            // Upload front
+            const fd1 = new FormData();
+            fd1.append('docType', 1);
+            fd1.append('docFile', frontFile.files[0]);
+            const r1 = await fetch('/Account/UploadDocAjax', { method: 'POST', body: fd1 });
+            const d1 = await r1.json();
+            if (!d1.success) { cm_toast('Mặt trước: ' + d1.message, 'danger'); return; }
+
+            // Upload back
+            const fd2 = new FormData();
+            fd2.append('docType', 2);
+            fd2.append('docFile', backFile.files[0]);
+            const r2 = await fetch('/Account/UploadDocAjax', { method: 'POST', body: fd2 });
+            const d2 = await r2.json();
+            if (!d2.success) { cm_toast('Mặt sau: ' + d2.message, 'danger'); return; }
+
+            cm_toast('✅ Upload CCCD thành công!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('cmCccdUploadModal')).hide();
+            setTimeout(() => location.reload(), 1500);
+        } catch (e) {
+            cm_toast('Lỗi: ' + e.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-upload me-1"></i>Upload cả 2 mặt';
+        }
+    }
+</script>

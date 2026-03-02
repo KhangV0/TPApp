@@ -6,6 +6,7 @@
     var negotiation = Model.StepData as TPApp.Entities.NegotiationForm;
     bool isBuyer  = Model.UserRole == 1;
     bool isSeller = Model.UserRole == 2;
+    bool isConsultant = Model.UserRole == 3;
     bool isCompleted = negotiation?.StatusId == (int)NegotiationStatus.Completed;
 
     bool alreadySigned = (isSeller && (negotiation?.SellerSigned ?? false))
@@ -22,6 +23,9 @@
     bool canEdit = negotiation != null
         && !isCompleted
         && negotiation.StatusId < (int)NegotiationStatus.WaitingSignature;
+
+    var sellerName = (string?)ViewBag.SellerName ?? "Seller";
+    var buyerName = (string?)ViewBag.BuyerName ?? "Buyer";
 }
 
 @* OTP Modal *@
@@ -91,7 +95,7 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Giá chốt cuối cùng (VNĐ)</label>
-                            <input type="number" name="giaChotCuoiCung" class="form-control" placeholder="Nhập số tiền..." value="@(negotiation.GiaChotCuoiCung?.ToString() ?? "")" />
+                            <input type="text" name="giaChotCuoiCung" class="form-control currency-input" placeholder="0" value="@(negotiation.GiaChotCuoiCung.HasValue ? negotiation.GiaChotCuoiCung.Value.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) : "")" />
                         </div>
                         <div class="col-12">
                             <label class="form-label">Điều khoản thanh toán</label>
@@ -183,12 +187,12 @@
                                     @if (negotiation.SellerSigned)
                                     {
                                         <i class="fas fa-check-circle text-success fa-lg"></i>
-                                        <span class="fw-bold text-success">Seller đã ký</span>
+                                        <span class="fw-bold text-success">@sellerName đã ký</span>
                                     }
                                     else
                                     {
                                         <i class="far fa-circle text-muted fa-lg"></i>
-                                        <span class="text-muted">Seller chưa ký</span>
+                                        <span class="text-muted">@sellerName chưa ký</span>
                                     }
                                 </div>
                                 @if (negotiation.SellerSignedAt.HasValue)
@@ -208,12 +212,12 @@
                                     @if (negotiation.BuyerSigned)
                                     {
                                         <i class="fas fa-check-circle text-success fa-lg"></i>
-                                        <span class="fw-bold text-success">Buyer đã ký</span>
+                                        <span class="fw-bold text-success">@buyerName đã ký</span>
                                     }
                                     else
                                     {
                                         <i class="far fa-circle text-muted fa-lg"></i>
-                                        <span class="text-muted">Buyer chưa ký</span>
+                                        <span class="text-muted">@buyerName chưa ký</span>
                                     }
                                 </div>
                                 @if (negotiation.BuyerSignedAt.HasValue)
@@ -371,8 +375,8 @@
             return;
         }
 
-        const giaChotCuoiCung = form.querySelector('[name="giaChotCuoiCung"]')?.value;
-        if (!giaChotCuoiCung) {
+        const giaChotRaw = form.querySelector('[name="giaChotCuoiCung"]')?.value.replace(/\./g, '') || '';
+        if (!giaChotRaw || isNaN(giaChotRaw)) {
             showToast('warning', 'Vui lòng nhập giá chốt cuối cùng');
             return;
         }
@@ -382,6 +386,8 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang lưu...';
 
         const formData = new FormData(form);
+        // Replace formatted currency with raw number
+        formData.set('giaChotCuoiCung', giaChotRaw);
 
         try {
             const res = await fetch('/Negotiation/SaveInline', {
@@ -398,7 +404,7 @@
                     const modal = bootstrap.Modal.getInstance(modalEl);
                     if (modal) modal.hide();
                 }
-                setTimeout(function() { location.reload(); }, 1500);
+                setTimeout(function() { window.location.href = '/Project/Details/' + projectId + '?step=5'; }, 1500);
             } else {
                 showToast('danger', data.message);
             }
@@ -410,16 +416,19 @@
         }
     }
 
-    // ── Toggle upload area in inline form ────────────────────────────────────
-    (function() {
-        const sel = document.getElementById('inlineHinhThucKySelect');
-        const area = document.getElementById('inlineUploadArea');
-        if (sel && area) {
-            function toggle() { area.style.display = sel.value === 'Upload file' ? '' : 'none'; }
-            toggle();
-            sel.addEventListener('change', toggle);
-        }
-    })();
+    // Upload area always visible
+
+    // ── Currency formatting (VNĐ: dots as thousand separators) ────────────────
+    document.querySelectorAll('.currency-input').forEach(function(input) {
+        input.addEventListener('input', function() {
+            var raw = this.value.replace(/\D/g, '');
+            if (raw) {
+                this.value = parseInt(raw, 10).toLocaleString('vi-VN');
+            } else {
+                this.value = '';
+            }
+        });
+    });
 
     // ── Request OTP ──────────────────────────────────────────────────────────
     async function requestOtp(btnEl) {
@@ -622,9 +631,9 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Giá chốt cuối cùng (VNĐ)</label>
-                                <input type="number" name="giaChotCuoiCung" class="form-control"
-                                       placeholder="Nhập số tiền..."
-                                       value="@(negotiation.GiaChotCuoiCung?.ToString() ?? "")" />
+                                <input type="text" name="giaChotCuoiCung" class="form-control currency-input"
+                                       placeholder="0"
+                                       value="@(negotiation.GiaChotCuoiCung.HasValue ? negotiation.GiaChotCuoiCung.Value.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) : "")" />
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Điều khoản thanh toán</label>

@@ -80,14 +80,31 @@ namespace TPApp.Controllers
 
         // POST: /RFQ/Create
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Create(RFQRequest model, int[]? selectedSellerIds, bool alsoInvite = false)
         {
+            bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
             var userId = GetCurrentUserId();
             var isMember = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == model.ProjectId && m.UserId == userId);
-            if (!isMember) return Forbid();
+            if (!isMember)
+                return isAjax ? Json(new { success = false, message = "Không có quyền truy cập." }) : Forbid();
 
-            if (ModelState.IsValid)
+            // Remove non-model fields from validation
+            ModelState.Remove("selectedSellerIds");
+            ModelState.Remove("alsoInvite");
+
+            if (!ModelState.IsValid)
+            {
+                if (isAjax)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                    return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join("; ", errors) });
+                }
+                return View(model);
+            }
+
+            try
             {
                 // Set metadata
                 model.NguoiTao = userId;
@@ -137,14 +154,19 @@ namespace TPApp.Controllers
                     model.StatusId = 2; // Sent
                     _context.Update(model);
                     await _context.SaveChangesAsync();
-
-                    TempData["SuccessMessage"] = $"Đã tạo RFQ và mời {selectedSellerIds.Length} nhà cung ứng.";
                 }
 
-                return RedirectToAction("Details", "Project", new { id = model.ProjectId });
-            }
+                if (isAjax)
+                    return Json(new { success = true, message = "Đã tạo Yêu cầu Báo giá thành công!" });
 
-            return View(model);
+                return Redirect($"/Project/Details/{model.ProjectId}?step=3");
+            }
+            catch (Exception ex)
+            {
+                if (isAjax)
+                    return Json(new { success = false, message = "Lỗi: " + ex.Message });
+                throw;
+            }
         }
 
         // GET: /RFQ/Details/5
@@ -172,6 +194,48 @@ namespace TPApp.Controllers
                 .ToListAsync();
             var invitedSellerIds = invitedSellerIdsList.ToHashSet();
 
+            // ── Check user role: only Consultant (Role=3) can search freely ──
+            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUserId = currentUser?.Id ?? 0;
+
+            var memberRole = await _context.ProjectMembers
+                .Where(m => m.ProjectId == projectId && m.UserId == currentUserId)
+                .Select(m => m.Role)
+                .FirstOrDefaultAsync();
+
+            // Fallback: if not in ProjectMembers, check if project creator (buyer = role 1)
+            if (memberRole == 0)
+            {
+                var isCreator = await _context.Projects.AnyAsync(p => p.Id == projectId && p.CreatedBy == currentUserId);
+                if (isCreator) memberRole = 1;
+            }
+
+            bool isConsultant = memberRole == 3;
+
+            // ── Get NCUId from the source product (FromId) ──
+            var techReq = await _context.TechTransferRequests.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.ProjectId == projectId);
+
+            bool hasFromId = techReq?.FromId != null;
+            int? ncuId = null;
+
+            if (hasFromId && (techReq!.TypeData ?? 1) == 1)
+            {
+                ncuId = await _context.SanPhamCNTBs.AsNoTracking()
+                    .Where(p => p.ID == techReq.FromId!.Value)
+                    .Select(p => p.NCUId)
+                    .FirstOrDefaultAsync();
+            }
+
+            // DEBUG LOG
+            System.Diagnostics.Debug.WriteLine($"[SearchSuppliers] projectId={projectId}, userId={currentUserId}, role={memberRole}, isConsultant={isConsultant}, hasFromId={hasFromId}, FromId={techReq?.FromId}, ncuId={ncuId}");
+
+            // Non-consultant without FromId → return empty immediately
+            if (!isConsultant && !hasFromId)
+            {
+                return Json(new { data = Array.Empty<object>(), totalCount = 0, totalPages = 0, currentPage = 1 });
+            }
+
             // Query NhaCungUng with UserId, activated, StatusId=3, and LanguageId from session
             var lang = HttpContext.Session.GetInt32("LanguageId") ?? 1;
             var query = _context.NhaCungUngs.AsNoTracking()
@@ -179,6 +243,17 @@ namespace TPApp.Controllers
                     && n.StatusId == 3
                     && !invitedSellerIds.Contains(n.UserId!.Value)
                     && (n.LanguageId == null || n.LanguageId == lang));
+
+            // ── Non-consultant: filter directly by CungUngId == NCUId (only 1 supplier) ──
+            if (!isConsultant && ncuId.HasValue && ncuId.Value > 0)
+            {
+                query = query.Where(n => n.CungUngId == ncuId.Value);
+            }
+            else if (!isConsultant)
+            {
+                // NCUId not found → return empty
+                return Json(new { data = Array.Empty<object>(), totalCount = 0, totalPages = 0, currentPage = 1 });
+            }
 
             // Filter by lĩnh vực (resolve name to CatId, then search in ";id;" format)
             if (!string.IsNullOrWhiteSpace(linhVuc))
@@ -194,7 +269,7 @@ namespace TPApp.Controllers
                 }
             }
 
-            // Filter by search text (name)
+            // Filter by search text (name) — only applies for consultant
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var s = search.Trim().ToLower();

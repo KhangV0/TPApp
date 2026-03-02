@@ -139,5 +139,76 @@ namespace TPApp.Controllers
         {
             return View();
         }
+
+        // POST: /AdvancePayment/SaveInline  (AJAX from Step 8)
+        [HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SaveInline(
+            int projectId, decimal SoTienTamUng, DateTime NgayChuyen,
+            string? DaXacNhanNhanTien, IFormFile? ChungTuFile)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var entity = await _context.AdvancePaymentConfirmations
+                    .FirstOrDefaultAsync(x => x.ProjectId == projectId);
+
+                bool isNew = entity == null;
+                if (isNew)
+                {
+                    entity = new AdvancePaymentConfirmation
+                    {
+                        ProjectId = projectId,
+                        NguoiTao = userId,
+                        NgayTao = DateTime.Now
+                    };
+                }
+
+                entity.SoTienTamUng = SoTienTamUng;
+                entity.NgayChuyen = NgayChuyen;
+                entity.DaXacNhanNhanTien = DaXacNhanNhanTien == "true";
+                entity.StatusId = entity.DaXacNhanNhanTien ? 2 : 1;
+                entity.NguoiSua = userId;
+                entity.NgaySua = DateTime.Now;
+
+                // Handle file upload
+                if (ChungTuFile != null && ChungTuFile.Length > 0)
+                {
+                    var allowedExt = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
+                    var ext = Path.GetExtension(ChungTuFile.FileName).ToLowerInvariant();
+                    if (!allowedExt.Contains(ext))
+                        return Json(new { success = false, message = "Chỉ chấp nhận file .pdf, .jpg, .png" });
+
+                    if (ChungTuFile.Length > 10 * 1024 * 1024)
+                        return Json(new { success = false, message = "File không được quá 10MB." });
+
+                    var uploadFolder = Path.Combine(_environment.WebRootPath, "uploads", "advance-payments");
+                    Directory.CreateDirectory(uploadFolder);
+
+                    var uniqueName = $"{Guid.NewGuid()}{ext}";
+                    var filePath = Path.Combine(uploadFolder, uniqueName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await ChungTuFile.CopyToAsync(stream);
+                    }
+                    entity.ChungTuChuyenTienFile = $"/uploads/advance-payments/{uniqueName}";
+                }
+
+                if (isNew)
+                    _context.AdvancePaymentConfirmations.Add(entity);
+
+                await _context.SaveChangesAsync();
+
+                // Complete Step 8
+                if (entity.ProjectId.HasValue)
+                    await _workflowService.CompleteStep(entity.ProjectId.Value, 8);
+
+                return Json(new { success = true, message = isNew ? "✅ Đã lưu xác nhận tạm ứng." : "✅ Đã cập nhật thành công." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
     }
 }

@@ -220,6 +220,91 @@ namespace TPApp.Controllers
             var completedCount = statuses.Values.Count(s => s > 0);
             var progressPercent = (int)Math.Round((completedCount / 14.0) * 100);
 
+            // Load step-specific ViewBag data (mirrors Step action logic)
+            if (currentStep == 2)
+            {
+                var eSignDoc = await _eSignGateway.GetProjectNdaAsync(id.Value);
+                ViewBag.ESignDocument = eSignDoc;
+                if (eSignDoc != null)
+                {
+                    var sigs = await _eSignGateway.GetDocumentSignaturesAsync(eSignDoc.Id);
+                    ViewBag.Signatures = sigs;
+                    var sIds = sigs.Select(s => s.SignerUserId).Distinct().ToList();
+                    ViewBag.SignerNames = await _context.Users.AsNoTracking()
+                        .Where(u => sIds.Contains(u.Id))
+                        .ToDictionaryAsync(u => u.Id, u => u.FullName ?? u.UserName ?? $"User #{u.Id}");
+                }
+                var techReq2 = await _context.TechTransferRequests.AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.ProjectId == id.Value);
+                ViewBag.BenADefault = techReq2?.DonVi ?? techReq2?.HoTen ?? "";
+            }
+            else if (currentStep == 3)
+            {
+                ViewBag.LinhVucList = await _context.Categories.AsNoTracking()
+                    .Where(c => c.ParentId == 1).OrderBy(c => c.Title)
+                    .Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = c.Title, Text = c.Title })
+                    .ToListAsync();
+                var techReq3 = await _context.TechTransferRequests.AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.ProjectId == id.Value);
+                ViewBag.DefaultLinhVuc = techReq3?.LinhVuc ?? "";
+                ViewBag.HasFromId = techReq3?.FromId != null;
+                ViewBag.AutoMaRFQ = "RFQ-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+
+                // Load invited suppliers
+                var rfqForDetails = await _context.RFQRequests.AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.ProjectId == id.Value);
+                if (rfqForDetails != null)
+                {
+                    var invitations = await _context.RFQInvitations.AsNoTracking()
+                        .Where(i => i.RFQId == rfqForDetails.Id && i.IsActive)
+                        .ToListAsync();
+                    var invSellerIds = invitations.Select(i => i.SellerId).Distinct().ToList();
+                    // Get first NhaCungUng per UserId to avoid duplicates
+                    var nccLookup = await _context.NhaCungUngs.AsNoTracking()
+                        .Where(n => n.UserId != null && invSellerIds.Contains(n.UserId!.Value))
+                        .GroupBy(n => n.UserId!.Value)
+                        .Select(g => g.First())
+                        .ToDictionaryAsync(n => n.UserId!.Value);
+                    var invitedSuppliers = invitations.Select(i => {
+                        var ncc = nccLookup.GetValueOrDefault(i.SellerId);
+                        return new {
+                            FullName = ncc?.FullName ?? "",
+                            Email = ncc?.Email ?? "",
+                            Phone = ncc?.Phone ?? "",
+                            UserName = "",
+                            LinhVuc = ncc?.LinhVucId ?? "",
+                            i.InvitedDate,
+                            i.StatusId,
+                            HasProposal = _context.ProposalSubmissions.Any(p => p.ProjectId == id.Value && p.NguoiTao == i.SellerId)
+                        };
+                    }).ToList();
+                    ViewBag.InvitedSuppliers = invitedSuppliers;
+                }
+            }
+            else if (currentStep == 7)
+            {
+                ViewBag.IsBuyer  = project.CreatedBy == userId;
+                ViewBag.IsSeller = project.SelectedSellerId == userId;
+
+                var ct7d = await _context.ProjectContracts
+                    .Where(x => x.ProjectId == id.Value && x.IsActive)
+                    .OrderByDescending(x => x.VersionNumber)
+                    .FirstOrDefaultAsync();
+                if (ct7d != null && ct7d.StatusId >= (int)TPApp.Enums.ContractStatus.ReadyToSign)
+                {
+                    var signing7 = HttpContext.RequestServices.GetService<TPApp.Interfaces.IContractSigningService>();
+                    var sysParams7 = HttpContext.RequestServices.GetService<TPApp.Interfaces.ISystemParameterService>();
+                    if (signing7 != null)
+                        ViewBag.SigningStatus = await signing7.GetStatusAsync(ct7d.Id);
+                    ViewBag.Provider = sysParams7 != null ? (await sysParams7.GetAsync("SIGNING_PROVIDER_DEFAULT") ?? "VNPT") : "VNPT";
+                    ViewBag.AuditLogs = await _context.ContractAuditLogs
+                        .Where(l => l.EntityId == ct7d.Id.ToString())
+                        .OrderByDescending(l => l.CreatedDate)
+                        .Take(20)
+                        .ToListAsync();
+                }
+            }
+
             var viewModel = new TPApp.ViewModel.ProjectDetailWithStepsVm
             {
                 Project = project,
@@ -410,10 +495,14 @@ namespace TPApp.Controllers
             statuses["Negotiation"] = negotiation?.StatusId ?? 0;
 
             var legalReview = await _context.LegalReviewForms.FirstOrDefaultAsync(x => x.ProjectId == projectId);
-            statuses["LegalReview"] = legalReview?.StatusId ?? 0;
+            // Step 6 uses ProjectContracts, not LegalReviewForms – derive status from contract
+            var contractForStatus = await _context.ProjectContracts
+                .Where(x => x.ProjectId == projectId && x.IsActive)
+                .OrderByDescending(x => x.VersionNumber)
+                .FirstOrDefaultAsync();
+            statuses["LegalReview"] = contractForStatus != null ? contractForStatus.StatusId : (legalReview?.StatusId ?? 0);
 
-            var contract = await _context.EContracts.FirstOrDefaultAsync(x => x.ProjectId == projectId);
-            statuses["EContract"] = contract?.StatusId ?? 0;
+            statuses["Signing"] = contractForStatus?.StatusId ?? 0;
 
             var payment = await _context.AdvancePaymentConfirmations.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["AdvancePayment"] = payment?.StatusId ?? 0;
@@ -450,8 +539,8 @@ namespace TPApp.Controllers
                 new() { StepNumber = 4, StepName = "Nộp hồ sơ đề xuất", StatusId = statuses["Proposal"], ControllerName = "Proposal", ActionName = "Index", IsAccessible = statuses["RFQ"] > 0 },
                 new() { StepNumber = 5, StepName = "Đàm phán thương mại", StatusId = statuses["Negotiation"], ControllerName = "Negotiation", ActionName = "Create", IsAccessible = statuses["Proposal"] > 0 },
                 new() { StepNumber = 6, StepName = "Kiểm tra pháp lý", StatusId = statuses["LegalReview"], ControllerName = "LegalReview", ActionName = "Create", IsAccessible = statuses["Negotiation"] > 0 },
-                new() { StepNumber = 7, StepName = "Ký hợp đồng điện tử", StatusId = statuses["EContract"], ControllerName = "EContract", ActionName = "Create", IsAccessible = statuses["LegalReview"] > 0 },
-                new() { StepNumber = 8, StepName = "Xác nhận tạm ứng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["EContract"] > 0 },
+                new() { StepNumber = 7, StepName = "Ký hợp đồng điện tử", StatusId = statuses["Signing"], ControllerName = "Signing", ActionName = "Index", IsAccessible = statuses["LegalReview"] > 0 },
+                new() { StepNumber = 8, StepName = "Xác nhận tạm ứng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["Signing"] >= 5 },
                 new() { StepNumber = 9, StepName = "Thử nghiệm Pilot", StatusId = statuses["PilotTest"], ControllerName = "PilotTest", ActionName = "Create", IsAccessible = statuses["AdvancePayment"] > 0 },
                 new() { StepNumber = 10, StepName = "Bàn giao & triển khai thiết bị", StatusId = statuses["Handover"], ControllerName = "Handover", ActionName = "Create", IsAccessible = statuses["PilotTest"] > 0 },
                 new() { StepNumber = 11, StepName = "Đào tạo & chuyển giao vận hành", StatusId = statuses["Training"], ControllerName = "Training", ActionName = "Create", IsAccessible = statuses["Handover"] > 0 },
@@ -510,8 +599,8 @@ namespace TPApp.Controllers
                 if (i == 13) currentStep = 14; // All complete
             }
             
-            // Validate access - can't skip ahead
-            if (stepNumber > currentStep)
+            // Validate access - can't skip ahead (but allow if step is accessible)
+            if (stepNumber > currentStep && !steps[stepNumber - 1].IsAccessible)
             {
                 // Return current step instead
                 stepNumber = currentStep;
@@ -532,7 +621,7 @@ namespace TPApp.Controllers
             // Load step-specific data for inline display
             model.StepData = await LoadStepData(projectId, stepNumber, userId, member.Role);
             
-            // Special handling for Step 2 (NDA) - Load E-Sign data
+            // Special handling for Step 2 (NDA) - Load E-Sign data + pre-fill BenA from Step 1
             if (stepNumber == 2)
             {
                 var eSignDoc = await _eSignGateway.GetProjectNdaAsync(projectId);
@@ -542,7 +631,19 @@ namespace TPApp.Controllers
                 {
                     var signatures = await _eSignGateway.GetDocumentSignaturesAsync(eSignDoc.Id);
                     ViewBag.Signatures = signatures;
+
+                    // Resolve signer names
+                    var signerIds = signatures.Select(s => s.SignerUserId).Distinct().ToList();
+                    var signerNames = await _context.Users.AsNoTracking()
+                        .Where(u => signerIds.Contains(u.Id))
+                        .ToDictionaryAsync(u => u.Id, u => u.FullName ?? u.UserName ?? $"User #{u.Id}");
+                    ViewBag.SignerNames = signerNames;
                 }
+
+                // Pre-fill BenA from TechTransferRequest.DonVi (Step 1)
+                var techReq = await _context.TechTransferRequests.AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.ProjectId == projectId);
+                ViewBag.BenADefault = techReq?.DonVi ?? techReq?.HoTen ?? "";
             }
             
             // Special handling for Step 3 (RFQ) - Load categories and supplier data
@@ -563,6 +664,7 @@ namespace TPApp.Controllers
                 var techTransfer = await _context.TechTransferRequests.AsNoTracking()
                     .FirstOrDefaultAsync(t => t.ProjectId == projectId);
                 ViewBag.DefaultLinhVuc = techTransfer?.LinhVuc ?? "";
+                ViewBag.HasFromId = techTransfer?.FromId != null;
 
                 // Auto-generate MaRFQ for creation form
                 ViewBag.AutoMaRFQ = "RFQ-" + DateTime.Now.ToString("yyyyMMddHHmmss");
@@ -571,29 +673,25 @@ namespace TPApp.Controllers
                 var rfqData = model.StepData as RFQRequest;
                 if (rfqData != null)
                 {
-                    var invitedSuppliers = await _context.RFQInvitations
+                    var invitations = await _context.RFQInvitations
                         .Where(i => i.RFQId == rfqData.Id && i.IsActive)
-                        .Join(_context.NhaCungUngs,
-                            inv => inv.SellerId,
-                            ncc => ncc.UserId,
-                            (inv, ncc) => new
-                            {
-                                inv.Id,
-                                inv.SellerId,
-                                inv.InvitedDate,
-                                inv.StatusId,
-                                inv.ViewedDate,
-                                inv.ResponseDate,
-                                ncc.FullName,
-                                ncc.Email,
-                                ncc.Phone,
-                                LinhVucId = ncc.LinhVucId ?? ""
-                            })
                         .ToListAsync();
+                    var invSellerIds2 = invitations.Select(i => i.SellerId).Distinct().ToList();
+                    // Get first NhaCungUng per UserId to avoid duplicates
+                    var nccLookup2 = await _context.NhaCungUngs.AsNoTracking()
+                        .Where(n => n.UserId != null && invSellerIds2.Contains(n.UserId!.Value))
+                        .GroupBy(n => n.UserId!.Value)
+                        .Select(g => g.First())
+                        .ToDictionaryAsync(n => n.UserId!.Value);
+
+                    // Resolve usernames
+                    var invUserNames = await _context.Users.AsNoTracking()
+                        .Where(u => invSellerIds2.Contains(u.Id))
+                        .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "");
 
                     // Resolve LinhVucId to category names
-                    var allInvCatIds = invitedSuppliers
-                        .SelectMany(s => s.LinhVucId.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                    var allInvCatIds = nccLookup2.Values
+                        .SelectMany(n => (n.LinhVucId ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
                         .Where(id => int.TryParse(id, out _))
                         .Select(int.Parse)
                         .Distinct()
@@ -604,32 +702,29 @@ namespace TPApp.Controllers
                             .ToDictionaryAsync(c => c.CatId, c => c.Title ?? "")
                         : new Dictionary<int, string>();
 
-                    // Resolve usernames
-                    var invSellerIds = invitedSuppliers.Select(s => s.SellerId).Distinct().ToList();
-                    var invUserNames = await _context.Users.AsNoTracking()
-                        .Where(u => invSellerIds.Contains(u.Id))
-                        .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "");
-
-                    var invitedWithProposals = invitedSuppliers.Select(inv => new
-                    {
-                        inv.Id,
-                        inv.SellerId,
-                        inv.InvitedDate,
-                        inv.StatusId,
-                        inv.ViewedDate,
-                        inv.ResponseDate,
-                        inv.FullName,
-                        inv.Email,
-                        inv.Phone,
-                        UserName = invUserNames.ContainsKey(inv.SellerId) ? invUserNames[inv.SellerId] : "",
-                        LinhVuc = string.Join(", ", inv.LinhVucId
-                            .Split(';', StringSplitOptions.RemoveEmptyEntries)
-                            .Where(id => int.TryParse(id, out _))
-                            .Select(int.Parse)
-                            .Where(id => invCatNames.ContainsKey(id))
-                            .Select(id => invCatNames[id])),
-                        HasProposal = _context.ProposalSubmissions
-                            .Any(p => p.ProjectId == projectId && p.NguoiTao == inv.SellerId)
+                    var invitedWithProposals = invitations.Select(inv => {
+                        var ncc = nccLookup2.GetValueOrDefault(inv.SellerId);
+                        var linhVucStr = ncc?.LinhVucId ?? "";
+                        return new {
+                            inv.Id,
+                            inv.SellerId,
+                            inv.InvitedDate,
+                            inv.StatusId,
+                            inv.ViewedDate,
+                            inv.ResponseDate,
+                            FullName = ncc?.FullName ?? "",
+                            Email = ncc?.Email ?? "",
+                            Phone = ncc?.Phone ?? "",
+                            UserName = invUserNames.GetValueOrDefault(inv.SellerId, ""),
+                            LinhVuc = string.Join(", ", linhVucStr
+                                .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                                .Where(id => int.TryParse(id, out _))
+                                .Select(int.Parse)
+                                .Where(id => invCatNames.ContainsKey(id))
+                                .Select(id => invCatNames[id])),
+                            HasProposal = _context.ProposalSubmissions
+                                .Any(p => p.ProjectId == projectId && p.NguoiTao == inv.SellerId)
+                        };
                     }).ToList();
 
                     ViewBag.InvitedSuppliers = invitedWithProposals;
@@ -642,8 +737,9 @@ namespace TPApp.Controllers
                 var project5 = await _context.Projects.FindAsync(projectId);
                 bool isBuyer5 = project5?.CreatedBy == userId;
                 bool isSelectedSeller5 = project5?.SelectedSellerId != null && project5.SelectedSellerId == userId;
+                bool isConsultant5 = await _context.ProjectMembers.AnyAsync(m => m.ProjectId == projectId && m.UserId == userId && m.Role == 3);
 
-                if (!isBuyer5 && !isSelectedSeller5)
+                if (!isBuyer5 && !isSelectedSeller5 && !isConsultant5)
                     return Forbid();
 
                 // Auto-create NegotiationForm draft if not exists
@@ -665,6 +761,47 @@ namespace TPApp.Controllers
                     await _context.SaveChangesAsync();
                     // Reload StepData after auto-create
                     model.StepData = draft;
+                }
+
+                // Pass buyer/seller names for display
+                if (project5 != null)
+                {
+                    var buyerUser = project5.CreatedBy.HasValue
+                        ? await _context.Users.AsNoTracking().Where(u => u.Id == project5.CreatedBy.Value).Select(u => u.FullName ?? u.UserName).FirstOrDefaultAsync()
+                        : null;
+                    var sellerUser = project5.SelectedSellerId.HasValue
+                        ? await _context.Users.AsNoTracking().Where(u => u.Id == project5.SelectedSellerId.Value).Select(u => u.FullName ?? u.UserName).FirstOrDefaultAsync()
+                        : null;
+                    ViewBag.BuyerName = buyerUser ?? "Buyer";
+                    ViewBag.SellerName = sellerUser ?? "Seller";
+                }
+            }
+            // Special handling for Step 7 (Signing) - Load signing data inline
+            if (stepNumber == 7)
+            {
+                var proj7 = await _context.Projects.FindAsync(projectId);
+                if (proj7 != null)
+                {
+                    bool isBuyer7  = proj7.CreatedBy == userId;
+                    bool isSeller7 = proj7.SelectedSellerId == userId;
+                    ViewBag.IsBuyer  = isBuyer7;
+                    ViewBag.IsSeller = isSeller7;
+
+                    var ct7 = model.StepData as ProjectContract;
+                    if (ct7 != null && ct7.StatusId >= (int)TPApp.Enums.ContractStatus.ReadyToSign)
+                    {
+                        var signing = HttpContext.RequestServices.GetService<TPApp.Interfaces.IContractSigningService>();
+                        var sysParams = HttpContext.RequestServices.GetService<TPApp.Interfaces.ISystemParameterService>();
+                        if (signing != null)
+                            ViewBag.SigningStatus = await signing.GetStatusAsync(ct7.Id);
+                        ViewBag.Provider = sysParams != null ? (await sysParams.GetAsync("SIGNING_PROVIDER_DEFAULT") ?? "VNPT") : "VNPT";
+
+                        ViewBag.AuditLogs = await _context.ContractAuditLogs
+                            .Where(l => l.EntityId == ct7.Id.ToString())
+                            .OrderByDescending(l => l.CreatedDate)
+                            .Take(20)
+                            .ToListAsync();
+                    }
                 }
             }
 

@@ -30,19 +30,17 @@ namespace TPApp.Controllers
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> UploadNda(
-            IFormFile ndaFile, 
+            IFormFile? ndaFile, 
             int projectId,
             string benA,
             string benB,
             string loaiNDA,
             string thoiHanBaoMat,
+            string? xacNhanKySo,
             bool daDongY)
         {
             try
             {
-                if (ndaFile == null || ndaFile.Length == 0)
-                    return Json(new { success = false, message = "File không hợp lệ" });
-
                 var userId = GetCurrentUserId();
 
                 var ndaAgreement = new TPApp.Entities.NDAAgreement
@@ -53,7 +51,7 @@ namespace TPApp.Controllers
                     LoaiNDA = loaiNDA,
                     ThoiHanBaoMat = thoiHanBaoMat,
                     DaDongY = daDongY,
-                    XacNhanKySo = null,
+                    XacNhanKySo = xacNhanKySo,
                     StatusId = 1,
                     NguoiTao = userId,
                     NgayTao = DateTime.Now
@@ -65,20 +63,24 @@ namespace TPApp.Controllers
                 var doc = await _eSignGateway.CreateDocumentAsync(
                     projectId, 1, $"NDA - {benA} & {benB}", userId);
 
-                using var stream = ndaFile.OpenReadStream();
-                var hash = await _eSignGateway.UploadDocumentAsync(doc.Id, stream, ndaFile.FileName);
+                string? hash = null;
+                if (ndaFile != null && ndaFile.Length > 0)
+                {
+                    using var stream = ndaFile.OpenReadStream();
+                    hash = await _eSignGateway.UploadDocumentAsync(doc.Id, stream, ndaFile.FileName);
+                }
 
                 return Json(new { 
                     success = true, 
                     documentId = doc.Id,
                     ndaId = ndaAgreement.Id,
                     hash = hash,
-                    message = "Tạo Phiếu NDA và tải lên file thành công!"
+                    message = "Phiếu NDA đã được tạo thành công!"
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating NDA and uploading document");
+                _logger.LogError(ex, "Error creating NDA");
                 return Json(new { success = false, message = ex.Message });
             }
         }
