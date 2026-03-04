@@ -2,40 +2,91 @@
 
 <section class="technology-videos">
     <div class="container">
+
         <p style="text-align: center; margin-bottom: 30px; font-weight: 700; color: #046dbd;">
             <a href="@($"{Html.MainDomain()}video")" style="color: #111111; font-size: 16px; font-weight: 700;">VIDEO CÔNG NGHỆ</a>
         </p>
-        <div class="row justify-content-center">
-            @foreach (var video in Model)
-            {
-                <div class="col-md-4 mb-4">
-                    <div class="card shadow-sm border-0 h-100">
-                        <div class="ratio ratio-16x9">
-                            @if (!string.IsNullOrEmpty(video.VideoUrl))
-                            {
-                                <!-- CASE 1: Có VideoUrl → show iframe -->
-                                <iframe src="@video.VideoUrl"
-                                        title="@video.Title"
-                                        frameborder="0"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                        allowfullscreen>
-                                </iframe>
-                            }
-                            else
-                            {
-                                <a href="@video.Link">
-                                    <img src="@video.ImageUrl" class="card-img-top" alt="@video.Title" />
-                                </a>
-                            }
+
+        <div id="carouselVideoCongNghe"
+             class="carousel slide TechCarousel"
+             data-bs-ride="carousel"
+             data-bs-interval="3000">
+
+            <div class="carousel-inner">
+
+                @{
+                    int perSlide  = 3;
+                    var list      = Model ?? new List<TPApp.ViewModel.VideoVm>();
+                    int slideIndex = 0;
+                }
+
+                @if (list.Any())
+                {
+                    for (int i = 0; i < list.Count; i += perSlide)
+                    {
+                        slideIndex++;
+                        var group = list.Skip(i).Take(perSlide);
+
+                        <div class="carousel-item @(slideIndex == 1 ? "active" : "")">
+                            <div class="row justify-content-center">
+
+                                @foreach (var video in group)
+                                {
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card shadow-sm border-0 h-100">
+                                            <div class="ratio ratio-16x9">
+                                                @if (!string.IsNullOrEmpty(video.VideoUrl))
+                                                {
+                                                    <iframe src="@video.VideoUrl"
+                                                            title="@video.Title"
+                                                            frameborder="0"
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                            allowfullscreen>
+                                                    </iframe>
+                                                }
+                                                else
+                                                {
+                                                    <a href="@video.Link">
+                                                        <img src="@video.ImageUrl" class="card-img-top" alt="@video.Title" />
+                                                    </a>
+                                                }
+                                            </div>
+                                            <div class="card-body text-center">
+                                                <a href="@video.Link" class="text-decoration-none">
+                                                    <h5 class="card-title fw-bold">@video.Title</h5>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                            </div>
                         </div>
-                        <div class="card-body text-center">
-                            <a href="@video.Link" class="text-decoration-none">
-                                <h5 class="card-title fw-bold">@video.Title</h5>
-                            </a>
-                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="carousel-item active">
+                        <div class="text-center py-4">Đang cập nhật video công nghệ...</div>
                     </div>
-                </div>
-            }
+                }
+
+            </div>
+
+            <button class="carousel-control-prev"
+                    type="button"
+                    data-bs-target="#carouselVideoCongNghe"
+                    data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+
+            <button class="carousel-control-next"
+                    type="button"
+                    data-bs-target="#carouselVideoCongNghe"
+                    data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+
         </div>
     </div>
 </section>

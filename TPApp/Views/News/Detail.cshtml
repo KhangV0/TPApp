@@ -18,7 +18,10 @@
 
                 <article class="entry-detail">
                     <div class="entry-meta-data">
-                        @Model.PublishedDateText
+                        @if (Model.MenuId != 83)
+                        {
+                            @Model.PublishedDateText
+                        }
                     </div>
 
                     <div class="entry-photo">

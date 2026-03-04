@@ -1458,3 +1458,35 @@
         padding: 5px 10px 5px 30px;
     }
 }
+
+@media (min-width: 992px) {
+
+    .hero-content p {
+        min-height: 80px;
+    }
+
+    .hero-slide-2 .hero-content {
+        max-width: 90%;
+    }
+
+    .hero-slide-2 .hero-content p {
+        max-width: 50%;
+    }
+
+    .hp-lang-btn {
+        color: #333333;
+        display: block;
+        padding: 5px 10px;
+        border: 1px;
+        border-radius: 30px;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    }
+
+    .hp-lang-btn:hover {
+        color: #0056b3;
+        border: 1px;
+        border-radius: 30px;
+        box-shadow: rgba(0, 0, 0, 0.30) 0px 1px 4px;
+    }
+
+}

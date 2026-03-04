@@ -4440,3 +4440,10 @@ header {
     background: linear-gradient(90deg, #0b77c8, #e82827);
     width: 0;
 }
+.step-desc {
+    padding: 0px 0px 10px 0px;
+    display: block;
+    font-size: 12px;
+    color: #0c0c0c;
+
+}

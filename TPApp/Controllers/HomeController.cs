@@ -20,7 +20,7 @@ namespace TPApp.Controllers
         
         // ===== CONSTANT =====
         private static readonly int[] TinSuKienMenus = { 44, 72, 83, 46 };
-        private const int VIDEO_MENU_ID = 70;
+        private const int VIDEO_MENU_ID = 71;
         private const int YEU_CAU_MENU_ID = 67;
 
         public HomeController(
@@ -71,7 +71,7 @@ namespace TPApp.Controllers
                     .Where(x => (x.MenuId == m.MenuId || childIds.Contains(x.MenuId ?? 0))
                              && x.StatusId == 3)
                     .OrderByDescending(x => x.PublishedDate)
-                    .Take(3)
+                    .Take(6)
                     .Select(x => new TinSuKienItemVm
                     {
                         Title = x.Title,
@@ -101,7 +101,7 @@ namespace TPApp.Controllers
                 .Where(x => (x.MenuId == VIDEO_MENU_ID || childIds.Contains(x.MenuId ?? 0))
                          && x.StatusId == 3)
                 .OrderByDescending(x => x.PublishedDate)
-                .Take(3)
+                .Take(9)
                 .Select(x => new VideoVm
                 {
                     Title = x.Title,
