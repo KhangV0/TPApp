@@ -9,5 +9,6 @@ namespace TPApp.ViewModel
         public string ControllerName { get; set; } = string.Empty;
         public string ActionName { get; set; } = string.Empty;
         public bool IsAccessible { get; set; }
+        public bool IsVisible { get; set; } = true;
     }
 }

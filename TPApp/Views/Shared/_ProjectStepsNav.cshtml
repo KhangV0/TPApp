@@ -1,8 +1,10 @@
 @model List<TPApp.ViewModel.ProjectStepNavVm>
 
 @{
-    var completedCount = Model.Count(s => s.StatusId > 0);
-    var progressPercent = (int)Math.Round((completedCount / 14.0) * 100);
+    var visibleSteps = Model.Where(s => s.IsVisible).ToList();
+    var totalVisible = visibleSteps.Count;
+    var completedCount = visibleSteps.Count(s => s.StatusId > 0);
+    var progressPercent = totalVisible > 0 ? (int)Math.Round((completedCount / (double)totalVisible) * 100) : 0;
 }
 
 <div class="project-steps-nav mb-4">
@@ -15,7 +17,7 @@
 
             <!-- Horizontal Steps -->
             <ul class="nav nav-pills nav-justified flex-nowrap overflow-auto">
-                @foreach (var step in Model)
+                @foreach (var step in visibleSteps)
                 {
                     var stepClass = step.StatusId > 0 ? "completed" : (step.IsCurrent ? "current" : "pending");
                     var badgeClass = step.StatusId > 0 ? "bg-success" : (step.IsCurrent ? "bg-primary" : "bg-light text-muted");
@@ -52,7 +54,7 @@
             <!-- Progress Text -->
             <div class="text-center mt-3">
                 <small class="text-muted">
-                    <i class="fas fa-tasks"></i> Hoàn thành: <strong>@completedCount/14</strong> bước (@progressPercent%)
+                    <i class="fas fa-tasks"></i> Hoàn thành: <strong>@completedCount/@totalVisible</strong> bước (@progressPercent%)
                 </small>
             </div>
         </div>

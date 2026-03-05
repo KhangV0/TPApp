@@ -207,8 +207,12 @@ namespace TPApp.Controllers
                 if (i == 13) currentStep = 14; // All completed
             }
 
-            // Override with requested step if provided and accessible
-            if (step.HasValue && step.Value >= 1 && step.Value <= 14 && steps[step.Value - 1].IsAccessible)
+            // Cap to last visible step (steps 8-14 are hidden)
+            var maxVisibleStep = steps.Where(s => s.IsVisible).Max(s => s.StepNumber);
+            if (currentStep > maxVisibleStep) currentStep = maxVisibleStep;
+
+            // Override with requested step if provided, accessible, and visible
+            if (step.HasValue && step.Value >= 1 && step.Value <= maxVisibleStep && steps[step.Value - 1].IsAccessible)
             {
                 currentStep = step.Value;
             }
@@ -532,13 +536,13 @@ namespace TPApp.Controllers
                 new() { StepNumber = 5, StepName = "Đàm phán thương mại", StatusId = statuses["Negotiation"], ControllerName = "Negotiation", ActionName = "Create", IsAccessible = statuses["Proposal"] > 0 },
                 new() { StepNumber = 6, StepName = "Kiểm tra pháp lý", StatusId = statuses["LegalReview"], ControllerName = "LegalReview", ActionName = "Create", IsAccessible = statuses["Negotiation"] > 0 },
                 new() { StepNumber = 7, StepName = "Ký hợp đồng điện tử", StatusId = statuses["Signing"], ControllerName = "Signing", ActionName = "Index", IsAccessible = statuses["LegalReview"] > 0 },
-                new() { StepNumber = 8, StepName = "Xác nhận tạm ứng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["Signing"] >= 5 },
-                new() { StepNumber = 9, StepName = "Thử nghiệm Pilot", StatusId = statuses["PilotTest"], ControllerName = "PilotTest", ActionName = "Create", IsAccessible = statuses["AdvancePayment"] > 0 },
-                new() { StepNumber = 10, StepName = "Bàn giao & triển khai thiết bị", StatusId = statuses["Handover"], ControllerName = "Handover", ActionName = "Create", IsAccessible = statuses["PilotTest"] > 0 },
-                new() { StepNumber = 11, StepName = "Đào tạo & chuyển giao vận hành", StatusId = statuses["Training"], ControllerName = "Training", ActionName = "Create", IsAccessible = statuses["Handover"] > 0 },
-                new() { StepNumber = 12, StepName = "Bàn giao hồ sơ kỹ thuật", StatusId = statuses["TechDoc"], ControllerName = "TechDoc", ActionName = "Create", IsAccessible = statuses["Training"] > 0 },
-                new() { StepNumber = 13, StepName = "Nghiệm thu", StatusId = statuses["Acceptance"], ControllerName = "Acceptance", ActionName = "Create", IsAccessible = statuses["TechDoc"] > 0 },
-                new() { StepNumber = 14, StepName = "Thanh lý hợp đồng", StatusId = statuses["Liquidation"], ControllerName = "Liquidation", ActionName = "Create", IsAccessible = statuses["Acceptance"] > 0 }
+                new() { StepNumber = 8, StepName = "Xác nhận tạm ứng", StatusId = statuses["AdvancePayment"], ControllerName = "AdvancePayment", ActionName = "Create", IsAccessible = statuses["Signing"] >= 5, IsVisible = false },
+                new() { StepNumber = 9, StepName = "Thử nghiệm Pilot", StatusId = statuses["PilotTest"], ControllerName = "PilotTest", ActionName = "Create", IsAccessible = statuses["AdvancePayment"] > 0, IsVisible = false },
+                new() { StepNumber = 10, StepName = "Bàn giao & triển khai thiết bị", StatusId = statuses["Handover"], ControllerName = "Handover", ActionName = "Create", IsAccessible = statuses["PilotTest"] > 0, IsVisible = false },
+                new() { StepNumber = 11, StepName = "Đào tạo & chuyển giao vận hành", StatusId = statuses["Training"], ControllerName = "Training", ActionName = "Create", IsAccessible = statuses["Handover"] > 0, IsVisible = false },
+                new() { StepNumber = 12, StepName = "Bàn giao hồ sơ kỹ thuật", StatusId = statuses["TechDoc"], ControllerName = "TechDoc", ActionName = "Create", IsAccessible = statuses["Training"] > 0, IsVisible = false },
+                new() { StepNumber = 13, StepName = "Nghiệm thu", StatusId = statuses["Acceptance"], ControllerName = "Acceptance", ActionName = "Create", IsAccessible = statuses["TechDoc"] > 0, IsVisible = false },
+                new() { StepNumber = 14, StepName = "Thanh lý hợp đồng", StatusId = statuses["Liquidation"], ControllerName = "Liquidation", ActionName = "Create", IsAccessible = statuses["Acceptance"] > 0, IsVisible = false }
             };
 
             return steps;
@@ -590,6 +594,11 @@ namespace TPApp.Controllers
                 }
                 if (i == 13) currentStep = 14; // All complete
             }
+
+            // Cap to last visible step (steps 8-14 are hidden)
+            var maxVisibleStep = steps.Where(s => s.IsVisible).Max(s => s.StepNumber);
+            if (currentStep > maxVisibleStep) currentStep = maxVisibleStep;
+            if (stepNumber > maxVisibleStep) stepNumber = maxVisibleStep;
             
             // Validate access - can't skip ahead (but allow if step is accessible)
             if (stepNumber > currentStep && !steps[stepNumber - 1].IsAccessible)
