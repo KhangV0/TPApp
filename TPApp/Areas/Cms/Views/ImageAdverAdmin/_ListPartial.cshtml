@@ -20,8 +20,8 @@
                         Tiêu đề <i class="fas fa-sort text-muted ms-1"></i>
                     </th>
                     <th style="width:100px">Vị trí</th>
-                    <th class="sortable" data-sort="sort" style="cursor:pointer;width:70px">
-                        STT <i class="fas fa-sort text-muted ms-1"></i>
+                    <th style="width:50px" class="text-center">
+                        <i class="fas fa-arrows-alt text-muted" title="Kéo thả để sắp xếp"></i>
                     </th>
                     <th class="sortable" data-sort="status" style="cursor:pointer;width:130px">
                         Trạng thái <i class="fas fa-sort text-muted ms-1"></i>
@@ -35,7 +35,7 @@
                     </th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="sortableBody">
                 @if (!Model.Any())
                 {
                     <tr>
@@ -51,7 +51,7 @@
                     {
                         var isPublished = item.StatusID == 3;
                         var canDelete = !isPublished;
-                        <tr>
+                        <tr data-id="@item.ID">
                             <td class="text-center">
                                 <input type="checkbox" class="form-check-input chkRow" value="@item.ID" @(canDelete ? "" : "disabled") />
                             </td>
@@ -96,8 +96,8 @@
                             <td class="text-center">
                                 <span class="badge bg-secondary">@(item.Subject ?? 0)</span>
                             </td>
-                            <td class="text-center">
-                                <span class="badge bg-light text-dark">@(item.Sort ?? 0)</span>
+                            <td class="text-center drag-handle" style="cursor:grab">
+                                <i class="fas fa-grip-vertical text-muted"></i>
                             </td>
                             <td>
                                 @{

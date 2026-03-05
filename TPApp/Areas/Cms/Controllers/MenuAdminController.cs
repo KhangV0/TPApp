@@ -47,6 +47,8 @@ namespace TPApp.Areas.Cms.Controllers
                 query = query.Where(m => m.StatusId == statusId.Value);
             if (parentId.HasValue)
                 query = query.Where(m => m.ParentId == parentId.Value);
+            else
+                query = query.Where(m => m.ParentId == null || m.ParentId == 0);
 
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -112,6 +114,17 @@ namespace TPApp.Areas.Cms.Controllers
                 .OrderBy(m => m.Sort)
                 .ToListAsync();
             ViewBag.ParentMenus = BuildMenuTree(filterMenus, null, 0);
+
+            // Breadcrumb info for drill-down
+            if (parentId.HasValue && parentId.Value > 0)
+            {
+                var browseParent = await _context.Menus.AsNoTracking()
+                    .Where(m => m.MenuId == parentId.Value)
+                    .Select(m => new { m.MenuId, m.Title, m.ParentId })
+                    .FirstOrDefaultAsync();
+                ViewBag.BrowseParentTitle = browseParent?.Title;
+                ViewBag.BrowseParentParentId = browseParent?.ParentId;
+            }
 
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return PartialView("_ListPartial", items);
@@ -209,6 +222,26 @@ namespace TPApp.Areas.Cms.Controllers
 
             TempData["Success"] = "Cập nhật menu thành công!";
             return RedirectToAction(nameof(Index));
+        }
+
+        // ─────────────────────────────────────────
+        // UPDATE SORT (drag & drop)
+        // ─────────────────────────────────────────
+        [HttpPost]
+        public async Task<IActionResult> UpdateSort([FromBody] List<SortUpdateItem> items)
+        {
+            if (items == null || !items.Any())
+                return Json(new { success = false, message = "Không có dữ liệu." });
+
+            foreach (var item in items)
+            {
+                var entity = await _context.Menus.FindAsync(item.Id);
+                if (entity != null)
+                    entity.Sort = item.Sort;
+            }
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Đã cập nhật thứ tự." });
         }
 
         // ─────────────────────────────────────────

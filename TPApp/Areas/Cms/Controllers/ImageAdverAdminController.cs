@@ -62,14 +62,18 @@ namespace TPApp.Areas.Cms.Controllers
 
         // ── INDEX ──
         public async Task<IActionResult> Index(
-            string? keyword, int? statusId, int? subject,
+            string? keyword, int? statusId, int? subject, int? siteId,
             string? sortBy, string? sortDir,
             int page = 1, int pageSize = 30)
         {
-            var siteId = GetSiteId();
+            var currentSiteId = GetSiteId();
+
+            // Default to current site; only SiteId=1 can switch
+            if (!siteId.HasValue || currentSiteId != 1)
+                siteId = currentSiteId;
 
             var query = _context.ImageAdvers.AsNoTracking()
-                .Where(a => a.LanguageID == 1 && (a.SiteId == null || a.SiteId == siteId));
+                .Where(a => a.LanguageID == 1 && a.SiteId == siteId);
 
             // Filters
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -131,6 +135,13 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.Subject = subject;
             ViewBag.Statuses = statuses;
 
+            // Site filter
+            ViewBag.Sites = new SelectList(
+                await _context.RootSites.AsNoTracking().ToListAsync(),
+                "SiteId", "SiteName", siteId);
+            ViewBag.CurrentSiteId = currentSiteId;
+            ViewBag.SiteId = siteId;
+
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return PartialView("_ListPartial", items);
 
@@ -156,6 +167,19 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ImageAdverFormVm vm)
         {
+            // Set defaults for hidden fields
+            if (string.IsNullOrEmpty(vm.Domain))
+                vm.Domain = GetDomain();
+            if (!vm.SiteId.HasValue || vm.SiteId == 0)
+                vm.SiteId = GetSiteId();
+            if (vm.LanguageID == 0)
+                vm.LanguageID = 1;
+
+            // Clear ModelState for auto-filled fields
+            ModelState.Remove("Domain");
+            ModelState.Remove("SiteId");
+            ModelState.Remove("LanguageID");
+
             if (string.IsNullOrWhiteSpace(vm.Title))
                 ModelState.AddModelError("Title", "Tiêu đề không được để trống.");
 
@@ -219,6 +243,24 @@ namespace TPApp.Areas.Cms.Controllers
 
             TempData["Success"] = "Đã cập nhật quảng cáo thành công.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // ── UPDATE SORT (drag & drop) ──
+        [HttpPost]
+        public async Task<IActionResult> UpdateSort([FromBody] List<SortUpdateItem> items)
+        {
+            if (items == null || !items.Any())
+                return Json(new { success = false, message = "Không có dữ liệu." });
+
+            foreach (var item in items)
+            {
+                var entity = await _context.ImageAdvers.FindAsync(item.Id);
+                if (entity != null)
+                    entity.Sort = item.Sort;
+            }
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Đã cập nhật thứ tự." });
         }
 
         // ── DELETE ──

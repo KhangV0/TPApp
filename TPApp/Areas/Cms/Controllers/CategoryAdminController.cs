@@ -23,6 +23,12 @@ namespace TPApp.Areas.Cms.Controllers
         public DateTime? Created { get; set; }
     }
 
+    public class SortUpdateItem
+    {
+        public int Id { get; set; }
+        public int Sort { get; set; }
+    }
+
     public class CategoryFormVm
     {
         public int CatId { get; set; }
@@ -80,6 +86,8 @@ namespace TPApp.Areas.Cms.Controllers
                 query = query.Where(c => c.StatusId == statusId.Value);
             if (parentId.HasValue)
                 query = query.Where(c => c.ParentId == parentId.Value);
+            else
+                query = query.Where(c => c.ParentId == null || c.ParentId == 0);
 
             // Sort
             query = sortBy?.ToLower() switch
@@ -161,6 +169,17 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.ParentId = parentId;
             ViewBag.Statuses = statuses;
             ViewBag.ParentCategories = parentMenuItems;
+
+            // Breadcrumb info for drill-down
+            if (parentId.HasValue && parentId.Value > 0)
+            {
+                var browseParent = await _context.Categories.AsNoTracking()
+                    .Where(c => c.CatId == parentId.Value)
+                    .Select(c => new { c.CatId, c.Title, c.ParentId })
+                    .FirstOrDefaultAsync();
+                ViewBag.BrowseParentTitle = browseParent?.Title;
+                ViewBag.BrowseParentParentId = browseParent?.ParentId;
+            }
 
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return PartialView("_ListPartial", items);
@@ -251,6 +270,24 @@ namespace TPApp.Areas.Cms.Controllers
 
             TempData["Success"] = "Đã cập nhật danh mục thành công.";
             return RedirectToAction(nameof(Index));
+        }
+
+        // ── UPDATE SORT (drag & drop) ──
+        [HttpPost]
+        public async Task<IActionResult> UpdateSort([FromBody] List<SortUpdateItem> items)
+        {
+            if (items == null || !items.Any())
+                return Json(new { success = false, message = "Không có dữ liệu." });
+
+            foreach (var item in items)
+            {
+                var entity = await _context.Categories.FindAsync(item.Id);
+                if (entity != null)
+                    entity.Sort = item.Sort;
+            }
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Đã cập nhật thứ tự." });
         }
 
         // ── DELETE ──

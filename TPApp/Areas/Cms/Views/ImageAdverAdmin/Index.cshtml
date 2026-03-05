@@ -15,11 +15,11 @@
         <form id="searchForm">
             @Html.AntiForgeryToken()
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold small mb-1">Từ khóa</label>
                     <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control form-control-sm" placeholder="Tiêu đề quảng cáo..." />
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold small mb-1">Trạng thái</label>
                     <select name="statusId" class="form-select form-select-sm">
                         <option value="">-- Tất cả --</option>
@@ -36,9 +36,37 @@
                         }
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold small mb-1">Vị trí (Subject)</label>
-                    <input type="number" name="subject" value="@ViewBag.Subject" class="form-control form-control-sm" placeholder="Mã vị trí..." />
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Vị trí</label>
+                    @{
+                        var subj = ViewBag.Subject?.ToString() ?? "";
+                    }
+                    <select name="subject" class="form-select form-select-sm">
+                        <option value="">-- Tất cả --</option>
+                        <option value="1" selected="@(subj == "1")">1 - Hero Banner</option>
+                        <option value="9" selected="@(subj == "9")">9 - Detail Right</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    @{
+                        var currentSiteId = (int?)ViewBag.CurrentSiteId ?? 1;
+                        var isSiteAdmin = currentSiteId == 1;
+                        var sites = ViewBag.Sites as Microsoft.AspNetCore.Mvc.Rendering.SelectList;
+                    }
+                    <label class="form-label fw-semibold small mb-1">Sàn</label>
+                    <select name="siteId" class="form-select form-select-sm" @(!isSiteAdmin ? "disabled" : "")>
+                        @if (sites != null)
+                        {
+                            foreach (var s in sites)
+                            {
+                                <option value="@s.Value" selected="@s.Selected">@s.Text</option>
+                            }
+                        }
+                    </select>
+                    @if (!isSiteAdmin)
+                    {
+                        <input type="hidden" name="siteId" value="@ViewBag.SiteId" />
+                    }
                 </div>
             </div>
         </form>
@@ -76,6 +104,7 @@
 </div>
 
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 $(function(){
     toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
@@ -104,6 +133,7 @@ $(function(){
                 $('#btnBulkDelete').prop('disabled', true);
                 var cnt = $('#partialTotalCount').text();
                 $('#badgeTotal').text(cnt);
+                initSortable();
             },
             error: function() {
                 toastr.error('Lỗi tải dữ liệu.');
@@ -178,6 +208,36 @@ $(function(){
             }
         });
     });
+
+    // ── Drag & Drop sorting ──
+    function initSortable() {
+        var el = document.getElementById('sortableBody');
+        if (!el) return;
+        Sortable.create(el, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'table-info',
+            onEnd: function() {
+                var items = [];
+                $('#sortableBody tr[data-id]').each(function(index) {
+                    items.push({ Id: parseInt($(this).data('id')), Sort: index });
+                });
+                $.ajax({
+                    url: '@Url.Action("UpdateSort", "ImageAdverAdmin", new { area = "Cms" })',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(items),
+                    success: function(r) {
+                        if (r.success) toastr.success(r.message);
+                        else toastr.error(r.message);
+                    },
+                    error: function() { toastr.error('Lỗi cập nhật thứ tự.'); }
+                });
+            }
+        });
+    }
+    initSortable();
+
 });
 </script>
 }

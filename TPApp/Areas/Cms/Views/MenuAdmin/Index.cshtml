@@ -44,7 +44,7 @@
                     <div class="mb-2">
                         <label class="form-label fw-semibold small mb-1">Menu cha</label>
                         <select name="parentId" id="filterParent" class="form-select form-select-sm">
-                            <option value="">---Tất cả---</option>
+                            <option value="">---Gốc---</option>
                             @{
                                 var selParent = ViewBag.ParentId?.ToString() ?? "";
                                 var parentMenus = ViewBag.ParentMenus as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
@@ -95,6 +95,7 @@
 </div>
 
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 $(function(){
 
@@ -126,6 +127,7 @@ $(function(){
                 $('#btnBulkDelete').prop('disabled', true);
                 var cnt = $('#partialTotalCount').text();
                 $('#badgeTotal').text(cnt);
+                initSortable();
             },
             error: function() {
                 toastr.error('Lỗi tải dữ liệu.');
@@ -201,6 +203,55 @@ $(function(){
             }
         });
     });
+
+    // Drill-down: click title to see children
+    $(document).on('click', '.drill-down', function(e) {
+        e.preventDefault();
+        var catId = $(this).data('catid');
+        $('#filterParent').val(catId).trigger('change');
+        loadList(1);
+    });
+
+    // Drill-up: back button to parent
+    $(document).on('click', '.drill-up', function(e) {
+        e.preventDefault();
+        var parentId = $(this).data('parentid');
+        if (parentId && parentId > 0) {
+            $('#filterParent').val(parentId).trigger('change');
+        } else {
+            $('#filterParent').val('').trigger('change');
+        }
+        loadList(1);
+    });
+
+    // ── Drag & Drop sorting ──
+    function initSortable() {
+        var el = document.getElementById('sortableBody');
+        if (!el) return;
+        Sortable.create(el, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'table-info',
+            onEnd: function() {
+                var items = [];
+                $('#sortableBody tr[data-id]').each(function(index) {
+                    items.push({ Id: parseInt($(this).data('id')), Sort: index });
+                });
+                $.ajax({
+                    url: '@Url.Action("UpdateSort", "MenuAdmin", new { area = "Cms" })',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(items),
+                    success: function(r) {
+                        if (r.success) toastr.success(r.message);
+                        else toastr.error(r.message);
+                    },
+                    error: function() { toastr.error('Lỗi cập nhật thứ tự.'); }
+                });
+            }
+        });
+    }
+    initSortable();
 
 });
 </script>

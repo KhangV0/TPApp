@@ -47,9 +47,12 @@
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <label asp-for="Subject" class="form-label fw-semibold small">Vị trí (Subject)</label>
-                    <input asp-for="Subject" type="number" class="form-control form-control-sm" placeholder="0" />
-                    <small class="text-muted">Mã vị trí hiển thị quảng cáo</small>
+                    <label asp-for="Subject" class="form-label fw-semibold small">Vị trí</label>
+                    <select asp-for="Subject" class="form-select form-select-sm">
+                        <option value="">-- Chọn vị trí --</option>
+                        <option value="1">1 - Hero Banner</option>
+                        <option value="9">9 - Detail Right</option>
+                    </select>
                 </div>
 
                 <div class="mb-3">

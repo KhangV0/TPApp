@@ -78,6 +78,12 @@
     opacity: 0.9;
 }
 
+.hero-desc {
+    margin-top: 20px;
+    font-size: 13px;
+    opacity: 0.9;
+}
+
 .hero-btn {
     margin-top: 24px;
     border-radius: 30px;

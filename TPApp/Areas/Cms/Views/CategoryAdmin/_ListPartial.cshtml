@@ -8,6 +8,24 @@
 
 <span id="partialTotalCount" class="d-none">@totalCount</span>
 
+@{
+    var browseParentTitle = ViewBag.BrowseParentTitle as string;
+    var browseParentParentId = (int?)ViewBag.BrowseParentParentId;
+}
+@if (!string.IsNullOrEmpty(browseParentTitle))
+{
+    <div class="px-3 py-2 bg-light border-bottom d-flex align-items-center gap-2">
+        <a href="#" class="btn btn-sm btn-outline-secondary drill-up"
+           data-parentid="@(browseParentParentId ?? 0)">
+            <i class="fas fa-arrow-left me-1"></i> Quay lại
+        </a>
+        <span class="small">
+            <i class="fas fa-folder-open text-warning me-1"></i>
+            Danh mục con của: <strong>@browseParentTitle</strong>
+        </span>
+    </div>
+}
+
 <div class="card-body p-0">
     <div class="table-responsive">
         <table class="table table-hover table-sm align-middle mb-0">
@@ -15,12 +33,12 @@
                 <tr>
                     <th style="width:35px"><input type="checkbox" id="chkAll" class="form-check-input" /></th>
                     <th style="width:120px">Thao tác</th>
-                    <th class="sortable" data-sort="title" style="cursor:pointer">
+                    <th class="sortable" data-sort="title" style="cursor:pointer;width:200px">
                         Tiêu đề <i class="fas fa-sort text-muted ms-1"></i>
                     </th>
                     <th style="width:150px">Danh mục cha</th>
-                    <th class="sortable" data-sort="sort" style="cursor:pointer;width:70px">
-                        STT <i class="fas fa-sort text-muted ms-1"></i>
+                    <th style="width:50px" class="text-center">
+                        <i class="fas fa-arrows-alt text-muted" title="Kéo thả để sắp xếp"></i>
                     </th>
                     <th class="sortable" data-sort="status" style="cursor:pointer;width:130px">
                         Trạng thái <i class="fas fa-sort text-muted ms-1"></i>
@@ -35,7 +53,7 @@
                     </th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="sortableBody">
                 @if (!Model.Any())
                 {
                     <tr>
@@ -51,7 +69,7 @@
                     {
                         var isPublished = item.StatusId == 3;
                         var canDelete = !isPublished;
-                        <tr>
+                        <tr data-id="@item.CatId">
                             <td class="text-center">
                                 <input type="checkbox" class="form-check-input chkRow" value="@item.CatId" @(canDelete ? "" : "disabled") />
                             </td>
@@ -77,15 +95,15 @@
                                 </div>
                             </td>
                             <td>
-                                <a asp-action="Edit" asp-route-id="@item.CatId" class="fw-semibold text-decoration-none small">
-                                    @item.Title
+                                <a href="#" class="fw-semibold text-decoration-none small drill-down" data-catid="@item.CatId">
+                                    <i class="fas fa-folder text-warning me-1 small"></i>@item.Title
                                 </a>
                             </td>
                             <td>
                                 <span class="small text-muted">@(item.ParentTitle ?? "—")</span>
                             </td>
-                            <td class="text-center">
-                                <span class="badge bg-light text-dark">@(item.Sort ?? 0)</span>
+                            <td class="text-center drag-handle" style="cursor:grab">
+                                <i class="fas fa-grip-vertical text-muted"></i>
                             </td>
                             <td>
                                 @{
