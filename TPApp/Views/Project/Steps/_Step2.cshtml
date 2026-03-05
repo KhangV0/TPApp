@@ -2,394 +2,116 @@
 
 @{
     var nda = Model.StepData as TPApp.Entities.NDAAgreement;
-    var eSignDoc = ViewBag.ESignDocument as TPApp.Entities.ESign.ESignDocument;
-    var signatures = ViewBag.Signatures as List<TPApp.Entities.ESign.ESignSignature>;
+    var isCompleted = nda != null && nda.DaDongY;
 }
-
-<style>
-    .form-control::placeholder {
-        color: #ccc;
-        opacity: 1;
-    }
-</style>
-
-@* OTP Modal for NDA signing *@
-<div class="modal fade" id="ndaOtpModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Nhập mã OTP</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center">
-                <p class="text-muted small mb-3" id="ndaOtpSentMessage">Mã OTP đã được gửi.<br/>Có hiệu lực trong <strong id="ndaOtpCountdown" class="text-danger">5:00</strong></p>
-                <input type="text" id="ndaOtpInput" class="form-control form-control-lg text-center fw-bold"
-                       maxlength="6" placeholder="_ _ _ _ _ _" autocomplete="off" style="letter-spacing:6px;font-size:1.5rem" />
-                <div id="ndaOtpError" class="text-danger small mt-2 d-none"></div>
-            </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" id="btnVerifyNdaOtp" onclick="ndaVerifyOtp()">
-                    <i class="fas fa-check-circle me-1"></i> Xác nhận OTP
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
-            <i class="fas fa-file-signature"></i> Bước 2: Thỏa thuận Bảo mật (NDA) - Chữ ký điện tử
+            <i class="fas fa-file-signature"></i> Bước 2: Thỏa thuận Bảo mật (NDA)
         </h5>
     </div>
     <div class="card-body">
         <i class="step-desc">
-            Bên mua đồng ý các điều khoản của Thỏa thuận bảo mật thông tin (NDA) nhằm đảm bảo an toàn cho các thông tin sắp trao đổi với Sàn.
-         </i>
-        @* E-Sign Section *@
-        @if (eSignDoc != null)
-        {
-            <div class="esign-section mb-4">
-                <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-shield-alt"></i> Tài liệu chữ ký điện tử</h6>
-                
-                <dl class="row">
-                    <dt class="col-sm-3">Tên tài liệu:</dt>
-                    <dd class="col-sm-9"><strong>@eSignDoc.DocumentName</strong></dd>
+            Bên mua đồng ý các điều khoản bảo mật thông tin nhằm đảm bảo an toàn cho các thông tin sắp trao đổi với Sàn.
+        </i>
 
-                    <dt class="col-sm-3">Trạng thái:</dt>
-                    <dd class="col-sm-9">
-                        @switch (eSignDoc.Status)
+        <div class="p-4 bg-light border rounded mt-3">
+            <h6 class="text-center mb-1"><i class="fas fa-file-contract"></i> PHIẾU THỎA THUẬN BẢO MẬT</h6>
+            <p class="text-center text-muted small mb-4">–oOo–</p>
+
+            @* ── Bên A / Bên B ── *@
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Bên A (Bên Mua)</label>
+                    @{
+                        var techTransfer = ViewBag.TechTransfer as TPApp.Entities.TechTransferRequest;
+                        var benA = nda?.BenA ?? techTransfer?.DonVi ?? techTransfer?.HoTen ?? "";
+                    }
+                    <input type="text" class="form-control @(isCompleted ? "bg-white" : "")" id="benA" value="@benA"
+                           @(isCompleted ? "readonly" : "") placeholder="Nhập tên đơn vị / cá nhân" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-semibold">Bên B (Bên Tư vấn)</label>
+                    <input type="text" class="form-control bg-light" id="benB"
+                           value="Trung tâm Thông tin, Thống kê và Ứng dụng tiến bộ khoa học công nghệ"
+                           readonly />
+                </div>
+            </div>
+
+            @* ── 6 điều khoản ── *@
+            <div class="border rounded-3 p-4 mb-4" style="background: #f8fafc;">
+                <p class="fw-semibold text-dark mb-3">
+                    Bằng việc đánh dấu tick chọn, <strong>Bên Mua</strong> đồng ý các điều kiện sau:
+                </p>
+                <ol class="mb-0" style="line-height: 1.9;">
+                    <li>
+                        <strong>Bảo mật thông tin:</strong>
+                        Không sao chép, phát tán hay tiết lộ Thông Tin dự án cho bất kỳ bên thứ ba nào khi chưa được phép.
+                    </li>
+                    <li>
+                        <strong>Sử dụng đúng mục đích:</strong>
+                        Chỉ sử dụng thông tin cho giao dịch chuyển giao công nghệ, nghiêm cấm sử dụng cho mục đích thương mại riêng.
+                    </li>
+                    <li>
+                        <strong>Tôn trọng Sở hữu trí tuệ:</strong>
+                        Việc tiếp nhận thông tin không làm phát sinh quyền sở hữu hay quyền sử dụng (license) đối với tài sản trí tuệ.
+                    </li>
+                    <li>
+                        <strong>Thời hạn ràng buộc:</strong>
+                        Duy trì nghĩa vụ bảo mật <strong>12 tháng</strong> sau khi kết thúc thỏa thuận.
+                    </li>
+                    <li>
+                        <strong>Trách nhiệm vi phạm:</strong>
+                        Chịu hoàn toàn trách nhiệm và bồi thường toàn bộ thiệt hại thực tế (gồm án phí, phí luật sư) nếu vi phạm.
+                    </li>
+                    <li>
+                        <strong>Giải quyết tranh chấp:</strong>
+                        Tuân thủ pháp luật Việt Nam, ưu tiên thương lượng hoặc giải quyết tại Tòa án có thẩm quyền tại TP.HCM.
+                    </li>
+                </ol>
+            </div>
+
+            @* ── Checkbox Đồng ý ── *@
+            @if (isCompleted)
+            {
+                <div class="border rounded-3 p-3 mb-3" style="background: #eafaf1; border-color: #28a745 !important;">
+                    <i class="fas fa-check-circle text-success fa-lg me-2"></i>
+                    <strong class="text-success">Đã đồng ý các điều khoản</strong>
+                    <br />
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>Ngày tạo: @nda.NgayTao.ToString("dd/MM/yyyy HH:mm")
+                        - bởi <strong>@(!string.IsNullOrEmpty(ViewBag.NdaCreatorName) ? ViewBag.NdaCreatorName : ViewBag.NdaCreatorUserName)</strong>.
+                        @if (nda.NgaySua.HasValue)
                         {
-                            case 0:
-                                <span class="badge bg-secondary"><i class="fas fa-file"></i> Nháp</span>
-                                break;
-                            case 1:
-                                <span class="badge bg-warning"><i class="fas fa-clock"></i> Chờ ký</span>
-                                break;
-                            case 2:
-                                <span class="badge bg-success"><i class="fas fa-check-circle"></i> Đã ký</span>
-                                break;
-                            case 3:
-                                <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Từ chối</span>
-                                break;
+                            <span class="ms-2"><i class="fas fa-edit me-1"></i>Cập nhật: @nda.NgaySua.Value.ToString("dd/MM/yyyy HH:mm")</span>
                         }
-                    </dd>
-
-                    @if (!string.IsNullOrEmpty(eSignDoc.FilePath))
-                    {
-                        <dt class="col-sm-3">File:</dt>
-                        <dd class="col-sm-9">
-                            <a href="@eSignDoc.FilePath" target="_blank" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-download"></i> Tải xuống NDA
-                            </a>
-                        </dd>
-
-                        <dt class="col-sm-3">Mã hash (SHA256):</dt>
-                        <dd class="col-sm-9"><code class="small">@eSignDoc.FileHash</code></dd>
-                    }
-
-                    @if (eSignDoc.SignedAt.HasValue)
-                    {
-                        <dt class="col-sm-3">Ngày ký:</dt>
-                        <dd class="col-sm-9">@eSignDoc.SignedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</dd>
-                    }
-                </dl>
-
-                @* Signatures List *@
-                @if (signatures != null && signatures.Any())
-                {
-                    <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="fas fa-pen-fancy"></i> Danh sách chữ ký</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Người ký</th>
-                                    <th>Vai trò</th>
-                                    <th>Trạng thái</th>
-                                    <th>Ngày ký</th>
-                                    <th>IP Address</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var sig in signatures)
-                                {
-                                    <tr>
-                                        @{
-                                            var signerNames = ViewBag.SignerNames as Dictionary<int, string>;
-                                            var signerName = signerNames != null && signerNames.ContainsKey(sig.SignerUserId)
-                                                ? signerNames[sig.SignerUserId]
-                                                : $"User #{sig.SignerUserId}";
-                                        }
-                                        <td>@signerName</td>
-                                        <td>@sig.SignerRole</td>
-                                        <td>
-                                            @if (sig.Status == 1)
-                                            {
-                                                <span class="badge bg-success">Đã ký</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-warning">Chờ ký</span>
-                                            }
-                                        </td>
-                                        <td>@(sig.SignedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
-                                        <td><small>@sig.IpAddress</small></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-
-                @* Sign Button — send OTP to sign *@
-                @if (eSignDoc.Status != 2)
-                {
-                    <div class="mt-4 p-3 bg-light border rounded">
-                        <h6 class="mb-3"><i class="fas fa-signature"></i> Ký tài liệu điện tử</h6>
-                        <div class="d-flex gap-4 mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="esignOtpChannel" id="esignChannelEmail" value="email" checked />
-                                <label class="form-check-label" for="esignChannelEmail">
-                                    <i class="fas fa-envelope me-1 text-primary"></i> OTP qua Email
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="esignOtpChannel" id="esignChannelPhone" value="phone" />
-                                <label class="form-check-label" for="esignChannelPhone">
-                                    <i class="fas fa-mobile-alt me-1 text-success"></i> OTP qua Phone
-                                </label>
-                            </div>
-                        </div>
-                        <button class="btn btn-success" id="btnSendEsignOtp" data-document-id="@eSignDoc.Id"
-                                onclick="sendEsignOtp(this)">
-                            <i class="fas fa-pen-nib me-1"></i> Gửi OTP & Ký xác nhận
-                        </button>
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            @* No E-Sign document yet - Show NDA agreement form *@
-            <div class="p-4 bg-light border rounded">
-                <h6 class="text-center mb-1"><i class="fas fa-file-contract"></i> PHIẾU THỎA THUẬN BẢO MẬT</h6>
-                <p class="text-center text-muted small mb-4">–oOo–</p>
-
-                <form id="createNdaForm" enctype="multipart/form-data">
-                    <input type="hidden" id="projectId" value="@Model.ProjectId" />
-
-                    @* ── Bên A / Bên B ── *@
-                    <div class="row mb-3">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Bên A (Bên Mua) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="benA" name="benA"
-                                   value="@(ViewBag.BenADefault ?? "")"
-                                   placeholder="Nhập tên đơn vị / cá nhân" required />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Bên B (Bên Tư vấn)</label>
-                            <input type="text" class="form-control bg-light" id="benB" name="benB"
-                                   value="Trung tâm Thông tin, Thống kê và Ứng dụng tiến bộ khoa học công nghệ"
-                                   readonly />
-                        </div>
-                    </div>
-
-                    @* ── Nội dung 6 điều khoản ── *@
-                    <div class="border rounded-3 p-4 mb-4" style="background: #f8fafc;">
-                        <p class="fw-semibold text-dark mb-3">
-                            Bằng việc đánh dấu tick chọn, <strong>Bên Mua</strong> xác nhận và cam kết tuân thủ các điều kiện sau:
-                        </p>
-                        <ol class="mb-0" style="line-height: 1.9;">
-                            <li>
-                                <strong>Bảo mật tuyệt đối:</strong>
-                                Không sao chép, phát tán hay tiết lộ Thông Tin Mật cho bất kỳ bên thứ ba nào khi chưa được phép.
-                            </li>
-                            <li>
-                                <strong>Sử dụng đúng mục đích:</strong>
-                                Chỉ sử dụng thông tin cho giao dịch chuyển giao công nghệ, nghiêm cấm sử dụng cho mục đích thương mại riêng.
-                            </li>
-                            <li>
-                                <strong>Tôn trọng Sở hữu trí tuệ:</strong>
-                                Việc tiếp nhận thông tin không làm phát sinh quyền sở hữu hay quyền sử dụng (license) đối với tài sản trí tuệ.
-                            </li>
-                            <li>
-                                <strong>Thời hạn ràng buộc:</strong>
-                                Duy trì nghĩa vụ bảo mật <strong>03 năm</strong> sau khi kết thúc thỏa thuận; giữ kín vô thời hạn đối với các "Bí mật kinh doanh".
-                            </li>
-                            <li>
-                                <strong>Trách nhiệm vi phạm:</strong>
-                                Chấp nhận chịu phạt <strong>5% giá trị hợp đồng</strong> và bồi thường toàn bộ thiệt hại thực tế (gồm án phí, phí luật sư) nếu vi phạm.
-                            </li>
-                            <li>
-                                <strong>Giải quyết tranh chấp:</strong>
-                                Tuân thủ pháp luật Việt Nam, ưu tiên thương lượng hoặc giải quyết tại Tòa án có thẩm quyền tại TP.HCM.
-                            </li>
-                        </ol>
-                    </div>
-
-                    @* ── Checkbox Đồng ý ── *@
-                    <div class="border rounded-3 p-3 mb-4" style="background: #fffdf0; border-color: #ffc107 !important;">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="daDongY" name="daDongY"
-                                   required style="width:1.2em; height:1.2em;" />
-                            <label class="form-check-label fw-bold fs-6 ms-1" for="daDongY">
-                                <i class="fas fa-check-circle text-success me-1"></i> Đồng ý
-                            </label>
-                        </div>
-                    </div>
-
-                    @* ── Thời hạn + OTP ── *@
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-calendar-alt me-1 text-primary"></i>
-                                Thời hạn bảo mật <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-select" id="thoiHanBaoMat" name="thoiHanBaoMat" required>
-                                <option value="">-- Chọn thời hạn --</option>
-                                <option value="1 năm">1 năm</option>
-                                <option value="2 năm">2 năm</option>
-                                <option value="3 năm" selected>3 năm</option>
-                                <option value="5 năm">5 năm</option>
-                                <option value="Vĩnh viễn">Vĩnh viễn</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-shield-alt me-1 text-primary"></i>
-                                Xác nhận ký số (OTP) <span class="text-danger">*</span>
-                            </label>
-                            <div class="d-flex gap-4 mt-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="otpChannel" id="otpEmail" value="email" checked />
-                                    <label class="form-check-label" for="otpEmail">
-                                        <i class="fas fa-envelope me-1 text-primary"></i> OTP qua Email
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="otpChannel" id="otpPhone" value="phone" />
-                                    <label class="form-check-label" for="otpPhone">
-                                        <i class="fas fa-mobile-alt me-1 text-success"></i> OTP qua Phone
-                                    </label>
-                                </div>
-                            </div>
-                            <input type="hidden" id="xacNhanKySo" name="xacNhanKySo" value="OTP-Email" />
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-lg" id="btnSubmitNda" disabled>
-                        <i class="fas fa-signature me-2"></i>Ký và xác nhận NDA
-                    </button>
-                </form>
-            </div>
-        }
-
-        @* NDA Agreement Information — same layout as creation form *@
-        @if (nda != null)
-        {
-            <hr class="my-4" />
-            <div class="p-4 bg-light border rounded">
-                <h6 class="text-center mb-1"><i class="fas fa-file-contract"></i> PHIẾU THỎA THUẬN BẢO MẬT</h6>
-                <p class="text-center text-muted small mb-4">–oOo–</p>
-
-                @* ── Bên A / Bên B ── *@
-                <div class="row mb-3">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold">Bên A (Bên Mua)</label>
-                        <input type="text" class="form-control bg-white" value="@nda.BenA" readonly />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold">Bên B (Bên Tư vấn)</label>
-                        <input type="text" class="form-control bg-white" value="@nda.BenB" readonly />
-                    </div>
+                    </small>
                 </div>
-
-                @* ── 6 điều khoản ── *@
-                <div class="border rounded-3 p-4 mb-4" style="background: #f8fafc;">
-                    <p class="fw-semibold text-dark mb-3">
-                        Bằng việc đánh dấu tick chọn, <strong>Bên Mua</strong> xác nhận và cam kết tuân thủ các điều kiện sau:
-                    </p>
-                    <ol class="mb-0" style="line-height: 1.9;">
-                        <li><strong>Bảo mật tuyệt đối:</strong> Không sao chép, phát tán hay tiết lộ Thông Tin Mật cho bất kỳ bên thứ ba nào khi chưa được phép.</li>
-                        <li><strong>Sử dụng đúng mục đích:</strong> Chỉ sử dụng thông tin cho giao dịch chuyển giao công nghệ, nghiêm cấm sử dụng cho mục đích thương mại riêng.</li>
-                        <li><strong>Tôn trọng Sở hữu trí tuệ:</strong> Việc tiếp nhận thông tin không làm phát sinh quyền sở hữu hay quyền sử dụng (license) đối với tài sản trí tuệ.</li>
-                        <li><strong>Thời hạn ràng buộc:</strong> Duy trì nghĩa vụ bảo mật <strong>03 năm</strong> sau khi kết thúc thỏa thuận; giữ kín vô thời hạn đối với các "Bí mật kinh doanh".</li>
-                        <li><strong>Trách nhiệm vi phạm:</strong> Chấp nhận chịu phạt <strong>5% giá trị hợp đồng</strong> và bồi thường toàn bộ thiệt hại thực tế (gồm án phí, phí luật sư) nếu vi phạm.</li>
-                        <li><strong>Giải quyết tranh chấp:</strong> Tuân thủ pháp luật Việt Nam, ưu tiên thương lượng hoặc giải quyết tại Tòa án có thẩm quyền tại TP.HCM.</li>
-                    </ol>
-                </div>
-
-                @* ── Trạng thái Đồng ý ── *@
-                <div class="border rounded-3 p-3 mb-4" style="background: @(nda.DaDongY || (eSignDoc != null && eSignDoc.Status == 2) ? "#eafaf1" : "#fffdf0"); border-color: @(nda.DaDongY || (eSignDoc != null && eSignDoc.Status == 2) ? "#28a745" : "#ffc107") !important;">
-                    @if (nda.DaDongY || (eSignDoc != null && eSignDoc.Status == 2))
-                    {
-                        <i class="fas fa-check-circle text-success fa-lg me-2"></i>
-                        <strong class="text-success">Đã đồng ý các điều khoản</strong>
-                    }
-                    else
-                    {
-                        <i class="fas fa-times-circle text-warning fa-lg me-2"></i>
-                        <strong class="text-warning">Chưa đồng ý</strong>
-                    }
-                </div>
-
-                @* ── Thời hạn + Ký số ── *@
-                <div class="row mb-3">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold">
-                            <i class="fas fa-calendar-alt me-1 text-primary"></i> Thời hạn bảo mật
+            }
+            else
+            {
+                <div class="border rounded-3 p-3 mb-3" style="background: #fffdf0; border-color: #ffc107 !important;">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="daDongY"
+                               style="width:1.2em; height:1.2em;" />
+                        <label class="form-check-label fw-bold fs-6 ms-1" for="daDongY">
+                            <i class="fas fa-check-circle text-success me-1"></i> Đồng ý
                         </label>
-                        <input type="text" class="form-control bg-white" value="@nda.ThoiHanBaoMat" readonly />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold">
-                            <i class="fas fa-shield-alt me-1 text-primary"></i> Xác nhận ký số
-                        </label>
-                        <div class="mt-1">
-                            @if (!string.IsNullOrEmpty(nda.XacNhanKySo))
-                            {
-                                <span class="badge bg-primary fs-6"><i class="fas fa-key me-1"></i>@nda.XacNhanKySo</span>
-                            }
-                            else if (eSignDoc != null && eSignDoc.Status == 2)
-                            {
-                                <span class="badge bg-success fs-6"><i class="fas fa-check-circle me-1"></i>Đã ký điện tử</span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">Chưa xác nhận</span>
-                            }
-                        </div>
                     </div>
                 </div>
 
-                @* ── Timestamps ── *@
-                <div class="row">
-                    <div class="col-md-6">
-                        <small class="text-muted"><i class="fas fa-clock me-1"></i>Ngày tạo: @nda.NgayTao.ToString("dd/MM/yyyy HH:mm")</small>
-                    </div>
-                    @if (nda.NgaySua.HasValue)
-                    {
-                        <div class="col-md-6">
-                            <small class="text-muted"><i class="fas fa-edit me-1"></i>Cập nhật: @nda.NgaySua.Value.ToString("dd/MM/yyyy HH:mm")</small>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
-        else if (eSignDoc == null)
-        {
-            <div class="alert alert-warning mt-3">
-                <i class="fas fa-exclamation-triangle"></i> 
-                Chưa có thông tin phiếu thỏa thuận bảo mật. Vui lòng điền thông tin và ký NDA.
-            </div>
-        }
+                <button type="button" class="btn btn-primary btn-lg" id="btnAgreeNda" disabled>
+                    <i class="fas fa-check-double me-2"></i>Xác nhận đồng ý NDA
+                </button>
+            }
+        </div>
     </div>
     <div class="card-footer">
         <button class="btn btn-secondary step-nav-btn" data-step="1">
             <i class="fas fa-arrow-left"></i> Quay lại bước trước
         </button>
-        @if (eSignDoc != null && eSignDoc.Status == 2)
+        @if (isCompleted)
         {
             <button class="btn btn-primary step-nav-btn" data-step="3">
                 Tiếp tục bước 3 <i class="fas fa-arrow-right"></i>
@@ -398,195 +120,83 @@
     </div>
 </div>
 
+@if (!isCompleted)
+{
 <script>
 var projectId = @Model.ProjectId;
-// ── Checkbox toggle for submit button ───────────────────────────────────────
+
+// Local showToast: delegates to parent page's showToast if available, else self-creates
+function showToast(type, message) {
+    if (typeof window.showToast === 'function' && window.showToast !== showToast) {
+        window.showToast(type, message);
+    } else {
+        var container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '9999';
+            document.body.appendChild(container);
+        }
+        var bgClass = type === 'success' ? 'bg-success' : type === 'error' || type === 'danger' ? 'bg-danger' : 'bg-warning';
+        var html = '<div class="toast align-items-center text-white ' + bgClass + ' border-0 show" role="alert">' +
+            '<div class="d-flex"><div class="toast-body">' + message + '</div>' +
+            '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>';
+        container.insertAdjacentHTML('beforeend', html);
+        var toast = container.lastElementChild;
+        setTimeout(function() { toast.remove(); }, 5000);
+    }
+}
+
+// Checkbox toggle
 (function() {
     var chk = document.getElementById('daDongY');
-    var btn = document.getElementById('btnSubmitNda');
+    var btn = document.getElementById('btnAgreeNda');
     if (chk && btn) {
         chk.addEventListener('change', function() {
             btn.disabled = !this.checked;
         });
-        btn.disabled = !chk.checked;
     }
-
-    // Sync OTP channel radio → hidden field
-    document.querySelectorAll('input[name="otpChannel"]').forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            var hdn = document.getElementById('xacNhanKySo');
-            if (hdn) hdn.value = 'OTP-' + (this.value === 'phone' ? 'Phone' : 'Email');
-        });
-    });
 })();
 
-var ndaSavedDocumentId = null;
-var ndaOtpCountdown = null;
-
-// ── Create NDA form submission → save + send OTP + show modal ───────────────
-document.getElementById('createNdaForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    var btn = document.getElementById('btnSubmitNda');
+// Submit NDA agreement (simple - just agree, no OTP)
+document.getElementById('btnAgreeNda')?.addEventListener('click', async function() {
+    var btn = this;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...';
 
-    var form = new FormData();
-    form.append('projectId', document.getElementById('projectId')?.value || '');
-    form.append('benA', document.getElementById('benA')?.value || '');
-    form.append('benB', document.getElementById('benB')?.value || '');
-    form.append('loaiNDA', 'Mẫu chuẩn của Sàn');
-    form.append('thoiHanBaoMat', document.getElementById('thoiHanBaoMat')?.value || '');
-    form.append('xacNhanKySo', document.getElementById('xacNhanKySo')?.value || '');
-    form.append('daDongY', document.getElementById('daDongY')?.checked ? 'true' : 'false');
-
     try {
-        // Step 1: Save NDA
-        var res = await fetch('/ESign/UploadNda', { method: 'POST', body: form });
-        var data = await res.json();
-        if (!data.success) {
-            alert('❌ ' + data.message);
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-signature me-2"></i>Ký và xác nhận NDA';
-            return;
-        }
-
-        ndaSavedDocumentId = data.documentId;
-
-        // Step 2: Send OTP
-        var channel = (document.querySelector('input[name="otpChannel"]:checked') || {}).value || 'email';
-        var otpRes = await fetch('/ESign/SendOtp', {
+        var res = await fetch('/NDA/AgreeNda', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: projectId, channel: channel, phoneNumber: '' })
+            body: JSON.stringify({
+                projectId: projectId,
+                benA: document.getElementById('benA')?.value || '',
+                benB: document.getElementById('benB')?.value || ''
+            })
         });
-        var otpData = await otpRes.json();
+        var data = await res.json();
 
-        if (otpData.success) {
-            // Show OTP modal
-            document.getElementById('ndaOtpInput').value = '';
-            document.getElementById('ndaOtpError').classList.add('d-none');
-            document.getElementById('btnVerifyNdaOtp').disabled = false;
-            document.getElementById('ndaOtpSentMessage').innerHTML =
-                otpData.message + '<br/>Có hiệu lực trong <strong id="ndaOtpCountdown" class="text-danger">5:00</strong>';
-            ndaStartOtpCountdown(300);
-            new bootstrap.Modal(document.getElementById('ndaOtpModal')).show();
+        if (data.success) {
+            showToast('success', '✅ ' + data.message);
+            // Reload step 2 content after short delay
+            setTimeout(function() {
+                if (typeof loadStep === 'function') {
+                    loadStep(2);
+                } else {
+                    location.reload();
+                }
+            }, 1000);
         } else {
-            alert('❌ Gửi OTP thất bại: ' + otpData.message);
+            showToast('danger', '❌ ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-double me-2"></i>Xác nhận đồng ý NDA';
         }
     } catch(ex) {
-        alert('Lỗi: ' + ex.message);
-    } finally {
+        showToast('danger', 'Lỗi kết nối: ' + ex.message);
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-signature me-2"></i>Ký và xác nhận NDA';
+        btn.innerHTML = '<i class="fas fa-check-double me-2"></i>Xác nhận đồng ý NDA';
     }
 });
-
-// ── Countdown timer ─────────────────────────────────────────────────────────
-function ndaStartOtpCountdown(seconds) {
-    clearInterval(ndaOtpCountdown);
-    var el = document.getElementById('ndaOtpCountdown');
-    var remaining = seconds;
-
-    ndaOtpCountdown = setInterval(function() {
-        remaining--;
-        var m = Math.floor(remaining / 60);
-        var s = remaining % 60;
-        el.textContent = m + ':' + s.toString().padStart(2, '0');
-
-        if (remaining <= 0) {
-            clearInterval(ndaOtpCountdown);
-            el.textContent = 'Hết hạn';
-            document.getElementById('btnVerifyNdaOtp').disabled = true;
-            var errEl = document.getElementById('ndaOtpError');
-            errEl.textContent = 'OTP đã hết hạn. Vui lòng thử lại.';
-            errEl.classList.remove('d-none');
-        }
-    }, 1000);
-}
-
-// ── Verify OTP & Sign NDA ───────────────────────────────────────────────────
-async function ndaVerifyOtp() {
-    var otp = document.getElementById('ndaOtpInput').value.trim();
-    var errEl = document.getElementById('ndaOtpError');
-    errEl.classList.add('d-none');
-
-    if (otp.length !== 6) {
-        errEl.textContent = 'Vui lòng nhập đủ 6 chữ số.';
-        errEl.classList.remove('d-none');
-        return;
-    }
-
-    var btn = document.getElementById('btnVerifyNdaOtp');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xác nhận...';
-
-    try {
-        var res = await fetch('/ESign/SignDocument', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ documentId: ndaSavedDocumentId, otpCode: otp })
-        });
-        var data = await res.json();
-
-        if (data.success) {
-            clearInterval(ndaOtpCountdown);
-            bootstrap.Modal.getInstance(document.getElementById('ndaOtpModal'))?.hide();
-            alert('✅ ' + data.message);
-            location.reload(); // Stay on step 2, show signed state
-        } else {
-            errEl.textContent = data.message;
-            errEl.classList.remove('d-none');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Xác nhận OTP';
-        }
-    } catch (e) {
-        errEl.textContent = 'Lỗi kết nối: ' + e.message;
-        errEl.classList.remove('d-none');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Xác nhận OTP';
-    }
-}
-
-// Allow Enter key in OTP input
-document.getElementById('ndaOtpInput')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') ndaVerifyOtp();
-});
-
-// ── Send OTP for existing E-Sign document ───────────────────────────────────
-async function sendEsignOtp(btnEl) {
-    var docId = btnEl.getAttribute('data-document-id');
-    ndaSavedDocumentId = parseInt(docId);
-
-    var channel = (document.querySelector('input[name="esignOtpChannel"]:checked') || {}).value || 'email';
-
-    btnEl.disabled = true;
-    btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
-
-    try {
-        var res = await fetch('/ESign/SendOtp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: projectId, channel: channel, phoneNumber: '' })
-        });
-        var data = await res.json();
-
-        if (data.success) {
-            document.getElementById('ndaOtpInput').value = '';
-            document.getElementById('ndaOtpError').classList.add('d-none');
-            document.getElementById('btnVerifyNdaOtp').disabled = false;
-            document.getElementById('ndaOtpSentMessage').innerHTML =
-                data.message + '<br/>Có hiệu lực trong <strong id="ndaOtpCountdown" class="text-danger">5:00</strong>';
-            ndaStartOtpCountdown(300);
-            new bootstrap.Modal(document.getElementById('ndaOtpModal')).show();
-        } else {
-            alert('❌ ' + data.message);
-        }
-    } catch (e) {
-        alert('Lỗi: ' + e.message);
-    } finally {
-        btnEl.disabled = false;
-        btnEl.innerHTML = '<i class="fas fa-pen-nib me-1"></i> Gửi OTP & Ký xác nhận';
-    }
-}
 </script>
+}

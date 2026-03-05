@@ -1,0 +1,111 @@
+@model TPApp.ViewModel.SearchResultPageVm
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var MainDomain = Configuration["AppSettings:MainDomain"] ?? "https://localhost:7232/";
+}
+
+@* ── Controls row ─────────────────────────────────── *@
+<div class="se-controls">
+    <span class="se-count">
+        Hiển thị <strong>@Model.Items.Count</strong> / <strong>@Model.Total</strong> kết quả
+    </span>
+</div>
+
+@if (Model.Items.Any())
+{
+    @foreach (var item in Model.Items)
+    {
+        var iconCss = "se-icon-" + item.EntityType.ToString().ToLower();
+        var icon = TPApp.ViewModel.SearchEntityTypeHelper.ToIcon(item.EntityType);
+
+        // Build full URL
+        var rawUrl = item.Url ?? "";
+        var urlPath = (rawUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                    || rawUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            ? new Uri(rawUrl).PathAndQuery.TrimStart('/')
+            : rawUrl.TrimStart('/');
+        var fullUrl = $"{MainDomain}{urlPath}";
+
+        <div class="se-card">
+            @* Icon bubble *@
+            <div class="se-card-icon @iconCss">
+                <i class="bi @icon"></i>
+            </div>
+
+            @* Content *@
+            <div class="se-card-body">
+                <div class="se-card-title">
+                    <a href="@fullUrl" target="_blank">@Html.Raw(item.Title)</a>
+                </div>
+
+                @if (!string.IsNullOrEmpty(item.SnippetHtml))
+                {
+                    <div class="se-card-snippet">@Html.Raw(item.SnippetHtml)</div>
+                }
+
+                @* Type tag *@
+                <div class="se-card-meta">
+                    @foreach (var tag in item.Tags)
+                    {
+                        <span class="se-chip"><i class="bi @icon"></i> @tag</span>
+                    }
+                </div>
+
+                @* Action buttons *@
+                <div class="se-card-actions">
+                    <a href="@fullUrl" target="_blank" class="se-btn se-btn-primary">
+                        <i class="bi bi-eye me-1"></i>Xem chi tiết
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── Pagination ────────────────────────────────── *@
+    @if (Model.TotalPages > 1)
+    {
+        <div class="se-pagination">
+            <a class="se-page-btn @(Model.HasPreviousPage ? "" : "disabled")"
+               data-page="@(Model.Page - 1)" href="#">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+
+            @{
+                int startPage = Math.Max(1, Model.Page - 3);
+                int endPage = Math.Min(Model.TotalPages, Model.Page + 3);
+            }
+
+            @if (startPage > 1)
+            {
+                <a class="se-page-btn" data-page="1" href="#">1</a>
+                @if (startPage > 2) { <span class="se-page-btn disabled">…</span> }
+            }
+
+            @for (int p = startPage; p <= endPage; p++)
+            {
+                <a class="se-page-btn @(p == Model.Page ? "active" : "")"
+                   data-page="@p" href="#">@p</a>
+            }
+
+            @if (endPage < Model.TotalPages)
+            {
+                @if (endPage < Model.TotalPages - 1) { <span class="se-page-btn disabled">…</span> }
+                <a class="se-page-btn" data-page="@Model.TotalPages" href="#">@Model.TotalPages</a>
+            }
+
+            <a class="se-page-btn @(Model.HasNextPage ? "" : "disabled")"
+               data-page="@(Model.Page + 1)" href="#">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+    }
+}
+else
+{
+    @* Empty state *@
+    <div class="se-empty">
+        <i class="bi bi-search"></i>
+        <h5>Không tìm thấy kết quả</h5>
+        <p>Thử từ khóa khác hoặc mở rộng bộ lọc.</p>
+    </div>
+}

@@ -520,6 +520,27 @@
             return;
         }
 
+        // Ensure showToast is available
+        if (typeof showToast !== 'function') {
+            window.showToast = function(type, message) {
+                var container = document.getElementById('toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'toast-container';
+                    container.className = 'position-fixed top-0 end-0 p-3';
+                    container.style.zIndex = '9999';
+                    document.body.appendChild(container);
+                }
+                var bgClass = type === 'success' ? 'bg-success' : (type === 'error' || type === 'danger') ? 'bg-danger' : 'bg-warning';
+                var html = '<div class="toast align-items-center text-white ' + bgClass + ' border-0 show" role="alert">' +
+                    '<div class="d-flex"><div class="toast-body">' + message + '</div>' +
+                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>';
+                container.insertAdjacentHTML('beforeend', html);
+                var toast = container.lastElementChild;
+                setTimeout(function() { toast.remove(); }, 5000);
+            };
+        }
+
         // AJAX submit for RFQ creation form
         $(document).on('submit', '#createRfqForm', function(e) {
             e.preventDefault();
@@ -534,21 +555,18 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 success: function(resp) {
                     if (resp.success) {
-                        if (typeof showToast === 'function') showToast('success', resp.message);
-                        else alert('✅ ' + resp.message);
+                        showToast('success', '✅ ' + resp.message);
                         // Reload step 3 content
                         $.get('/Project/Step', { projectId: @Model.ProjectId, stepNumber: 3 }, function(data) {
                             $('#step-content').html(data);
                         });
                     } else {
-                        if (typeof showToast === 'function') showToast('error', resp.message || 'Có lỗi xảy ra.');
-                        else alert('❌ ' + (resp.message || 'Có lỗi xảy ra.'));
+                        showToast('danger', '❌ ' + (resp.message || 'Có lỗi xảy ra.'));
                         btn.prop('disabled', false).html('<i class="fas fa-save"></i> Tạo Yêu cầu Báo giá');
                     }
                 },
                 error: function() {
-                    if (typeof showToast === 'function') showToast('error', 'Lỗi kết nối. Vui lòng thử lại.');
-                    else alert('❌ Lỗi kết nối.');
+                    showToast('danger', 'Lỗi kết nối. Vui lòng thử lại.');
                     btn.prop('disabled', false).html('<i class="fas fa-save"></i> Tạo Yêu cầu Báo giá');
                 }
             });

@@ -223,20 +223,22 @@ namespace TPApp.Controllers
             // Load step-specific ViewBag data (mirrors Step action logic)
             if (currentStep == 2)
             {
-                var eSignDoc = await _eSignGateway.GetProjectNdaAsync(id.Value);
-                ViewBag.ESignDocument = eSignDoc;
-                if (eSignDoc != null)
-                {
-                    var sigs = await _eSignGateway.GetDocumentSignaturesAsync(eSignDoc.Id);
-                    ViewBag.Signatures = sigs;
-                    var sIds = sigs.Select(s => s.SignerUserId).Distinct().ToList();
-                    ViewBag.SignerNames = await _context.Users.AsNoTracking()
-                        .Where(u => sIds.Contains(u.Id))
-                        .ToDictionaryAsync(u => u.Id, u => u.FullName ?? u.UserName ?? $"User #{u.Id}");
-                }
                 var techReq2 = await _context.TechTransferRequests.AsNoTracking()
                     .FirstOrDefaultAsync(t => t.ProjectId == id.Value);
-                ViewBag.BenADefault = techReq2?.DonVi ?? techReq2?.HoTen ?? "";
+                ViewBag.TechTransfer = techReq2;
+
+                // Load NDA creator info
+                var nda2 = await _context.NDAAgreements.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.ProjectId == id.Value);
+                if (nda2?.NguoiTao > 0)
+                {
+                    var creator2 = await _context.Users.AsNoTracking()
+                        .Where(u => u.Id == nda2.NguoiTao)
+                        .Select(u => new { u.FullName, u.UserName })
+                        .FirstOrDefaultAsync();
+                    ViewBag.NdaCreatorName = creator2?.FullName ?? "";
+                    ViewBag.NdaCreatorUserName = creator2?.UserName ?? "";
+                }
             }
             else if (currentStep == 3)
             {
@@ -472,18 +474,8 @@ namespace TPApp.Controllers
             statuses["TechTransfer"] = tech?.StatusId ?? 0;
 
             var nda = await _context.NDAAgreements.FirstOrDefaultAsync(x => x.ProjectId == projectId);
-            // NDA step is only "completed" when E-Sign document is fully signed
-            if (nda != null)
-            {
-                var ndaESign = await _context.ESignDocuments
-                    .FirstOrDefaultAsync(d => d.ProjectId == projectId && d.DocType == 1);
-                // Status = 2 means signed; otherwise NDA is in progress (1) but not complete
-                statuses["NDA"] = (ndaESign != null && ndaESign.Status == 2) ? 2 : 1;
-            }
-            else
-            {
-                statuses["NDA"] = 0;
-            }
+            // NDA is completed when user has agreed to terms
+            statuses["NDA"] = (nda != null && nda.DaDongY) ? 2 : (nda != null ? 1 : 0);
 
             var rfq = await _context.RFQRequests.FirstOrDefaultAsync(x => x.ProjectId == projectId);
             statuses["RFQ"] = rfq?.StatusId ?? 0;
@@ -535,7 +527,7 @@ namespace TPApp.Controllers
             {
                 new() { StepNumber = 1, StepName = "Yêu cầu chuyển giao công nghệ", StatusId = statuses["TechTransfer"], ControllerName = "TechTransfer", ActionName = "Details", IsAccessible = true },
                 new() { StepNumber = 2, StepName = "Thỏa thuận bảo mật (NDA)", StatusId = statuses["NDA"], ControllerName = "NDA", ActionName = "Create", IsAccessible = statuses["TechTransfer"] > 0 },
-                new() { StepNumber = 3, StepName = "Yêu cầu báo giá (RFQ)", StatusId = statuses["RFQ"], ControllerName = "RFQ", ActionName = "Create", IsAccessible = statuses["NDA"] >= 2 },
+                new() { StepNumber = 3, StepName = "Yêu cầu báo giá (RFQ)", StatusId = statuses["RFQ"], ControllerName = "RFQ", ActionName = "Create", IsAccessible = statuses["NDA"] > 0 },
                 new() { StepNumber = 4, StepName = "Nộp hồ sơ đề xuất", StatusId = statuses["Proposal"], ControllerName = "Proposal", ActionName = "Index", IsAccessible = statuses["RFQ"] > 0 },
                 new() { StepNumber = 5, StepName = "Đàm phán thương mại", StatusId = statuses["Negotiation"], ControllerName = "Negotiation", ActionName = "Create", IsAccessible = statuses["Proposal"] > 0 },
                 new() { StepNumber = 6, StepName = "Kiểm tra pháp lý", StatusId = statuses["LegalReview"], ControllerName = "LegalReview", ActionName = "Create", IsAccessible = statuses["Negotiation"] > 0 },
@@ -621,29 +613,24 @@ namespace TPApp.Controllers
             // Load step-specific data for inline display
             model.StepData = await LoadStepData(projectId, stepNumber, userId, member.Role);
             
-            // Special handling for Step 2 (NDA) - Load E-Sign data + pre-fill BenA from Step 1
+            // Special handling for Step 2 (NDA) - Load TechTransfer for BenA display + creator info
             if (stepNumber == 2)
             {
-                var eSignDoc = await _eSignGateway.GetProjectNdaAsync(projectId);
-                ViewBag.ESignDocument = eSignDoc;
-                
-                if (eSignDoc != null)
-                {
-                    var signatures = await _eSignGateway.GetDocumentSignaturesAsync(eSignDoc.Id);
-                    ViewBag.Signatures = signatures;
-
-                    // Resolve signer names
-                    var signerIds = signatures.Select(s => s.SignerUserId).Distinct().ToList();
-                    var signerNames = await _context.Users.AsNoTracking()
-                        .Where(u => signerIds.Contains(u.Id))
-                        .ToDictionaryAsync(u => u.Id, u => u.FullName ?? u.UserName ?? $"User #{u.Id}");
-                    ViewBag.SignerNames = signerNames;
-                }
-
-                // Pre-fill BenA from TechTransferRequest.DonVi (Step 1)
                 var techReq = await _context.TechTransferRequests.AsNoTracking()
                     .FirstOrDefaultAsync(t => t.ProjectId == projectId);
-                ViewBag.BenADefault = techReq?.DonVi ?? techReq?.HoTen ?? "";
+                ViewBag.TechTransfer = techReq;
+
+                // Load NDA creator info
+                var ndaData = model.StepData as TPApp.Entities.NDAAgreement;
+                if (ndaData?.NguoiTao > 0)
+                {
+                    var creator = await _context.Users.AsNoTracking()
+                        .Where(u => u.Id == ndaData.NguoiTao)
+                        .Select(u => new { u.FullName, u.UserName })
+                        .FirstOrDefaultAsync();
+                    ViewBag.NdaCreatorName = creator?.FullName ?? "";
+                    ViewBag.NdaCreatorUserName = creator?.UserName ?? "";
+                }
             }
             
             // Special handling for Step 3 (RFQ) - Load categories and supplier data

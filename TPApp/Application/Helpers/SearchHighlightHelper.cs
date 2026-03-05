@@ -52,6 +52,9 @@ namespace TPApp.Application.Helpers
             if (string.IsNullOrWhiteSpace(text))
                 return string.Empty;
 
+            // Strip HTML tags to prevent broken layout from truncated tags
+            text = StripHtml(text);
+
             if (string.IsNullOrWhiteSpace(keywords))
                 return text.Length > maxLength ? text.Substring(0, maxLength) + "..." : text;
 
@@ -81,6 +84,11 @@ namespace TPApp.Application.Helpers
                 if (spaceIndex > 0 && spaceIndex < start + 20)
                     start = spaceIndex + 1;
             }
+
+            // Recalculate length after start adjustment
+            length = Math.Min(maxLength, text.Length - start);
+            if (length <= 0)
+                return text.Length > maxLength ? text.Substring(0, maxLength) + "..." : text;
 
             var snippet = text.Substring(start, length);
 

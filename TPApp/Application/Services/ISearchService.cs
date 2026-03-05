@@ -46,5 +46,20 @@ namespace TPApp.Application.Services
             int days = 7, 
             int topN = 10, 
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Get result counts grouped by TypeName for filter tabs
+        /// </summary>
+        Task<Dictionary<string, int>> GetCountsByTypeAsync(
+            string keyword,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Search with TypeName filter using inline SQL (bypasses SP).
+        /// </summary>
+        Task<SearchResult> SearchByTypeAsync(
+            string keyword,
+            SearchOptions options,
+            CancellationToken cancellationToken = default);
     }
 }

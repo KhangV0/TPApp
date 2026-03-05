@@ -262,7 +262,7 @@ namespace TPApp.Application.Services
 
                 // Step 2: Get product IDs from search results (RefId = SanPhamCNTB.ID)
                 var productIds = searchResult.Items
-                    .Where(item => item.RefId.HasValue && item.TypeName == "Công nghệ và Thiết bị")
+                    .Where(item => item.RefId.HasValue && (item.TypeName == "Công nghệ" || item.TypeName == "Thiết bị" || item.TypeName == "Tài sản trí tuệ"))
                     .Select(item => (int)item.RefId!.Value)
                     .ToList();
 
@@ -313,6 +313,22 @@ namespace TPApp.Application.Services
                     })
                     .ToListAsync(cancellationToken);
 
+                // Step 5b: Get real average rating from EntityRatings table
+                var ratingData = await _context.Set<TPApp.Entities.EntityRating>()
+                    .Where(r => ncuIds.Contains(r.EntityId)
+                             && r.EntityType == TPApp.Enums.EntityTypes.NhaCungUng
+                             && r.StatusId == 1)
+                    .GroupBy(r => r.EntityId)
+                    .Select(g => new
+                    {
+                        EntityId = g.Key,
+                        AvgStars = g.Average(r => r.Stars),
+                        Count = g.Count()
+                    })
+                    .ToListAsync(cancellationToken);
+
+                var ratingLookup = ratingData.ToDictionary(r => r.EntityId);
+
                 // Step 6: Create lookup dictionary for search results
                 var searchResultLookup = searchResult.Items
                     .Where(item => item.RefId.HasValue)
@@ -327,6 +343,11 @@ namespace TPApp.Application.Services
                         var company = companies.FirstOrDefault(c => c.CungUngId == group.Key);
                         if (company == null)
                             return null;
+
+                        // Use EntityRatings average if available, else fallback to NhaCungUng.Rating
+                        double realRating = ratingLookup.TryGetValue(company.CungUngId, out var rd)
+                            ? rd.AvgStars
+                            : (company.Rating ?? 0);
 
                         var productList = group.Select(product =>
                         {
@@ -348,7 +369,7 @@ namespace TPApp.Application.Services
                             CompanyName = company.FullName ?? "Không rõ",
                             CompanyUrl = $"nha-cung-ung/{company.QueryString}-{company.CungUngId}.html",
                             MatchPercentage = CalculateMatchPercentage(productList),
-                            Rating = company.Rating ?? 0,
+                            Rating = realRating,
                             ViewCount = company.Viewed ?? 0,
                             Products = productList.OrderByDescending(p => p.RelevancePercentage).ToList()
                         };
@@ -542,6 +563,170 @@ namespace TPApp.Application.Services
             }
         }
 
+        /// <summary>
+        /// Get result counts grouped by TypeName for search filter tabs
+        /// </summary>
+        public async Task<Dictionary<string, int>> GetCountsByTypeAsync(
+            string keyword,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(keyword))
+                    return new Dictionary<string, int>();
+
+                keyword = TPApp.Helpers.VietnameseTextHelper.NormalizeKeyword(keyword);
+                var keywordParam = new SqlParameter("@Keyword", keyword);
+
+                var counts = await _context.Database
+                    .SqlQueryRaw<TypeCountRow>(@"
+                        DECLARE @SearchTerm NVARCHAR(1000);
+                        DECLARE @XML XML;
+                        SET @XML = CAST('<r><w>' + REPLACE(@Keyword, ' ', '</w><w>') + '</w></r>' AS XML);
+                        SELECT @SearchTerm = STUFF((
+                            SELECT ' AND ""' + LTRIM(RTRIM(T.c.value('.', 'NVARCHAR(500)'))) + '""'
+                            FROM @XML.nodes('/r/w') T(c)
+                            WHERE LTRIM(RTRIM(T.c.value('.', 'NVARCHAR(500)'))) <> ''
+                            FOR XML PATH(''), TYPE
+                        ).value('.', 'NVARCHAR(MAX)'), 1, 5, '');
+                        IF @SearchTerm IS NULL OR @SearchTerm = ''
+                            SET @SearchTerm = '""' + @Keyword + '""';
+
+                        SELECT ISNULL(s.TypeName, N'Khác') AS TypeName, COUNT(*) AS Cnt
+                        FROM dbo.SearchIndexContents s
+                        INNER JOIN CONTAINSTABLE(dbo.SearchIndexContents, (Title, RemovedUnicode, Contents), @SearchTerm) AS KEY_TBL
+                            ON s.Id = KEY_TBL.[KEY]
+                        GROUP BY s.TypeName;",
+                        keywordParam)
+                    .ToListAsync(cancellationToken);
+
+                return counts.ToDictionary(c => c.TypeName, c => c.Cnt);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting counts by type for: {Keyword}", keyword);
+                return new Dictionary<string, int>();
+            }
+        }
+
+        /// <summary>
+        /// Search using raw ADO.NET with CONTAINSTABLE.
+        /// Same SQL pattern as GetCountsByTypeAsync (proven to work).
+        /// </summary>
+        public async Task<SearchResult> SearchByTypeAsync(
+            string keyword,
+            SearchOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(keyword))
+                    return new SearchResult();
+
+                keyword = TPApp.Helpers.VietnameseTextHelper.NormalizeKeyword(keyword);
+                var offset = (options.PageNumber - 1) * options.PageSize;
+                var hasTypeFilter = !string.IsNullOrEmpty(options.TypeName);
+
+                var whereClause = hasTypeFilter
+                    ? "WHERE s.TypeName = @TypeName"
+                    : "";
+
+                var sql = $@"
+                    DECLARE @SearchTerm NVARCHAR(1000);
+                    DECLARE @XML XML;
+                    SET @XML = CAST('<r><w>' + REPLACE(@Keyword, ' ', '</w><w>') + '</w></r>' AS XML);
+                    SELECT @SearchTerm = STUFF((
+                        SELECT ' AND ""' + LTRIM(RTRIM(T.c.value('.', 'NVARCHAR(500)'))) + '""'
+                        FROM @XML.nodes('/r/w') T(c)
+                        WHERE LTRIM(RTRIM(T.c.value('.', 'NVARCHAR(500)'))) <> ''
+                        FOR XML PATH(''), TYPE
+                    ).value('.', 'NVARCHAR(MAX)'), 1, 5, '');
+                    IF @SearchTerm IS NULL OR @SearchTerm = ''
+                        SET @SearchTerm = '""' + @Keyword + '""';
+
+                    -- Result set 1: paginated rows
+                    SELECT s.Id, s.Title, s.[Description], s.Contents, s.FutherIndex,
+                           s.RemovedUnicode, s.RefId, s.ImgPreview, s.TypeName,
+                           s.MimeType, s.URL, s.AbsPath, s.Created, s.Modified,
+                           s.IndexTime, s.Noted, s.Creator, s.LanguageId, s.SiteId
+                    FROM dbo.SearchIndexContents s
+                    INNER JOIN CONTAINSTABLE(dbo.SearchIndexContents, (Title, RemovedUnicode, Contents), @SearchTerm) AS KEY_TBL
+                        ON s.Id = KEY_TBL.[KEY]
+                    {whereClause}
+                    ORDER BY KEY_TBL.RANK DESC
+                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+
+                    -- Result set 2: total count
+                    SELECT COUNT(*)
+                    FROM dbo.SearchIndexContents s
+                    INNER JOIN CONTAINSTABLE(dbo.SearchIndexContents, (Title, RemovedUnicode, Contents), @SearchTerm) AS KEY_TBL
+                        ON s.Id = KEY_TBL.[KEY]
+                    {whereClause};";
+
+                var items = new List<TPApp.Data.Entities.SearchIndexContent>();
+                int totalCount = 0;
+
+                var conn = _context.Database.GetDbConnection();
+                var needClose = conn.State != System.Data.ConnectionState.Open;
+                if (needClose) await conn.OpenAsync(cancellationToken);
+
+                try
+                {
+                    using var cmd = conn.CreateCommand();
+                    cmd.CommandText = sql;
+                    cmd.Parameters.Add(new SqlParameter("@Keyword", keyword));
+                    if (hasTypeFilter)
+                        cmd.Parameters.Add(new SqlParameter("@TypeName", options.TypeName));
+                    cmd.Parameters.Add(new SqlParameter("@Offset", offset));
+                    cmd.Parameters.Add(new SqlParameter("@PageSize", options.PageSize));
+
+                    using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+                    // Result set 1: rows
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        items.Add(new TPApp.Data.Entities.SearchIndexContent
+                        {
+                            Id = reader.GetInt64(reader.GetOrdinal("Id")),
+                            Title = reader.IsDBNull(reader.GetOrdinal("Title")) ? null : reader.GetString(reader.GetOrdinal("Title")),
+                            Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+                            Contents = reader.IsDBNull(reader.GetOrdinal("Contents")) ? null : reader.GetString(reader.GetOrdinal("Contents")),
+                            RefId = reader.IsDBNull(reader.GetOrdinal("RefId")) ? null : reader.GetInt64(reader.GetOrdinal("RefId")),
+                            ImgPreview = reader.IsDBNull(reader.GetOrdinal("ImgPreview")) ? null : reader.GetString(reader.GetOrdinal("ImgPreview")),
+                            TypeName = reader.IsDBNull(reader.GetOrdinal("TypeName")) ? null : reader.GetString(reader.GetOrdinal("TypeName")),
+                            URL = reader.IsDBNull(reader.GetOrdinal("URL")) ? null : reader.GetString(reader.GetOrdinal("URL")),
+                            Created = reader.IsDBNull(reader.GetOrdinal("Created")) ? null : reader.GetDateTime(reader.GetOrdinal("Created")),
+                            Modified = reader.IsDBNull(reader.GetOrdinal("Modified")) ? null : reader.GetDateTime(reader.GetOrdinal("Modified")),
+                            Creator = reader.IsDBNull(reader.GetOrdinal("Creator")) ? null : reader.GetString(reader.GetOrdinal("Creator")),
+                        });
+                    }
+
+                    // Result set 2: count
+                    if (await reader.NextResultAsync(cancellationToken) && await reader.ReadAsync(cancellationToken))
+                    {
+                        totalCount = reader.GetInt32(0);
+                    }
+                }
+                finally
+                {
+                    if (needClose) await conn.CloseAsync();
+                }
+
+                return new SearchResult
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = options.PageNumber,
+                    PageSize = options.PageSize
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in SearchByTypeAsync for: {Keyword}, Type: {Type}", keyword, options.TypeName);
+                throw; // Don't swallow - let controller handle it
+            }
+        }
+
         // =============================================
         // Private Helper Methods
         // =============================================
@@ -697,6 +882,13 @@ namespace TPApp.Application.Services
             public string? URL { get; set; }
             public string? ImgPreview { get; set; }
             public int RANK { get; set; }
+        }
+
+        // Helper for GetCountsByTypeAsync GROUP BY result
+        private class TypeCountRow
+        {
+            public string TypeName { get; set; } = string.Empty;
+            public int Cnt { get; set; }
         }
     }
 }

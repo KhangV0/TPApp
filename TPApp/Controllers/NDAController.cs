@@ -102,11 +102,75 @@ namespace TPApp.Controllers
             return View(model);
         }
 
-        // GET: /NDA/Success
-        [HttpGet]
-        public IActionResult Success()
+        // POST: /NDA/AgreeNda (AJAX - simplified Step 2, no OTP)
+        [HttpPost]
+        public async Task<IActionResult> AgreeNda([FromBody] AgreeNdaRequest request)
         {
-            return View();
+            try
+            {
+                if (request.ProjectId <= 0)
+                    return Json(new { success = false, message = "Project ID không hợp lệ." });
+
+                var userId = GetCurrentUserId();
+                var isMember = await _context.ProjectMembers
+                    .AnyAsync(m => m.ProjectId == request.ProjectId && m.UserId == userId);
+                if (!isMember)
+                    return Json(new { success = false, message = "Bạn không có quyền truy cập dự án này." });
+
+                // Check if already agreed
+                var existing = await _context.NDAAgreements
+                    .FirstOrDefaultAsync(x => x.ProjectId == request.ProjectId);
+                if (existing != null && existing.DaDongY)
+                    return Json(new { success = true, message = "Đã đồng ý trước đó." });
+
+                if (existing != null)
+                {
+                    // Update existing
+                    existing.DaDongY = true;
+                    existing.NgaySua = DateTime.Now;
+                    existing.StatusId = 1;
+                }
+                else
+                {
+                    // Create new
+                    existing = new NDAAgreement
+                    {
+                        ProjectId = request.ProjectId,
+                        BenA = request.BenA ?? "",
+                        BenB = request.BenB ?? "Trung tâm Thông tin, Thống kê và Ứng dụng tiến bộ khoa học công nghệ",
+                        LoaiNDA = "Mẫu chuẩn của Sàn",
+                        ThoiHanBaoMat = "12 tháng",
+                        DaDongY = true,
+                        NguoiTao = userId,
+                        NgayTao = DateTime.Now,
+                        StatusId = 1
+                    };
+                    _context.NDAAgreements.Add(existing);
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Complete Step 2
+                await _workflowService.CompleteStep(request.ProjectId, 2);
+
+                // Notify
+                await _notifQueue.QueueAsync(userId, request.ProjectId,
+                    "NDA đã hoàn tất",
+                    "Thỏa thuận bảo mật đã được đồng ý. Tiến hành bước 3: Tạo yêu cầu báo giá (RFQ).");
+
+                return Json(new { success = true, message = "Đã đồng ý thỏa thuận bảo mật thành công." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
+        public class AgreeNdaRequest
+        {
+            public int ProjectId { get; set; }
+            public string? BenA { get; set; }
+            public string? BenB { get; set; }
         }
     }
 }

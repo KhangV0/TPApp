@@ -1,217 +1,171 @@
-@model TPApp.ViewModel.SearchViewModel
+@model TPApp.ViewModel.SearchResultPageVm
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
-    ViewData["Title"] = $"Tìm kiếm: {Model.Query}";
+    ViewData["Title"] = string.IsNullOrWhiteSpace(Model.Query)
+        ? "Tìm kiếm" : $"Tìm kiếm: {Model.Query}";
     var MainDomain = Configuration["AppSettings:MainDomain"] ?? "https://localhost:7232/";
+    var enableAI = (int?)ViewBag.EnableAISearch ?? 0;
+
+    // Define tab order
+    var typeOrder = new[]
+    {
+        TPApp.ViewModel.SearchEntityType.All,
+        TPApp.ViewModel.SearchEntityType.Technology,
+        TPApp.ViewModel.SearchEntityType.Equipment,
+        TPApp.ViewModel.SearchEntityType.IntellectualProperty,
+        TPApp.ViewModel.SearchEntityType.Supplier,
+        TPApp.ViewModel.SearchEntityType.Expert,
+        TPApp.ViewModel.SearchEntityType.Article
+    };
 }
 
-<style>
-    /* Keyword highlighting */
-    mark {
-        font-weight: bold !important;
-        background-color: #ffeb3b !important;
-        padding: 2px 4px;
-        border-radius: 2px;
-    }
+<link rel="stylesheet" href="~/css/search-enterprise.css" />
 
-    /* AI Search Results Styling */
-    .ai-search-results .company-card {
-        border-left: 4px solid #0d6efd;
-        transition: box-shadow 0.2s;
-    }
+<div class="se-page">
 
-    .ai-search-results .company-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .ai-search-results .card-title a {
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-
-    .ai-search-results .card-title a:hover {
-        text-decoration: underline !important;
-    }
-
-    .ai-search-results .match-badge {
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-    }
-
-    .ai-search-results .products-section {
-        background-color: #f8f9fa;
-        padding: 1rem;
-        border-radius: 0.25rem;
-    }
-
-    .ai-search-results .product-item {
-        transition: background-color 0.2s;
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-    }
-
-    .ai-search-results .product-item:hover {
-        background-color: #ffffff;
-    }
-
-    .ai-search-results .product-item:last-child {
-        border-bottom: none !important;
-    }
-
-    .ai-search-results .product-item a:hover {
-        color: #0d6efd !important;
-    }
-
-    .ai-search-results .relevance-score {
-        font-weight: 600;
-        min-width: 50px;
-        text-align: right;
-    }
-</style>
-
-<div class="container my-5">
-    <div class="search-results-header mb-4">
-        <h1 class="h3">Kết quả tìm kiếm: <span class="text-primary">"@Model.Query"</span></h1>
+    @* ── Header ─────────────────────────────────────── *@
+    <div class="se-header">
         @if (!string.IsNullOrWhiteSpace(Model.Query))
         {
-            <p class="text-muted">
-                Tìm thấy <strong>@Model.NormalResultCount</strong> kết quả
+            <h1>Kết quả tìm kiếm: <span>"@Model.Query"</span></h1>
+            var total = Model.CountsByType.GetValueOrDefault(TPApp.ViewModel.SearchEntityType.All, Model.Total);
+            <p class="se-summary">
+                Tìm thấy <strong>@total</strong> kết quả
                 @if (Model.AIResultCount > 0)
                 {
-                    <text> và <strong>@Model.AIResultCount</strong> kết quả theo gợi ý thông minh (AI)</text>
+                    <text> và <strong>@Model.AIResultCount</strong> gợi ý AI</text>
                 }
             </p>
         }
+        else
+        {
+            <h1>Tìm kiếm</h1>
+            <p class="se-summary">Nhập từ khóa để tìm công nghệ, thiết bị, nhà cung ứng…</p>
+        }
     </div>
-
-    @* Search Mode Tabs *@
-    @if (!string.IsNullOrWhiteSpace(Model.Query))
-    {
-        <ul class="nav nav-tabs mb-4" role="tablist">
-            <li class="nav-item" role="presentation">
-                <a class="nav-link @(Model.Mode != "ai" ? "active" : "")" 
-                   href="/search?q=@Uri.EscapeDataString(Model.Query)&mode=normal">
-                    <i class="bi bi-search me-2"></i>
-                    Tìm kiếm thông thường
-                    <span class="badge bg-primary ms-2">@Model.NormalResultCount</span>
-                </a>
-            </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link @(Model.Mode == "ai" ? "active" : "")" 
-                   href="/search?q=@Uri.EscapeDataString(Model.Query)&mode=ai">
-                    <i class="bi bi-stars me-2"></i>
-                    Gợi ý thông minh (AI)
-                    <span class="badge bg-success ms-2">@Model.AIResultCount</span>
-                </a>
-            </li>
-        </ul>
-    }
 
     @if (string.IsNullOrWhiteSpace(Model.Query))
     {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            Vui lòng nhập từ khóa tìm kiếm
-        </div>
-    }
-    else if (Model.Mode == "ai" && Model.AISearchResults != null && Model.AISearchResults.Any())
-    {
-        @* AI Search Results - Company Grouped Format *@
-        <div class="ai-search-results">
-            @foreach (var company in Model.AISearchResults)
-            {
-                <div class="card mb-3 company-card">
-                    <div class="card-body">
-                        @* Company Header *@
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div class="flex-grow-1">
-                                <h5 class="card-title mb-2">
-                                    <a href="@($"{MainDomain}{company.CompanyUrl}")" class="text-primary text-decoration-none">
-                                        @company.CompanyName
-                                    </a>
-                                </h5>
-                                <div class="text-muted small">
-                                    <i class="bi bi-star-fill text-warning"></i>
-                                    @company.Rating.ToString("0.0")/5
-                                    <span class="mx-2">•</span>
-                                    <i class="bi bi-eye"></i>
-                                    @company.ViewCount.ToString("N0") lượt xem
-                                </div>
-                            </div>
-                            <span class="badge bg-success fs-6 match-badge">
-                                @company.MatchPercentage.ToString("0.00")% phù hợp
-                            </span>
-                        </div>
-
-                        @* Products Section *@
-                        <div class="products-section">
-                            <h6 class="text-muted mb-2">
-                                <i class="bi bi-box-seam me-2"></i>
-                                Sản phẩm phù hợp:
-                            </h6>
-                            <ul class="list-unstyled mb-0">
-                                @foreach (var product in company.Products)
-                                {
-                                    <li class="d-flex justify-content-between align-items-center py-2 border-bottom product-item">
-                                        <a href="@($"{MainDomain}{product.ProductUrl}")" class="text-decoration-none text-dark flex-grow-1">
-                                            @product.ProductName
-                                        </a>
-                                        <span class="text-muted ms-3 relevance-score">
-                                            @product.RelevancePercentage.ToString("0")%
-                                        </span>
-                                    </li>
-                                }
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
-    else if (Model.SearchResults != null && Model.SearchResults.Any())
-    {
-        @* Normal Search Results - Existing Format *@
-        <div class="list-group">
-            @foreach (var result in Model.SearchResults)
-            {
-                var rawUrl = result.Url ?? "";
-                var urlPath = (rawUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || rawUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-                    ? new Uri(rawUrl).PathAndQuery.TrimStart('/')
-                    : rawUrl.TrimStart('/');
-                <a href="@($"{MainDomain}{urlPath}")" class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between align-items-start">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">@Html.Raw(result.Title)</h6>
-                            @if (!string.IsNullOrEmpty(result.Description))
-                            {
-                                <p class="mb-1 text-muted small">
-                                    @Html.Raw(result.Description)
-                                </p>
-                            }
-                            <div class="d-flex gap-2 align-items-center">
-                                <span class="badge bg-secondary">@result.TypeName</span>
-                                @if (result.Created.HasValue)
-                                {
-                                    <small class="text-muted">
-                                        <i class="bi bi-calendar me-1"></i>@result.Created.Value.ToString("dd/MM/yyyy")
-                                    </small>
-                                }
-                            </div>
-                        </div>
-                        @if (!string.IsNullOrEmpty(result.ImageUrl))
-                        {
-                            <img src="@Html.CookedImageURL("254-170", result.ImageUrl)" alt="@result.Title" class="ms-3" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" />
-                        }
-                    </div>
-                </a>
-            }
+        <div class="se-empty">
+            <i class="bi bi-search"></i>
+            <h5>Vui lòng nhập từ khóa tìm kiếm</h5>
+            <p>Sử dụng thanh tìm kiếm phía trên để bắt đầu.</p>
         </div>
     }
     else
     {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            Không tìm thấy kết quả nào. Hãy thử từ khóa khác.
-        </div>
+        @* ── Mode tabs: Normal / AI ────────────────────── *@
+        @if (enableAI == 1)
+        {
+            <ul class="nav nav-tabs se-mode-tabs mb-3">
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Mode != "ai" ? "active" : "")"
+                       href="/Search?q=@Uri.EscapeDataString(Model.Query)">
+                        <i class="bi bi-search me-1"></i>Tìm kiếm thông thường
+                        @{
+                            var normalCount = Model.CountsByType.GetValueOrDefault(TPApp.ViewModel.SearchEntityType.All, Model.Total);
+                        }
+                        @if (normalCount > 0)
+                        {
+                            <span class="badge bg-primary ms-1">@normalCount</span>
+                        }
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(Model.Mode == "ai" ? "active" : "")"
+                       href="/Search?q=@Uri.EscapeDataString(Model.Query)&mode=ai">
+                        <i class="bi bi-stars me-1"></i>Gợi ý thông minh (AI)
+                        @if (Model.AIResultCount > 0)
+                        {
+                            <span class="badge bg-success ms-1">@Model.AIResultCount</span>
+                        }
+                    </a>
+                </li>
+            </ul>
+        }
+
+        @if (Model.Mode == "ai" && enableAI == 1)
+        {
+            @* ── AI results (kept from original) ───────────── *@
+            if (Model.AISearchResults != null && Model.AISearchResults.Any())
+            {
+                <div class="ai-search-results">
+                    @foreach (var company in Model.AISearchResults)
+                    {
+                        <div class="card mb-3" style="border-left:4px solid #0d6efd;">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            <a href="@($"{MainDomain}{company.CompanyUrl}")"
+                                               class="text-primary text-decoration-none">@company.CompanyName</a>
+                                        </h5>
+                                        <small class="text-muted">
+                                            <i class="bi bi-star-fill text-warning"></i> @company.Rating.ToString("0.0")/5
+                                            &nbsp;•&nbsp;
+                                            <i class="bi bi-eye"></i> @company.ViewCount.ToString("N0") lượt xem
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-success fs-6 px-3 py-2">
+                                        @company.MatchPercentage.ToString("0.0")% phù hợp
+                                    </span>
+                                </div>
+                                <div class="bg-light p-3 rounded">
+                                    <h6 class="text-muted mb-2"><i class="bi bi-box-seam me-1"></i>Sản phẩm phù hợp:</h6>
+                                    <ul class="list-unstyled mb-0">
+                                        @foreach (var prod in company.Products)
+                                        {
+                                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                                <a href="@($"{MainDomain}{prod.ProductUrl}")"
+                                                   class="text-decoration-none text-dark">@prod.ProductName</a>
+                                                <span class="text-muted">@prod.RelevancePercentage.ToString("0")%</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="se-empty">
+                    <i class="bi bi-stars"></i>
+                    <h5>Không có kết quả AI</h5>
+                    <p>Thử mô tả chi tiết hơn hoặc sử dụng tab "Tìm kiếm thông thường".</p>
+                </div>
+            }
+        }
+        else
+        {
+            @* ── Type filter pills ──────────────────────────── *@
+            <div class="se-filters">
+                @foreach (var et in typeOrder)
+                {
+                    var label = TPApp.ViewModel.SearchEntityTypeHelper.ToLabel(et);
+                    var icon  = TPApp.ViewModel.SearchEntityTypeHelper.ToIcon(et);
+                    var count = Model.CountsByType.GetValueOrDefault(et, 0);
+                    var isActive = et == Model.Type;
+
+                    <a href="#" class="se-filter-pill @(isActive ? "active" : "")"
+                       data-type="@(et == TPApp.ViewModel.SearchEntityType.All ? "all" : et.ToString())">
+                        <i class="bi @icon"></i>
+                        @label
+                        @if (count > 0)
+                        {
+                            <span class="badge">@count</span>
+                        }
+                    </a>
+                }
+            </div>
+
+            @* ── Results host (loaded inline, updated via AJAX) *@
+            <div id="resultsHost">
+                @await Html.PartialAsync("_SearchResults", Model)
+            </div>
+        }
     }
 </div>
+
+<script src="~/js/search-enterprise.js"></script>
