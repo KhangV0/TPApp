@@ -19,7 +19,7 @@
                                 <h1>@item.Title</h1>
                                 @if (!string.IsNullOrEmpty(item.Description))
                                 {
-                                    <div class="hero-desc">@Html.Raw(item.Description)</div>
+                                    @Html.Raw(item.Description)
                                 }
                                 @if (!string.IsNullOrEmpty(item.URL))
                                 {
