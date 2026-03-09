@@ -1496,10 +1496,14 @@
     }
 
 }
-.bi-facebook::before {
+.hp-footer-social-icons .bi-facebook::before {
     content: "\f344";
     color: #fff !important;
 }
 .hp-footer-info-row i {
     color: #fff !important;
+}
+.sidebar-floating .bi-facebook::before {
+    content: "\f344";
+    color: #323232 !important;
 }
