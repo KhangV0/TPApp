@@ -160,16 +160,7 @@
 
             <!-- RIGHT COLUMN -->
             <div class="column col-xs-12 col-sm-3" id="left_column">
-                <div class="adv-banner left-module">
-                    <div class="box-adv">
-                        <a href="@($"{Html.MainDomain()}yeu-cau-cong-nghe-67.html")">
-                            <img src="@($"{Html.MainDomain()}FrontEnd/assets/data/techneed.jpg")" alt="ads-banner" />
-                        </a>
-                    </div>
-                    @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
-                    @await Html.PartialAsync("~/Views/QuangCao/Right.cshtml")
-
-                </div>
+                @await Component.InvokeAsync("QuangCaoLeft")
             </div>
 
         </div>
