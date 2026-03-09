@@ -7,7 +7,7 @@ namespace TPApp.Services;
 
 /// <summary>
 /// Converts HTML contract content to a PDF using iText7 pdfHTML.
-/// Used when no uploaded file exists — generates a PDF from HtmlContent on the fly.
+/// Supports Vietnamese Unicode via Windows Fonts (Times New Roman / Arial).
 /// </summary>
 public class HtmlToPdfService
 {
@@ -34,7 +34,6 @@ public class HtmlToPdfService
 
         var ms = new MemoryStream();
 
-        // Use block form so we can call ms.ToArray() AFTER pdfDoc closes but BEFORE ms disposes
         {
             using var writer = new PdfWriter(ms, new WriterProperties());
             writer.SetCloseStream(false);
@@ -45,11 +44,41 @@ public class HtmlToPdfService
 
             var props = new ConverterProperties();
             props.SetBaseUri("file:///" + _env.WebRootPath.Replace('\\', '/') + "/");
-            var fontProv = new DefaultFontProvider(true, true, false);
+
+            // ── Font provider hỗ trợ Unicode / tiếng Việt ──────────────────
+            // Tắt built-in fonts (thường chỉ support Latin), load thủ công
+            var fontProv = new DefaultFontProvider(false, false, false);
+
+            // 1. Font từ wwwroot/fonts/ nếu admin đặt font tùy chỉnh
+            var customFontDir = Path.Combine(_env.WebRootPath, "fonts");
+            if (Directory.Exists(customFontDir))
+                fontProv.AddDirectory(customFontDir);
+
+            // 2. Times New Roman + Arial từ Windows — hỗ trợ đầy đủ tiếng Việt
+            var winFonts = new[]
+            {
+                @"C:\Windows\Fonts\times.ttf",    // Times New Roman Regular
+                @"C:\Windows\Fonts\timesbd.ttf",  // Times New Roman Bold
+                @"C:\Windows\Fonts\timesi.ttf",   // Times New Roman Italic
+                @"C:\Windows\Fonts\timesbi.ttf",  // Times New Roman Bold Italic
+                @"C:\Windows\Fonts\arial.ttf",    // Arial Regular
+                @"C:\Windows\Fonts\arialbd.ttf",  // Arial Bold
+                @"C:\Windows\Fonts\ariali.ttf",   // Arial Italic
+                @"C:\Windows\Fonts\arialuni.ttf", // Arial Unicode MS (fallback tốt nhất)
+            };
+            foreach (var f in winFonts)
+            {
+                if (File.Exists(f))
+                    fontProv.AddFont(f);
+            }
+
+            // 3. Standard PDF fonts (Latin fallback)
+            fontProv.AddStandardPdfFonts();
+
             props.SetFontProvider(fontProv);
 
             HtmlConverter.ConvertToPdf(htmlContent, pdfDoc, props);
-        } // pdfDoc & writer flushed + disposed here; ms still open
+        }
 
         var result = ms.ToArray();
         ms.Dispose();
@@ -64,9 +93,10 @@ public class HtmlToPdfService
         return
             "<!DOCTYPE html>\n<html lang=\"vi\">\n<head>\n" +
             "  <meta charset=\"UTF-8\"/>\n" +
+            "  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>\n" +
             $"  <title>{safeTitle}</title>\n" +
             "  <style>\n" +
-            "    body { font-family: 'Times New Roman', Times, serif; font-size: 13pt;" +
+            "    body { font-family: 'Times New Roman', Arial, sans-serif; font-size: 13pt;" +
             "           line-height: 1.65; margin: 2cm; color: #111; }\n" +
             "    h1, h2, h3 { font-weight: bold; text-align: center; }\n" +
             "    h1 { font-size: 16pt; margin-bottom: 6pt; }\n" +
