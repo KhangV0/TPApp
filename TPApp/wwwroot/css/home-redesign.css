@@ -54,7 +54,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(to right, rgba(0, 33, 84, 0.85), rgba(0, 33, 84, 0.4));
+    background: linear-gradient(to right, rgba(0, 33, 84, 0.4), rgba(0, 33, 84, 0.4));
 }
 
 .hero-content {
@@ -423,7 +423,7 @@
 
 /* Footer Redesign */
 .hp-footer {
-    background-color: #0e1b2a;
+    background-color: #004494;
     /* Deep Navy Blue from reference */
     color: #ffffff;
     padding: 60px 0 40px;
@@ -432,7 +432,7 @@
 }
 
 .hp-footer a {
-    color: #ccc;
+    color: #fff;
     text-decoration: none;
     transition: color 0.2s;
 }
@@ -1495,4 +1495,11 @@
         box-shadow: rgba(0, 0, 0, 0.30) 0px 1px 4px;
     }
 
+}
+.bi-facebook::before {
+    content: "\f344";
+    color: #fff !important;
+}
+.hp-footer-info-row i {
+    color: #fff !important;
 }

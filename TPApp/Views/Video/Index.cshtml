@@ -9,11 +9,11 @@
                 @await Html.PartialAsync("Video")
             </div>
 
-            <div class="column col-xs-12 col-sm-3" id="left-column">
-                <div class="adv-banner left-module">
-                    @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
-                    @await Html.PartialAsync("~/Views/QuangCao/Right.cshtml")
-                </div>
+            <div class="column col-xs-12 col-sm-3" id="left_column">
+
+                @await Component.InvokeAsync("QuangCaoLeft")
+
+
             </div>
         </div>
     </div>

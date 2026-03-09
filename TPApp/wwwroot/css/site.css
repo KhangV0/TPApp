@@ -765,13 +765,17 @@ body {
 
 /* Title */
 .brand-showcase-title a {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
-    color: #263238;
+    color: #046dbd !important;
     display: inline-block;
     padding-bottom: 8px;
     letter-spacing: 0.5px;
     text-decoration: none;
+    text-transform: lowercase !important;
+}
+.brand-showcase-title a::first-letter {
+    text-transform: uppercase;
 }
 
 /* Nội dung */
@@ -4446,4 +4450,8 @@ header {
     font-size: 12px;
     color: #0c0c0c;
 
+}
+.page-heading.CongNgheThietBi {
+    font-size: 32px;
+    text-transform: uppercase;
 }

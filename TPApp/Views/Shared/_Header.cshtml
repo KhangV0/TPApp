@@ -106,14 +106,9 @@
 								 alt="@userName"
 								 class="hp-user-avatar"
 								 onerror="this.onerror=null;this.src='@fallbackSvg';">
-							<span class="hp-user-name">@userName</span>
+							@* <span class="hp-user-name">@userName</span> *@
 						</a>
 						<ul class="dropdown-menu dropdown-menu-end hp-user-dropdown">
-							<li>
-								<a class="dropdown-item" href="@($"{MainDomain}Dashboard")">
-									<i class="bi bi-speedometer2 me-2"></i>Dashboard
-								</a>
-							</li>
 							@if (canAccessCms)
 							{
 								<li>
@@ -123,6 +118,33 @@
 								</li>
 							}
 							@await Component.InvokeAsync("SellerMenuItems")
+							<li>
+								<a class="dropdown-item" href="@($"{MainDomain}Dashboard")">
+									<i class="bi bi-speedometer2 me-2"></i>Dashboard
+								</a>
+							</li>
+							
+							<li>
+								<a class="dropdown-item" href="/Projects/MyProjects">
+									<i class="bi bi-folder2-open me-2"></i>Dự án của tôi
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="/Chat">
+									<i class="bi bi-chat-dots me-2"></i>Tin nhắn
+								</a>
+							</li>
+							<li><hr class="dropdown-divider"></li>
+							<li>
+								<a class="dropdown-item" href="/Account/Profile">
+									<i class="bi bi-person me-2"></i>Thông tin cá nhân
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="/Account/ChangePassword">
+									<i class="bi bi-key me-2"></i>Đổi mật khẩu
+								</a>
+							</li>
 							<li><hr class="dropdown-divider"></li>
 							<li>
 								<form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
@@ -301,14 +323,9 @@
 								 alt="@userName"
 								 class="hp-user-avatar"
 								 onerror="this.onerror=null;this.src='@fallbackSvg';">
-							<span class="hp-user-name">@userName</span>
+							@* <span class="hp-user-name">@userName</span> *@
 						</a>
 						<ul class="dropdown-menu dropdown-menu-end hp-user-dropdown">
-							<li>
-								<a class="dropdown-item" href="@($"{MainDomain}Dashboard")">
-									<i class="bi bi-speedometer2 me-2"></i>Dashboard
-								</a>
-							</li>
 							@if (canAccessCms)
 							{
 								<li>
@@ -318,6 +335,33 @@
 								</li>
 							}
 							@await Component.InvokeAsync("SellerMenuItems")
+							<li>
+								<a class="dropdown-item" href="@($"{MainDomain}Dashboard")">
+									<i class="bi bi-speedometer2 me-2"></i>Dashboard
+								</a>
+							</li>
+							
+							<li>
+								<a class="dropdown-item" href="/Projects/MyProjects">
+									<i class="bi bi-folder2-open me-2"></i>Dự án của tôi
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="/Chat">
+									<i class="bi bi-chat-dots me-2"></i>Tin nhắn
+								</a>
+							</li>
+							<li><hr class="dropdown-divider"></li>
+							<li>
+								<a class="dropdown-item" href="/Account/Profile">
+									<i class="bi bi-person me-2"></i>Thông tin cá nhân
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="/Account/ChangePassword">
+									<i class="bi bi-key me-2"></i>Đổi mật khẩu
+								</a>
+							</li>
 							<li><hr class="dropdown-divider"></li>
 							<li>
 								<form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">

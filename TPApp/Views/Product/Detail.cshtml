@@ -60,8 +60,6 @@
             @* SIDEBAR *@
             <div class="col-sm-3">
                 @await Component.InvokeAsync("QuangCaoLeft")
-                @await Html.PartialAsync("_ProductRelated", Model.RelatedProducts)
-                @await Html.PartialAsync("~/Views/QuangCao/TopRight.cshtml")
             </div>
 
         </div>
