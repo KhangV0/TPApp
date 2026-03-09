@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>VNPT-CA Plugin Debug v2</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #00d4ff;
+        }
+
+        .card {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 1px solid #0f3460;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #e94560;
+        }
+
+        button {
+            background: #0f3460;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #e94560;
+        }
+
+        pre {
+            background: #0a0a23;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            color: #00ff88;
+        }
+
+        .error {
+            color: #ff4444;
+        }
+
+        .warn {
+            color: #ffaa00;
+        }
+
+        .info {
+            color: #00d4ff;
+        }
+
+        .status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        .status.ok {
+            background: #00ff8822;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .status.fail {
+            background: #ff444422;
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .status.pending {
+            background: #ffaa0022;
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+        }
+
+        input[type=number] {
+            background: #0a0a23;
+            color: #e0e0e0;
+            border: 1px solid #0f3460;
+            padding: 8px;
+            border-radius: 6px;
+            width: 80px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔌 VNPT-CA Plugin Debug v2</h1>
+    <p>Plugin chạy trên <code>127.0.0.1:4433</code> (WebSocket + SSL)</p>
+
+    <div class="card">
+        <h3>1. Kết nối WebSocket</h3>
+        <p>Port: <input type="number" id="port" value="4433" />
+            <button onclick="tryConnect('wss')">🔒 wss:// (SSL)</button>
+            <button onclick="tryConnect('ws')">🔓 ws:// (no SSL)</button>
+        </p>
+        <p><small>Nếu wss:// fail, thử mở tab mới → <a href="https://localhost:4433" target="_blank"
+                    style="color:#00d4ff">https://localhost:4433</a> → accept cert → quay lại test.</small></p>
+        <div id="connStatus" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+        <h3>2. Gửi lệnh tới Plugin</h3>
+        <p>Chọn lệnh:</p>
+        <button onclick="sendCmd({func:'QueryCertificate'})">QueryCertificate</button>
+        <button onclick="sendCmd({func:'ListCertificate'})">ListCertificate</button>
+        <button onclick="sendCmd({func:'getCertificateInfo'})">getCertificateInfo</button>
+        <button onclick="sendCmd({func:'SignPDF'})">SignPDF</button>
+        <button onclick="sendCmd({func:'GetVersion'})">GetVersion</button>
+        <button onclick="sendCmd({func:'CheckToken'})">CheckToken</button>
+        <button onclick="sendCmd('QueryCertificate')">Raw: QueryCertificate</button>
+        <p>Lệnh tùy chỉnh (JSON):</p>
+        <textarea id="customCmd"
+            style="width:100%;height:60px;background:#0a0a23;color:#e0e0e0;border:1px solid #0f3460;border-radius:6px;padding:8px;font-family:monospace">{"func":"QueryCertificate"}</textarea>
+        <br /><button onclick="sendCustom()">📤 Gửi lệnh tùy chỉnh</button>
+        <div id="cmdResult" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+        <h3>📝 Console Log</h3>
+        <button onclick="document.getElementById('log').textContent=''">🗑️ Clear</button>
+        <pre id="log"></pre>
+    </div>
+
+    <script>
+        let activeWs = null;
+
+        function log(msg, cls = '') {
+            const el = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            el.innerHTML += `<span class="${cls}">[${time}] ${msg}</span>\n`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function setStatus(id, html) {
+            document.getElementById(id).innerHTML = html;
+        }
+
+        async function tryConnect(protocol) {
+            const port = document.getElementById('port').value;
+            const url = `${protocol}://localhost:${port}`;
+
+            log(`═══ Connecting to ${url} ═══`, 'info');
+            setStatus('connStatus', '<span class="status pending">Đang kết nối...</span>');
+
+            if (activeWs) {
+                try { activeWs.close(); } catch (e) { }
+                activeWs = null;
+            }
+
+            try {
+                const ws = new WebSocket(url);
+
+                const timer = setTimeout(() => {
+                    log('⏰ Connection timeout (5s)', 'error');
+                    ws.close();
+                    setStatus('connStatus', '<span class="status fail">❌ Timeout</span>');
+                }, 5000);
+
+                ws.onopen = () => {
+                    clearTimeout(timer);
+                    activeWs = ws;
+                    log(`✅ WebSocket CONNECTED to ${url}!`, 'success');
+                    log(`readyState: ${ws.readyState}, protocol: "${ws.protocol}", extensions: "${ws.extensions}"`, 'info');
+                    setStatus('connStatus', `<span class="status ok">✅ Kết nối thành công! ${url}</span>`);
+                };
+
+                ws.onmessage = (e) => {
+                    log(`📩 MESSAGE received (${e.data.length} chars):`, 'success');
+                    try {
+                        const json = JSON.parse(e.data);
+                        log(JSON.stringify(json, null, 2), 'success');
+                        setStatus('cmdResult', `<pre class="success">${JSON.stringify(json, null, 2)}</pre>`);
+                    } catch {
+                        log(e.data, 'success');
+                        setStatus('cmdResult', `<pre class="success">${e.data}</pre>`);
+                    }
+                };
+
+                ws.onerror = (e) => {
+                    clearTimeout(timer);
+                    log(`❌ WebSocket ERROR on ${url}`, 'error');
+                    log(`Tip: Nếu wss:// fail, có thể do cert. Thử mở https://localhost:${port} trong tab mới và accept cert.`, 'warn');
+                    setStatus('connStatus', `<span class="status fail">❌ Lỗi kết nối ${url}</span>`);
+                };
+
+                ws.onclose = (e) => {
+                    log(`🔌 WebSocket CLOSED: code=${e.code}, reason="${e.reason}", wasClean=${e.wasClean}`, 'warn');
+                    if (activeWs === ws) activeWs = null;
+                };
+
+            } catch (e) {
+                log(`❌ Exception: ${e.message}`, 'error');
+                setStatus('connStatus', `<span class="status fail">❌ ${e.message}</span>`);
+            }
+        }
+
+        function sendCmd(cmd) {
+            if (!activeWs || activeWs.readyState !== WebSocket.OPEN) {
+                log('⚠️ WebSocket chưa kết nối! Bấm "wss://" hoặc "ws://" trước.', 'warn');
+                return;
+            }
+            const msg = typeof cmd === 'string' ? cmd : JSON.stringify(cmd);
+            log(`📤 SENDING: ${msg}`, 'info');
+            setStatus('cmdResult', '<span class="status pending">Đang chờ phản hồi...</span>');
+            activeWs.send(msg);
+        }
+
+        function sendCustom() {
+            const raw = document.getElementById('customCmd').value.trim();
+            if (!activeWs || activeWs.readyState !== WebSocket.OPEN) {
+                log('⚠️ WebSocket chưa kết nối!', 'warn');
+                return;
+            }
+            log(`📤 SENDING CUSTOM: ${raw}`, 'info');
+            setStatus('cmdResult', '<span class="status pending">Đang chờ phản hồi...</span>');
+            activeWs.send(raw);
+        }
+
+        log('VNPT-CA Plugin Debug v2 loaded', 'info');
+        log('Port 4433 confirmed via netstat. Plugin: VNPT-CA Plugin.exe', 'info');
+        log('domainConfig.txt updated with localhost entries', 'info');
+        log('', '');
+        log('👉 Bước 1: Bấm "wss:// (SSL)" để kết nối', 'warn');
+        log('👉 Nếu fail: mở tab mới https://localhost:4433 → accept cert → quay lại', 'warn');
+        log('👉 Nếu vẫn fail: bấm "ws:// (no SSL)"', 'warn');
+        log('👉 Bước 2: Bấm "QueryCertificate" hoặc "ListCertificate"', 'warn');
+    </script>
+</body>
+
+</html>

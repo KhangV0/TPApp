@@ -337,6 +337,61 @@ namespace TPApp.Services
             return (true, $"✅ Gửi yêu cầu ký CA tới {provider} thành công. RequestRef: {requestRef}", req.Id);
         }
 
+        // ─── Buyer CA remote signing (enterprise) ─────────────────────────────
+        public async Task<(bool ok, string message, int requestId)> StartBuyerCAAsync(
+            int contractId, int userId, string provider, string callbackUrl, string? ipAddress)
+        {
+            var contract = await _context.ProjectContracts.FindAsync(contractId);
+            if (contract == null) return (false, "Không tìm thấy hợp đồng.", 0);
+
+            if (contract.StatusId < (int)ContractStatus.ReadyToSign)
+                return (false, "Hợp đồng chưa ReadyToSign.", 0);
+
+            var caProvider = _providerFactory.Resolve(provider);
+            var user = await _context.Users.FindAsync(userId);
+
+            var signer = new SignerInfo
+            {
+                FullName = user?.FullName ?? "Buyer",
+                Email    = user?.Email     ?? "",
+                Phone    = user?.PhoneNumber ?? ""
+            };
+
+            byte[] pdfBytes = Array.Empty<byte>();
+            if (!string.IsNullOrEmpty(contract.OriginalFilePath) && File.Exists(contract.OriginalFilePath))
+                pdfBytes = await File.ReadAllBytesAsync(contract.OriginalFilePath);
+
+            var callbackSecret = Guid.NewGuid().ToString("N");
+            var requestRef = await caProvider.CreateSigningRequestAsync(pdfBytes, signer, callbackUrl);
+
+            var req = new ContractSignatureRequest
+            {
+                ContractId      = contractId,
+                UserId          = userId,
+                Role            = 1, // Buyer
+                SignatureType   = (int)ContractSignatureType.BuyerCA_Remote,
+                Provider        = provider,
+                StatusId        = (int)ContractSignatureStatus.Pending,
+                RequestRef      = requestRef,
+                CallbackSecret  = callbackSecret,
+                CreatedDate     = DateTime.UtcNow
+            };
+            _context.ContractSignatureRequests.Add(req);
+
+            if (contract.StatusId == (int)ContractStatus.ReadyToSign)
+            {
+                contract.StatusId = (int)ContractStatus.SigningInProgress;
+                contract.ModifiedDate = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            await _audit.AppendAsync("ContractSignatureRequest", req.Id.ToString(),
+                "BuyerCAStarted", new { provider, requestRef }, userId, ipAddress);
+
+            return (true, $"✅ Gửi yêu cầu ký CA tới {provider} thành công. RequestRef: {requestRef}", req.Id);
+        }
+
         // ─── CA Provider webhook callback ─────────────────────────────────────
         public async Task<bool> HandleProviderCallbackAsync(
             string provider, string requestRef, string callbackSecret,

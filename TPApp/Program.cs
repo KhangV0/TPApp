@@ -89,6 +89,21 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
     options.SlidingExpiration = true;
+
+    // For AJAX/fetch requests: return 401 instead of redirecting to login page
+    options.Events.OnRedirectToLogin = ctx =>
+    {
+        var isAjax = ctx.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+                  || ctx.Request.Headers["Accept"].ToString().Contains("application/json");
+        if (isAjax)
+        {
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            ctx.Response.ContentType = "application/json";
+            return ctx.Response.WriteAsync("{\"success\":false,\"message\":\"Unauthorized\"}");
+        }
+        ctx.Response.Redirect(ctx.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
 // --- CMS Authorization ---
@@ -139,12 +154,15 @@ builder.Services.AddScoped<TPApp.Interfaces.IContractApprovalService,  TPApp.Ser
 builder.Services.AddScoped<TPApp.Interfaces.IContractService,          TPApp.Services.ContractService>();
 builder.Services.AddScoped<TPApp.Interfaces.IContractSigningService,   TPApp.Services.ContractSigningService>();
 builder.Services.AddScoped<TPApp.Interfaces.IVerificationService,      TPApp.Services.VerificationService>();
+builder.Services.AddScoped<TPApp.Services.PdfSigningService>();  // iText7 visible signature embedding
+builder.Services.AddScoped<TPApp.Services.HtmlToPdfService>();   // iText7 HTML→PDF for contracts without uploaded file
 
 // CA signing provider adapters (resolved by name via factory)
 builder.Services.AddScoped<TPApp.Interfaces.ISigningProvider, TPApp.Services.Signing.VnptSigningProvider>();
 builder.Services.AddScoped<TPApp.Interfaces.ISigningProvider, TPApp.Services.Signing.FptSigningProvider>();
 builder.Services.AddScoped<TPApp.Interfaces.ISigningProvider, TPApp.Services.Signing.ViettelSigningProvider>();
 builder.Services.AddScoped<TPApp.Services.ISigningProviderFactory, TPApp.Services.SigningProviderFactory>();
+builder.Services.AddHttpClient(); // IHttpClientFactory for CA provider adapters (stub auto-callback, real API calls)
 
 
 // --- AI Semantic Matching Services ---

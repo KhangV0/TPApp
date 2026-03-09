@@ -19,6 +19,9 @@ namespace TPApp.Interfaces
         /// <summary>Initiate CA remote signing for Seller via provider adapter.</summary>
         Task<(bool ok, string message, int requestId)> StartSellerCAAsync(int contractId, int userId, string provider, string callbackUrl, string? ipAddress);
 
+        /// <summary>Initiate CA remote signing for Buyer (enterprise) via provider adapter.</summary>
+        Task<(bool ok, string message, int requestId)> StartBuyerCAAsync(int contractId, int userId, string provider, string callbackUrl, string? ipAddress);
+
         /// <summary>Handle webhook callback from CA provider. Validates secret + records signature.</summary>
         Task<bool> HandleProviderCallbackAsync(string provider, string requestRef, string callbackSecret, byte[]? signedPdfBytes, string? certSerial, string? certSubject, string? certIssuer, string? rawPayload);
 

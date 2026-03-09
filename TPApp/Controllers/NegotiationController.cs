@@ -64,7 +64,12 @@ namespace TPApp.Controllers
             if (project == null) return (false, false, false);
             bool isBuyer  = project.CreatedBy == userId;
             bool isSeller = project.SelectedSellerId == userId;
-            return (isBuyer || isSeller, isBuyer, isSeller);
+            if (isBuyer || isSeller) return (true, isBuyer, isSeller);
+
+            // Consultant (Role 3) can access but not sign
+            bool isConsultant = await _context.ProjectMembers
+                .AnyAsync(m => m.ProjectId == projectId && m.UserId == userId && m.Role == 3);
+            return (isConsultant, false, false);
         }
 
         // ─────────────────────────────────────────────────────────────────────

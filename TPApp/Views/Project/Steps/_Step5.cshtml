@@ -20,7 +20,8 @@
 
     var hinhThucKy = negotiation?.HinhThucKy ?? "OTP";
 
-    bool canEdit = negotiation != null
+    bool canEdit = isBuyer
+        && negotiation != null
         && !isCompleted
         && negotiation.StatusId < (int)NegotiationStatus.WaitingSignature;
 

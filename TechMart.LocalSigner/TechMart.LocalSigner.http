@@ -1,0 +1,6 @@
+@TechMart.LocalSigner_HostAddress = http://localhost:5277
+
+GET {{TechMart.LocalSigner_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
