@@ -123,10 +123,15 @@
                             <strong>Quy trình:</strong> Cắm USB Token → Đọc chứng thư → Nhập PIN → Ký hash văn bản → Gửi về server lưu.
                         </div>
                         <h6 class="fw-semibold mt-3"><i class="fas fa-download me-1 text-primary"></i>Cài đặt TechMart LocalSigner</h6>
-                        <div class="alert alert-light small border">
-                            <i class="fas fa-laptop me-1"></i>
-                            Tải và chạy <strong>TechMartSigner.exe</strong> trên máy tính.
-                            Agent sẽ tự động phát hiện USB Token và giao tiếp với trình duyệt qua <code>localhost:15800</code>.
+                        <div class="d-flex align-items-center gap-3 p-3 border rounded bg-light mb-2">
+                            <i class="fas fa-laptop-code fa-2x text-primary"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">TechMart LocalSigner</div>
+                                <small class="text-muted">Agent chạy trên máy tính — phát hiện USB Token và giao tiếp qua <code>localhost:15800</code></small>
+                            </div>
+                            <a href="/Uploads/TechMart.LocalSigner.zip" download class="btn btn-primary btn-sm text-nowrap">
+                                <i class="fas fa-download me-1"></i>Tải xuống (.zip)
+                            </a>
                         </div>
                         <h6 class="fw-semibold mt-3"><i class="fas fa-list-ol me-1 text-primary"></i>Các bước thực hiện</h6>
                         <ol class="small">
@@ -241,6 +246,22 @@
         }
         else
         {
+            <!-- TechMart LocalSigner download banner (chỉ hiện khi có user dùng CA) -->
+            @if (buyerUsesCA || sellerUsesCA)
+            {
+                <div class="alert alert-primary d-flex align-items-center gap-3 mb-3">
+                    <i class="fas fa-usb fa-2x"></i>
+                    <div class="flex-grow-1">
+                        <strong>Cần phần mềm TechMart LocalSigner để ký bằng USB Token</strong>
+                        <div class="small text-muted mt-1">
+                            Tải và chạy agent trên máy tính trước khi nhấn "Ký USB Token".
+                        </div>
+                    </div>
+                    <a href="/Uploads/TechMart.LocalSigner.zip" download class="btn btn-white btn-sm text-nowrap border border-white">
+                        <i class="fas fa-download me-1"></i>Tải LocalSigner (.zip)
+                    </a>
+                </div>
+            }
             <!-- Contract summary -->
             <div class="row g-3 mb-4">
                 <div class="col-md-6">

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body         { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: #111; line-height: 1.8; max-width: 860px; margin: 0 auto; padding: 48px 60px; }
+    .header-top  { text-align: center; font-weight: bold; text-transform: uppercase; font-size: 13px; margin-bottom: 4px; }
+    .header-sub  { text-align: center; font-size: 13px; margin-bottom: 32px; }
+    h1.title     { text-align: center; font-size: 17px; font-weight: bold; text-transform: uppercase; margin: 24px 0 4px; letter-spacing: 1px; }
+    .so-hd       { text-align: center; margin-bottom: 6px; font-size: 14px; }
+    .divider     { text-align: center; font-size: 22px; margin: 12px 0 24px; color: #555; }
+    .can-cu      { margin-bottom: 8px; padding-left: 12px; border-left: 3px solid #ccc; }
+    .intro       { margin: 20px 0 24px; font-style: italic; }
+    .party-block { border: 1px solid #ddd; border-radius: 6px; padding: 16px 20px; margin-bottom: 16px; background: #fafafa; }
+    .party-title { font-weight: bold; font-size: 15px; margin-bottom: 10px; }
+    .party-row   { display: flex; margin-bottom: 6px; }
+    .party-label { min-width: 180px; color: #555; }
+    .party-val   { font-weight: 600; flex: 1; border-bottom: 1px dotted #bbb; min-width: 120px; padding-bottom: 1px; }
+    .dieu        { margin-top: 22px; }
+    .dieu-title  { font-weight: bold; font-size: 14.5px; margin-bottom: 6px; }
+    .dieu-body   { padding-left: 18px; }
+    .dieu-body p { margin: 4px 0; }
+    .sign-block  { display: flex; justify-content: space-around; margin-top: 60px; text-align: center; }
+    .sign-col    { width: 44%; }
+    .sign-col .label { font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
+    .sign-col .name  { margin-top: 70px; font-weight: bold; }
+    .watermark   { color: #bbb; font-size: 11px; text-align: center; margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px; }
+    @media print { body { padding: 20px 40px; } }
+  </style>
+</head>
+<body>
+
+<div class="header-top">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+<div class="header-sub">Độc lập – Tự do – Hạnh phúc<br>――――――――――――</div>
+
+<h1 class="title">Hợp đồng chuyển giao công nghệ</h1>
+<div class="so-hd">Số: {{SO_HD}}</div>
+<div class="divider">🙢🙢🕮🙠🙠</div>
+
+<div class="can-cu">Căn cứ vào Luật Chuyển giao công nghệ số 07/2017/QH14 ngày 19/6/2017;</div>
+<div class="can-cu">Căn cứ vào Bộ luật Dân sự số 91/2015/QH13 ngày 24/11/2015;</div>
+<div class="can-cu">Căn cứ Luật Thương mại số 36/2005/QH11 ngày 14/6/2005;</div>
+<div class="can-cu">Căn cứ Luật Cạnh tranh số 23/2018/QH14 ngày 12/6/2018;</div>
+
+<p class="intro">Hôm nay, <strong>{{NGAY_HD}}</strong>, chúng tôi gồm:</p>
+
+<div class="party-block">
+  <div class="party-title">Bên chuyển giao (Bên A):</div>
+  <div class="party-row"><span class="party-label">Tên tổ chức/cá nhân:</span><span class="party-val">{{BEN_A_TEN}}</span></div>
+  <div class="party-row"><span class="party-label">Trụ sở chính:</span><span class="party-val">{{BEN_A_TRU_SO}}</span></div>
+  <div class="party-row"><span class="party-label">Điện thoại:</span><span class="party-val">{{BEN_A_DIEN_THOAI}}</span></div>
+  <div class="party-row"><span class="party-label">Mã số thuế:</span><span class="party-val">{{BEN_A_MA_SO_THUE}}</span></div>
+  <div class="party-row"><span class="party-label">Tài khoản số:</span><span class="party-val">{{BEN_A_TAI_KHOAN}}</span></div>
+  <div class="party-row"><span class="party-label">Đại diện:</span><span class="party-val">{{BEN_A_DAI_DIEN}}</span></div>
+  <div class="party-row"><span class="party-label">Chức vụ:</span><span class="party-val">{{BEN_A_CHUC_VU}}</span></div>
+</div>
+
+<div class="party-block">
+  <div class="party-title">Bên nhận chuyển giao (Bên B):</div>
+  <div class="party-row"><span class="party-label">Tên tổ chức/cá nhân:</span><span class="party-val">{{BEN_B_TEN}}</span></div>
+  <div class="party-row"><span class="party-label">Trụ sở chính:</span><span class="party-val">{{BEN_B_TRU_SO}}</span></div>
+  <div class="party-row"><span class="party-label">Điện thoại:</span><span class="party-val">{{BEN_B_DIEN_THOAI}}</span></div>
+  <div class="party-row"><span class="party-label">Mã số thuế:</span><span class="party-val">{{BEN_B_MA_SO_THUE}}</span></div>
+  <div class="party-row"><span class="party-label">Tài khoản số:</span><span class="party-val">{{BEN_B_TAI_KHOAN}}</span></div>
+  <div class="party-row"><span class="party-label">Đại diện:</span><span class="party-val">{{BEN_B_DAI_DIEN}}</span></div>
+  <div class="party-row"><span class="party-label">Chức vụ:</span><span class="party-val">{{BEN_B_CHUC_VU}}</span></div>
+</div>
+
+<p><strong>Hai bên cam kết thực hiện các điều khoản sau:</strong></p>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 1: Đối tượng chuyển giao</div>
+  <div class="dieu-body">
+    <p>Tên công nghệ: <strong>{{TEN_CONG_NGHE}}</strong></p>
+    <p>Thuộc dự án: <strong>{{PROJECT_NAME}}</strong></p>
+    <p>Mô tả: {{MO_TA}}</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 2: Chất lượng, nội dung công nghệ</div>
+  <div class="dieu-body">
+    <p>Bên A cam kết chuyển giao công nghệ đúng theo yêu cầu kỹ thuật, đạt chất lượng như đã thỏa thuận tại các bước đàm phán. Bên A có trách nhiệm cung cấp đầy đủ tài liệu kỹ thuật và hướng dẫn vận hành.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 3: Phạm vi và thời hạn chuyển giao</div>
+  <div class="dieu-body">
+    <p>Phạm vi: Công nghệ được chuyển giao trong lãnh thổ Việt Nam.</p>
+    <p>Thời hạn chuyển giao: Theo thỏa thuận của hai bên, được ghi nhận trong biên bản bàn giao.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 4: Phương thức chuyển giao công nghệ</div>
+  <div class="dieu-body">
+    <p>Chuyển giao thông qua hướng dẫn trực tiếp, tài liệu kỹ thuật, và/hoặc đào tạo tại chỗ theo thỏa thuận của hai bên.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 5: Địa điểm và tiến độ chuyển giao</div>
+  <div class="dieu-body">
+    <p>Địa điểm: {{BEN_B_TRU_SO}}</p>
+    <p>Tiến độ: Theo kế hoạch được hai bên thống nhất sau khi ký kết hợp đồng.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 6: Thời hạn bảo hành công nghệ</div>
+  <div class="dieu-body">
+    <p>Bên A cam kết bảo hành công nghệ trong vòng <strong>12 tháng</strong> kể từ ngày bàn giao và nghiệm thu. Trong thời gian bảo hành, Bên A có trách nhiệm khắc phục các lỗi kỹ thuật phát sinh do lỗi của công nghệ được chuyển giao.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 7: Giá chuyển giao công nghệ, thiết bị và phương thức thanh toán</div>
+  <div class="dieu-body">
+    <p>Tổng giá trị hợp đồng chuyển giao sau thuế VAT: <strong>{{TONG_GIA}}</strong></p>
+    <p>Phương thức thanh toán: {{PHUONG_THUC_THANH_TOAN}}</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 8: Nghĩa vụ bảo hộ công nghệ của bên giao và bên nhận chuyển giao</div>
+  <div class="dieu-body">
+    <p>Bên A đảm bảo công nghệ chuyển giao không vi phạm quyền sở hữu trí tuệ của bên thứ ba. Bên B cam kết không sao chép, phân phối lại hoặc chuyển giao lại công nghệ cho bên thứ ba khi chưa có sự đồng ý bằng văn bản của Bên A.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 9: Nghiệm thu kết quả chuyển giao công nghệ</div>
+  <div class="dieu-body">
+    <p>Việc nghiệm thu được thực hiện bằng biên bản có chữ ký của đại diện hai bên. Tiêu chí nghiệm thu căn cứ vào các yêu cầu kỹ thuật được xác định tại Điều 1 và Điều 2.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 10: Cải tiến công nghệ chuyển giao của bên nhận chuyển giao</div>
+  <div class="dieu-body">
+    <p>Bên B được phép cải tiến công nghệ để phù hợp với điều kiện thực tế. Mọi cải tiến phải được thông báo cho Bên A và không được làm phát sinh tranh chấp về quyền sở hữu.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 11: Cam kết của bên chuyển giao về đào tạo nhân lực</div>
+  <div class="dieu-body">
+    <p>Bên A cam kết đào tạo nhân lực vận hành công nghệ cho Bên B theo chương trình và thời gian được thống nhất tại phụ lục đính kèm hợp đồng.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 12: Quyền và nghĩa vụ của các bên</div>
+  <div class="dieu-body">
+    <p><strong>Bên A:</strong> Có quyền nhận thanh toán đúng hạn theo hợp đồng. Có nghĩa vụ chuyển giao đầy đủ, đúng tiến độ và hỗ trợ kỹ thuật trong thời gian bảo hành.</p>
+    <p><strong>Bên B:</strong> Có quyền yêu cầu hỗ trợ kỹ thuật trong thời gian bảo hành. Có nghĩa vụ thanh toán đúng hạn và sử dụng công nghệ đúng mục đích đã cam kết.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 13: Sửa đổi, đình chỉ hoặc hủy bỏ hợp đồng</div>
+  <div class="dieu-body">
+    <p>Hợp đồng có hiệu lực kể từ ngày Bên B ký hợp đồng và chuyển tiền đợt 1.</p>
+    <p>Hợp đồng có thể được sửa đổi, bổ sung theo yêu cầu bằng văn bản của một trong các bên và được đại diện hợp pháp của các bên đồng thuận ký kết bằng văn bản. Các điều khoản sửa đổi, bổ sung có hiệu lực từ thời điểm được ký kết.</p>
+    <p>Hợp đồng bị chấm dứt trong các trường hợp sau:</p>
+    <p>– Hết thời hạn ghi trong hợp đồng.</p>
+    <p>– Hợp đồng không thực hiện được do nguyên nhân bất khả kháng như: thiên tai, bãi công, biểu tình, nổi loạn, chiến tranh và các sự kiện tương tự.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 14: Trách nhiệm do vi phạm hợp đồng</div>
+  <div class="dieu-body">
+    <p>Bên nào vi phạm hợp đồng phải chịu phạt hợp đồng và bồi thường cho bên kia toàn bộ thiệt hại theo quy định của Bộ luật Dân sự năm 2015 và Luật Thương mại năm 2005.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 15: Luật điều chỉnh hợp đồng</div>
+  <div class="dieu-body">
+    <p>Hợp đồng này được điều chỉnh bởi các luật của Nhà nước Cộng hòa Xã hội Chủ nghĩa Việt Nam có liên quan.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 16: Trọng tài</div>
+  <div class="dieu-body">
+    <p>Các tranh chấp phát sinh từ hợp đồng này được giải quyết bằng thương lượng, trên tinh thần hợp tác cao nhất và hạn chế tổn thất chung. Nếu tranh chấp không giải quyết được bằng thương lượng thì sẽ đưa ra Tòa án có thẩm quyền tại Tp.HCM giải quyết; quyết định của Tòa án là quyết định cuối cùng cho các bên thực hiện.</p>
+  </div>
+</div>
+
+<div class="dieu">
+  <div class="dieu-title">Điều 17: Điều khoản thi hành</div>
+  <div class="dieu-body">
+    <p>Mọi vấn đề phát sinh ngoài hợp đồng thì hai bên thỏa thuận với nhau và thống nhất bằng văn bản.</p>
+    <p>Sau 30 ngày kể từ ngày lắp đặt và chuyển giao quy trình công nghệ xong, nếu hai bên không có biên bản khiếu nại thì hợp đồng coi như được thanh lý.</p>
+    <p>Hợp đồng được xây dựng trên cơ sở bình đẳng và tự nguyện. Hai bên cam kết thực hiện đúng và đầy đủ các điều khoản trong hợp đồng này.</p>
+    <p>Hợp đồng được lập thành <strong>04 bản</strong> bằng tiếng Việt, mỗi bên giữ <strong>02 bản</strong> và có giá trị pháp lý như nhau.</p>
+  </div>
+</div>
+
+<div class="sign-block">
+  <div class="sign-col">
+    <div class="label">Đại diện Bên A</div>
+    <div style="font-size:12px;color:#888;margin-top:4px">(Ký, ghi rõ họ tên, đóng dấu)</div>
+    <div class="name">{{BEN_A_DAI_DIEN}}</div>
+  </div>
+  <div class="sign-col">
+    <div class="label">Đại diện Bên B</div>
+    <div style="font-size:12px;color:#888;margin-top:4px">(Ký, ghi rõ họ tên, đóng dấu)</div>
+    <div class="name">{{BEN_B_DAI_DIEN}}</div>
+  </div>
+</div>
+
+<div class="watermark">
+  Bản nháp tự động – Hệ thống TechPort | Phiên bản {{VERSION}} | Tạo lúc: {{NGAY_TAO}}<br/>
+  Cần rà soát pháp lý trước khi ký chính thức.
+</div>
+
+</body>
+</html>

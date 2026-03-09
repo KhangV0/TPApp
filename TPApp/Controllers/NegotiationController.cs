@@ -702,6 +702,47 @@ namespace TPApp.Controllers
             }
         }
 
+        // ─────────────────────────────────────────────────────────────────────
+        // POST /Negotiation/Init  (AJAX) — Buyer khởi tạo biên bản đàm phán
+        // ─────────────────────────────────────────────────────────────────────
+        [HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> Init([FromBody] RequestOtpDto dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var (canAccess, isBuyer, _) = await GetAccessAsync(dto.ProjectId, userId);
+                if (!canAccess || !isBuyer)
+                    return Json(new { success = false, message = "Chỉ Buyer mới có thể khởi tạo biên bản." });
+
+                bool exists = await _context.NegotiationForms
+                    .AnyAsync(n => n.ProjectId == dto.ProjectId);
+                if (exists)
+                    return Json(new { success = false, message = "Biên bản đàm phán đã tồn tại." });
+
+                // Get sellerId from project
+                var proj = await _context.Projects.FindAsync(dto.ProjectId);
+                int sellerId = proj?.SelectedSellerId ?? 0;
+
+                var form = new NegotiationForm
+                {
+                    ProjectId = dto.ProjectId,
+                    SellerId  = sellerId,
+                    StatusId  = (int)NegotiationStatus.Draft,
+                    NgayTao   = DateTime.Now,
+                    NguoiTao  = userId
+                };
+                _context.NegotiationForms.Add(form);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "✅ Đã khởi tạo biên bản đàm phán. Trang sẽ tải lại..." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi: " + ex.Message });
+            }
+        }
+
         // Legacy redirect
         [HttpGet]
         public IActionResult Create(int? projectId) => RedirectToAction("Edit", new { projectId });

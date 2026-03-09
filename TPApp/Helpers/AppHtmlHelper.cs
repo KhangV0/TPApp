@@ -70,5 +70,30 @@ namespace TPApp.Web.Helpers
                 number,
                 currency);
         }
+        // ── Format tiền VNĐ dùng chung cho các bước ──────────────────────────
+
+        private static readonly CultureInfo _viVN = CultureInfo.GetCultureInfo("vi-VN");
+
+        /// <summary>1.500.000.000 VNĐ (null → "——")</summary>
+        public static string FormatVnd(decimal? value)
+            => value.HasValue
+               ? value.Value.ToString("N0", _viVN) + " VNĐ"
+               : "——";
+
+        /// <summary>1.500.000.000 VNĐ từ string (null/empty → "——")</summary>
+        public static string FormatVnd(string? value)
+            => decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var d)
+               ? d.ToString("N0", _viVN) + " VNĐ"
+               : "——";
+
+        /// <summary>Chỉ số thuần: 1.500.000.000 (không kèm "VNĐ")</summary>
+        public static string FormatVndNumber(decimal? value)
+            => value.HasValue ? value.Value.ToString("N0", _viVN) : "——";
+
+        /// <summary>Badge HTML xanh lá với giá VNĐ, dùng @Html.Raw()</summary>
+        public static string FormatVndBadge(decimal? value)
+            => value.HasValue
+               ? $"<span class=\"badge bg-success fs-6\"><i class=\"fas fa-coins me-1\"></i>{value.Value.ToString("N0", _viVN)} VNĐ</span>"
+               : "<span class=\"text-muted\">Chưa cập nhật</span>";
     }
 }

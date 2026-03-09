@@ -194,6 +194,43 @@ namespace TPApp.Controllers
             }
         }
 
+        // ─── POST /Contract/SaveHtml  (AJAX) ──────────────────────────────────
+        [HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> SaveHtml([FromBody] SaveHtmlDto dto)
+        {
+            try
+            {
+                var userId   = GetUserId();
+                var contract = await _context.ProjectContracts.FindAsync(dto.ContractId);
+                if (contract == null)
+                    return Json(new { success = false, message = "Không tìm thấy hợp đồng." });
+
+                var (role, canAccess) = await GetRoleAsync(contract.ProjectId, userId);
+                if (!canAccess || role == 0)
+                    return Json(new { success = false, message = "Không có quyền chỉnh sửa." });
+
+                if (contract.StatusId >= (int)TPApp.Enums.ContractStatus.ReadyToSign)
+                    return Json(new { success = false, message = "Hợp đồng đã chốt, không thể chỉnh sửa." });
+
+                contract.HtmlContent  = dto.HtmlContent;
+                contract.ModifiedBy   = userId;
+                contract.ModifiedDate = DateTime.UtcNow;
+                // Nếu đang Draft → chuyển sang WaitingPartyReview để báo hiệu đã có nội dung
+                if (contract.StatusId == (int)TPApp.Enums.ContractStatus.Draft)
+                    contract.StatusId = (int)TPApp.Enums.ContractStatus.WaitingPartyReview;
+
+                await _context.SaveChangesAsync();
+                await _audit.AppendAsync("ProjectContract", contract.Id.ToString(), "HtmlEdited",
+                    new { userId, length = dto.HtmlContent?.Length }, userId);
+
+                return Json(new { success = true, message = "✅ Nội dung hợp đồng đã được lưu." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         // ─── GET /Contract/Download/{contractId}/{type} ───────────────────────
         [HttpGet]
         [Route("Contract/Download/{contractId}/{type?}")]
@@ -240,5 +277,10 @@ namespace TPApp.Controllers
         public int     ProjectId  { get; set; }
         public int     ContractId { get; set; }
         public string? Comment    { get; set; }
+    }
+    public class SaveHtmlDto
+    {
+        public int     ContractId  { get; set; }
+        public string? HtmlContent { get; set; }
     }
 }

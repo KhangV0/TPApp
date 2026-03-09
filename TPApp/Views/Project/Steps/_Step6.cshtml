@@ -42,7 +42,7 @@
     // Aliases
     var ct       = activeContract;
     bool isBuyer = userRole == 1;
-    bool canEdit = userRole == 1 || userRole == 2;
+    bool canEdit = userRole == 1 || userRole == 2 || userRole == 3;
     bool ctLocked = ct?.StatusId >= (int)ContractStatus.ReadyToSign;
 
     string StatusLabel(int s) => s switch {
@@ -178,12 +178,53 @@
                                         <i class="fas fa-file-signature me-1"></i>Tải bản ký
                                     </a>
                                 }
+                                @if (!ctLocked && canEdit && !string.IsNullOrEmpty(ct.HtmlContent))
+                                {
+                                    <button class="btn btn-sm btn-outline-warning" id="cmEditBtn" onclick="cm_openEditor()" title="Chỉnh sửa nội dung hợp đồng">
+                                        <i class="fas fa-pen me-1"></i>Chỉnh sửa
+                                    </button>
+                                }
                             </div>
                         </div>
                         <div class="card-body p-0" style="min-height:400px;overflow:auto">
                             @if (!string.IsNullOrEmpty(ct.HtmlContent))
                             {
-                                <div class="p-3">@Html.Raw(ct.HtmlContent)</div>
+                                @* Toolbar chỉnh sửa nổi phía trên iframe *@
+                                <div id="cmEditorToolbar"
+                                     class="d-none align-items-center gap-2 flex-wrap p-2 border-bottom bg-light">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-dark" onclick="cm_execCmd('bold')"      title="Bold"><b>B</b></button>
+                                        <button class="btn btn-outline-dark" onclick="cm_execCmd('italic')"    title="Italic"><i>I</i></button>
+                                        <button class="btn btn-outline-dark" onclick="cm_execCmd('underline')" title="Gạch chân"><u>U</u></button>
+                                    </div>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-dark" onclick="cm_execCmd('justifyLeft')"   title="Trái"><i class="fas fa-align-left"></i></button>
+                                        <button class="btn btn-outline-dark" onclick="cm_execCmd('justifyCenter')" title="Giữa"><i class="fas fa-align-center"></i></button>
+                                        <button class="btn btn-outline-dark" onclick="cm_execCmd('justifyRight')"  title="Phải"><i class="fas fa-align-right"></i></button>
+                                    </div>
+                                    <select class="form-select form-select-sm" style="width:auto"
+                                            onchange="cm_execCmd('fontSize', this.value); this.value=''">
+                                        <option value="">Cỡ chữ</option>
+                                        <option value="1">Nhỏ</option>
+                                        <option value="3">Bình thường</option>
+                                        <option value="5">Lớn</option>
+                                        <option value="7">Rất lớn</option>
+                                    </select>
+                                    <div class="ms-auto d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="cm_cancelEdit()">
+                                            <i class="fas fa-times me-1"></i>Hủy
+                                        </button>
+                                        <button class="btn btn-sm btn-success" onclick="cm_saveHtml()" id="cmEditorSaveBtn">
+                                            <i class="fas fa-save me-1"></i>Lưu thay đổi
+                                        </button>
+                                    </div>
+                                </div>
+                                <iframe id="cmContractIframe"
+                                        srcdoc="@ct.HtmlContent"
+                                        style="width:100%;min-height:600px;border:none;"
+                                        title="Xem hợp đồng"
+                                        onload="cm_resizeIframe(this)">
+                                </iframe>
                             }
                             else if (!string.IsNullOrEmpty(ct.OriginalFilePath))
                             {
@@ -523,7 +564,96 @@
         document.body.appendChild(t);
         setTimeout(() => t.remove(), 4000);
     }
+
+    // Tự resize iframe theo chiều cao nội dung hợp đồng
+    function cm_resizeIframe(iframe) {
+        try {
+            const resize = () => {
+                const h = iframe.contentDocument?.body?.scrollHeight;
+                if (h && h > 100) iframe.style.height = (h + 32) + 'px';
+            };
+            resize();
+            setTimeout(resize, 400);
+        } catch(e) {}
+    }
 </script>
+
+
+<script>
+    const cm_contractIdForEditor = @(ct?.Id ?? 0);
+    const cm_stepNumber = @Model.StepNumber; // = 6
+
+    // Reload trang nhưng giữ ở bước hiện tại
+    function cm_reloadStep() {
+        const url = new URL(window.location.href);
+        url.searchParams.set('step', cm_stepNumber);
+        window.location.href = url.toString();
+    }
+
+    // Chạy lệnh format BÊN TRONG iframe (không phải trang ngoài)
+    function cm_execCmd(cmd, value = null) {
+        const iframe = document.getElementById('cmContractIframe');
+        if (!iframe) return;
+        iframe.contentDocument.execCommand(cmd, false, value);
+        iframe.contentWindow.focus();
+    }
+
+    function cm_openEditor() {
+        const iframe = document.getElementById('cmContractIframe');
+        if (!iframe) return;
+
+        iframe.contentDocument.designMode = 'on';
+        iframe.style.outline = '2px solid #1e88e5';
+        iframe.style.borderRadius = '4px';
+
+        // Hiện toolbar: bỏ d-none, thêm d-flex
+        const toolbar = document.getElementById('cmEditorToolbar');
+        toolbar.classList.remove('d-none');
+        toolbar.classList.add('d-flex');
+
+        // Ẩn nút "Chỉnh sửa"
+        const editBtn = document.getElementById('cmEditBtn');
+        if (editBtn) editBtn.classList.add('d-none');
+
+        iframe.contentWindow.focus();
+    }
+
+    function cm_cancelEdit() {
+        const iframe = document.getElementById('cmContractIframe');
+        if (iframe) {
+            iframe.contentDocument.designMode = 'off';
+            iframe.style.outline = '';
+        }
+        cm_reloadStep();
+    }
+
+    async function cm_saveHtml() {
+        const iframe = document.getElementById('cmContractIframe');
+        if (!iframe) return;
+
+        const btn = document.getElementById('cmEditorSaveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang lưu...';
+
+        try {
+            const html = iframe.contentDocument.documentElement.outerHTML;
+            const res  = await fetch('/Contract/SaveHtml', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contractId: cm_contractIdForEditor, htmlContent: html })
+            });
+            const d = await res.json();
+            cm_toast(d.message, d.success ? 'success' : 'danger');
+            if (d.success) setTimeout(() => cm_reloadStep(), 800);
+        } catch (e) {
+            cm_toast('Lỗi: ' + e.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-1"></i>Lưu thay đổi';
+        }
+    }
+</script>
+
 
 <!-- Doc Upload Modal (single file) -->
 <div class="modal fade" id="cmDocUploadModal" tabindex="-1">

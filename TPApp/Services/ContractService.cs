@@ -13,39 +13,52 @@ namespace TPApp.Services
         private readonly IContractAuditService     _audit;
         private readonly IContractApprovalService  _approval;
         private readonly IWorkflowService          _workflow;
+        private readonly IWebHostEnvironment       _env;
         private readonly ILogger<ContractService>  _logger;
 
         public ContractService(AppDbContext context, IHashService hash,
             IContractAuditService audit, IContractApprovalService approval,
-            IWorkflowService workflow, ILogger<ContractService> logger)
+            IWorkflowService workflow, IWebHostEnvironment env,
+            ILogger<ContractService> logger)
         {
             _context  = context;
             _hash     = hash;
             _audit    = audit;
             _approval = approval;
             _workflow = workflow;
+            _env      = env;
             _logger   = logger;
         }
 
-        // ─── Auto-create draft from negotiation data ─────────────────────────
+        // ─── Auto-create draft from negotiation data ──────────────────────────
         public async Task<ProjectContract> AutoCreateDraftAsync(int projectId, int createdByUserId)
         {
-            // Archive any previous active version
             await ArchiveActiveAsync(projectId);
 
-            var neg = await _context.NegotiationForms.FirstOrDefaultAsync(n => n.ProjectId == projectId);
+            var neg  = await _context.NegotiationForms.FirstOrDefaultAsync(n => n.ProjectId == projectId);
             var proj = await _context.Projects.FindAsync(projectId);
 
-            int ver = await NextVersionAsync(projectId);
+            // Bên B: Buyer – thông tin từ Step 1 (TechTransferRequest)
+            var step1 = await _context.TechTransferRequests
+                .Where(r => r.ProjectId == projectId)
+                .OrderByDescending(r => r.NgayTao)
+                .FirstOrDefaultAsync();
 
-            var html = BuildHtmlSnapshot(proj, neg);
+            // Bên A: Seller – thông tin user
+            ApplicationUser? sellerUser = null;
+            if (proj?.SelectedSellerId.HasValue == true)
+                sellerUser = await _context.Users.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == proj.SelectedSellerId.Value);
+
+            int ver  = await NextVersionAsync(projectId);
+            var html = BuildHtmlSnapshot(proj, neg, step1, sellerUser, ver, _env);
 
             var contract = new ProjectContract
             {
                 ProjectId     = projectId,
                 VersionNumber = ver,
                 SourceType    = 1, // AutoGenerate
-                Title         = $"HỢP ĐỒNG THƯƠNG MẠI – {proj?.ProjectName ?? $"Dự án #{projectId}"} (v{ver})",
+                Title         = $"HỢP ĐỒNG CHUYỂN GIAO CÔNG NGHỆ – {proj?.ProjectName ?? $"Dự án #{projectId}"} (v{ver})",
                 StatusId      = (int)ContractStatus.Draft,
                 HtmlContent   = html,
                 IsActive      = true,
@@ -135,11 +148,9 @@ namespace TPApp.Services
             if (contract.StatusId >= (int)ContractStatus.ReadyToSign)
                 return (false, "Hợp đồng đã ở trạng thái ReadyToSign hoặc cao hơn.");
 
-            // Validate: must have either HTML or file
             if (string.IsNullOrEmpty(contract.HtmlContent) && string.IsNullOrEmpty(contract.OriginalFilePath))
                 return (false, "Hợp đồng chưa có nội dung. Vui lòng upload file hoặc tạo auto-draft.");
 
-            // Validate all parties approved
             bool allApproved = await _approval.AllPartiesApprovedAsync(contractId);
             if (!allApproved)
                 return (false, "Chưa đủ 3 bên phê duyệt (Buyer + Seller + Tư vấn).");
@@ -182,8 +193,8 @@ namespace TPApp.Services
 
             foreach (var c in active)
             {
-                c.IsActive    = false;
-                c.ArchivedAt  = DateTime.UtcNow;
+                c.IsActive   = false;
+                c.ArchivedAt = DateTime.UtcNow;
                 if (c.StatusId < (int)ContractStatus.ReadyToSign)
                     c.StatusId = (int)ContractStatus.Archived;
             }
@@ -203,9 +214,9 @@ namespace TPApp.Services
             var root = System.IO.Path.Combine(env.ContentRootPath, "wwwroot", "uploads", "contracts", $"proj_{projectId}");
             System.IO.Directory.CreateDirectory(root);
 
-            var ext = System.IO.Path.GetExtension(file.FileName);
+            var ext        = System.IO.Path.GetExtension(file.FileName);
             var storedName = $"contract_v{version}_{DateTime.UtcNow:yyyyMMddHHmmss}{ext}";
-            var fullPath = System.IO.Path.Combine(root, storedName);
+            var fullPath   = System.IO.Path.Combine(root, storedName);
 
             await using var fs = System.IO.File.Create(fullPath);
             await file.CopyToAsync(fs);
@@ -216,40 +227,80 @@ namespace TPApp.Services
         private static void ValidateFile(IFormFile file)
         {
             var allowed = new[] { ".pdf", ".docx" };
-            var ext = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
+            var ext     = System.IO.Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!allowed.Contains(ext))
-                throw new InvalidOperationException($"Chỉ chấp nhận file .pdf / .docx.");
+                throw new InvalidOperationException("Chỉ chấp nhận file .pdf / .docx.");
             if (file.Length > 25 * 1024 * 1024)
                 throw new InvalidOperationException("File vượt quá 25 MB.");
         }
 
-        private static string BuildHtmlSnapshot(Project? proj, NegotiationForm? neg)
+        // ─── Build HTML từ template file wwwroot/templates/ ───────────────────
+        private static string BuildHtmlSnapshot(
+            Project?             proj,
+            NegotiationForm?     neg,
+            TechTransferRequest? step1,
+            ApplicationUser?     sellerUser,
+            int                  ver,
+            IWebHostEnvironment  env)
         {
-            var price       = neg?.GiaChotCuoiCung?.ToString("N0") ?? "—";
-            var payment     = neg?.DieuKhoanThanhToan ?? "—";
-            var projectName = proj?.ProjectName ?? "—";
+            var today = DateTime.Now;
 
-            return $@"<div style=""font-family:Arial,sans-serif;max-width:900px;margin:auto;padding:32px;border:1px solid #ccc;border-radius:8px"">
-  <h2 style=""text-align:center;color:#1a3c6e"">HỢP ĐỒNG CHUYỂN GIAO CÔNG NGHỆ</h2>
-  <p style=""text-align:center;color:#666"">Bản nháp tự động từ kết quả đàm phán Bước 5</p>
-  <hr/>
-  <h4>Điều 1 – Đối tượng hợp đồng</h4>
-  <p>Dự án: <strong>{projectName}</strong></p>
-  <h4>Điều 2 – Giá trị hợp đồng</h4>
-  <p>Giá thỏa thuận: <strong>{price} VNĐ</strong></p>
-  <h4>Điều 3 – Điều khoản thanh toán</h4>
-  <p>{payment}</p>
-  <h4>Điều 4 – Thời gian giao hàng</h4>
-  <p>Theo thỏa thuận của hai bên.</p>
-  <h4>Điều 5 – Điều khoản pháp lý</h4>
-  <p>Hợp đồng điện tử có giá trị pháp lý tương đương văn bản giấy sau khi 2 bên ký số
-     theo quy định Luật Giao dịch điện tử 2023.</p>
-  <hr/>
-  <p style=""color:#aaa;font-size:11px"">
-    Tài liệu tự động – Phiên bản nháp. Cần rà soát pháp lý trước khi ký.
-    Tạo lúc: {DateTime.Now:dd/MM/yyyy HH:mm}
-  </p>
-</div>";
+            // Bên A – Seller (bên chuyển giao)
+            var benATen       = sellerUser?.FullName ?? sellerUser?.UserName ?? "——";
+            var benADienThoai = sellerUser?.PhoneNumber ?? "——";
+            var benADaiDien   = sellerUser?.FullName ?? sellerUser?.UserName ?? "——";
+
+            // Bên B – Buyer (bên nhận chuyển giao, từ Step 1)
+            var benBTen       = step1?.DonVi ?? step1?.HoTen ?? "——";
+            var benBTruSo     = step1?.DiaChi ?? "——";
+            var benBDienThoai = step1?.DienThoai ?? "——";
+            var benBDaiDien   = step1?.HoTen ?? "——";
+            var benBChucVu    = step1?.ChucVu ?? "——";
+
+            // Thông tin hợp đồng
+            var soHD        = $"TechPort-{proj?.Id ?? 0}-v{ver}-{today:yyyyMM}";
+            var ngayHD      = $"ngày {today.Day} tháng {today.Month} năm {today.Year}";
+            var projectName = proj?.ProjectName ?? "——";
+            var tenCongNghe = step1?.TenCongNghe ?? proj?.ProjectName ?? "——";
+            var moTa        = step1?.MoTaNhuCau ?? "——";
+            var tongGia     = neg?.GiaChotCuoiCung != null
+                                ? neg.GiaChotCuoiCung.Value.ToString("N0") + " VNĐ"
+                                : "——";
+            var ptThanhToan = neg?.DieuKhoanThanhToan ?? "——";
+
+            // Đọc template từ wwwroot/templates/
+            var templatePath = System.IO.Path.Combine(
+                env.WebRootPath, "templates", "contract_chuyen_giao_cong_nghe.html");
+
+            var html = System.IO.File.Exists(templatePath)
+                ? System.IO.File.ReadAllText(templatePath, System.Text.Encoding.UTF8)
+                : "<p><strong>Lỗi:</strong> Không tìm thấy template hợp đồng tại wwwroot/templates/contract_chuyen_giao_cong_nghe.html</p>";
+
+            // Thay thế placeholder
+            return html
+                .Replace("{{SO_HD}}",                   soHD)
+                .Replace("{{NGAY_HD}}",                 ngayHD)
+                .Replace("{{PROJECT_NAME}}",             projectName)
+                .Replace("{{TEN_CONG_NGHE}}",           tenCongNghe)
+                .Replace("{{MO_TA}}",                   moTa)
+                .Replace("{{TONG_GIA}}",                tongGia)
+                .Replace("{{PHUONG_THUC_THANH_TOAN}}", ptThanhToan)
+                .Replace("{{BEN_A_TEN}}",               benATen)
+                .Replace("{{BEN_A_TRU_SO}}",            "——")
+                .Replace("{{BEN_A_DIEN_THOAI}}",        benADienThoai)
+                .Replace("{{BEN_A_MA_SO_THUE}}",        "——")
+                .Replace("{{BEN_A_TAI_KHOAN}}",         "——")
+                .Replace("{{BEN_A_DAI_DIEN}}",          benADaiDien)
+                .Replace("{{BEN_A_CHUC_VU}}",           "——")
+                .Replace("{{BEN_B_TEN}}",               benBTen)
+                .Replace("{{BEN_B_TRU_SO}}",            benBTruSo)
+                .Replace("{{BEN_B_DIEN_THOAI}}",        benBDienThoai)
+                .Replace("{{BEN_B_MA_SO_THUE}}",        "——")
+                .Replace("{{BEN_B_TAI_KHOAN}}",         "——")
+                .Replace("{{BEN_B_DAI_DIEN}}",          benBDaiDien)
+                .Replace("{{BEN_B_CHUC_VU}}",           benBChucVu)
+                .Replace("{{VERSION}}",                 $"v{ver}")
+                .Replace("{{NGAY_TAO}}",                today.ToString("dd/MM/yyyy HH:mm"));
         }
     }
 }

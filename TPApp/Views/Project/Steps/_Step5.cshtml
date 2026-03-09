@@ -20,10 +20,10 @@
 
     var hinhThucKy = negotiation?.HinhThucKy ?? "OTP";
 
-    bool canEdit = isBuyer
-        && negotiation != null
-        && !isCompleted
+    // Inline form chỉ hiện ở Draft (chưa có giá); modal cho phép edit mọi trạng thái chưa Completed
+    bool canEditInline = isBuyer && negotiation != null && !isCompleted
         && negotiation.StatusId < (int)NegotiationStatus.WaitingSignature;
+    bool canEdit = canEditInline; // alias để không vỡ logic cũ bên dưới
 
     var sellerName = (string?)ViewBag.SellerName ?? "Seller";
     var buyerName = (string?)ViewBag.BuyerName ?? "Buyer";
@@ -56,7 +56,7 @@
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-handshake"></i> Bước 5: Đàm phán Thương mại</h5>
-        @if (isBuyer && !isCompleted)
+        @if (isBuyer && negotiation != null && !isCompleted)
         {
             <button class="btn btn-sm btn-light" type="button"
                     data-bs-toggle="modal" data-bs-target="#editNegotiationModal">
@@ -99,7 +99,8 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Giá chốt cuối cùng (VNĐ)</label>
-                            <input type="text" name="giaChotCuoiCung" class="form-control currency-input" placeholder="0" value="@(negotiation.GiaChotCuoiCung.HasValue ? negotiation.GiaChotCuoiCung.Value.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) : "")" />
+                            <input type="text" name="giaChotCuoiCung" class="form-control currency-input" placeholder="0"
+                                   value="@AppHtmlHelper.FormatVndNumber(negotiation.GiaChotCuoiCung)" />
                         </div>
                         <div class="col-12">
                             <label class="form-label">Điều khoản thanh toán</label>
@@ -145,13 +146,7 @@
                 <dl class="row">
                     <dt class="col-sm-3">Giá chốt cuối cùng:</dt>
                     <dd class="col-sm-9">
-                        @if (negotiation.GiaChotCuoiCung.HasValue)
-                        {
-                            <span class="badge bg-success fs-6">
-                                <i class="fas fa-dollar-sign"></i> @negotiation.GiaChotCuoiCung.Value.ToString("N0") VNĐ
-                            </span>
-                        }
-                        else { <span class="text-muted">Chưa cập nhật</span> }
+                        @Html.Raw(AppHtmlHelper.FormatVndBadge(negotiation.GiaChotCuoiCung))
                     </dd>
 
                     <dt class="col-sm-3">Điều khoản thanh toán:</dt>
@@ -320,9 +315,26 @@
         }
         else
         {
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Chưa có dữ liệu cho bước này.
+            <div class="alert alert-info d-flex align-items-center gap-3">
+                <i class="fas fa-info-circle fa-lg"></i>
+                <div>
+                    <strong>Chưa có biên bản đàm phán.</strong><br/>
+                    @if (isBuyer)
+                    {
+                        <span class="text-muted small">Nhấn nút bên dưới để bắt đầu quá trình đàm phán thương mại.</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Đang chờ Buyer khởi tạo biên bản đàm phán.</span>
+                    }
+                </div>
             </div>
+            @if (isBuyer)
+            {
+                <button class="btn btn-primary" onclick="initNegotiation(this)">
+                    <i class="fas fa-plus me-1"></i> Khởi tạo biên bản đàm phán
+                </button>
+            }
         }
     </div>
     <div class="card-footer">
@@ -608,6 +620,64 @@
             btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Xác nhận';
         }
     }
+
+    // ── Khởi tạo biên bản đàm phán (khi chưa có) ──────────────────────────
+    async function initNegotiation(btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang khởi tạo...';
+        try {
+            const res = await fetch('/Negotiation/Init', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId })
+            });
+            const d = await res.json();
+            showToast(d.success ? 'success' : 'danger', d.message);
+            if (d.success) setTimeout(() => location.reload(), 1200);
+        } catch (e) {
+            showToast('danger', 'Lỗi: ' + e.message);
+        } finally {
+            btnEl.disabled = false;
+            btnEl.innerHTML = '<i class="fas fa-plus me-1"></i> Khởi tạo biên bản đàm phán';
+        }
+    }
+
+    // ── Lưu từ modal edit (dùng negotiationModalForm) ─────────────────────
+    async function saveNegotiationModal() {
+        const form = document.getElementById('negotiationModalForm');
+        if (!form) return;
+
+        const hinhThucKy = form.querySelector('[name="hinhThucKy"]')?.value;
+        if (!hinhThucKy) { showToast('warning', 'Vui lòng chọn hình thức ký'); return; }
+
+        const giaChotRaw = form.querySelector('[name="giaChotCuoiCung"]')?.value.replace(/\./g, '') || '';
+        if (!giaChotRaw || isNaN(giaChotRaw)) {
+            showToast('warning', 'Vui lòng nhập giá chốt cuối cùng');
+            return;
+        }
+
+        const btn = document.getElementById('btnSaveNegotiationModal');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang lưu...';
+
+        const formData = new FormData(form);
+        formData.set('giaChotCuoiCung', giaChotRaw);
+
+        try {
+            const res = await fetch('/Negotiation/SaveInline', { method: 'POST', body: formData });
+            const data = await res.json();
+            showToast(data.success ? 'success' : 'danger', data.message);
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editNegotiationModal'))?.hide();
+                setTimeout(() => location.reload(), 1200);
+            }
+        } catch (e) {
+            showToast('danger', 'Lỗi kết nối: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-1"></i> Lưu thay đổi';
+        }
+    }
 </script>
 
 @* ── Edit Negotiation Modal (Buyer only) ─────────────────────────────── *@
@@ -630,14 +700,14 @@
                             <strong>Lưu ý:</strong> Đã có bên ký xác nhận. Nếu lưu thay đổi, chữ ký sẽ bị reset và cả hai bên phải ký lại.
                         </div>
                     }
-                    <form id="negotiationInlineForm" enctype="multipart/form-data">
+                    <form id="negotiationModalForm" enctype="multipart/form-data">
                         <input type="hidden" name="projectId" value="@Model.ProjectId" />
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Giá chốt cuối cùng (VNĐ)</label>
                                 <input type="text" name="giaChotCuoiCung" class="form-control currency-input"
                                        placeholder="0"
-                                       value="@(negotiation.GiaChotCuoiCung.HasValue ? negotiation.GiaChotCuoiCung.Value.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) : "")" />
+                                       value="@AppHtmlHelper.FormatVndNumber(negotiation.GiaChotCuoiCung)" />
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Điều khoản thanh toán</label>
@@ -676,7 +746,7 @@
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i> Huỷ
                     </button>
-                    <button type="button" class="btn btn-primary" id="btnSaveNegotiation" onclick="saveNegotiationInline()">
+                    <button type="button" class="btn btn-primary" id="btnSaveNegotiationModal" onclick="saveNegotiationModal()">
                         <i class="fas fa-save me-1"></i> Lưu thay đổi
                     </button>
                 </div>
