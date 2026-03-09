@@ -343,10 +343,15 @@
                             }
                         </div>
                     </div>
-                    <div class="card-body p-0" style="min-height:300px;max-height:600px;overflow:auto">
+                    <div class="card-body p-0" style="min-height:300px;overflow:auto">
                         @if (!string.IsNullOrEmpty(contract.HtmlContent))
                         {
-                            <div class="p-3">@Html.Raw(contract.HtmlContent)</div>
+                            <iframe id="s7ContractIframe"
+                                    srcdoc="@contract.HtmlContent"
+                                    style="width:100%;min-height:500px;border:none;"
+                                    title="Xem hợp đồng"
+                                    onload="s7_resizeIframe(this)">
+                            </iframe>
                         }
                         else if (!string.IsNullOrEmpty(contract.OriginalFilePath))
                         {
@@ -633,6 +638,19 @@
     const s7_projectId = @Model.ProjectId;
     const s7_buyerUsesCA = @(buyerUsesCA ? "true" : "false");
     const s7_sellerUsesCA = @(sellerUsesCA ? "true" : "false");
+
+    // Tự resize iframe hợp đồng theo chiều cao nội dung (giống Step 6)
+    function s7_resizeIframe(iframe) {
+        try {
+            const resize = () => {
+                const h = iframe.contentDocument?.body?.scrollHeight;
+                if (h && h > 100) iframe.style.height = (h + 32) + 'px';
+            };
+            resize();
+            setTimeout(resize, 400);
+        } catch(e) {}
+    }
+
     let s7_timers = {};
     let s7_requestIds = {};
 
