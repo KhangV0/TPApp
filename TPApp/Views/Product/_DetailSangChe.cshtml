@@ -83,16 +83,16 @@
 
 <div class="ho-so-cong-nghe mt-4">
 
-    @* TAB NAVIGATION — Tab 1 ẩn, Tab 2 đổi thành active *@
+    @* TAB NAVIGATION — Tab 1 hiện lại *@
     <ul class="nav nav-tabs" id="detailTabsSangChe" role="tablist">
-        <li class="nav-item" role="presentation" style="display:none">
-            <button class="nav-link" id="sc-chusohuuTab" data-bs-toggle="tab"
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="sc-chusohuuTab" data-bs-toggle="tab"
                     data-bs-target="#sc-chusohuu" type="button" role="tab">
                 <i class="fa fa-user me-1"></i>Chủ sở hữu
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="sc-phanloaiTab" data-bs-toggle="tab"
+            <button class="nav-link" id="sc-phanloaiTab" data-bs-toggle="tab"
                     data-bs-target="#sc-phanloai" type="button" role="tab">
                 <i class="fa fa-id-card me-1"></i>Thông tin
             </button>
@@ -116,7 +116,7 @@
         @* ══════════════════════════════════════
            TAB 1 – CHỦ SỞ HỮU
            ══════════════════════════════════════ *@
-        <div class="tab-pane fade" id="sc-chusohuu" role="tabpanel">
+        <div class="tab-pane fade show active" id="sc-chusohuu" role="tabpanel">
             <div class="hscn-section-title"><i class="fa fa-user me-2"></i>Thông tin chủ sở hữu</div>
 
             @* Loại chủ sở hữu *@
@@ -221,7 +221,7 @@
         @* ══════════════════════════════════════
            TAB 2 – PHÂN LOẠI & ĐỊNH DANH
            ══════════════════════════════════════ *@
-        <div class="tab-pane fade show active" id="sc-phanloai" role="tabpanel">
+        <div class="tab-pane fade" id="sc-phanloai" role="tabpanel">
             <div class="hscn-section-title"><i class="fa fa-id-card me-2"></i>Thông tin tài sản trí tuệ</div>
 
             @* Phân loại hồ sơ *@

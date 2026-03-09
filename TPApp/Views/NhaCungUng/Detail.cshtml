@@ -155,19 +155,19 @@
 
                 @* ── 4 TABS (tương ứng CMS form) ── *@
                 <ul class="nav nav-tabs mb-0" role="tablist">
-                    <li class="nav-item" style="display:none">
-                        <a class="nav-link" data-bs-toggle="tab" href="#tab1">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tab1">
                             <i class="fa fa-id-card me-1"></i>Thông tin định danh
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" data-bs-toggle="tab" href="#tab2">
-                            <i class="fa fa-cogs me-1"></i>Năng lực &amp; Lĩnh vực
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab2">
+                            <i class="fa fa-cogs me-1"></i>Năng lực & Lĩnh vực
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" data-bs-toggle="tab" href="#tab3">
-                            <i class="fa fa-box me-1"></i>Dịch vụ &amp; Sản phẩm
+                            <i class="fa fa-box me-1"></i>Dịch vụ & Sản phẩm
                         </a>
                     </li>
                     <li class="nav-item">
@@ -179,8 +179,8 @@
 
                 <div class="tab-content border border-top-0 rounded-bottom p-3 mb-4">
 
-                    @* ══════ TAB 1: THÔNG TIN ĐỊNH DANH (ẨN) ══════ *@
-                    <div class="tab-pane fade" id="tab1">
+                    @* ══════ TAB 1: THÔNG TIN ĐỊNH DANH ══════ *@
+                    <div class="tab-pane fade show active" id="tab1">
                         <table class="table table-sm table-bordered mb-0" style="font-size:14px;">
                             <tbody>
                                 <tr><td class="fw-bold bg-light" style="width:180px;">Tên đơn vị</td><td>@Model.FullName</td></tr>
@@ -227,8 +227,8 @@
                         </table>
                     </div>
 
-                    @* ══════ TAB 2: NĂNG LỰC &amp; LĨNH VỰC ══════ *@
-                    <div class="tab-pane fade show active" id="tab2">
+                    @* ══════ TAB 2: NĂNG LỰC & LĨNH VỰC ══════ *@
+                    <div class="tab-pane fade" id="tab2">
                         @if (!string.IsNullOrEmpty(Model.LinhVucText))
                         {
                             <h6 class="fw-semibold mb-2"><i class="fa fa-layer-group me-1 text-primary"></i>Lĩnh vực hoạt động chính</h6>
@@ -350,9 +350,9 @@
                 @* ── RATING + VIEW WIDGET ── *@
                 <div class="mt-3">
                     @await Html.PartialAsync("_EntityRating", null, new ViewDataDictionary(ViewData) {
-                        { "EntityType", "NhaCungUng" },
-                        { "EntityId", Model.Id }
-                    })
+                    { "EntityType", "NhaCungUng" },
+                                        { "EntityId", Model.Id }
+                                        })
                 </div>
 
             </div>

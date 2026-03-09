@@ -56,16 +56,16 @@
 
 <div class="ho-so-cong-nghe mt-4">
 
-    @* TAB NAVIGATION — Tab 1 ẩn đi *@
+    @* TAB NAVIGATION — Tab 1 hiện, Tab Nhà cung ứng ẩn *@
     <ul class="nav nav-tabs" id="detailTabsThietBi" role="tablist">
-        <li class="nav-item" role="presentation" style="display:none">
-            <button class="nav-link" id="tb-nhandienTab" data-bs-toggle="tab"
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tb-nhandienTab" data-bs-toggle="tab"
                     data-bs-target="#tb-nhandien" type="button" role="tab">
                 <i class="fa fa-id-card me-1"></i>Nhận diện thiết bị
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tb-thongsoTab" data-bs-toggle="tab"
+            <button class="nav-link" id="tb-thongsoTab" data-bs-toggle="tab"
                     data-bs-target="#tb-thongso" type="button" role="tab">
                 <i class="fa fa-cogs me-1"></i>Thông tin
             </button>
@@ -76,7 +76,7 @@
                 <i class="fa fa-star me-1"></i>Ưu điểm &amp; Giá
             </button>
         </li>
-        <li class="nav-item" role="presentation">
+        <li class="nav-item" role="presentation" style="display:none">
             <button class="nav-link" id="tb-nhacungungTab" data-bs-toggle="tab"
                     data-bs-target="#tb-nhacungung" type="button" role="tab">
                 <i class="fa fa-building me-1"></i>Nhà cung ứng
@@ -87,14 +87,88 @@
     <div class="tab-content border border-top-0 rounded-bottom p-4" id="detailTabsThietBiContent">
 
         @* ══════════════════════════════════════
-           TAB 1 – NHẬN DIỆN (ẩn, không dùng)
+           TAB 1 – NHẬN DIỆN THIẾT BỊ (active)
            ══════════════════════════════════════ *@
-        <div class="tab-pane fade" id="tb-nhandien" role="tabpanel"></div>
+        <div class="tab-pane fade show active" id="tb-nhandien" role="tabpanel">
+            <div class="hscn-section-title"><i class="fa fa-id-card me-2"></i>Thông tin nhận diện thiết bị</div>
+
+            @* Tên thiết bị *@
+            <div class="hscn-item">
+                <div class="hscn-item-title">Tên thiết bị / máy móc</div>
+                <div class="ps-3 fw-bold fs-6">@p.Name</div>
+            </div>
+
+            @* Ảnh đại diện — đã hiển thị bên trên trong _DetailHeader, bỏ qua *@
+
+            @* Xuất xứ *@
+            @{
+                bool isDomesticN = string.IsNullOrEmpty(p.XuatXu) ||
+                    p.XuatXu.Contains("Việt", StringComparison.OrdinalIgnoreCase) ||
+                    p.XuatXu.Contains("VN", StringComparison.OrdinalIgnoreCase);
+            }
+            @if (!string.IsNullOrEmpty(p.XuatXu))
+            {
+                <div class="hscn-item">
+                    <div class="hscn-item-title">Xuất xứ</div>
+                    <div class="ps-3">
+                        <div class="hscn-check-row">@chk(isDomesticN) Trong nước (Việt Nam)</div>
+                        <div class="hscn-check-row">@chk(!isDomesticN) Nước ngoài
+                            @if (!isDomesticN) { <span>(Quốc gia: <strong>@p.XuatXu</strong>)</span> }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* Lĩnh vực áp dụng — chỉ hiện đã check *@
+            @{
+                var checkedIndsN = Model.Industries?.Where(ind => catIds.Contains(ind.CatId)).ToList();
+            }
+            @if (checkedIndsN != null && checkedIndsN.Any())
+            {
+                <div class="hscn-item">
+                    <div class="hscn-item-title">Lĩnh vực áp dụng</div>
+                    <div class="ps-3">
+                        @foreach (var ind in checkedIndsN) { <div class="hscn-check-row">☑ @ind.Title</div> }
+                    </div>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(Model.CategoryTitle))
+            {
+                <div class="hscn-item">
+                    <div class="hscn-item-title">Lĩnh vực áp dụng</div>
+                    <div class="ps-3"><div class="hscn-check-row">☑ @Model.CategoryTitle</div></div>
+                </div>
+            }
+
+            @* Mức độ phát triển *@
+            @if (p.Rating.HasValue && p.Rating > 0)
+            {
+                <div class="hscn-item">
+                    <div class="hscn-item-title">Mức độ phát triển</div>
+                    <div class="ps-3">
+                        @if (p.Rating == 7) { <div class="hscn-check-row">☑ <i class="fa fa-flask me-1"></i> Đã ứng dụng thử nghiệm (Pilot)</div> }
+                        @if (p.Rating == 8) { <div class="hscn-check-row">☑ <i class="fa fa-industry me-1"></i> Đã ứng dụng công nghiệp</div> }
+                        @if (p.Rating == 9) { <div class="hscn-check-row">☑ <i class="fa fa-shopping-cart me-1"></i> Đã thương mại hóa</div> }
+                    </div>
+                </div>
+            }
+
+            @* Keywords *@
+            @if (Model.Keywords != null && Model.Keywords.Any())
+            {
+                <div class="hscn-item">
+                    <div class="hscn-item-title">Từ khoá</div>
+                    <div class="ps-3">
+                        @foreach (var kw in Model.Keywords) { <span class="badge bg-secondary me-1">@kw.Keyword</span> }
+                    </div>
+                </div>
+            }
+        </div>
 
         @* ══════════════════════════════════════
            TAB 2 (active) – THÔNG TIN
            ══════════════════════════════════════ *@
-        <div class="tab-pane fade show active" id="tb-thongso" role="tabpanel">
+        <div class="tab-pane fade" id="tb-thongso" role="tabpanel">
             <div class="hscn-section-title"><i class="fa fa-cogs me-2"></i>Thông tin thiết bị</div>
 
             @* Xuất xứ *@
