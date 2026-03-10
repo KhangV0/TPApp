@@ -269,14 +269,21 @@ namespace TPApp.Services
             var ptThanhToan = neg?.DieuKhoanThanhToan ?? "——";
 
             // Đọc template từ wwwroot/templates/
-            // Dùng ContentRootPath + "wwwroot" thay vì WebRootPath để tránh null khi chạy deployed
+            // Thử ContentRootPath trước, fallback sang WebRootPath
             var wwwRoot      = System.IO.Path.Combine(env.ContentRootPath, "wwwroot");
-            var templatePath = System.IO.Path.Combine(
-                wwwRoot, "templates", "contract_chuyen_giao_cong_nghe.html");
+            var templatePath = System.IO.Path.Combine(wwwRoot, "templates", "contract_chuyen_giao_cong_nghe.html");
+
+            // Fallback: thử WebRootPath nếu ContentRootPath không ra file
+            if (!System.IO.File.Exists(templatePath) && !string.IsNullOrEmpty(env.WebRootPath))
+            {
+                templatePath = System.IO.Path.Combine(
+                    env.WebRootPath, "templates", "contract_chuyen_giao_cong_nghe.html");
+            }
 
             var html = System.IO.File.Exists(templatePath)
                 ? System.IO.File.ReadAllText(templatePath, System.Text.Encoding.UTF8)
-                : "<p><strong>Lỗi:</strong> Không tìm thấy template hợp đồng tại wwwroot/templates/contract_chuyen_giao_cong_nghe.html</p>";
+                : $"<p><strong>Lỗi:</strong> Không tìm thấy template tại: <code>{templatePath}</code><br/>" +
+                  $"ContentRoot=<code>{env.ContentRootPath}</code> | WebRoot=<code>{env.WebRootPath}</code></p>";
 
             // Thay thế placeholder
             return html
