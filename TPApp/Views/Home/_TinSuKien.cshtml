@@ -13,7 +13,7 @@
         </h2>
 
         <!-- TAB HEADER -->
-        <ul class="nav nav-tabs justify-content-center mb-4" role="tablist">
+        <ul class="nav tech-tabs" role="tablist">
             @for (int i = 0; i < tabs.Count; i++)
             {
                 var tab = tabs[i];
@@ -31,9 +31,17 @@
         <!-- TAB CONTENT -->
         <div class="tab-content">
 
+            @{
+                var tabLinks = new[] {
+                    "tin-su-kien-44.html",
+                    "bao-cao-phan-tich-xu-huong-cong-nghe-46.html",
+                    "giai-phap-cong-nghe-72.html"
+                };
+            }
             @for (int i = 0; i < tabs.Count; i++)
             {
                 var tab = tabs[i];
+                var firstLink = i < tabLinks.Length ? tabLinks[i] : "#";
 
                 <div class="tab-pane fade @(i == 0 ? "show active" : "")"
                      id="content-@tab.MenuId">
@@ -106,6 +114,11 @@
                         </div>
 
                     </div>
+
+                    <div class="tech-section-more">
+                        <a href="@firstLink" class="btn-tech-more">Xem thêm »</a>
+                    </div>
+
                 </div>
             }
 

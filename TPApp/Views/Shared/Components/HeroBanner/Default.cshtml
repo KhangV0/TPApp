@@ -13,6 +13,50 @@
                     @for (int i = 0; i < Model.Count; i++)
                     {
                         var item = Model[i];
+
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <a href="@item.URL">
+                                <img src="@item.SRC"
+                                     class="d-block w-100"
+                                     alt="@item.Title"
+                                     style="border-radius:24px; object-fit:contain;"
+                                     onerror="this.style.display='none'">
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                @if (Model.Count > 1)
+                {
+                    <!-- Indicators -->
+                    <div class="carousel-indicators carousel-indicators-fix">
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            <button type="button" data-bs-target="#heroCarousel"
+                                    data-bs-slide-to="@i" class="@(i == 0 ? "active" : "")"></button>
+                        }
+                    </div>
+                }
+
+            </div>
+        </div>
+    </section>
+}
+
+
+@* @if (Model.Any())
+{
+    <section class="hero-section" style="margin-top:0;">
+        <div class="container">
+            <div id="heroCarousel"
+                 class="carousel slide carousel-fade"
+                 data-bs-ride="carousel"
+                 data-bs-interval="3000">
+
+                <div class="carousel-inner">
+                    @for (int i = 0; i < Model.Count; i++)
+                    {
+                        var item = Model[i];
                         <div class="carousel-item @(i == 0 ? "active" : "") hero-slide @(i > 0 ? "hero-slide-2" : "")"
                              style="background-image:url('@item.SRC')">
                             <div class="hero-content">
@@ -48,3 +92,6 @@
         </div>
     </section>
 }
+ *@
+
+

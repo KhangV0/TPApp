@@ -304,7 +304,7 @@ app.MapControllerRoute(
 // 5. News Routes
 app.MapControllerRoute(
     name: "news_menu",
-    pattern: "{queryString:regex(^tin-su-kien|hoi-thao-trinh-dien-cong-nghe$)}-{menuId:int}.html",
+    pattern: "{queryString:regex(^(tin-su-kien|hoi-thao-trinh-dien-cong-nghe|bao-cao-phan-tich-xu-huong-cong-nghe|giai-phap-cong-nghe|mo-hinh-cong-nghe)$)}-{menuId:int}.html",
     defaults: new { controller = "News", action = "Category" }
 );
 

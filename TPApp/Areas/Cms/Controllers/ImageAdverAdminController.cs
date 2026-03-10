@@ -167,15 +167,13 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ImageAdverFormVm vm)
         {
-            // Set defaults for hidden fields
-            if (string.IsNullOrEmpty(vm.Domain))
-                vm.Domain = GetDomain();
-            if (!vm.SiteId.HasValue || vm.SiteId == 0)
-                vm.SiteId = GetSiteId();
+            // Luôn lấy Domain và SiteId từ appsettings.json
+            vm.Domain = GetDomain();
+            vm.SiteId = GetSiteId();
             if (vm.LanguageID == 0)
                 vm.LanguageID = 1;
 
-            // Clear ModelState for auto-filled fields
+            // Clear ModelState cho các field tự động
             ModelState.Remove("Domain");
             ModelState.Remove("SiteId");
             ModelState.Remove("LanguageID");
@@ -185,6 +183,10 @@ namespace TPApp.Areas.Cms.Controllers
 
             if (!ModelState.IsValid)
             {
+                TempData["Error"] = "Vui lòng kiểm tra lại thông tin: " +
+                    string.Join(" | ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
                 await LoadFormSelectListsAsync();
                 return View(vm);
             }
@@ -193,11 +195,19 @@ namespace TPApp.Areas.Cms.Controllers
             entity.Created = DateTime.Now;
             entity.Creator = User.Identity?.Name;
 
-            _context.ImageAdvers.Add(entity);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Đã tạo quảng cáo thành công.";
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                _context.ImageAdvers.Add(entity);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Đã tạo quảng cáo thành công.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lưu không thành công: " + ex.Message;
+                await LoadFormSelectListsAsync();
+                return View(vm);
+            }
         }
 
         // ── EDIT GET ──
@@ -215,11 +225,19 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ImageAdverFormVm vm)
         {
+            // Domain và SiteId không được chỉnh sửa trong Edit — bỏ qua validation
+            ModelState.Remove("Domain");
+            ModelState.Remove("SiteId");
+
             if (string.IsNullOrWhiteSpace(vm.Title))
                 ModelState.AddModelError("Title", "Tiêu đề không được để trống.");
 
             if (!ModelState.IsValid)
             {
+                TempData["Error"] = "Vui lòng kiểm tra lại thông tin: " +
+                    string.Join(" | ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
                 await LoadFormSelectListsAsync();
                 return View(vm);
             }
@@ -235,14 +253,22 @@ namespace TPApp.Areas.Cms.Controllers
             entity.StatusID = vm.StatusID;
             entity.Sort = vm.Sort;
             entity.ParentId = vm.ParentId;
-            entity.SiteId = vm.SiteId;
+            // Domain và SiteId giữ nguyên giá trị trong DB, không cập nhật từ form
             entity.Modified = DateTime.Now;
             entity.Modifier = User.Identity?.Name;
 
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Đã cập nhật quảng cáo thành công.";
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Đã cập nhật quảng cáo thành công.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Lưu không thành công: " + ex.Message;
+                await LoadFormSelectListsAsync();
+                return View(vm);
+            }
         }
 
         // ── UPDATE SORT (drag & drop) ──

@@ -2,107 +2,85 @@
 @using Microsoft.Extensions.Options
 @inject IOptions<TPApp.Helpers.AppSettings> AppSettings
 
-<section class="yc-section">
-    <div class="container">
+<div id="carouselTechCombined"
+     class="carousel slide TechCarousel"
+     data-bs-ride="carousel"
+     data-bs-interval="4000">
 
-        <p class="text-center">
-            <a href="cong-nghe.html" class="text-decoration-none" style="color: #111111; font-size: 16px; font-weight: 700;">
-                CÔNG NGHỆ MỚI CẬP NHẬT
-            </a>
-        </p>
+    <div class="carousel-inner">
 
-        <div id="carouselTechCombined"
-             class="carousel slide TechCarousel"
-             data-bs-ride="carousel"
-             data-bs-interval="3000">
+        @{
+            int perSlide = 3;
+            var list = Model != null
+                ? Model.Take(9).ToList()
+                : new List<TPApp.Entities.SanPhamCNTB>();
+            int slideIndex = 0;
+            var mainDomain = AppSettings.Value.MainDomain;
+        }
 
-            <div class="carousel-inner">
+        @if (list.Any())
+        {
+            for (int i = 0; i < list.Count; i += perSlide)
+            {
+                slideIndex++;
+                var group = list.Skip(i).Take(perSlide);
 
-                @{
-                    int perSlide = 3;
-                    var list = Model != null
-                        ? Model.Take(9).ToList() 
-                        : new List<TPApp.Entities.SanPhamCNTB>();
-                    int slideIndex = 0;
-                    var mainDomain = AppSettings.Value.MainDomain;
-                }
+                <div class="carousel-item @(slideIndex == 1 ? "active" : "")">
+                    <div class="row g-4">
+                        @foreach (var item in group)
+                        {
+                            string imgUrl = TPApp.Controllers.ProductController
+                                .CookedImageURL("254-170", item.QuyTrinhHinhAnh, mainDomain);
 
-                @if (list.Any())
-                {
-                    for (int i = 0; i < list.Count; i += perSlide)
-                    {
-                        slideIndex++;
-                        var group = list.Skip(i).Take(perSlide);
+                            string url = $"{mainDomain}2-cong-nghe-thiet-bi/{item.ProductType}/" +
+                                         $"{item.QueryString}-{item.ID}.html";
 
-                        <div class="carousel-item @(slideIndex == 1 ? "active" : "")">
-                            <div class="row g-4 justify-content-center">
-
-                                @foreach (var item in group)
-                                {
-                                    string imgUrl = TPApp.Controllers.ProductController
-                                    .CookedImageURL("254-170", item.QuyTrinhHinhAnh, mainDomain);
-
-                                    string url = $"{mainDomain}2-cong-nghe-thiet-bi/{item.ProductType}/" +
-                                    $"{item.QueryString}-{item.ID}.html";
-
-                                    <div class="col-lg-3 col-md-4 col-6">
-                                        <div class="hp-tech-card-new">
+                            <div class="col-lg-4 col-md-6 col-12">
+                                <a href="@url" class="text-decoration-none text-dark d-block h-100">
+                                    <div class="tech-card">
+                                        <div class="tech-card-img-wrap">
                                             <img src="@imgUrl"
+                                                 class="tech-card-img"
                                                  alt="@item.Name"
                                                  onerror="this.src='/image/default-tech.jpg'">
-
-                                            <div class="overlay"></div>
-
-                                            <div class="content">
-                                                <h5 class="title">
-                                                    @item.Name
-                                                </h5>
-
-@*                                                 @if (!string.IsNullOrEmpty(item.MoTaNgan))
-                                                {
-                                                    <p class="desc">
-                                                        @Html.Raw(item.MoTaNgan)
-                                                    </p>
-                                                } *@
-
-                                                <a href="@url" class="btn-view">
-                                                    Xem thêm »
-                                                </a>
-                                            </div>
                                         </div>
-
+                                        <div class="tech-card-body">
+                                            <div class="tech-card-title">@item.Name</div>
+                                            @if (!string.IsNullOrEmpty(item.MoTaNgan))
+                                            {
+                                                <div class="tech-card-desc">@Html.Raw(item.MoTaNgan)</div>
+                                            }
+                                        </div>
                                     </div>
-                                }
-
+                                </a>
                             </div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="carousel-item active">
-                        <div class="text-center py-4">
-                            Đang cập nhật công nghệ...
-                        </div>
+                        }
                     </div>
-                }
-
+                </div>
+            }
+        }
+        else
+        {
+            <div class="carousel-item active">
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-hourglass-split fs-2 d-block mb-2"></i>
+                    Đang cập nhật công nghệ...
+                </div>
             </div>
+        }
 
-            <button class="carousel-control-prev"
-                    type="button"
-                    data-bs-target="#carouselTechCombined"
-                    data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
-            </button>
-
-            <button class="carousel-control-next"
-                    type="button"
-                    data-bs-target="#carouselTechCombined"
-                    data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
-            </button>
-
-        </div>
     </div>
-</section>
+
+    <button class="carousel-control-prev" type="button"
+            data-bs-target="#carouselTechCombined" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button"
+            data-bs-target="#carouselTechCombined" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+</div>
+
+<div class="tech-section-more">
+    <a href="cong-nghe.html" class="btn-tech-more">Xem thêm »</a>
+</div>

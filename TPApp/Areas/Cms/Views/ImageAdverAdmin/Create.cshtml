@@ -61,10 +61,19 @@ $(function(){
         }
     }).then(editor => {
         window._descEditor = editor;
-        document.getElementById('adverForm').addEventListener('submit', function() {
-            document.getElementById('editorDescription').value = editor.getData();
-        });
     }).catch(err => console.error('CKEditor init error:', err));
+
+    // Sync CKEditor data vào textarea TRƯỚC khi form submit
+    var _submitting = false;
+    document.getElementById('adverForm').addEventListener('submit', function(e) {
+        if (_submitting) return;
+        e.preventDefault();
+        if (window._descEditor) {
+            document.getElementById('editorDescription').value = window._descEditor.getData();
+        }
+        _submitting = true;
+        this.submit();
+    });
 
     // Image upload buttons
     $('.btn-upload-field').on('click', function() {

@@ -149,6 +149,7 @@
         background: #fff;
         padding: 10px 10px;
     }
+
     ..tp-analytics__row,
     .tp-metrics__grid {
         display: block;
@@ -218,7 +219,7 @@
 
 /* Sections Common */
 .hp-section {
-    padding: 60px 0;
+    padding: 20px 0;
 }
 
 .hp-section-title {
@@ -647,6 +648,13 @@
     overflow: hidden;
     height: 260px;
     cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.13);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.yc-card:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px);
 }
 
 .yc-card img {
@@ -673,8 +681,11 @@
     bottom: 18px;
     left: 18px;
     right: 18px;
-    color: #fff;
+    color: #1a1a1a;
     text-align: center;
+    background: rgba(255, 255, 255, 0.82);
+    border-radius: 10px;
+    padding: 10px 12px;
 }
 
 .yc-meta {
@@ -789,6 +800,7 @@
 
 .hp-category-item {
     position: relative;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 
 .hp-category-item:hover .hp-category-name {
@@ -1496,14 +1508,232 @@
     }
 
 }
+
 .hp-footer-social-icons .bi-facebook::before {
     content: "\f344";
     color: #fff !important;
 }
+
 .hp-footer-info-row i {
     color: #fff !important;
 }
+
 .sidebar-floating .bi-facebook::before {
     content: "\f344";
     color: #323232 !important;
+}
+
+.background-hero {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* nếu theme đang dùng overlay làm mờ */
+.background-hero::before {
+    content: none !important;
+    background: transparent !important;
+}
+
+.tp-kpi {
+    --tp-analytics-bg: linear-gradient(135deg, #f8fbff, #eef4ff);
+    --tp-panel-bg: #ffffff;
+    --tp-border: #dce8f8;
+    --tp-shadow: 0 10px 30px rgba(37, 99, 235, .08);
+    --tp-text: #0f172a;
+    --tp-muted: #64748b;
+    border-radius: 20px;
+    padding: 24px;
+    background: var(--tp-analytics-bg);
+    border: 1.5px solid var(--tp-border);
+    box-shadow: var(--tp-shadow);
+    color: var(--tp-text);
+}
+
+.tp-title {
+    font-size: 1.4rem !important;
+}
+
+.CNNB-nav button {
+    font-size: 18px;
+}
+
+.CNNB {
+    --bs-nav-tabs-link-active-border-color: #999999 #999999 #ffffff #999999;
+    border-bottom: 1px solid #999999;
+}
+
+/* ===============================
+   TECH TABS — "Công nghệ nổi bật"
+   =============================== */
+.tech-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+
+.tech-tabs .nav-link {
+    font-size: 18px;
+    font-weight: 600;
+    color: #555;
+    padding: 10px 24px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    bottom: -2px;
+}
+
+.tech-tabs .nav-link:hover {
+    color: var(--hp-primary-blue);
+    border-bottom-color: var(--hp-accent-cyan);
+}
+
+.tech-tabs .nav-link.active {
+    color: var(--hp-primary-blue);
+    border-bottom: 3px solid var(--hp-primary-blue);
+    background: transparent;
+}
+
+/* ===============================
+   TECH CARD
+   =============================== */
+.tech-card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tech-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+}
+
+/* Image wrapper để clip zoom */
+.tech-card-img-wrap {
+    overflow: hidden;
+    width: 100%;
+    background-color: #ebebeb;
+    flex-shrink: 0;
+}
+
+.tech-card-img {
+    width: 100%;
+    height: 200px;
+    object-fit: contain;
+    background-color: #ebebeb;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.tech-card:hover .tech-card-img {
+    transform: scale(1.06);
+}
+
+.tech-card-body {
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.tech-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #222;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.tech-card-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+    margin-bottom: 12px;
+}
+
+/* ===============================
+   BTN-TECH-MORE
+   =============================== */
+.btn-tech-more {
+    display: inline-block;
+    padding: 8px 22px;
+    border: 2px solid var(--hp-primary-blue);
+    border-radius: 30px;
+    color: var(--hp-primary-blue);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    background: transparent;
+    transition: background 0.25s ease, color 0.25s ease;
+    white-space: nowrap;
+}
+
+.btn-tech-more:hover {
+    background: var(--hp-primary-blue);
+    color: #fff;
+}
+
+/* Nút "Xem thêm" ở cuối section */
+.tech-section-more {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .tech-tabs .nav-link {
+        font-size: 15px;
+        padding: 8px 14px;
+    }
+
+    .tech-card-img {
+        height: 160px;
+    }
+}
+
+.carousel-indicators-fix {
+    bottom: 100px !important;
+    left: 50%;
+    width: 15% !important;
+    transform: translateX(-50%);
+}
+
+.carousel-indicators-fix button {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    /* màu tối */
+}
+
+.carousel-indicators-fix .active {
+    background-color: rgba(0, 0, 0, 0.9);
+    /* nút đang active tối hơn */
+}
+
+@media (max-width: 768px) {
+    .carousel-indicators-fix {
+        display: none;
+    }
 }
