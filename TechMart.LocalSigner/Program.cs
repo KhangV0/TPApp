@@ -45,6 +45,27 @@ app.MapGet("/health", (TokenService svc) =>
     });
 });
 
+// GET /driver-status — list all configured driver paths + which ones actually exist on disk
+// Helps diagnose "missing PKCS#11 driver" on client machines
+app.MapGet("/driver-status", (IConfiguration config) =>
+{
+    var paths = config.GetSection("Pkcs11:DriverPaths").Get<string[]>() ?? [];
+    var result = paths.Select(p => new
+    {
+        path = p,
+        exists = File.Exists(p)
+    });
+    var anyFound = result.Any(r => r.exists);
+    return Results.Ok(new
+    {
+        anyDriverFound = anyFound,
+        message = anyFound
+            ? "✅ Driver found. If token not detected, please plug in your USB Token."
+            : "❌ No PKCS#11 driver found. Please install the USB Token driver software (VNPT-CA / Viettel-CA / eToken) from your CA provider.",
+        drivers = result
+    });
+});
+
 // GET /certificates — list certs on USB Token
 app.MapGet("/certificates", (TokenService svc) =>
 {

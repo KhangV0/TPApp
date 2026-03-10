@@ -21,23 +21,30 @@ public class TokenMonitorService : BackgroundService
     {
         _log.LogInformation("🔌 Token monitor started (interval: {Ms}ms)", _intervalMs);
 
-        // Initialize PKCS#11 driver
-        if (!_tokenService.Initialize())
-        {
-            _log.LogError("❌ PKCS#11 initialization failed. Token monitor will keep retrying...");
-        }
-
         while (!ct.IsCancellationRequested)
         {
-            try
+            // Re-try Initialize every loop until a driver is found
+            if (_tokenService.DriverPath == null)
             {
-                var detected = _tokenService.ScanToken();
-                if (detected)
-                    _log.LogDebug("Token present ✅");
+                if (_tokenService.Initialize())
+                    _log.LogInformation("✅ PKCS#11 driver loaded successfully.");
+                else
+                    _log.LogWarning("⚠️ No PKCS#11 driver found yet. " +
+                        "Please install the USB Token driver (VNPT-CA / eToken) and replug the device.");
             }
-            catch (Exception ex)
+            else
             {
-                _log.LogWarning("Token scan error: {Msg}", ex.Message);
+                // Driver loaded — scan for token presence
+                try
+                {
+                    var detected = _tokenService.ScanToken();
+                    if (detected)
+                        _log.LogDebug("Token present ✅");
+                }
+                catch (Exception ex)
+                {
+                    _log.LogWarning("Token scan error: {Msg}", ex.Message);
+                }
             }
 
             await Task.Delay(_intervalMs, ct);

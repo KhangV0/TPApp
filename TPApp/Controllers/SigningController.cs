@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +22,7 @@ namespace TPApp.Controllers
         private readonly Services.PdfSigningService _pdfSigner;
         private readonly Services.HtmlToPdfService  _htmlToPdf;
         private readonly IWebHostEnvironment        _env;
+        private readonly bool                       _signingTestMode; // Added
 
         public SigningController(
             AppDbContext context, UserManager<ApplicationUser> userManager,
@@ -30,7 +31,8 @@ namespace TPApp.Controllers
             Services.INotificationQueueService notifQueue,
             Services.PdfSigningService pdfSigner,
             Services.HtmlToPdfService htmlToPdf,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IConfiguration config) // Added IConfiguration
         {
             _context    = context;
             _userManager = userManager;
@@ -42,6 +44,9 @@ namespace TPApp.Controllers
             _pdfSigner  = pdfSigner;
             _htmlToPdf  = htmlToPdf;
             _env        = env;
+            _signingTestMode = config.GetValue<bool>("Signing:TestMode"); // Added
+            if (_signingTestMode) // Added
+                _logger.LogWarning("⚠️ Signing:TestMode=true — status updates skipped for testing"); // Added
         }
 
         private int GetUserId()
@@ -124,19 +129,24 @@ namespace TPApp.Controllers
                 // Notify on successful sign
                 if (ok)
                 {
-                    var contract = await _context.ProjectContracts.FindAsync(dto.ContractId);
-                    if (contract?.ProjectId != null)
+                    if (!_signingTestMode) // TestMode: không update status, không notify
                     {
-                        var proj = await _context.Projects.FindAsync(contract.ProjectId);
-                        if (proj != null)
+                        var contract = await _context.ProjectContracts.FindAsync(dto.ContractId);
+                        if (contract?.ProjectId != null)
                         {
-                            var notifMsg = "Bên A (Đơn vị mua) đã ký số hợp đồng thành công.";
-                            if (proj.CreatedBy.HasValue)
-                                await _notifQueue.QueueAsync(proj.CreatedBy.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
-                            if (proj.SelectedSellerId.HasValue)
-                                await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                            var proj = await _context.Projects.FindAsync(contract.ProjectId);
+                            if (proj != null)
+                            {
+                                var notifMsg = "Bên B (Người mua) đã ký số hợp đồng thành công.";
+                                if (proj.CreatedBy.HasValue)
+                                    await _notifQueue.QueueAsync(proj.CreatedBy.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                                if (proj.SelectedSellerId.HasValue)
+                                    await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                            }
                         }
                     }
+                    else
+                        _logger.LogWarning("[TestMode] BuyerConfirm OTP signed — status NOT updated");
                 }
 
                 return Json(new { success = ok, message = msg });
@@ -180,19 +190,24 @@ namespace TPApp.Controllers
                 // Notify on successful sign
                 if (ok)
                 {
-                    var contract = await _context.ProjectContracts.FindAsync(dto.ContractId);
-                    if (contract?.ProjectId != null)
+                    if (!_signingTestMode)
                     {
-                        var proj = await _context.Projects.FindAsync(contract.ProjectId);
-                        if (proj != null)
+                        var contract = await _context.ProjectContracts.FindAsync(dto.ContractId);
+                        if (contract?.ProjectId != null)
                         {
-                            var notifMsg = "Bên B (Đơn vị cung cấp) đã ký số hợp đồng thành công.";
-                            if (proj.CreatedBy.HasValue)
-                                await _notifQueue.QueueAsync(proj.CreatedBy.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
-                            if (proj.SelectedSellerId.HasValue)
-                                await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                            var proj = await _context.Projects.FindAsync(contract.ProjectId);
+                            if (proj != null)
+                            {
+                                var notifMsg = "Bên A (Người bán) đã ký số hợp đồng thành công.";
+                                if (proj.CreatedBy.HasValue)
+                                    await _notifQueue.QueueAsync(proj.CreatedBy.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                                if (proj.SelectedSellerId.HasValue)
+                                    await _notifQueue.QueueAsync(proj.SelectedSellerId.Value, contract.ProjectId, "✍️ Bước 7: Ký số", notifMsg);
+                            }
                         }
                     }
+                    else
+                        _logger.LogWarning("[TestMode] SellerConfirm OTP signed — status NOT updated");
                 }
 
                 return Json(new { success = ok, message = msg });
@@ -321,7 +336,7 @@ namespace TPApp.Controllers
                         var proj = await _context.Projects.FindAsync(contract.ProjectId);
                         if (proj != null)
                         {
-                            var roleName = req.Role == 1 ? "Bên A (Đơn vị mua)" : "Bên B (Đơn vị cung cấp)";
+                            var roleName = req.Role == 1 ? "Bên B (Người mua)" : "Bên A (Người bán)";
                             var notifMsg = $"{roleName} đã ký số hợp đồng thành công (CA).";
                             if (proj.CreatedBy.HasValue)
                                 await _notifQueue.QueueAsync(proj.CreatedBy.Value, contract.ProjectId, "✍️ Bước 7: Ký số CA", notifMsg);
@@ -537,13 +552,18 @@ namespace TPApp.Controllers
                     }
 
                     // Embed visible signature panel into PDF
-                    if (!string.IsNullOrEmpty(contract.OriginalFilePath) &&
-                        System.IO.File.Exists(contract.OriginalFilePath))
+                    // Ưu tiên dùng SignedFilePath (bên kia đã ký trước) để cả 2 chữ ký cùng 1 file
+                    var sourcePdf = (!string.IsNullOrEmpty(contract.SignedFilePath) &&
+                                     System.IO.File.Exists(contract.SignedFilePath))
+                        ? contract.SignedFilePath    // Bên thứ 2 ký: chồng lên file đã có chữ ký bên 1
+                        : contract.OriginalFilePath; // Bên đầu tiên ký: dùng file gốc
+
+                    if (!string.IsNullOrEmpty(sourcePdf) && System.IO.File.Exists(sourcePdf))
                     {
                         try
                         {
                             signedPath = await _pdfSigner.EmbedVisibleSignatureAsync(
-                                sourcePdfPath:    contract.OriginalFilePath,
+                                sourcePdfPath:    sourcePdf,
                                 signatureBytes:   sigBytes,
                                 certificateBytes: certBytes ?? [],
                                 certSubject:      dto.CertSubject ?? "",
@@ -604,22 +624,28 @@ namespace TPApp.Controllers
                 };
                 _context.ContractSignatures.Add(sig);
 
-                // Update contract status
-                if (contract.StatusId == (int)TPApp.Enums.ContractStatus.ReadyToSign)
+                // Update contract status (bỏ qua khi TestMode)
+                if (!_signingTestMode)
                 {
-                    contract.StatusId = (int)TPApp.Enums.ContractStatus.SigningInProgress;
-                    contract.ModifiedDate = DateTime.UtcNow;
+                    if (contract.StatusId == (int)TPApp.Enums.ContractStatus.ReadyToSign)
+                    {
+                        contract.StatusId = (int)TPApp.Enums.ContractStatus.SigningInProgress;
+                        contract.ModifiedDate = DateTime.UtcNow;
+                    }
                 }
+                else
+                    _logger.LogWarning("[TestMode] USBTokenSign — status NOT updated, step7 NOT completed");
 
                 await _context.SaveChangesAsync();
 
-                // Check if both signed
-                await _signing.TryCompleteStep7Async(contract.ProjectId, dto.ContractId);
+                // Check if both signed (bỏ qua khi TestMode)
+                if (!_signingTestMode)
+                    await _signing.TryCompleteStep7Async(contract.ProjectId, dto.ContractId);
 
                 await _audit.AppendAsync("ContractSignature", sig.Id.ToString(),
                     "USBTokenSigned", new { userId, role, certSerial = dto.CertSerial, ip }, userId, ip);
 
-                var roleName = role == 1 ? "Buyer" : "Seller";
+                var roleName = role == 1 ? "Bên B (Người mua)" : "Bên A (Người bán)";
                 _logger.LogInformation("USB Token signed by {Role} (userId={UserId}) for contract {ContractId}",
                     roleName, userId, dto.ContractId);
 
