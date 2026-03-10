@@ -121,7 +121,7 @@ namespace TPApp.Controllers
                 .Where(x => (x.MenuId == YEU_CAU_MENU_ID || childIds.Contains(x.MenuId ?? 0))
                          && x.StatusId == 3)
                 .OrderByDescending(x => x.PublishedDate)
-                .Take(7)
+                .Take(6)
                 .ToList();
 
             return new YeuCauCongNgheVm
@@ -130,9 +130,8 @@ namespace TPApp.Controllers
                 // Passing _mainDomain to MapYeuCau via closure or change method
                 // LINQ Select with method group `MapYeuCau` won't work if MapYeuCau needs instance state _mainDomain.
                 // Changing to lambda.
-                Col1 = list.Take(2).Select(x => MapYeuCau(x)).ToList(),
-                Col2 = list.Skip(2).Take(3).Select(x => MapYeuCau(x)).ToList(),
-                Col3 = list.Skip(5).Take(2).Select(x => MapYeuCau(x)).ToList()
+                Col1 = list.Take(3).Select(x => MapYeuCau(x)).ToList(),
+                Col2 = list.Skip(3).Take(3).Select(x => MapYeuCau(x)).ToList()
             };
         }
         

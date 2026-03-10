@@ -7,66 +7,65 @@
 
 @if (items.Any())
 {
-    <section class="hp-section GPCN">
-        <div class="container">
+    <div id="carouselGiaiPhap"
+         class="carousel slide TechCarousel"
+         data-bs-ride="carousel"
+         data-bs-interval="4000">
 
-            <p class="text-center">
-                <a href="#" class="text-decoration-none" style="color: #111111; font-size: 16px; font-weight: 700;">
-                    TRÊN TAY CÔNG NGHỆ
-                </a>
-            </p>
+        <div class="carousel-inner">
 
-            <div id="carouselGiaiPhap" class="carousel slide TechCarousel" data-bs-ride="carousel" data-bs-interval="3000">
-                <div class="carousel-inner">
+            @{
+                int perSlide  = 3;
+                int slideIndex = 0;
+            }
 
-                    @{
-                        int perSlide  = 3;
-                        int slideIndex = 0;
-                    }
+            @for (int i = 0; i < items.Count; i += perSlide)
+            {
+                slideIndex++;
+                var group = items.Skip(i).Take(perSlide);
 
-                    @for (int i = 0; i < items.Count; i += perSlide)
-                    {
-                        slideIndex++;
-                        var group = items.Skip(i).Take(perSlide);
-
-                        <div class="carousel-item @(slideIndex == 1 ? "active" : "")">
-                            <div class="row g-4">
-
-                                @foreach (var item in group)
-                                {
-                                    <div class="col-lg-4">
-                                        <div class="hp-news-card h-100">
-                                            <a href="@item.Link" class="text-decoration-none text-dark">
-                                                <img src="@item.ImageUrl"
-                                                     class="img-fluid rounded mb-2"
-                                                     alt="@item.Title"
-                                                     onerror="this.src='https://placehold.co/400x250?text=News'">
-
-                                                <h6 class="fw-bold">@item.Title</h6>
-
-                                                @if (!string.IsNullOrEmpty(item.Description))
-                                                {
-                                                    <small class="text-muted text-limit">@item.Description</small>
-                                                }
-                                            </a>
+                <div class="carousel-item @(slideIndex == 1 ? "active" : "")">
+                    <div class="row g-4">
+                        @foreach (var item in group)
+                        {
+                            <div class="col-lg-4 col-md-6 col-12">
+                                <a href="@item.Link" class="text-decoration-none text-dark d-block h-100">
+                                    <div class="tech-card">
+                                        <div class="tech-card-img-wrap">
+                                            <img src="@item.ImageUrl"
+                                                 class="tech-card-img"
+                                                 alt="@item.Title"
+                                                 onerror="this.src='https://placehold.co/400x250?text=No+Image'">
+                                        </div>
+                                        <div class="tech-card-body">
+                                            <div class="tech-card-title">@item.Title</div>
+                                            @if (!string.IsNullOrEmpty(item.Description))
+                                            {
+                                                <div class="tech-card-desc">@item.Description</div>
+                                            }
                                         </div>
                                     </div>
-                                }
-
+                                </a>
                             </div>
-                        </div>
-                    }
-
+                        }
+                    </div>
                 </div>
+            }
 
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselGiaiPhap" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselGiaiPhap" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
-
-            </div>
         </div>
-    </section>
+
+        <button class="carousel-control-prev" type="button"
+                data-bs-target="#carouselGiaiPhap" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button"
+                data-bs-target="#carouselGiaiPhap" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+
+    </div>
+
+    <div class="tech-section-more">
+        <a href="~/mo-hinh-cong-nghe-83.html" class="btn-tech-more">Xem thêm »</a>
+    </div>
 }

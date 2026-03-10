@@ -15,35 +15,25 @@
             <!-- COL 1 -->
             @foreach (var item in Model.Col1)
             {
-                <div class="col-lg-6 col-md-6">
-                    <div class="yc-card">
+                <div class="col-lg-4 col-md-6">
+                    <a href="@item.Link" class="text-decoration-none d-block">
+                        <div class="yc-card">
+                            <!-- IMAGE -->
+                            <img src="@item.ImageUrl"
+                                 alt="@item.Title"
+                                 onerror="this.src='/image/yeucaucongnghe.jpg'">
 
-                        <!-- IMAGE -->
-                        <img src="@item.ImageUrl"
-                             alt="@item.Title"
-                             onerror="this.src='/image/yeucaucongnghe.jpg'">
+                            <!-- INFO -->
+                            <div class="yc-content">
+                                @*<div class="yc-meta">
+                                    <span><i class="bi bi-eye"></i> @item.Viewed</span>
+                                    <span><i class="bi bi-star"></i> 4.9/5</span>
+                                </div>*@
 
-                        <!-- OVERLAY -->
-                        <div class="yc-overlay"></div>
-
-                        <!-- INFO -->
-                        <div class="yc-content">
-
-                            <div class="yc-meta">
-                                <span><i class="bi bi-eye"></i> @item.Viewed</span>
-                                <span><i class="bi bi-star"></i> 4.9/5</span>
+                                <div class="yc-name">@item.Title</div>
                             </div>
-
-                            <div class="yc-name">
-                                @item.Title
-                            </div>
-
-                            <a href="@item.Link" class="yc-btn">
-                                Xem thêm »
-                            </a>
                         </div>
-
-                    </div>
+                    </a>
                 </div>
             }
 
@@ -51,35 +41,31 @@
             @foreach (var item in Model.Col2)
             {
                 <div class="col-lg-4 col-md-6">
-                    <div class="yc-card">
+                    <a href="@item.Link" class="text-decoration-none d-block">
+                        <div class="yc-card">
+                            <img src="@item.ImageUrl"
+                                 alt="@item.Title"
+                                 onerror="this.src='/image/yeucaucongnghe.jpg'">
 
-                        <img src="@item.ImageUrl"
-                             alt="@item.Title"
-                             onerror="this.src='/image/yeucaucongnghe.jpg'">
+                            <div class="yc-content">
+                                @*<div class="yc-meta">
+                                    <span><i class="bi bi-eye"></i> @item.Viewed</span>
+                                    <span><i class="bi bi-star"></i> 4.9/5</span>
+                                </div>*@
 
-                        <div class="yc-overlay"></div>
-
-                        <div class="yc-content">
-
-                            <div class="yc-meta">
-                                <span><i class="bi bi-eye"></i> @item.Viewed</span>
-                                <span><i class="bi bi-star"></i> 4.9/5</span>
+                                <div class="yc-name">@item.Title</div>
                             </div>
-
-                            <div class="yc-name">
-                                @item.Title
-                            </div>
-
-                            <a href="@item.Link" class="yc-btn">
-                                Xem thêm »
-                            </a>
                         </div>
-
-                    </div>
+                    </a>
                 </div>
             }
 
         </div><!-- /row g-4 -->
+
+        <div class="tech-section-more">
+            <a href="yeu-cau-cong-nghe-67.html" class="btn-tech-more">Xem thêm »</a>
+        </div>
+
     </div><!-- /container -->
 </section><!-- /yc-section -->
 
