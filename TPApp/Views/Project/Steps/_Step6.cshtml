@@ -249,9 +249,13 @@
                         </div>
                         @if (!ctLocked && canEdit)
                         {
-                            <div class="card-footer bg-light border-top">
+                            <div class="card-footer bg-light border-top d-flex gap-2 flex-wrap">
                                 <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#cmUploadModal">
-                                    <i class="fas fa-redo me-1"></i>Upload phiên bản mới
+                                    <i class="fas fa-upload me-1"></i>Upload phiên bản mới
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="cm_createAuto()"
+                                        title="Bỏ qua file đã upload — tạo lại hợp đồng chuẩn từ template HTML của hệ thống">
+                                    <i class="fas fa-magic me-1"></i>Tạo lại từ template hệ thống
                                 </button>
                             </div>
                         }
