@@ -1,0 +1,165 @@
+{
+  "lastUpdated": "15/03/2026",
+  "kpiTotal": [
+    {
+      "label": "Công nghệ",
+      "value": 1374,
+      "link": "cong-nghe.html"
+    },
+    {
+      "label": "Thiết bị",
+      "value": 23667,
+      "link": "thiet-bi.html"
+    },
+    {
+      "label": "Nhà cung ứng",
+      "value": 2461,
+      "link": "nha-cung-ung.html"
+    },
+    {
+      "label": "Chuyên gia tư vấn",
+      "value": 1106,
+      "link": "chuyen-gia.html"
+    },
+    {
+      "label": "Tài sản trí tuệ",
+      "value": 44,
+      "link": "tai-san-tri-tue.html"
+    },
+    {
+      "label": "Tin khoa học công nghệ",
+      "value": 2678,
+      "link": "tin-su-kien-44.html"
+    },
+    {
+      "label": "Video công nghệ",
+      "value": 327,
+      "link": "video.html"
+    },
+    {
+      "label": "Dự án tìm kiếm đối tác",
+      "value": 744,
+      "link": "tim-kiem-doi-tac-11.html"
+    }
+  ],
+  "kpi2026": [
+    {
+      "label": "Công nghệ mới",
+      "value": 12,
+      "link": "cong-nghe.html"
+    },
+    {
+      "label": "Thiết bị mới",
+      "value": 45,
+      "link": "thiet-bi.html"
+    },
+    {
+      "label": "Nhà cung ứng mới",
+      "value": 8,
+      "link": "nha-cung-ung.html"
+    },
+    {
+      "label": "Chuyên gia mới",
+      "value": 3,
+      "link": "chuyen-gia.html"
+    },
+    {
+      "label": "Tài sản trí tuệ mới",
+      "value": 2,
+      "link": "tai-san-tri-tue.html"
+    },
+    {
+      "label": "Tin KHCN mới",
+      "value": 35,
+      "link": "tin-su-kien-44.html"
+    },
+    {
+      "label": "Video mới",
+      "value": 5,
+      "link": "video.html"
+    },
+    {
+      "label": "Dự án mới",
+      "value": 15,
+      "link": "tim-kiem-doi-tac-11.html"
+    }
+  ],
+  "statBoxes": [
+    {
+      "label": "Yêu cầu tìm mua",
+      "value": 91,
+      "link": "tim-kiem-doi-tac-11.html",
+      "color": "blue"
+    },
+    {
+      "label": "Kết nối cung cầu",
+      "value": 5,
+      "link": "ket-noi-cung-cau.html",
+      "color": "amber"
+    },
+    {
+      "label": "Hợp đồng ký kết",
+      "value": 1,
+      "link": "hop-dong-ky-ket.html",
+      "color": "green"
+    },
+    {
+      "label": "Tổng giá trị HĐ (triệu)",
+      "value": 0,
+      "link": "hop-dong-ky-ket.html",
+      "color": "purple"
+    },
+    {
+      "label": "Mạng lưới đối tác",
+      "value": 25,
+      "link": "#partner-section",
+      "color": "teal"
+    }
+  ],
+  "doughnutChart": {
+    "sectors": [
+      {
+        "label": "Điện, điện tử, CNTT",
+        "value": 30,
+        "color": "#3b82f6",
+        "url": "2-ds-cong-nghe-thiet-bi/dien-dien-tu-cong-nghe-thong-tin-4.html"
+      },
+      {
+        "label": "Thực phẩm",
+        "value": 17,
+        "color": "#f59e0b",
+        "url": "2-ds-cong-nghe-thiet-bi/cong-nghe-thuc-pham-12.html"
+      },
+      {
+        "label": "Môi trường",
+        "value": 10,
+        "color": "#10b981",
+        "url": "2-ds-cong-nghe-thiet-bi/moi-truong-9.html"
+      },
+      {
+        "label": "Y tế",
+        "value": 7,
+        "color": "#ef4444",
+        "url": "2-ds-cong-nghe-thiet-bi/y-hoc-8.html"
+      },
+      {
+        "label": "CN sinh học",
+        "value": 5,
+        "color": "#8b5cf6",
+        "url": "2-ds-cong-nghe-thiet-bi/cong-nghe-sinh-hoc-10.html"
+      },
+      {
+        "label": "Trồng trọt",
+        "value": 5,
+        "color": "#06b6d4",
+        "url": "2-ds-cong-nghe-thiet-bi/trong-trot-14.html"
+      },
+      {
+        "label": "Khác",
+        "value": 26,
+        "color": "#94a3b8",
+        "url": "cong-nghe.html"
+      }
+    ]
+  }
+}

@@ -1,34 +1,32 @@
-/* home-analytics.js — Static hardcoded data, no DB required */
+/**
+ * home-analytics.js — Clickable doughnut + tabbed KPI count-up
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * HƯỚNG DẪN CẬP NHẬT SỐ LIỆU:
+ *
+ * Tất cả số liệu nằm trong file: /js/home-analytics-data.json
+ * Chỉ cần sửa file JSON đó, không cần sửa code JS này.
+ *
+ * Cấu trúc file JSON:
+ *   - kpiTotal[]      : 8 KPI cards tab "Dữ liệu tổng"
+ *   - kpi2026[]       : 8 KPI cards tab "Dữ liệu 2026"
+ *   - statBoxes[]     : 5 stat boxes dưới chart
+ *   - doughnutChart.sectors[] : dữ liệu biểu đồ tròn
+ *   - lastUpdated     : ngày cập nhật hiển thị
+ * ═══════════════════════════════════════════════════════════════
+ */
 (function () {
     'use strict';
 
-    // ── Static chart data ─────────────────────────────────────────
-    const MONTHS = ['2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'];
-    const VISITS = [147172, 265170, 386338, 487564, 356703, 372461, 373920, 170000];
-    const USERS = [44375, 98763, 185162, 283455, 174981, 182559, 96310, 35000];
-
-    const SECTOR_LABELS = [
-        'Điện, điện tử, CNTT',
-        'Thực phẩm',
-        'Môi trường',
-        'Y tế',
-        'CN sinh học',
-        'Trồng trọt',
-        'Khác'
-    ];
-    const SECTOR_VALUES = [30, 17, 10, 7, 5, 5, 26];
-    const SECTOR_COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4', '#94a3b8'];
-
-    const LEGEND_COLOR = '#334155';
-    const TICK_COLOR = '#64748b';
-    const GRID_COLOR = '#e5e7eb';
-    const TOOLTIP_BG = '#1e293b';
+    var LEGEND_COLOR = '#334155';
+    var TOOLTIP_BG   = '#1e293b';
+    var MainDomain   = document.querySelector('meta[name="main-domain"]')?.content || '/';
 
     // ── Count-up animation ────────────────────────────────────────
     function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
     function countUp(el) {
         var target = parseInt(el.dataset.target, 10);
-        if (!target) return;
+        if (!target && target !== 0) return;
         var dur = 1400, start = performance.now();
         (function step(now) {
             var p = Math.min((now - start) / dur, 1);
@@ -37,117 +35,184 @@
         })(start);
     }
 
-    // ── Build charts ──────────────────────────────────────────────
-    function buildCharts() {
-        if (typeof Chart === 'undefined') return;
+    // ── Load JSON data then build everything ──────────────────────
+    function loadDataAndBuild() {
+        fetch('/js/home-analytics-data.json?v=' + Date.now())
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                applyKpiData(data);
+                applyStatBoxes(data);
+                buildDoughnutChart(data);
+                setupTabCountUp();
+            })
+            .catch(function (err) {
+                console.warn('[home-analytics] Không tải được data JSON, dùng giá trị mặc định trong HTML.', err);
+                // Fallback: vẫn chạy count-up trên giá trị có sẵn trong HTML
+                document.querySelectorAll('.js-cu[data-target]').forEach(countUp);
+                setupTabCountUp();
+            });
+    }
 
-        // Count-up on all KPI values
-        document.querySelectorAll('.js-cu[data-target]').forEach(countUp);
-
-        // Line Chart
-        var growthCtx = document.getElementById('tpGrowthChart');
-        if (growthCtx && !growthCtx._chartBuilt) {
-            growthCtx._chartBuilt = true;
-            new Chart(growthCtx, {
-                type: 'line',
-                data: {
-                    labels: MONTHS,
-                    datasets: [
-                        {
-                            label: 'Lượt truy cập',
-                            data: VISITS,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59,130,246,.10)',
-                            tension: .38, pointRadius: 3, borderWidth: 2.5, fill: true
-                        },
-                        {
-                            label: 'Người dùng',
-                            data: USERS,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16,185,129,.10)',
-                            tension: .38, pointRadius: 3, borderWidth: 2.5, fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    animation: { duration: 900, easing: 'easeOutQuart' },
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { labels: { color: LEGEND_COLOR, usePointStyle: true, boxWidth: 8, padding: 12 } },
-                        tooltip: {
-                            backgroundColor: TOOLTIP_BG, padding: 10, cornerRadius: 8,
-                            callbacks: { label: function (ctx) { return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('vi-VN'); } }
-                        }
-                    },
-                    scales: {
-                        x: { ticks: { color: TICK_COLOR }, grid: { color: GRID_COLOR } },
-                        y: { ticks: { color: TICK_COLOR }, grid: { color: GRID_COLOR }, beginAtZero: true }
-                    }
+    // ── Apply KPI cards data from JSON ────────────────────────────
+    function applyKpiData(data) {
+        // Tab "Dữ liệu tổng"
+        var totalCards = document.querySelectorAll('#kpiTotal .tp-card');
+        if (data.kpiTotal && totalCards.length) {
+            data.kpiTotal.forEach(function (item, i) {
+                if (totalCards[i]) {
+                    var valEl = totalCards[i].querySelector('.tp-card__value');
+                    var lblEl = totalCards[i].querySelector('.tp-card__label');
+                    if (valEl) { valEl.dataset.target = item.value; }
+                    if (lblEl) { lblEl.textContent = item.label; }
                 }
             });
         }
 
-        // Doughnut Chart
+        // Tab "Dữ liệu 2026"
+        var cards2026 = document.querySelectorAll('#kpi2026 .tp-card');
+        if (data.kpi2026 && cards2026.length) {
+            data.kpi2026.forEach(function (item, i) {
+                if (cards2026[i]) {
+                    var valEl = cards2026[i].querySelector('.tp-card__value');
+                    var lblEl = cards2026[i].querySelector('.tp-card__label');
+                    if (valEl) { valEl.dataset.target = item.value; }
+                    if (lblEl) { lblEl.textContent = item.label; }
+                }
+            });
+        }
+
+        // Ngày cập nhật
+        if (data.lastUpdated) {
+            var updEl = document.querySelector('.tp-updated');
+            if (updEl) {
+                updEl.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Cập nhật: ' + data.lastUpdated;
+            }
+        }
+
+        // Count-up cho tab active (tổng)
+        document.querySelectorAll('#kpiTotal .js-cu[data-target]').forEach(countUp);
+    }
+
+    // ── Apply 5 stat boxes data from JSON ─────────────────────────
+    function applyStatBoxes(data) {
+        if (!data.statBoxes) return;
+        var boxes = document.querySelectorAll('.tp-stat-boxes .tp-stat-box');
+        data.statBoxes.forEach(function (item, i) {
+            if (boxes[i]) {
+                var valEl = boxes[i].querySelector('.tp-stat-box__val');
+                var lblEl = boxes[i].querySelector('.tp-stat-box__lbl');
+                if (valEl) {
+                    valEl.dataset.target = item.value;
+                    countUp(valEl);
+                }
+                if (lblEl) { lblEl.textContent = item.label; }
+                // Update link từ JSON
+                if (item.link) {
+                    boxes[i].setAttribute('href', item.link);
+                }
+            }
+        });
+    }
+
+    // ── Build doughnut chart from JSON ────────────────────────────
+    function buildDoughnutChart(data) {
+        if (typeof Chart === 'undefined') return;
         var typeCtx = document.getElementById('tpTypeChart');
-        if (typeCtx && !typeCtx._chartBuilt) {
-            typeCtx._chartBuilt = true;
-            new Chart(typeCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: SECTOR_LABELS,
-                    datasets: [{
-                        data: SECTOR_VALUES,
-                        backgroundColor: SECTOR_COLORS,
-                        borderWidth: 2,
-                        borderColor: '#fff',
-                        hoverOffset: 8
-                    }]
-                },
-                options: {
-                    cutout: '52%',
-                    animation: { duration: 900, easing: 'easeOutQuart' },
-                    layout: { padding: 4 },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: LEGEND_COLOR,
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                boxWidth: 8,
-                                padding: 10,
-                                font: { size: 10 }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: TOOLTIP_BG, padding: 10, cornerRadius: 8,
-                            callbacks: {
-                                label: function (ctx) {
-                                    return '  ' + ctx.label + ': ' + ctx.parsed + '%';
-                                }
+        if (!typeCtx || typeCtx._chartBuilt) return;
+        if (!data.doughnutChart || !data.doughnutChart.sectors) return;
+
+        var sectors = data.doughnutChart.sectors;
+        var labels  = sectors.map(function (s) { return s.label; });
+        var values  = sectors.map(function (s) { return s.value; });
+        var colors  = sectors.map(function (s) { return s.color; });
+        var urls    = sectors.map(function (s) { return s.url; });
+
+        typeCtx._chartBuilt = true;
+        new Chart(typeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '52%',
+                animation: { duration: 900, easing: 'easeOutQuart' },
+                layout: { padding: 4 },
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        align: 'center',
+                        labels: {
+                            color: LEGEND_COLOR,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 8,
+                            padding: 8,
+                            font: { size: 11 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: TOOLTIP_BG, padding: 10, cornerRadius: 8,
+                        callbacks: {
+                            label: function (ctx) {
+                                return '  ' + ctx.label + ': ' + ctx.parsed + '%';
+                            },
+                            afterLabel: function () {
+                                return '  👆 Click để xem chi tiết';
                             }
                         }
                     }
+                },
+                onHover: function (event, elements) {
+                    event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                },
+                onClick: function (event, elements) {
+                    if (elements.length > 0) {
+                        var index = elements[0].index;
+                        var url = MainDomain + urls[index];
+                        window.open(url, '_blank');
+                    }
                 }
+            }
+        });
+    }
+
+    // ── Tab switch: trigger count-up ──────────────────────────────
+    function setupTabCountUp() {
+        var tab2026Btn = document.querySelector('[data-bs-target="#kpi2026"]');
+        if (tab2026Btn) {
+            tab2026Btn.addEventListener('shown.bs.tab', function () {
+                document.querySelectorAll('#kpi2026 .js-cu-2026[data-target]').forEach(countUp);
+            });
+        }
+        var tabTotalBtn = document.querySelector('[data-bs-target="#kpiTotal"]');
+        if (tabTotalBtn) {
+            tabTotalBtn.addEventListener('shown.bs.tab', function () {
+                document.querySelectorAll('#kpiTotal .js-cu[data-target]').forEach(countUp);
             });
         }
     }
 
-    // ── Run: try immediately, fallback to DOMContentLoaded & window.load ──
+    // ── Init ──────────────────────────────────────────────────────
     function tryInit() {
-        if (document.getElementById('tpGrowthChart') && document.getElementById('tpTypeChart')) {
-            buildCharts();
+        if (document.getElementById('tpTypeChart')) {
+            loadDataAndBuild();
         }
     }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', tryInit);
     } else {
-        tryInit(); // DOM already ready
+        tryInit();
     }
-    // Extra safety: also run on window load (covers async layout shifts)
     window.addEventListener('load', tryInit);
 
 })();

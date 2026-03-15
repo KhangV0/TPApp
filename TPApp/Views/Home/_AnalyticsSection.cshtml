@@ -1,121 +1,269 @@
-@* _AnalyticsSection.cshtml — STATIC DATA (no DB) *@
+@*
+═══════════════════════════════════════════════════════════════════
+   _AnalyticsSection.cshtml — Homepage Analytics with Tabs
+
+   📌 HƯỚNG DẪN CẬP NHẬT SỐ LIỆU:
+
+   ▸ KPI CARDS (cột trái): Tìm data-target="XXX" và đổi số.
+     Ví dụ: data-target="1374" → đổi thành data-target="1500"
+     Cũng đổi text hiển thị bên cạnh: >1.374< → >1.500<
+
+   ▸ DỮ LIỆU 2026 (tab thứ 2): Tìm class="js-cu-2026"
+     Cập nhật tương tự data-target và inner text.
+
+   ▸ BIỂU ĐỒ TRÒN: Xem file wwwroot/js/home-analytics.js
+     - SECTOR_LABELS: tên các lĩnh vực
+     - SECTOR_VALUES: phần trăm mỗi lĩnh vực
+     - SECTOR_URLS: link khi click vào mỗi lĩnh vực
+
+   ▸ 5 STAT BOXES (cột phải, dưới chart): Tìm tp-stat-box
+     Đổi data-target="XX" và inner text.
+
+   ▸ NGÀY CẬP NHẬT: Tìm "Cập nhật:" ở cuối cột trái.
+═══════════════════════════════════════════════════════════════════
+*@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var MainDomain = Configuration["AppSettings:MainDomain"] ?? "https://localhost:7232/";
+}
 
 <section class="tp-metrics yc-section" aria-label="Techport trong con số">
   <div class="container">
     <div class="tp-metrics__grid">
 
       <!-- ═══════════════════════════════════════════════════════
-           LEFT — KPI CARDS
+           LEFT — KPI CARDS with TABS
            ═══════════════════════════════════════════════════════ -->
       <div class="tp-kpi">
 
         <div class="tp-kpi__head">
-          <h2 class="tp-title mb-4">Nền tảng giao dịch công nghệ trực tuyến</h2>
+          <h2 class="tp-title mb-0">Nền tảng giao dịch công nghệ trực tuyến</h2>
+          <!-- TAB BUTTONS -->
+          <ul class="nav tp-kpi-tabs mt-3 mb-3" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#kpiTotal" type="button" role="tab">
+                Dữ liệu tổng
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#kpi2026" type="button" role="tab">
+                Dữ liệu 2026
+              </button>
+            </li>
+          </ul>
         </div>
 
-        <div class="tp-kpi__cards">
+        <div class="tab-content">
+          <!-- ── TAB 1: Dữ liệu tổng ── -->
+          <div class="tab-pane fade show active" id="kpiTotal" role="tabpanel">
+            <div class="tp-kpi__cards">
 
-          <div class="tp-card">
-            <a href="~/cong-nghe.html">
-                <div class="tp-card__icon i-blue">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>
-                </div>
-                <div class="tp-card__meta">
+              <div class="tp-card">
+                <a href="@($"{MainDomain}cong-nghe.html")">
+                  <div class="tp-card__icon i-blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
                     <div class="tp-card__value js-cu" data-target="1374">1.374</div>
                     <div class="tp-card__label">Công nghệ</div>
-                </div>
-            </a>
-          </div>
+                  </div>
+                </a>
+              </div>
 
-          <div class="tp-card">
-            <a href="~/thiet-bi.html">
-                <div class="tp-card__icon i-cyan">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" /><line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" /></svg>
-                </div>
-                <div class="tp-card__meta">
+              <div class="tp-card">
+                <a href="@($"{MainDomain}thiet-bi.html")">
+                  <div class="tp-card__icon i-cyan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
                     <div class="tp-card__value js-cu" data-target="23667">23.667</div>
                     <div class="tp-card__label">Thiết bị</div>
-                </div>
-            </a>
-          </div>
+                  </div>
+                </a>
+              </div>
 
-          <div class="tp-card">
-            <a href="~/nha-cung-ung.html">
-                <div class="tp-card__icon i-green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-                </div>
-                <div class="tp-card__meta">
+              <div class="tp-card">
+                <a href="@($"{MainDomain}nha-cung-ung.html")">
+                  <div class="tp-card__icon i-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
                     <div class="tp-card__value js-cu" data-target="2461">2.461</div>
                     <div class="tp-card__label">Nhà cung ứng</div>
-                </div>
-            </a>
-          </div>
+                  </div>
+                </a>
+              </div>
 
-          <div class="tp-card">
-            <a href="~/chuyen-gia.html">
-                <div class="tp-card__icon i-amber">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>
-                </div>
-                <div class="tp-card__meta">
+              <div class="tp-card">
+                <a href="@($"{MainDomain}chuyen-gia.html")">
+                  <div class="tp-card__icon i-amber">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
                     <div class="tp-card__value js-cu" data-target="1106">1.106</div>
                     <div class="tp-card__label">Chuyên gia tư vấn</div>
-                </div>
-            </a>
-          </div>
+                  </div>
+                </a>
+              </div>
 
-          <div class="tp-card">
-            <a href="~/tai-san-tri-tue.html">
-                <div class="tp-card__icon i-purple">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                </div>
-                <div class="tp-card__meta">
+              <div class="tp-card">
+                <a href="@($"{MainDomain}tai-san-tri-tue.html")">
+                  <div class="tp-card__icon i-purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
                     <div class="tp-card__value js-cu" data-target="44">44</div>
                     <div class="tp-card__label">Tài sản trí tuệ</div>
-                </div>
-            </a>
-          </div>
+                  </div>
+                </a>
+              </div>
 
-          <div class="tp-card">
-            <a href="~/tin-su-kien-44.html">
-                <div class="tp-card__icon i-rose">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 002-2V7l-5-5H6a2 2 0 00-2 2v4" /><path d="M14 2v4a2 2 0 002 2h4" /><path d="M2 13h10M2 17h6" /></svg>
-                </div>
-                <div class="tp-card__meta">
+              <div class="tp-card">
+                <a href="@($"{MainDomain}tin-su-kien-44.html")">
+                  <div class="tp-card__icon i-rose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 002-2V7l-5-5H6a2 2 0 00-2 2v4"/><path d="M14 2v4a2 2 0 002 2h4"/><path d="M2 13h10M2 17h6"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
                     <div class="tp-card__value js-cu" data-target="2678">2.678</div>
                     <div class="tp-card__label">Tin khoa học công nghệ</div>
-                </div>
-            </a>
-          </div>
+                  </div>
+                </a>
+              </div>
 
-          <div class="tp-card">
-            <a href="~/video.html">
-                <div class="tp-card__icon i-indigo">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
-                </div>
-                <div class="tp-card__meta">
+              <div class="tp-card">
+                <a href="@($"{MainDomain}video.html")">
+                  <div class="tp-card__icon i-indigo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
                     <div class="tp-card__value js-cu" data-target="327">327</div>
                     <div class="tp-card__label">Video công nghệ</div>
-                </div>
-            </a>
-          </div>
+                  </div>
+                </a>
+              </div>
 
-          <div class="tp-card">
-            <a href="~/tim-kiem-doi-tac-11.html">
-                <div class="tp-card__icon i-teal">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                </div>
-                <div class="tp-card__meta">
+              <div class="tp-card">
+                <a href="@($"{MainDomain}tim-kiem-doi-tac-11.html")">
+                  <div class="tp-card__icon i-teal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
                     <div class="tp-card__value js-cu" data-target="744">744</div>
                     <div class="tp-card__label">Dự án tìm kiếm đối tác</div>
-                </div>
-            </a>
-          </div>
+                  </div>
+                </a>
+              </div>
 
-        </div><!-- /tp-kpi__cards -->
+            </div><!-- /tp-kpi__cards -->
+          </div><!-- /tab kpiTotal -->
+
+          <!-- ── TAB 2: Dữ liệu 2026 ── -->
+          <div class="tab-pane fade" id="kpi2026" role="tabpanel">
+            <div class="tp-kpi__cards">
+
+              <div class="tp-card">
+                <a href="@($"{MainDomain}cong-nghe.html")">
+                  <div class="tp-card__icon i-blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
+                    <div class="tp-card__value js-cu-2026" data-target="12">12</div>
+                    <div class="tp-card__label">Công nghệ mới</div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="tp-card">
+                <a href="@($"{MainDomain}thiet-bi.html")">
+                  <div class="tp-card__icon i-cyan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
+                    <div class="tp-card__value js-cu-2026" data-target="45">45</div>
+                    <div class="tp-card__label">Thiết bị mới</div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="tp-card">
+                <a href="@($"{MainDomain}nha-cung-ung.html")">
+                  <div class="tp-card__icon i-green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
+                    <div class="tp-card__value js-cu-2026" data-target="8">8</div>
+                    <div class="tp-card__label">Nhà cung ứng mới</div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="tp-card">
+                <a href="@($"{MainDomain}chuyen-gia.html")">
+                  <div class="tp-card__icon i-amber">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
+                    <div class="tp-card__value js-cu-2026" data-target="3">3</div>
+                    <div class="tp-card__label">Chuyên gia mới</div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="tp-card">
+                <a href="@($"{MainDomain}tai-san-tri-tue.html")">
+                  <div class="tp-card__icon i-purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
+                    <div class="tp-card__value js-cu-2026" data-target="2">2</div>
+                    <div class="tp-card__label">Tài sản trí tuệ mới</div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="tp-card">
+                <a href="@($"{MainDomain}tin-su-kien-44.html")">
+                  <div class="tp-card__icon i-rose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 002-2V7l-5-5H6a2 2 0 00-2 2v4"/><path d="M14 2v4a2 2 0 002 2h4"/><path d="M2 13h10M2 17h6"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
+                    <div class="tp-card__value js-cu-2026" data-target="35">35</div>
+                    <div class="tp-card__label">Tin KHCN mới</div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="tp-card">
+                <a href="@($"{MainDomain}video.html")">
+                  <div class="tp-card__icon i-indigo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
+                    <div class="tp-card__value js-cu-2026" data-target="5">5</div>
+                    <div class="tp-card__label">Video mới</div>
+                  </div>
+                </a>
+              </div>
+
+              <div class="tp-card">
+                <a href="@($"{MainDomain}tim-kiem-doi-tac-11.html")">
+                  <div class="tp-card__icon i-teal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </div>
+                  <div class="tp-card__meta">
+                    <div class="tp-card__value js-cu-2026" data-target="15">15</div>
+                    <div class="tp-card__label">Dự án mới</div>
+                  </div>
+                </a>
+              </div>
+
+            </div><!-- /tp-kpi__cards -->
+          </div><!-- /tab kpi2026 -->
+        </div><!-- /tab-content -->
 
         <div class="tp-updated">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Cập nhật: 02/03/2026
+          Cập nhật: 15/03/2026
         </div>
 
       </div><!-- /tp-kpi -->
@@ -127,60 +275,61 @@
 
         <div class="tp-analytics__head">
             <h2 class="tp-title mb-4">Dữ liệu thống kê</h2>
-            @* <p class="tp-sub">Biểu đồ hoạt động và cơ cấu lĩnh vực trên nền tảng.</p> *@
         </div>
 
         <div class="tp-analytics__row">
 
-          <!-- Line Chart — Lượt truy cập & người dùng -->
-          <div class="tp-panel">
-            <div class="tp-panel__title mb-4">Lượt truy cập &amp; Người dùng</div>
-            @* <div class="tp-panel__hint">Theo tháng · Truy cập · Người dùng</div> *@
-            <canvas id="tpGrowthChart" height="150"></canvas>
-          </div>
-
-          <!-- Pie Chart — Lĩnh vực -->
-          <div class="tp-panel">
+          <!-- Doughnut Chart — Lĩnh vực (clickable) -->
+          <div class="tp-panel tp-panel--chart-only">
             <div class="tp-panel__title">Cơ cấu theo lĩnh vực</div>
-            <canvas id="tpTypeChart" height="200"></canvas>
+            <div class="tp-panel__hint">Click vào biểu đồ để xem chi tiết lĩnh vực</div>
+            <canvas id="tpTypeChart" height="180"></canvas>
           </div>
 
         </div><!-- /tp-analytics__row -->
 
-        <!-- 4 Stat boxes -->
-        <div class="tp-stat-boxes">
+        <!-- 5 Stat boxes -->
+        <div class="tp-stat-boxes tp-stat-boxes--5">
 
-          <div class="tp-stat-box sb-blue">
+          <a href="@($"{MainDomain}tim-kiem-doi-tac-11.html")" class="tp-stat-box sb-blue" title="Xem yêu cầu tìm mua">
             <div class="tp-stat-box__icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
             </div>
             <div class="tp-stat-box__val js-cu" data-target="91">91</div>
             <div class="tp-stat-box__lbl">Yêu cầu tìm mua</div>
-          </div>
+          </a>
 
-          <div class="tp-stat-box sb-amber">
+          <a href="ket-noi-cung-cau.html" class="tp-stat-box sb-amber" title="Dashboard Kết nối cung cầu">
             <div class="tp-stat-box__icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             </div>
             <div class="tp-stat-box__val js-cu" data-target="5">5</div>
-            <div class="tp-stat-box__lbl">Giao dịch đang xử lý</div>
-          </div>
+            <div class="tp-stat-box__lbl">Kết nối cung cầu</div>
+          </a>
 
-          <div class="tp-stat-box sb-green">
+          <a href="hop-dong-ky-ket.html" class="tp-stat-box sb-green" title="Dashboard Hợp đồng">
             <div class="tp-stat-box__icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             </div>
             <div class="tp-stat-box__val js-cu" data-target="1">1</div>
             <div class="tp-stat-box__lbl">Hợp đồng ký kết</div>
-          </div>
+          </a>
 
-          <div class="tp-stat-box sb-purple">
+          <a href="hop-dong-ky-ket.html" class="tp-stat-box sb-purple" title="Dashboard Hợp đồng">
             <div class="tp-stat-box__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
             </div>
-            <div class="tp-stat-box__val js-cu" data-target="1">1</div>
-            <div class="tp-stat-box__lbl">Giao dịch hoàn tất</div>
-          </div>
+            <div class="tp-stat-box__val js-cu" data-target="0">0</div>
+            <div class="tp-stat-box__lbl">Tổng giá trị HĐ (triệu)</div>
+          </a>
+
+          <a href="#partner-section" class="tp-stat-box sb-teal" title="Xem mạng lưới đối tác" onclick="document.getElementById('partner-section')?.scrollIntoView({behavior:'smooth'});return false;">
+            <div class="tp-stat-box__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <div class="tp-stat-box__val js-cu" data-target="25">25</div>
+            <div class="tp-stat-box__lbl">Mạng lưới đối tác</div>
+          </a>
 
         </div><!-- /tp-stat-boxes -->
 
@@ -192,15 +341,20 @@
 
 <style>
 /* ═══════════════════════════════════════════════════════════════
-   HOME ENTERPRISE ANALYTICS — Static Data Version
+   HOME ENTERPRISE ANALYTICS — with Tabs + 5 Stat Boxes
    ═══════════════════════════════════════════════════════════════ */
 .tp-metrics { padding: 0 !important; }
 
 .tp-metrics__grid {
   display: grid;
   gap: 28px;
-  grid-template-columns: 1fr 1.45fr;
-  align-items: stretch;
+  grid-template-columns: 1fr 1fr;    /* 2 cột bằng nhau */
+  align-items: stretch;              /* Cả 2 cột cùng cao */
+}
+/* Cả 2 panel đều co giãn đều */
+.tp-kpi, .tp-analytics {
+  display: flex;
+  flex-direction: column;
 }
 
 /* ─── Shared typography ──────────────────────────────────── */
@@ -210,6 +364,38 @@
 }
 .tp-title { margin: 0 0 6px; font-size: 1.65rem; font-weight: 800; color: #0f172a; letter-spacing: -.03em; }
 .tp-sub   { margin: 0 0 22px; color: #64748b; font-size: .88rem; line-height: 1.6; }
+
+/* ─── KPI Tab Buttons ────────────────────────────────────── */
+.tp-kpi-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 2px solid #e5e7eb;
+  padding: 0;
+  list-style: none;
+}
+.tp-kpi-tabs .nav-link {
+  font-size: .82rem;
+  font-weight: 700;
+  color: #64748b;
+  padding: 8px 18px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  transition: color .2s, border-color .2s;
+  position: relative;
+  bottom: -2px;
+  cursor: pointer;
+}
+.tp-kpi-tabs .nav-link:hover {
+  color: #2563eb;
+  border-bottom-color: #93c5fd;
+}
+.tp-kpi-tabs .nav-link.active {
+  color: #2563eb;
+  border-bottom: 3px solid #2563eb;
+  background: transparent;
+}
 
 /* ─── KPI cards 4×2 ──────────────────────────────────────── */
 .tp-kpi__cards {
@@ -228,6 +414,7 @@
   min-height: 100px;
   overflow: hidden;
 }
+.tp-card a { text-decoration: none; color: inherit; display: block; }
 .tp-card:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(15,23,42,.09); }
 .tp-card__icon {
   width: 36px; height: 36px; border-radius: 10px;
@@ -280,7 +467,8 @@
 /* ─── Chart panels ──────────────────────────────────────── */
 .tp-analytics__row {
   display: grid; gap: 14px;
-  grid-template-columns: 1.45fr 1fr;
+  grid-template-columns: 1fr;
+  flex: 1;   /* Để chart chiếm hết chiều cao còn lại */
 }
 .tp-panel {
   border-radius: 14px;
@@ -288,16 +476,25 @@
   background: #ffffff;
   border: 1.5px solid #dce8f8;
   box-shadow: 0 4px 14px rgba(37,99,235,.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
 }
+.tp-panel--chart-only { text-align: center; }
+.tp-panel--chart-only canvas { cursor: pointer; max-height: 333px; }
 .tp-panel__title { font-weight: 800; font-size: .9rem;  color: #0f172a; }
 .tp-panel__hint  { font-size: .7rem; color: #94a3b8; margin: 3px 0 10px; }
 
-/* ─── 4 Stat Boxes ──────────────────────────────────────── */
+/* ─── 5 Stat Boxes ──────────────────────────────────────── */
 .tp-stat-boxes {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   margin-top: 14px;
+}
+.tp-stat-boxes--5 {
+  grid-template-columns: repeat(5, 1fr);
 }
 .tp-stat-box {
   border-radius: 14px;
@@ -307,9 +504,12 @@
   box-shadow: 0 2px 8px rgba(37,99,235,.06);
   display: flex; flex-direction: column; align-items: center;
   text-align: center; gap: 4px;
-  transition: transform .2s ease;
+  transition: transform .2s ease, box-shadow .2s ease;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
-.tp-stat-box:hover { transform: translateY(-2px); }
+.tp-stat-box:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,.12); }
 .tp-stat-box__icon {
   width: 34px; height: 34px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
@@ -326,18 +526,21 @@
 .sb-green  .tp-stat-box__val  { color: #059669; }
 .sb-purple .tp-stat-box__icon { background: rgba(139,92,246,.12);  color: #7c3aed; }
 .sb-purple .tp-stat-box__val  { color: #7c3aed; }
+.sb-teal   .tp-stat-box__icon { background: rgba(20,184,166,.12);  color: #0d9488; }
+.sb-teal   .tp-stat-box__val  { color: #0d9488; }
 
 /* ─── Responsive ─────────────────────────────────────────── */
 @@media (max-width: 1100px) {
   .tp-metrics__grid    { grid-template-columns: 1fr; }
   .tp-analytics__row   { grid-template-columns: 1fr; }
-  .tp-stat-boxes       { grid-template-columns: repeat(2, 1fr); }
+  .tp-stat-boxes,
+  .tp-stat-boxes--5    { grid-template-columns: repeat(3, 1fr); }
 }
 @@media (max-width: 600px) {
   .tp-kpi__cards  { grid-template-columns: 1fr 1fr; }
-  .tp-stat-boxes  { grid-template-columns: repeat(2, 1fr); }
+  .tp-stat-boxes,
+  .tp-stat-boxes--5  { grid-template-columns: repeat(2, 1fr); }
   .tp-card__value { font-size: 1.5rem; }
+  .tp-kpi-tabs .nav-link { font-size: .75rem; padding: 6px 12px; }
 }
 </style>
-
-

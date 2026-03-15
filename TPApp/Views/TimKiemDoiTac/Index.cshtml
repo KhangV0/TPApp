@@ -1,4 +1,4 @@
-﻿@model TPApp.ViewModel.TimKiemDoiTacIndexVm
+@model TPApp.ViewModel.TimKiemDoiTacIndexVm
 
 <div class="columns-container">
     <div class="container" id="columns">
@@ -87,16 +87,7 @@
             <!-- END CENTER -->
             <!-- RIGHT COLUMN -->
             <div class="column col-xs-12 col-sm-3" id="left_column">
-                <div class="adv-banner left-module">
-                    <div class="box-adv">
-                        <a href="@Html.($"{MainDomain}phieu-tim-kiem-doi-tac.html")">
-                            <img src="@Html.($"{MainDomain}FrontEnd/assets/data/img-searchdoitac.jpg")"
-                                 alt="ads-banner" />
-                        </a>
-                    </div>
-
-                    @* @await Html.PartialAsync("_Left") *@
-                </div>
+                @await Component.InvokeAsync("QuangCaoLeft")
             </div>
             <!-- END RIGHT -->
 
