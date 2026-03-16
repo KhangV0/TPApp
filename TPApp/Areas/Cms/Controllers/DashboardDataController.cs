@@ -94,6 +94,36 @@ namespace TPApp.Areas.Cms.Controllers
             }
         }
 
+        // POST: /cms/DashboardData/RestoreDefault?key=home
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public IActionResult RestoreDefault(string key)
+        {
+            if (!DataFiles.TryGetValue(key ?? "", out var relativePath))
+                return Json(new { success = false, error = $"Key '{key}' không hợp lệ" });
+
+            var defaultPath = Path.Combine(_env.WebRootPath, "js/dataDefault", Path.GetFileName(relativePath));
+            var targetPath = Path.Combine(_env.WebRootPath, relativePath);
+
+            if (!System.IO.File.Exists(defaultPath))
+                return Json(new { success = false, error = "File mặc định không tồn tại" });
+
+            try
+            {
+                // Backup current file before restoring
+                var backupPath = targetPath + ".bak";
+                if (System.IO.File.Exists(targetPath))
+                    System.IO.File.Copy(targetPath, backupPath, overwrite: true);
+
+                System.IO.File.Copy(defaultPath, targetPath, overwrite: true);
+                return Json(new { success = true, message = $"Đã khôi phục dữ liệu mặc định cho {key}" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, error = $"Lỗi khôi phục: {ex.Message}" });
+            }
+        }
+
         /// <summary>
         /// Đồng bộ statBoxes trong home-analytics-data.json từ contract + connection JSON
         /// </summary>

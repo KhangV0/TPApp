@@ -81,6 +81,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h5 class="mb-0" id="dmEditorTitle">Số liệu trang chủ</h5>
       <div>
+        <button class="btn btn-outline-danger btn-sm" id="dmRestoreDefault"><i class="fas fa-undo"></i> Khôi phục mặc định</button>
         <button class="btn btn-warning btn-sm d-none" id="dmFetchDb"><i class="fas fa-database"></i> Lấy từ Database</button>
         <button class="btn btn-default btn-sm" id="dmReload"><i class="fas fa-sync-alt"></i> Tải lại</button>
         <button class="btn btn-success btn-sm" id="dmPreview"><i class="fas fa-eye"></i> Xem trang</button>
@@ -508,6 +509,29 @@
     document.getElementById('dmReload').addEventListener('click', function () { loadData(currentKey); });
     document.getElementById('dmPreview').addEventListener('click', function () { window.open(previewUrls[currentKey] || '/', '_blank'); });
     fetchDbBtn.addEventListener('click', fetchFromDb);
+
+    document.getElementById('dmRestoreDefault').addEventListener('click', function () {
+        var keyName = titles[currentKey] || currentKey;
+        if (!confirm('Bạn có chắc muốn khôi phục dữ liệu mặc định cho "' + keyName + '"?\n\nDữ liệu hiện tại sẽ được backup trước khi khôi phục.')) return;
+        var btn = document.getElementById('dmRestoreDefault');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang khôi phục...';
+        fetch('/cms/DashboardData/RestoreDefault?key=' + currentKey, { method: 'POST' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    showStatus('✅ ' + data.message, false);
+                    loadData(currentKey);
+                } else {
+                    showStatus('❌ ' + (data.error || 'Lỗi'), true);
+                }
+            })
+            .catch(function (err) { showStatus('❌ Lỗi: ' + err.message, true); })
+            .finally(function () {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-undo"></i> Khôi phục mặc định';
+            });
+    });
 
     document.getElementById('dmAddContractRow').addEventListener('click', function () {
         var nextIdx = contractBody.querySelectorAll('tr').length + 1;

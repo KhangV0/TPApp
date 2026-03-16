@@ -1,0 +1,125 @@
+{
+  "lastUpdated": "16/3/2026",
+  "summary": {
+    "totalContracts": 11,
+    "totalValue": 13560,
+    "signedContracts": 11,
+    "pendingContracts": 0
+  },
+  "byField": {
+    "labels": ["Công nghệ Sinh học", "CNTP", "Cơ khí, chế tạo máy", "Điện, điện tử, CNTT", "Môi trường", "Y tế", "Trồng trọt", "Khác"],
+    "values": [4, 2, 2, 2, 1, 0, 0, 0],
+    "colors": ["#10b981", "#f59e0b", "#3b82f6", "#6366f1", "#ef4444", "#8b5cf6", "#06b6d4", "#94a3b8"]
+  },
+  "byStrategy": {
+    "labels": ["Công nghệ robot và tự động hóa", "Trí tuệ nhân tạo, bản sao số, thực tế ảo", "Không", "Khác"],
+    "values": [2, 1, 8, 0],
+    "colors": ["#6366f1", "#f43f5e", "#64748b", "#94a3b8"]
+  },
+  "byType": {
+    "labels": ["HĐ Chuyển giao Công nghệ", "HĐ Mua bán thiết bị", "HĐ dịch vụ SX thử nghiệm", "MOU", "Tư vấn kỹ thuật", "Hợp tác R&D", "Khác"],
+    "values": [5, 2, 2, 1, 0, 0, 1],
+    "colors": ["#0ea5e9", "#f59e0b", "#10b981", "#8b5cf6", "#ef4444", "#06b6d4", "#94a3b8"]
+  },
+  "contracts": [
+    {
+      "linhVuc": "CNTP",
+      "congNghe": "Không",
+      "benCung": "Khoa Kỹ Thuật Hóa Học - Trường Đại học Bách khoa – Đại học Quốc gia TP.HCM",
+      "benCau": "HTX Dịch Vụ Nông Nghiệp Mỹ Long",
+      "noiDung": "Công nghệ sản xuất chanh xắt lát sấy thăng hoa 100kg/mẻ",
+      "giaTriTrieu": 600,
+      "loaiHD": "HĐ Chuyển giao Công nghệ"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "congNghe": "Công nghệ robot và tự động hóa",
+      "benCung": "Công ty TNHH Kỹ thuật Tự động Phúc An",
+      "benCau": "Công ty Cổ phần Cơ khí Kỹ thuật Đại Phong",
+      "noiDung": "Chuyển giao và đào tạo vận hành 2 Robot AGV phục vụ vận chuyển hàng hóa trong nhà máy",
+      "giaTriTrieu": 500,
+      "loaiHD": "HĐ Chuyển giao Công nghệ"
+    },
+    {
+      "linhVuc": "CNTP",
+      "congNghe": "Không",
+      "benCung": "Công ty TNHH Thực phẩm Hữu cơ Việt Nam - VinaOrganic",
+      "benCau": "CÔNG TY TNHH E&L AUSTRALIA",
+      "noiDung": "Máy ly tâm 1-3kg có biến tần, Máy ly tâm 30-60kg có biến tần (lồng rời)",
+      "giaTriTrieu": 145,
+      "loaiHD": "HĐ Mua bán thiết bị"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "congNghe": "Công nghệ robot và tự động hóa",
+      "benCung": "Công ty Cổ phần Real-Time Robotics Việt Nam",
+      "benCau": "Công ty TNHH Một thành viên Phát triển Công viên phần mềm Quang Trung",
+      "noiDung": "Biên bản thiết lập khung hợp tác giữa QTSC và RtR",
+      "giaTriTrieu": 0,
+      "loaiHD": "MOU"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "congNghe": "Không",
+      "benCung": "Trung tâm Công nghệ sinh học Thành phố Hồ Chí Minh",
+      "benCau": "Công ty TNHH TM DV TKXD Thành Vinh",
+      "noiDung": "Thương mại hóa chế phẩm vi sinh từ kết quả nghiên cứu của Trung tâm Công nghệ sinh học TP.HCM",
+      "giaTriTrieu": 515,
+      "loaiHD": "HĐ dịch vụ SX thử nghiệm"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "congNghe": "Không",
+      "benCung": "Trung tâm Công nghệ sinh học Thành phố Hồ Chí Minh",
+      "benCau": "Công ty TNHH SX - TMDV Trần Lê Q.T",
+      "noiDung": "Thương mại hóa chế phẩm vi sinh từ kết quả nghiên cứu của Trung tâm Công nghệ sinh học TP.HCM",
+      "giaTriTrieu": 885,
+      "loaiHD": "HĐ dịch vụ SX thử nghiệm"
+    },
+    {
+      "linhVuc": "Điện, điện tử, CNTT",
+      "congNghe": "Trí tuệ nhân tạo, bản sao số, thực tế ảo",
+      "benCung": "Trung tâm kinh doanh khách hàng Doanh nghiệp 1 - VNPT TP.HCM",
+      "benCau": "Công ty TNHH Quản lý và Kinh doanh chợ Đầu Mối nông sản thực phẩm Hóc Môn",
+      "noiDung": "Hệ thống thu phí tự động thông minh - tích hợp hoá đơn điện tử tại chợ Đầu Mối Hóc Môn - TP.HCM",
+      "giaTriTrieu": 1862,
+      "loaiHD": "HĐ Chuyển giao Công nghệ"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "congNghe": "Không",
+      "benCung": "Công ty TNHH Công Nghệ Sinh học Bốn Mùa",
+      "benCau": "Công ty TNHH Điền Trang",
+      "noiDung": "Hệ thống Bioreactor IoT",
+      "giaTriTrieu": 805,
+      "loaiHD": "HĐ Chuyển giao Công nghệ"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "congNghe": "Không",
+      "benCung": "Công ty TNHH Công Nghệ Sinh học Bốn Mùa",
+      "benCau": "Công ty Cổ phần Công nghệ Sinh học Omega",
+      "noiDung": "Hệ thống dây chuyền sản xuất chế phẩm vi sinh",
+      "giaTriTrieu": 3267,
+      "loaiHD": "HĐ Chuyển giao Công nghệ"
+    },
+    {
+      "linhVuc": "Điện, điện tử, CNTT",
+      "congNghe": "Không",
+      "benCung": "Công ty TNHH Conotec",
+      "benCau": "Công ty TNHH Kỹ thuật Tự động Hàn Mỹ Việt",
+      "noiDung": "Hợp đồng thương mại về CN-TB điện tử, tự động hóa",
+      "giaTriTrieu": 3481,
+      "loaiHD": "HĐ Mua bán thiết bị"
+    },
+    {
+      "linhVuc": "Môi trường",
+      "congNghe": "Không",
+      "benCung": "Công Ty TNHH EWATER ENGINEERING",
+      "benCau": "Công ty Cổ phần NOVAL ENGINEERING",
+      "noiDung": "",
+      "giaTriTrieu": 1500,
+      "loaiHD": "Khác"
+    }
+  ]
+}

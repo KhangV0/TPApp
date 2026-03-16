@@ -1,0 +1,194 @@
+{
+  "lastUpdated": "16/3/2026",
+  "summary": {
+    "totalRequests": 60,
+    "totalConnections": 28,
+    "completedNegotiations": 28,
+    "conversionRate": 46.7
+  },
+  "byField": {
+    "labels": ["Cơ khí, chế tạo máy", "CNTP", "Công nghệ Sinh học", "Thuỷ sản", "Môi trường", "Điện, điện tử, CNTT"],
+    "values": [9, 8, 5, 3, 2, 1],
+    "colors": ["#3b82f6", "#f59e0b", "#10b981", "#06b6d4", "#ef4444", "#6366f1"]
+  },
+  "conversionFunnel": {
+    "labels": ["Yêu cầu tư vấn tiếp nhận", "Đã kết nối", "Biên bản ký kết"],
+    "values": [60, 28, 28],
+    "colors": ["#3b82f6", "#f59e0b", "#10b981"]
+  },
+  "byStatus": {
+    "labels": ["Hoàn tất"],
+    "values": [28],
+    "colors": ["#10b981"]
+  },
+  "connections": [
+    {
+      "linhVuc": "CNTP",
+      "benCau": "HKD Trần Hoài Thư",
+      "benCung": "Phân viện cơ điện Nông nghiệp - Công nghệ Sau thu hoạch",
+      "noiDung": "Công nghệ sản xuất giấm xoài"
+    },
+    {
+      "linhVuc": "CNTP",
+      "benCau": "Phạm Kim Lâu - Hội Nam Y Việt Nam",
+      "benCung": "Công ty cổ phần Machinex Việt Nam",
+      "noiDung": "Dây chuyền sản xuất nước đinh lăng 1000-2000 lít/giờ"
+    },
+    {
+      "linhVuc": "CNTP",
+      "benCau": "Phạm Kim Lâu - Hội Nam Y Việt Nam",
+      "benCung": "Công ty TNHH Công Nghệ lọc nước Việt Úc",
+      "noiDung": "Hệ thống lọc nước đóng chai, bình RO 1000-2000 lít/giờ"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Lý Thanh Lan",
+      "benCung": "Công Ty TNHH Công nghệ Tầm nhìn HHC",
+      "noiDung": "Máy tách màu"
+    },
+    {
+      "linhVuc": "CNTP",
+      "benCau": "Trịnh Chí Cường",
+      "benCung": "Công ty TNHH Công Nghệ lọc nước Việt Úc",
+      "noiDung": "Hệ thống lọc nước đóng bình RO 1200 lít/giờ"
+    },
+    {
+      "linhVuc": "Thuỷ sản",
+      "benCau": "Diệu Hiền",
+      "benCung": "Công ty Cổ phần AQUA RAS",
+      "noiDung": "Hệ thống nuôi cua tuần hoàn trong hộp"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Lê Ngọc Ánh - Công ty GV-Build Việt Nam",
+      "benCung": "Công Ty TNHH Công nghệ Tầm nhìn HHC",
+      "noiDung": "Máy tách màu nhựa"
+    },
+    {
+      "linhVuc": "Thuỷ sản",
+      "benCau": "Huỳnh Dũng",
+      "benCung": "Công ty DK Autotech và Công ty TNHH TM DV Tân Việt Mỹ",
+      "noiDung": "Hệ thống giám sát tự động môi trường ao nuôi thuỷ sản 6-8 chỉ tiêu nước"
+    },
+    {
+      "linhVuc": "CNTP",
+      "benCau": "Nguyễn Tiến Dũng - Công ty TNHH TM SX Daniel",
+      "benCung": "Công ty CP CDM Group",
+      "noiDung": "Hệ thống chiết xuất dầu điều từ vỏ hạt điều, công suất 10.000 lít dầu điều thô/ngày"
+    },
+    {
+      "linhVuc": "CNTP",
+      "benCau": "Lê Sáng - Công Ty TNHH DV TM XNK Quỳnh Châu",
+      "benCung": "Công ty CP CDM Group",
+      "noiDung": "Hệ thống khử mùi dầu hạt macca 1000 lít/ngày"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Nguyễn Hoàng Hải",
+      "benCung": "Viện khoa học công nghệ và quản lý môi trường",
+      "noiDung": "Máy ép dĩa mo cau"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Minh Huy",
+      "benCung": "Cơ sở Cơ khí - Chế tạo Lĩnh",
+      "noiDung": "Máy bơm mủ cao su"
+    },
+    {
+      "linhVuc": "Điện, điện tử, CNTT",
+      "benCau": "Phan Anh - Trường Phổ thông liên cấp Albert Einstein",
+      "benCung": "Công ty CP Công nghệ Giáo dục DOTB",
+      "noiDung": "Phần mềm chuyển đổi số trong trường học"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "benCau": "Phùng Chí Long - Công ty TNHH Trái cây Đỉnh Phong",
+      "benCung": "Công ty CP TM và DV quốc tế Sao Nam",
+      "noiDung": "Sản phẩm bảo quản nông sản sau thu hoạch AnsiP 1-MCP"
+    },
+    {
+      "linhVuc": "CNTP",
+      "benCau": "Đặng Văn Thái - Công ty TNHH SX TM Nông Sản TP Trí Việt",
+      "benCung": "Viện cơ điện nông nghiệp và công nghệ sau thu hoạch và Trung tâm công nghệ sinh học",
+      "noiDung": "Giải pháp bảo quản xoài và thanh long"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "benCau": "Hồ Trần Vân Anh",
+      "benCung": "Viện khoa học công nghệ và quản lý môi trường",
+      "noiDung": "Quy trình công nghệ sản xuất túi từ vỏ ngô"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "benCau": "Hân Dương - Trường Đại học Cần Thơ",
+      "benCung": "Viện trưởng Viện nghiên cứu ứng dụng và chuyển giao CN - Trường ĐH Công Thương TP.HCM",
+      "noiDung": "Hệ thống nuôi tảo làm thức ăn thuỷ sản"
+    },
+    {
+      "linhVuc": "Môi trường",
+      "benCau": "Chu Mạnh Tuấn - Công ty lò hơi DiVi",
+      "benCung": "Công ty Cổ Phần Khoa học Kỹ thuật Phượng Hải",
+      "noiDung": "Dịch vụ quan trắc nước cấp cho lò hơi"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Trung Võ - Roaster Village",
+      "benCung": "Công Ty TNHH Công nghệ Tầm nhìn HHC",
+      "noiDung": "Máy tách màu hạt cà phê 2 máng"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "benCau": "Phan Thanh Phong - Công ty TNHH TM XNK dầu khí phân bón Cà Mau",
+      "benCung": "Viện Nghiên cứu CN sinh học và môi trường - Trường ĐH Nông Lâm TP.HCM",
+      "noiDung": "Chế phẩm vi sinh cho cây lúa"
+    },
+    {
+      "linhVuc": "Công nghệ Sinh học",
+      "benCau": "Hoàng Trình - Công ty TNHH SX và TM Song Hoàng",
+      "benCung": "Viện Nghiên cứu CN sinh học và môi trường - Trường ĐH Nông Lâm TP.HCM",
+      "noiDung": "Quy trình chiết xuất chitin và chitosan từ ấu trùng ruồi lính đen"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Lê Vương",
+      "benCung": "Viện KHCN & Quản Lý Môi Trường thuộc ĐH Công nghiệp HCM",
+      "noiDung": "Máy ép dĩa mo cau"
+    },
+    {
+      "linhVuc": "CNTP",
+      "benCau": "Cao Văn Quát - Công ty TNHH LV Nông nghiệp Lâm Đồng",
+      "benCung": "Khoa CN Hóa học và Thực Phẩm - Trường ĐH Nông Lâm TP.HCM",
+      "noiDung": "Quy trình sản xuất dầu bơ"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Lưu Phương Vỹ - Công ty CP Kỹ nghệ xanh Việt Nam",
+      "benCung": "Công ty CP CDM Group",
+      "noiDung": "Dây chuyền sản xuất cà phê nhân tươi năng suất 500 tấn/ngày"
+    },
+    {
+      "linhVuc": "Môi trường",
+      "benCau": "Nguyễn Ngọc Tuấn - Công ty CPXD DASO",
+      "benCung": "Công Ty TNHH Môi Trường Hành Trình Xanh",
+      "noiDung": "Máy nghiền rác dòng chảy 210m3/h cho trạm bơm nước thải"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Nguyễn Thị Nga",
+      "benCung": "Công ty TNHH MTV TM DV Phú Hòa",
+      "noiDung": "Máy may viền nệm"
+    },
+    {
+      "linhVuc": "Cơ khí, chế tạo máy",
+      "benCau": "Nguyễn Phúc Hậu - Công ty CP TM Farm Mart Group",
+      "benCung": "Công ty TNHH Viet Star Bamboo",
+      "noiDung": "Máy ép dĩa mo cau và máy tiệt trùng UV"
+    },
+    {
+      "linhVuc": "Thuỷ sản",
+      "benCau": "Nguyễn Kiều Thu",
+      "benCung": "Công ty Cổ phần Aqua Ras",
+      "noiDung": "Hệ thống nuôi lươn tuần hoàn"
+    }
+  ]
+}
