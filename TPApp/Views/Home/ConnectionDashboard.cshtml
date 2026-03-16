@@ -95,6 +95,86 @@
   max-height: 260px;
 }
 
+/* Detail cards section */
+.cn-detail-section {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding: 0 16px;
+}
+.cn-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.cn-detail-header__title {
+  font-size: 1.1rem; font-weight: 700; color: #0f172a;
+}
+.cn-detail-header__badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #fff;
+  margin-left: 10px;
+}
+.cn-detail-header__btn {
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all .2s;
+}
+.cn-detail-header__btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.cn-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.cn-detail-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(37,99,235,.06);
+  border-left: 4px solid #3b82f6;
+  transition: transform .2s, box-shadow .2s;
+}
+.cn-detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37,99,235,.12);
+}
+.cn-detail-card__field {
+  font-size: .72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: 8px; color: #64748b;
+}
+.cn-detail-card__content {
+  font-size: .85rem; font-weight: 600; color: #0f172a;
+  margin-bottom: 10px; line-height: 1.4;
+}
+.cn-detail-card__row {
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: .78rem; color: #475569; margin-bottom: 4px;
+}
+.cn-detail-card__row-icon {
+  flex-shrink: 0; width: 16px; text-align: center;
+}
+.cn-detail-card__row-text {
+  flex: 1; line-height: 1.4;
+}
+.cn-detail-empty {
+  text-align: center; color: #94a3b8; font-size: .88rem;
+  padding: 40px 0;
+}
+
 /* Table */
 .cn-table-wrap {
   max-width: 1200px;
@@ -154,6 +234,7 @@
 @@media (max-width: 900px) {
   .cn-summary { grid-template-columns: repeat(2, 1fr); }
   .cn-charts__grid { grid-template-columns: 1fr; }
+  .cn-detail-grid { grid-template-columns: 1fr; }
 }
 @@media (max-width: 600px) {
   .cn-summary { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -193,7 +274,7 @@
 
     <div class="cn-chart-card">
       <div class="cn-chart-card__title">Kết nối theo lĩnh vực</div>
-      <div class="cn-chart-card__hint">Hover để xem chi tiết</div>
+      <div class="cn-chart-card__hint">Click vào biểu đồ để xem chi tiết kết nối</div>
       <canvas id="cnChartByField"></canvas>
     </div>
 
@@ -212,29 +293,20 @@
   </div>
 </div>
 
-
-
-
-<!-- CONNECTIONS TABLE -->
-<div class="cn-table-wrap">
-  <div class="cn-table-card">
-    <div class="cn-table-card__title">📋 Danh sách biên bản kết nối</div>
-    <div style="overflow-x:auto;">
-      <table class="cn-table">
-        <thead>
-          <tr>
-            <th style="width:40px">STT</th>
-            <th>Lĩnh vực</th>
-            <th>Bên cầu</th>
-            <th>Bên cung</th>
-            <th>Nội dung yêu cầu</th>
-          </tr>
-        </thead>
-        <tbody id="cnTableBody"></tbody>
-      </table>
+<!-- DETAIL CARDS (shows all on load, filters on chart click) -->
+<div class="cn-detail-section" id="cnDetailSection">
+  <div class="cn-detail-header">
+    <div>
+      <span class="cn-detail-header__title" id="cnDetailTitle">📋 Tất cả kết nối</span>
+      <span class="cn-detail-header__badge" id="cnDetailBadge"></span>
     </div>
+    <button class="cn-detail-header__btn" id="cnDetailShowAll" style="display:none;" onclick="window._cnShowAll && window._cnShowAll()">← Xem tất cả</button>
   </div>
+  <div class="cn-detail-grid" id="cnDetailGrid"></div>
 </div>
+
+
+
 
 <div class="cn-updated" id="cnUpdated"></div>
 
@@ -304,30 +376,103 @@
                                 var item = items[0];
                                 var total = item.dataset.data.reduce(function (a, b) { return a + b; }, 0);
                                 var pct = total > 0 ? Math.round(item.parsed / total * 100) : 0;
-                                return item.label + ': ' + item.parsed + ' (' + pct + '%)';
+                                return item.label + ': ' + item.parsed + ' kết nối (' + pct + '%)';
                             },
                             label: function () { return ''; },
-                            afterBody: function (items) {
-                                if (!items.length || !filterKey) return [];
-                                var sectorLabel = items[0].label;
-                                var matched = _connections.filter(function (c) {
-                                    return c[filterKey] === sectorLabel;
-                                });
-                                if (matched.length === 0) return ['  (không có biên bản)'];
-                                var lines = ['───────────────'];
-                                matched.forEach(function (c, i) {
-                                    lines.push('📋 ' + (c.benCau || '') + ' → ' + (c.benCung || ''));
-                                    lines.push('   ' + (c.noiDung || ''));
-                                    if (i < matched.length - 1) lines.push('');
-                                });
-                                return lines;
+                            afterBody: function () {
+                                if (canvasId === 'cnChartByField') {
+                                    return ['👆 Click để xem chi tiết'];
+                                }
+                                return [];
                             }
                         }
                     }
+                },
+                onHover: function (event, elements) {
+                    if (canvasId === 'cnChartByField') {
+                        event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                    }
+                },
+                onClick: function (event, elements) {
+                    if (canvasId !== 'cnChartByField' || !elements.length) return;
+                    var index = elements[0].index;
+                    var label = chartData.labels[index];
+                    var color = chartData.colors[index];
+                    showDetailCards(label, color, filterKey);
                 }
             }
         });
     }
+
+    // ── Show detail cards (filtered by field) ───────────────────
+    function showDetailCards(label, color, filterKey) {
+        var grid    = document.getElementById('cnDetailGrid');
+        var title   = document.getElementById('cnDetailTitle');
+        var badge   = document.getElementById('cnDetailBadge');
+        var btnAll  = document.getElementById('cnDetailShowAll');
+        if (!grid) return;
+
+        var matched = _connections.filter(function (c) {
+            return c[filterKey] === label;
+        });
+
+        title.textContent = 'Chi tiết kết nối — ';
+        badge.textContent = label + ' (' + matched.length + ')';
+        badge.style.background = color;
+        badge.style.display = 'inline-block';
+        if (btnAll) btnAll.style.display = 'inline-block';
+
+        renderCards(grid, matched, color);
+        document.getElementById('cnDetailSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── Render all cards (initial load) ────────────────────────
+    function renderAllCards() {
+        var grid    = document.getElementById('cnDetailGrid');
+        var title   = document.getElementById('cnDetailTitle');
+        var badge   = document.getElementById('cnDetailBadge');
+        var btnAll  = document.getElementById('cnDetailShowAll');
+        if (!grid) return;
+
+        title.textContent = '📋 Tất cả kết nối';
+        badge.textContent = _connections.length + ' biên bản';
+        badge.style.background = '#3b82f6';
+        badge.style.display = 'inline-block';
+        if (btnAll) btnAll.style.display = 'none';
+
+        renderCards(grid, _connections, null);
+    }
+
+    // ── Render card HTML ───────────────────────────────────────
+    var _fieldColors = {};
+    function renderCards(grid, list, forcedColor) {
+        if (list.length === 0) {
+            grid.innerHTML = '<div class="cn-detail-empty">Không có biên bản kết nối</div>';
+            return;
+        }
+        var html = '';
+        list.forEach(function (c) {
+            var color = forcedColor || _fieldColors[c.linhVuc] || '#3b82f6';
+            html += '<div class="cn-detail-card" style="border-left-color:' + color + '">';
+            html += '  <div class="cn-detail-card__field">' + (c.linhVuc || '') + '</div>';
+            html += '  <div class="cn-detail-card__content">' + (c.noiDung || '') + '</div>';
+            html += '  <div class="cn-detail-card__row">';
+            html += '    <div class="cn-detail-card__row-icon">🏢</div>';
+            html += '    <div class="cn-detail-card__row-text"><strong>Bên cầu:</strong> ' + (c.benCau || '') + '</div>';
+            html += '  </div>';
+            html += '  <div class="cn-detail-card__row">';
+            html += '    <div class="cn-detail-card__row-icon">🔧</div>';
+            html += '    <div class="cn-detail-card__row-text"><strong>Bên cung:</strong> ' + (c.benCung || '') + '</div>';
+            html += '  </div>';
+            html += '</div>';
+        });
+        grid.innerHTML = html;
+    }
+
+    // ── Show all / reset ────────────────────────────────────────
+    window._cnShowAll = function () {
+        renderAllCards();
+    };
 
     function buildBarChart(canvasId, chartData) {
         var ctx = document.getElementById(canvasId);
@@ -371,25 +516,6 @@
         });
     }
 
-    function renderTable(connections) {
-        var tbody = document.getElementById('cnTableBody');
-        if (!tbody) return;
-        if (!connections || connections.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">Chưa có dữ liệu kết nối</td></tr>';
-            return;
-        }
-        var html = '';
-        connections.forEach(function (c, i) {
-            html += '<tr>';
-            html += '<td><strong>' + (i + 1) + '</strong></td>';
-            html += '<td>' + (c.linhVuc || '') + '</td>';
-            html += '<td>' + (c.benCau || '') + '</td>';
-            html += '<td>' + (c.benCung || '') + '</td>';
-            html += '<td>' + (c.noiDung || '') + '</td>';
-            html += '</tr>';
-        });
-        tbody.innerHTML = html;
-    }
 
     function init() {
         fetch('/js/connection-dashboard-data.json?v=' + Date.now())
@@ -403,13 +529,20 @@
                 countUp(document.getElementById('cnCompleted'), data.summary.completedNegotiations);
                 countUp(document.getElementById('cnRate'), data.summary.conversionRate, true);
 
+                // Build field color map for cards
+                if (data.byField) {
+                    data.byField.labels.forEach(function (lbl, i) {
+                        _fieldColors[lbl] = data.byField.colors[i];
+                    });
+                }
+
                 // Charts — with detail tooltips
                 buildDoughnut('cnChartByField', data.byField, 'linhVuc');
                 buildBarChart('cnChartFunnel', data.conversionFunnel);
                 buildDoughnut('cnChartByStatus', data.byStatus, 'trangThai');
 
-                // Table
-                renderTable(_connections);
+                // Render ALL cards on load
+                renderAllCards();
 
                 // Updated
                 var upd = document.getElementById('cnUpdated');
