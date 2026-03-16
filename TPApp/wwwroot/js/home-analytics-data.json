@@ -1,116 +1,116 @@
 {
-  "lastUpdated": "15/03/2026",
+  "lastUpdated": "16/3/2026",
   "kpiTotal": [
     {
-      "label": "Công nghệ",
+      "label": "C\u00F4ng ngh\u1EC7",
       "value": 1374,
       "link": "cong-nghe.html"
     },
     {
-      "label": "Thiết bị",
+      "label": "Thi\u1EBFt b\u1ECB",
       "value": 23667,
       "link": "thiet-bi.html"
     },
     {
-      "label": "Nhà cung ứng",
+      "label": "Nh\u00E0 cung \u1EE9ng",
       "value": 2461,
       "link": "nha-cung-ung.html"
     },
     {
-      "label": "Chuyên gia tư vấn",
+      "label": "Chuy\u00EAn gia t\u01B0 v\u1EA5n",
       "value": 1106,
       "link": "chuyen-gia.html"
     },
     {
-      "label": "Tài sản trí tuệ",
+      "label": "T\u00E0i s\u1EA3n tr\u00ED tu\u1EC7",
       "value": 44,
       "link": "tai-san-tri-tue.html"
     },
     {
-      "label": "Tin khoa học công nghệ",
+      "label": "Tin khoa h\u1ECDc c\u00F4ng ngh\u1EC7",
       "value": 2678,
       "link": "tin-su-kien-44.html"
     },
     {
-      "label": "Video công nghệ",
+      "label": "Video c\u00F4ng ngh\u1EC7",
       "value": 327,
       "link": "video.html"
     },
     {
-      "label": "Dự án tìm kiếm đối tác",
+      "label": "D\u1EF1 \u00E1n t\u00ECm ki\u1EBFm \u0111\u1ED1i t\u00E1c",
       "value": 744,
       "link": "tim-kiem-doi-tac-11.html"
     }
   ],
   "kpi2026": [
     {
-      "label": "Công nghệ mới",
+      "label": "C\u00F4ng ngh\u1EC7 m\u1EDBi",
       "value": 12,
       "link": "cong-nghe.html"
     },
     {
-      "label": "Thiết bị mới",
+      "label": "Thi\u1EBFt b\u1ECB m\u1EDBi",
       "value": 45,
       "link": "thiet-bi.html"
     },
     {
-      "label": "Nhà cung ứng mới",
+      "label": "Nh\u00E0 cung \u1EE9ng m\u1EDBi",
       "value": 8,
       "link": "nha-cung-ung.html"
     },
     {
-      "label": "Chuyên gia mới",
+      "label": "Chuy\u00EAn gia m\u1EDBi",
       "value": 3,
       "link": "chuyen-gia.html"
     },
     {
-      "label": "Tài sản trí tuệ mới",
+      "label": "T\u00E0i s\u1EA3n tr\u00ED tu\u1EC7 m\u1EDBi",
       "value": 2,
       "link": "tai-san-tri-tue.html"
     },
     {
-      "label": "Tin KHCN mới",
+      "label": "Tin KHCN m\u1EDBi",
       "value": 35,
       "link": "tin-su-kien-44.html"
     },
     {
-      "label": "Video mới",
+      "label": "Video m\u1EDBi",
       "value": 5,
       "link": "video.html"
     },
     {
-      "label": "Dự án mới",
+      "label": "D\u1EF1 \u00E1n m\u1EDBi",
       "value": 15,
       "link": "tim-kiem-doi-tac-11.html"
     }
   ],
   "statBoxes": [
     {
-      "label": "Yêu cầu tìm mua",
+      "label": "Y\u00EAu c\u1EA7u t\u00ECm mua",
       "value": 91,
       "link": "tim-kiem-doi-tac-11.html",
       "color": "blue"
     },
     {
-      "label": "Kết nối cung cầu",
+      "label": "K\u1EBFt n\u1ED1i cung c\u1EA7u",
       "value": 5,
       "link": "ket-noi-cung-cau.html",
       "color": "amber"
     },
     {
-      "label": "Hợp đồng ký kết",
+      "label": "H\u1EE3p \u0111\u1ED3ng k\u00FD k\u1EBFt",
       "value": 1,
       "link": "hop-dong-ky-ket.html",
       "color": "green"
     },
     {
-      "label": "Tổng giá trị HĐ (triệu)",
-      "value": 0,
+      "label": "T\u1ED5ng gi\u00E1 tr\u1ECB H\u0110 (tri\u1EC7u)",
+      "value": 100,
       "link": "hop-dong-ky-ket.html",
       "color": "purple"
     },
     {
-      "label": "Mạng lưới đối tác",
+      "label": "M\u1EA1ng l\u01B0\u1EDBi \u0111\u1ED1i t\u00E1c",
       "value": 25,
       "link": "#partner-section",
       "color": "teal"
@@ -119,43 +119,43 @@
   "doughnutChart": {
     "sectors": [
       {
-        "label": "Điện, điện tử, CNTT",
+        "label": "\u0110i\u1EC7n, \u0111i\u1EC7n t\u1EED, CNTT",
         "value": 30,
         "color": "#3b82f6",
         "url": "2-ds-cong-nghe-thiet-bi/dien-dien-tu-cong-nghe-thong-tin-4.html"
       },
       {
-        "label": "Thực phẩm",
+        "label": "Th\u1EF1c ph\u1EA9m",
         "value": 17,
         "color": "#f59e0b",
         "url": "2-ds-cong-nghe-thiet-bi/cong-nghe-thuc-pham-12.html"
       },
       {
-        "label": "Môi trường",
+        "label": "M\u00F4i tr\u01B0\u1EDDng",
         "value": 10,
         "color": "#10b981",
         "url": "2-ds-cong-nghe-thiet-bi/moi-truong-9.html"
       },
       {
-        "label": "Y tế",
+        "label": "Y t\u1EBF",
         "value": 7,
         "color": "#ef4444",
         "url": "2-ds-cong-nghe-thiet-bi/y-hoc-8.html"
       },
       {
-        "label": "CN sinh học",
+        "label": "CN sinh h\u1ECDc",
         "value": 5,
         "color": "#8b5cf6",
         "url": "2-ds-cong-nghe-thiet-bi/cong-nghe-sinh-hoc-10.html"
       },
       {
-        "label": "Trồng trọt",
+        "label": "Tr\u1ED3ng tr\u1ECDt",
         "value": 5,
         "color": "#06b6d4",
         "url": "2-ds-cong-nghe-thiet-bi/trong-trot-14.html"
       },
       {
-        "label": "Khác",
+        "label": "Kh\u00E1c",
         "value": 26,
         "color": "#94a3b8",
         "url": "cong-nghe.html"

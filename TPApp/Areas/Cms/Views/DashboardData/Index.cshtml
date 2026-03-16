@@ -1,0 +1,519 @@
+@{
+    ViewData["Title"] = "Quản trị số liệu Dashboard";
+}
+
+<style>
+.dm-tabs {
+  display: flex; gap: 0;
+  border-bottom: 2px solid #dee2e6;
+  margin-bottom: 20px;
+}
+.dm-tab {
+  padding: 10px 24px; cursor: pointer;
+  font-size: .85rem; font-weight: 600; color: #6c757d;
+  border-bottom: 3px solid transparent;
+  transition: all .2s;
+  background: none; border-top: none; border-left: none; border-right: none;
+}
+.dm-tab:hover { color: #007bff; }
+.dm-tab--active { color: #007bff; border-bottom-color: #007bff; }
+
+/* JSON editor */
+.dm-textarea {
+  width: 100%; min-height: 500px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: .82rem; line-height: 1.5;
+  padding: 14px; border: 1px solid #ced4da; border-radius: 4px;
+  background: #f8f9fa; color: #212529; resize: vertical; tab-size: 2;
+}
+.dm-textarea:focus { outline: none; border-color: #007bff; background: #fff; }
+
+/* Table editor */
+.dm-table-wrap { overflow-x: auto; }
+.dm-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.dm-table th { background: #f1f5f9; padding: 8px 10px; text-align: left; font-weight: 600; color: #475569; border-bottom: 2px solid #dee2e6; white-space: nowrap; }
+.dm-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.dm-table tr:hover td { background: #f8fafc; }
+.dm-table input, .dm-table select {
+  width: 100%; padding: 4px 6px; border: 1px solid #dee2e6; border-radius: 3px;
+  font-size: .8rem;
+}
+.dm-table input:focus, .dm-table select:focus { outline: none; border-color: #007bff; }
+.dm-table .col-num { width: 90px; }
+.dm-table .col-val { width: 150px; }
+.dm-table .col-date { width: 110px; }
+.dm-table .col-act { width: 40px; text-align: center; }
+
+.dm-status {
+  margin-top: 10px; padding: 10px 14px; border-radius: 4px; font-size: .82rem; display: none;
+}
+.dm-status--ok  { background: #d4edda; color: #155724; display: block; }
+.dm-status--err { background: #f8d7da; color: #721c24; display: block; }
+</style>
+
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6"><h1 class="m-0">⚙️ Quản trị số liệu Dashboard</h1></div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="/cms">CMS</a></li>
+          <li class="breadcrumb-item active">Số liệu Dashboard</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+<div class="container-fluid">
+<div class="card">
+  <div class="card-header">
+    <div class="dm-tabs">
+      <button class="dm-tab dm-tab--active" data-key="home">📊 Trang chủ</button>
+      <button class="dm-tab" data-key="contract">📄 Hợp đồng</button>
+      <button class="dm-tab" data-key="connection">🔗 Kết nối cung cầu</button>
+    </div>
+  </div>
+
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0" id="dmEditorTitle">Số liệu trang chủ</h5>
+      <div>
+        <button class="btn btn-warning btn-sm d-none" id="dmFetchDb"><i class="fas fa-database"></i> Lấy từ Database</button>
+        <button class="btn btn-default btn-sm" id="dmReload"><i class="fas fa-sync-alt"></i> Tải lại</button>
+        <button class="btn btn-success btn-sm" id="dmPreview"><i class="fas fa-eye"></i> Xem trang</button>
+        <button class="btn btn-primary btn-sm" id="dmSave"><i class="fas fa-save"></i> Lưu thay đổi</button>
+      </div>
+    </div>
+
+    <!-- Table editor (for home) -->
+    <div id="dmHomePanel">
+      <h6 class="mt-2 mb-2"><i class="fas fa-chart-line text-primary"></i> KPI Dữ liệu tổng</h6>
+      <div class="dm-table-wrap">
+        <table class="dm-table">
+          <thead><tr><th>Tên</th><th class="col-val">Giá trị</th><th>Link</th><th class="col-act"></th></tr></thead>
+          <tbody id="dmKpiTotalBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-outline-primary btn-sm mt-1 mb-3" id="dmAddKpiTotal"><i class="fas fa-plus"></i> Thêm</button>
+
+      <h6 class="mt-2 mb-2"><i class="fas fa-calendar-alt text-success"></i> KPI Dữ liệu năm hiện tại (2026)</h6>
+      <div class="dm-table-wrap">
+        <table class="dm-table">
+          <thead><tr><th>Tên</th><th class="col-val">Giá trị</th><th>Link</th><th class="col-act"></th></tr></thead>
+          <tbody id="dmKpi2026Body"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-outline-primary btn-sm mt-1 mb-3" id="dmAddKpi2026"><i class="fas fa-plus"></i> Thêm</button>
+
+      <h6 class="mt-2 mb-2"><i class="fas fa-boxes-stacked text-warning"></i> Stat Boxes (cột phải)</h6>
+      <div class="dm-table-wrap">
+        <table class="dm-table">
+          <thead><tr><th>Tên</th><th class="col-val">Giá trị</th><th>Link</th><th style="width:100px">Màu</th><th class="col-act"></th></tr></thead>
+          <tbody id="dmStatBoxBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-outline-primary btn-sm mt-1 mb-3" id="dmAddStatBox"><i class="fas fa-plus"></i> Thêm</button>
+
+      <div class="callout callout-warning mt-2">
+        <p class="mb-0"><i class="fas fa-info-circle"></i> Biểu đồ tròn (doughnutChart) sẽ được giữ nguyên, chỉ KPI + Stat Boxes thay đổi.</p>
+      </div>
+    </div>
+
+    <!-- Table editor (for contract) -->
+    <div id="dmContractPanel" class="d-none">
+      <div class="dm-table-wrap">
+        <table class="dm-table">
+          <thead>
+            <tr>
+              <th>Số HĐ</th>
+              <th>Tên dự án</th>
+              <th>Lĩnh vực</th>
+              <th>Loại HĐ</th>
+              <th>Công nghệ</th>
+              <th>Trạng thái</th>
+              <th class="col-val">Giá trị (tr)</th>
+              <th class="col-date">Ngày tạo</th>
+              <th class="col-act"></th>
+            </tr>
+          </thead>
+          <tbody id="dmContractBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-outline-primary btn-sm mt-2" id="dmAddContractRow"><i class="fas fa-plus"></i> Thêm hàng</button>
+      <div class="callout callout-warning mt-3">
+        <p class="mb-0"><i class="fas fa-info-circle"></i> Summary cards và biểu đồ sẽ được <strong>tự tính toán</strong> từ bảng khi lưu.</p>
+      </div>
+    </div>
+
+    <!-- Table editor (for connection) -->
+    <div id="dmConnectionPanel" class="d-none">
+      <div class="dm-table-wrap">
+        <table class="dm-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Tên dự án</th>
+              <th>Lĩnh vực</th>
+              <th>Bên mua</th>
+              <th>Bên bán</th>
+              <th class="col-val">Giá chốt (tr)</th>
+              <th>Trạng thái</th>
+              <th class="col-date">Ngày tạo</th>
+              <th class="col-act"></th>
+            </tr>
+          </thead>
+          <tbody id="dmConnectionBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-outline-primary btn-sm mt-2" id="dmAddConnectionRow"><i class="fas fa-plus"></i> Thêm hàng</button>
+      <div class="callout callout-warning mt-3">
+        <p class="mb-0"><i class="fas fa-info-circle"></i> Summary cards và biểu đồ sẽ được <strong>tự tính toán</strong> từ bảng khi lưu.</p>
+      </div>
+    </div>
+
+    <div class="dm-status" id="dmStatus"></div>
+
+    <div class="callout callout-info mt-3">
+      <h5><i class="fas fa-info-circle"></i> Hướng dẫn sử dụng</h5>
+      <ul class="mb-0" style="font-size:.82rem; padding-left:18px;">
+        <li><strong>Tab Trang chủ:</strong> Chỉnh sửa JSON trực tiếp (KPI, biểu đồ, stat boxes).</li>
+        <li><strong>Tab Hợp đồng / Kết nối:</strong> Chỉnh sửa dữ liệu qua bảng — summary cards và biểu đồ sẽ được tự tính khi lưu.</li>
+        <li><strong>Lấy từ Database:</strong> Kéo dữ liệu thực từ hệ thống vào bảng, sau đó chỉnh sửa và lưu.</li>
+        <li><strong>Lưu:</strong> Nhấn <kbd>Lưu thay đổi</kbd> hoặc <kbd>Ctrl+S</kbd>. File cũ sẽ được backup tự động (.bak).</li>
+        <li><strong>Xem trang:</strong> Mở dashboard tương ứng trong tab mới để kiểm tra kết quả.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+</section>
+
+@section scripts {
+<script>
+(function () {
+    'use strict';
+
+    var currentKey = 'home';
+    var titles = { home: 'Số liệu trang chủ', contract: 'Số liệu hợp đồng ký kết', connection: 'Số liệu kết nối cung cầu' };
+    var previewUrls = { home: '/', contract: '/hop-dong-ky-ket.html', connection: '/ket-noi-cung-cau.html' };
+
+    // Dropdown options
+    var LINH_VUC_OPTS = ['Điện, điện tử, CNTT', 'Thực phẩm', 'Môi trường', 'Y tế', 'CN sinh học', 'Trồng trọt', 'Khác'];
+    var LOAI_HD_OPTS  = ['Chuyển giao CN', 'Mua bán thiết bị', 'Tư vấn kỹ thuật', 'Hợp tác R&D', 'Khác'];
+    var CONG_NGHE_OPTS = ['Công nghệ cao', 'Công nghệ chiến lược', 'Công nghệ thông thường'];
+    var TRANG_THAI_HD_OPTS = ['Chưa ký', 'Đã ký 1 bên', 'Đã hoàn tất'];
+    var TRANG_THAI_KN_OPTS = ['Nháp', 'Đã thỏa giá', 'Chờ ký', 'Đã ký 1 bên', 'Hoàn tất'];
+
+    // DOM refs
+    var status = document.getElementById('dmStatus');
+    var editorTitle = document.getElementById('dmEditorTitle');
+    var homePanel = document.getElementById('dmHomePanel');
+    var contractPanel = document.getElementById('dmContractPanel');
+    var connectionPanel = document.getElementById('dmConnectionPanel');
+    var fetchDbBtn = document.getElementById('dmFetchDb');
+    var contractBody = document.getElementById('dmContractBody');
+    var connectionBody = document.getElementById('dmConnectionBody');
+    var kpiTotalBody = document.getElementById('dmKpiTotalBody');
+    var kpi2026Body = document.getElementById('dmKpi2026Body');
+    var statBoxBody = document.getElementById('dmStatBoxBody');
+    var token = function() { return document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''; };
+    var COLOR_OPTS = ['blue','cyan','green','amber','purple','rose','indigo','teal'];
+
+    var _homeDoughnut = null; // preserve doughnutChart on save
+
+    function showStatus(msg, isError) {
+        status.textContent = msg;
+        status.className = 'dm-status ' + (isError ? 'dm-status--err' : 'dm-status--ok');
+        if (!isError) setTimeout(function () { status.style.display = 'none'; }, 4000);
+    }
+
+    function makeSelect(options, selected) {
+        var html = '<select class="form-select form-select-sm">';
+        options.forEach(function (o) { html += '<option' + (o === selected ? ' selected' : '') + '>' + o + '</option>'; });
+        return html + '</select>';
+    }
+
+    function esc(v) { return (v || '').replace(/"/g, '&quot;'); }
+
+    // ===================== HOME TABLES =====================
+    function renderKpiRow(item) {
+        return '<tr>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="label" value="' + esc(item.label) + '"></td>' +
+            '<td><input type="number" class="form-control form-control-sm" data-field="value" value="' + (item.value || 0) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="link" value="' + esc(item.link) + '"></td>' +
+            '<td class="col-act"><button class="btn btn-sm btn-outline-danger dm-del-row"><i class="fas fa-trash"></i></button></td></tr>';
+    }
+
+    function renderStatBoxRow(item) {
+        return '<tr>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="label" value="' + esc(item.label) + '"></td>' +
+            '<td><input type="number" class="form-control form-control-sm" data-field="value" value="' + (item.value || 0) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="link" value="' + esc(item.link) + '"></td>' +
+            '<td>' + makeSelect(COLOR_OPTS, item.color || 'blue').replace('<select', '<select data-field="color"') + '</td>' +
+            '<td class="col-act"><button class="btn btn-sm btn-outline-danger dm-del-row"><i class="fas fa-trash"></i></button></td></tr>';
+    }
+
+    function renderKpiTable(tbody, items) {
+        var html = ''; (items || []).forEach(function (i) { html += renderKpiRow(i); });
+        tbody.innerHTML = html; bindDelBtns(tbody);
+    }
+
+    function renderStatBoxTable(items) {
+        var html = ''; (items || []).forEach(function (i) { html += renderStatBoxRow(i); });
+        statBoxBody.innerHTML = html; bindDelBtns(statBoxBody);
+    }
+
+    function collectKpi(tbody) {
+        return collectRows(tbody, ['value'], 'label', 'label');
+    }
+
+    function buildHomeJson() {
+        return {
+            lastUpdated: new Date().toLocaleDateString('vi-VN'),
+            kpiTotal: collectKpi(kpiTotalBody),
+            kpi2026: collectKpi(kpi2026Body),
+            statBoxes: collectRows(statBoxBody, ['value'], 'label', 'label'),
+            doughnutChart: _homeDoughnut || {}
+        };
+    }
+
+    // ===================== CONTRACT TABLE =====================
+    function renderContractRow(c) {
+        return '<tr>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="soHopDong" value="' + esc(c.soHopDong) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="tenDuAn" value="' + esc(c.tenDuAn) + '"></td>' +
+            '<td>' + makeSelect(LINH_VUC_OPTS, c.linhVuc).replace('<select', '<select data-field="linhVuc"') + '</td>' +
+            '<td>' + makeSelect(LOAI_HD_OPTS, c.loaiHD).replace('<select', '<select data-field="loaiHD"') + '</td>' +
+            '<td>' + makeSelect(CONG_NGHE_OPTS, c.congNghe).replace('<select', '<select data-field="congNghe"') + '</td>' +
+            '<td>' + makeSelect(TRANG_THAI_HD_OPTS, c.trangThai).replace('<select', '<select data-field="trangThai"') + '</td>' +
+            '<td><input type="number" class="form-control form-control-sm" data-field="giaTriTrieu" value="' + (c.giaTriTrieu || 0) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="ngayTao" value="' + esc(c.ngayTao) + '" placeholder="dd/MM/yyyy"></td>' +
+            '<td class="col-act"><button class="btn btn-sm btn-outline-danger dm-del-row"><i class="fas fa-trash"></i></button></td></tr>';
+    }
+
+    function renderContractTable(contracts) {
+        var html = ''; (contracts || []).forEach(function (c) { html += renderContractRow(c); });
+        contractBody.innerHTML = html; bindDelBtns(contractBody);
+    }
+
+    function collectContracts() { return collectRows(contractBody, ['giaTriTrieu'], 'soHopDong', 'tenDuAn'); }
+
+    function buildContractJson(contracts) {
+        var total = contracts.length, signed = 0, pending = 0, totalVal = 0;
+        var fc = {}, sc = {}, tc = {};
+        LINH_VUC_OPTS.forEach(function(l){fc[l]=0;}); CONG_NGHE_OPTS.forEach(function(s){sc[s]=0;}); LOAI_HD_OPTS.forEach(function(t){tc[t]=0;});
+        contracts.forEach(function(c) {
+            if (c.trangThai==='Đã hoàn tất') signed++; else pending++;
+            totalVal += (c.giaTriTrieu||0);
+            if(fc[c.linhVuc]!==undefined)fc[c.linhVuc]++; if(sc[c.congNghe]!==undefined)sc[c.congNghe]++; if(tc[c.loaiHD]!==undefined)tc[c.loaiHD]++;
+        });
+        return {
+            lastUpdated: new Date().toLocaleDateString('vi-VN'),
+            summary: { totalContracts: total, totalValue: totalVal, signedContracts: signed, pendingContracts: pending },
+            byField:    { labels: LINH_VUC_OPTS, values: LINH_VUC_OPTS.map(function(l){return fc[l];}), colors: ['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#94a3b8'] },
+            byStrategy: { labels: CONG_NGHE_OPTS, values: CONG_NGHE_OPTS.map(function(s){return sc[s];}), colors: ['#6366f1','#f43f5e','#64748b'] },
+            byType:     { labels: LOAI_HD_OPTS, values: LOAI_HD_OPTS.map(function(t){return tc[t];}), colors: ['#0ea5e9','#f59e0b','#10b981','#8b5cf6','#94a3b8'] },
+            contracts: contracts
+        };
+    }
+
+    // ===================== CONNECTION TABLE =====================
+    function renderConnectionRow(c) {
+        return '<tr>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="maKetNoi" value="' + esc(c.maKetNoi) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="tenDuAn" value="' + esc(c.tenDuAn) + '"></td>' +
+            '<td>' + makeSelect(LINH_VUC_OPTS, c.linhVuc).replace('<select', '<select data-field="linhVuc"') + '</td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="benMua" value="' + esc(c.benMua) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="benBan" value="' + esc(c.benBan) + '"></td>' +
+            '<td><input type="number" class="form-control form-control-sm" data-field="giaChot" value="' + (c.giaChot || 0) + '"></td>' +
+            '<td>' + makeSelect(TRANG_THAI_KN_OPTS, c.trangThai).replace('<select', '<select data-field="trangThai"') + '</td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="ngayTao" value="' + esc(c.ngayTao) + '" placeholder="dd/MM/yyyy"></td>' +
+            '<td class="col-act"><button class="btn btn-sm btn-outline-danger dm-del-row"><i class="fas fa-trash"></i></button></td></tr>';
+    }
+
+    function renderConnectionTable(connections) {
+        var html = ''; (connections || []).forEach(function (c) { html += renderConnectionRow(c); });
+        connectionBody.innerHTML = html; bindDelBtns(connectionBody);
+    }
+
+    function collectConnections() { return collectRows(connectionBody, ['giaChot'], 'maKetNoi', 'tenDuAn'); }
+
+    function buildConnectionJson(connections, totalRequests) {
+        var total = connections.length, completed = 0;
+        var fc = {}, sc = {};
+        LINH_VUC_OPTS.forEach(function(l){fc[l]=0;});
+        TRANG_THAI_KN_OPTS.forEach(function(s){sc[s]=0;});
+        connections.forEach(function(c) {
+            if(c.trangThai==='Hoàn tất') completed++;
+            if(fc[c.linhVuc]!==undefined)fc[c.linhVuc]++;
+            if(sc[c.trangThai]!==undefined)sc[c.trangThai]++;
+        });
+        var waiting = (sc['Chờ ký']||0) + (sc['Đã ký 1 bên']||0);
+        var negotiating = (sc['Đã thỏa giá']||0) + waiting;
+        var rate = totalRequests > 0 ? Math.round(total / totalRequests * 1000) / 10 : 0;
+        return {
+            lastUpdated: new Date().toLocaleDateString('vi-VN'),
+            summary: { totalRequests: totalRequests, totalConnections: total, completedNegotiations: completed, conversionRate: rate },
+            byField: { labels: LINH_VUC_OPTS, values: LINH_VUC_OPTS.map(function(l){return fc[l];}), colors: ['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#94a3b8'] },
+            conversionFunnel: { labels: ['Yêu cầu tìm mua','Đã kết nối','Đang thương lượng','Đã ký biên bản'], values: [totalRequests, total, negotiating, completed], colors: ['#3b82f6','#f59e0b','#8b5cf6','#10b981'] },
+            byStatus: { labels: TRANG_THAI_KN_OPTS, values: TRANG_THAI_KN_OPTS.map(function(s){return sc[s];}), colors: ['#94a3b8','#f59e0b','#3b82f6','#8b5cf6','#10b981'] },
+            connections: connections
+        };
+    }
+
+    var _totalRequests = 91;
+
+    // ===================== SHARED UTILS =====================
+    function bindDelBtns(tbody) {
+        tbody.querySelectorAll('.dm-del-row').forEach(function (btn) {
+            btn.onclick = function () { btn.closest('tr').remove(); };
+        });
+    }
+
+    function collectRows(tbody, numFields, keyA, keyB) {
+        var rows = [];
+        tbody.querySelectorAll('tr').forEach(function (tr) {
+            var c = {};
+            tr.querySelectorAll('[data-field]').forEach(function (el) {
+                var f = el.getAttribute('data-field'), v = el.value;
+                if (numFields.indexOf(f) >= 0) v = parseFloat(v) || 0;
+                c[f] = v;
+            });
+            if (c[keyA] || c[keyB]) rows.push(c);
+        });
+        return rows;
+    }
+
+    // ===================== PANEL SWITCH =====================
+    function switchPanel(key) {
+        homePanel.classList.add('d-none');
+        contractPanel.classList.add('d-none');
+        connectionPanel.classList.add('d-none');
+        fetchDbBtn.classList.add('d-none');
+
+        if (key === 'home') { homePanel.classList.remove('d-none'); }
+        else if (key === 'contract') { contractPanel.classList.remove('d-none'); fetchDbBtn.classList.remove('d-none'); }
+        else if (key === 'connection') { connectionPanel.classList.remove('d-none'); fetchDbBtn.classList.remove('d-none'); }
+    }
+
+    // ===================== LOAD =====================
+    function loadData(key) {
+        currentKey = key;
+        editorTitle.textContent = titles[key] || key;
+        status.style.display = 'none';
+        switchPanel(key);
+
+        fetch('/cms/DashboardData/Load?key=' + key)
+            .then(function (r) { return r.text(); })
+            .then(function (json) {
+                var obj; try { obj = JSON.parse(json); } catch (e) { obj = null; }
+                if (key === 'home' && obj) {
+                    renderKpiTable(kpiTotalBody, obj.kpiTotal || []);
+                    renderKpiTable(kpi2026Body, obj.kpi2026 || []);
+                    renderStatBoxTable(obj.statBoxes || []);
+                    _homeDoughnut = obj.doughnutChart || null;
+                } else if (key === 'contract' && obj) {
+                    renderContractTable(obj.contracts || []);
+                } else if (key === 'connection' && obj) {
+                    _totalRequests = (obj.summary && obj.summary.totalRequests) || 91;
+                    renderConnectionTable(obj.connections || []);
+                }
+            })
+            .catch(function (err) { showStatus('Lỗi tải dữ liệu: ' + err.message, true); });
+    }
+
+    // ===================== SAVE =====================
+    function saveData() {
+        var body;
+        if (currentKey === 'home') {
+            body = JSON.stringify(buildHomeJson());
+        } else if (currentKey === 'contract') {
+            body = JSON.stringify(buildContractJson(collectContracts()));
+        } else if (currentKey === 'connection') {
+            body = JSON.stringify(buildConnectionJson(collectConnections(), _totalRequests));
+        }
+
+        fetch('/cms/DashboardData/Save?key=' + currentKey, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+            body: body
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success) showStatus('✅ ' + data.message + ' — ' + data.lastUpdated, false);
+            else showStatus('❌ ' + (data.error || 'Lỗi'), true);
+        })
+        .catch(function (err) { showStatus('❌ Lỗi lưu: ' + err.message, true); });
+    }
+
+    // ===================== FETCH FROM DB =====================
+    function fetchFromDb() {
+        fetchDbBtn.disabled = true;
+        fetchDbBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải...';
+
+        var url = currentKey === 'connection' ? '/cms/DashboardData/FetchConnections' : '/cms/DashboardData/FetchContracts';
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.error) { showStatus('❌ ' + data.error, true); return; }
+                if (currentKey === 'contract' && data.contracts) {
+                    renderContractTable(data.contracts);
+                    showStatus('✅ Đã tải ' + data.contracts.length + ' hợp đồng từ database.', false);
+                } else if (currentKey === 'connection' && data.connections) {
+                    if (data.totalRequests) _totalRequests = data.totalRequests;
+                    renderConnectionTable(data.connections);
+                    showStatus('✅ Đã tải ' + data.connections.length + ' kết nối từ database.', false);
+                }
+            })
+            .catch(function (err) { showStatus('❌ ' + err.message, true); })
+            .finally(function () {
+                fetchDbBtn.disabled = false;
+                fetchDbBtn.innerHTML = '<i class="fas fa-database"></i> Lấy từ Database';
+            });
+    }
+
+    // ===================== EVENTS =====================
+    document.querySelectorAll('.dm-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            document.querySelectorAll('.dm-tab').forEach(function (t) { t.classList.remove('dm-tab--active'); });
+            tab.classList.add('dm-tab--active');
+            loadData(tab.getAttribute('data-key'));
+        });
+    });
+
+    document.getElementById('dmSave').addEventListener('click', saveData);
+    document.getElementById('dmReload').addEventListener('click', function () { loadData(currentKey); });
+    document.getElementById('dmPreview').addEventListener('click', function () { window.open(previewUrls[currentKey] || '/', '_blank'); });
+    fetchDbBtn.addEventListener('click', fetchFromDb);
+
+    document.getElementById('dmAddContractRow').addEventListener('click', function () {
+        contractBody.insertAdjacentHTML('beforeend', renderContractRow({ soHopDong:'', tenDuAn:'', linhVuc:LINH_VUC_OPTS[0], loaiHD:LOAI_HD_OPTS[0], congNghe:CONG_NGHE_OPTS[0], trangThai:'Chưa ký', giaTriTrieu:0, ngayTao:new Date().toLocaleDateString('vi-VN') }));
+        bindDelBtns(contractBody);
+    });
+    document.getElementById('dmAddConnectionRow').addEventListener('click', function () {
+        connectionBody.insertAdjacentHTML('beforeend', renderConnectionRow({ maKetNoi:'', tenDuAn:'', linhVuc:LINH_VUC_OPTS[0], benMua:'', benBan:'', giaChot:0, trangThai:'Nháp', ngayTao:new Date().toLocaleDateString('vi-VN') }));
+        bindDelBtns(connectionBody);
+    });
+    document.getElementById('dmAddKpiTotal').addEventListener('click', function () {
+        kpiTotalBody.insertAdjacentHTML('beforeend', renderKpiRow({ label:'', value:0, link:'' }));
+        bindDelBtns(kpiTotalBody);
+    });
+    document.getElementById('dmAddKpi2026').addEventListener('click', function () {
+        kpi2026Body.insertAdjacentHTML('beforeend', renderKpiRow({ label:'', value:0, link:'' }));
+        bindDelBtns(kpi2026Body);
+    });
+    document.getElementById('dmAddStatBox').addEventListener('click', function () {
+        statBoxBody.insertAdjacentHTML('beforeend', renderStatBoxRow({ label:'', value:0, link:'', color:'blue' }));
+        bindDelBtns(statBoxBody);
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveData(); }
+    });
+
+    loadData('home');
+})();
+</script>
+}

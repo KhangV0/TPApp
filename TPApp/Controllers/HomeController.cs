@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Text;
@@ -166,6 +166,17 @@ namespace TPApp.Controllers
                 ImageUrl = ProductController.CookedImageURL("254-170", x.Image, _mainDomain),
                 Link = $"{_mainDomain}{x.MenuId}/yeu-cau/{x.QueryString}-{x.Id}.html"
             };
+        }
+        // ================= DASHBOARD HỢP ĐỒNG =================
+        public IActionResult ContractDashboard()
+        {
+            return View();
+        }
+
+        // ================= DASHBOARD KẾT NỐI CUNG CẦU =================
+        public IActionResult ConnectionDashboard()
+        {
+            return View();
         }
     }
 }

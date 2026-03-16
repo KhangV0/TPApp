@@ -1,0 +1,426 @@
+@*
+═══════════════════════════════════════════════════════════════════
+   Dashboard Kết nối cung cầu
+   Route: ket-noi-cung-cau.html
+
+   📌 HƯỚNG DẪN CẬP NHẬT SỐ LIỆU:
+   Sửa file: wwwroot/js/connection-dashboard-data.json
+═══════════════════════════════════════════════════════════════════
+*@
+
+@{
+    ViewData["Title"] = "Dashboard Kết nối cung cầu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+/* ═══════════════════════════════════════════════════
+   CONNECTION DASHBOARD
+   ═══════════════════════════════════════════════════ */
+.cn-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1a3a4f 50%, #0f172a 100%);
+  padding: 48px 0 36px;
+  color: #fff;
+  text-align: center;
+}
+.cn-hero__title {
+  font-size: 2rem; letter-spacing: -.03em;
+  margin-bottom: 6px;
+}
+.cn-hero__sub {
+  font-size: .9rem; color: #94a3b8; margin: 0;
+}
+
+/* Summary cards */
+.cn-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin: -30px auto 32px;
+  max-width: 900px;
+  position: relative;
+  z-index: 2;
+  padding: 0 16px;
+}
+.cn-summary__card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 16px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,.1);
+  border: 1.5px solid #e2e8f0;
+  transition: transform .2s ease;
+}
+.cn-summary__card:hover { transform: translateY(-3px); }
+.cn-summary__val {
+  font-size: 2rem; font-weight: 900; letter-spacing: -.04em; line-height: 1;
+}
+.cn-summary__unit {
+  font-size: 1rem; font-weight: 600;
+}
+.cn-summary__lbl {
+  font-size: .75rem; color: #64748b; font-weight: 500; margin-top: 4px;
+}
+.cn-summary__card:nth-child(1) .cn-summary__val { color: #3b82f6; }
+.cn-summary__card:nth-child(2) .cn-summary__val { color: #f59e0b; }
+.cn-summary__card:nth-child(3) .cn-summary__val { color: #10b981; }
+.cn-summary__card:nth-child(4) .cn-summary__val { color: #8b5cf6; }
+
+/* Chart section */
+.cn-charts {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+.cn-charts__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.cn-chart-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: 0 4px 16px rgba(37,99,235,.08);
+  border: 1.5px solid #e2e8f0;
+}
+.cn-chart-card__title {
+  font-size: .95rem; font-weight: 700; color: #0f172a;
+  margin-bottom: 4px;
+}
+.cn-chart-card__hint {
+  font-size: .7rem; color: #94a3b8; margin-bottom: 14px;
+}
+.cn-chart-card canvas {
+  max-height: 260px;
+}
+
+/* Table */
+.cn-table-wrap {
+  max-width: 1200px;
+  margin: 0 auto 40px;
+  padding: 0 16px;
+}
+.cn-table-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(37,99,235,.08);
+  border: 1.5px solid #e2e8f0;
+}
+.cn-table-card__title {
+  font-size: 1.1rem; font-weight: 700; color: #0f172a;
+  margin-bottom: 16px;
+}
+.cn-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+}
+.cn-table th {
+  background: #f1f5f9;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+}
+.cn-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+.cn-table tr:hover td { background: #f8fafc; }
+.cn-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .72rem;
+  font-weight: 600;
+}
+.cn-badge--draft    { background: #f1f5f9; color: #64748b; }
+.cn-badge--agreed   { background: #fef3c7; color: #92400e; }
+.cn-badge--waiting  { background: #dbeafe; color: #1e40af; }
+.cn-badge--partial  { background: #ede9fe; color: #6d28d9; }
+.cn-badge--done     { background: #d1fae5; color: #065f46; }
+
+.cn-updated {
+  text-align: center;
+  color: #94a3b8;
+  font-size: .75rem;
+  padding: 16px 0 40px;
+}
+
+@@media (max-width: 900px) {
+  .cn-summary { grid-template-columns: repeat(2, 1fr); }
+  .cn-charts__grid { grid-template-columns: 1fr; }
+}
+@@media (max-width: 600px) {
+  .cn-summary { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cn-hero__title { font-size: 1.4rem; }
+}
+</style>
+
+<!-- HERO -->
+<section class="cn-hero">
+  <h1 class="cn-hero__title">🔗 Dashboard Kết Nối Cung Cầu</h1>
+  <p class="cn-hero__sub">Tổng hợp dữ liệu kết nối cung cầu — từ yêu cầu đến biên bản thương lượng</p>
+</section>
+
+<!-- SUMMARY CARDS -->
+<div class="cn-summary">
+  <div class="cn-summary__card">
+    <div class="cn-summary__val" id="cnRequests">0</div>
+    <div class="cn-summary__lbl">Tổng yêu cầu tìm mua</div>
+  </div>
+  <div class="cn-summary__card">
+    <div class="cn-summary__val" id="cnConnections">0</div>
+    <div class="cn-summary__lbl">Đã kết nối</div>
+  </div>
+  <div class="cn-summary__card">
+    <div class="cn-summary__val" id="cnCompleted">0</div>
+    <div class="cn-summary__lbl">Biên bản hoàn tất</div>
+  </div>
+  <div class="cn-summary__card">
+    <div><span class="cn-summary__val" id="cnRate">0</span><span class="cn-summary__unit">%</span></div>
+    <div class="cn-summary__lbl">Tỉ lệ kết nối</div>
+  </div>
+</div>
+
+<!-- 3 CHARTS -->
+<div class="cn-charts">
+  <div class="cn-charts__grid">
+
+    <div class="cn-chart-card">
+      <div class="cn-chart-card__title">Kết nối theo lĩnh vực</div>
+      <div class="cn-chart-card__hint">Hover để xem chi tiết</div>
+      <canvas id="cnChartByField"></canvas>
+    </div>
+
+    <div class="cn-chart-card">
+      <div class="cn-chart-card__title">Phễu chuyển đổi</div>
+      <div class="cn-chart-card__hint">Từ yêu cầu → kết nối → thương lượng → ký</div>
+      <canvas id="cnChartFunnel"></canvas>
+    </div>
+
+    <div class="cn-chart-card">
+      <div class="cn-chart-card__title">Theo trạng thái</div>
+      <div class="cn-chart-card__hint">Hover để xem chi tiết</div>
+      <canvas id="cnChartByStatus"></canvas>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+<div class="cn-updated" id="cnUpdated"></div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    var TOOLTIP_BG = '#1e293b';
+    var _connections = []; // loaded from JSON
+
+    function countUp(el, target, isDecimal) {
+        var dur = 1200, start = performance.now();
+        (function step(now) {
+            var p = Math.min((now - start) / dur, 1);
+            var ease = 1 - Math.pow(1 - p, 3);
+            var val = ease * target;
+            el.textContent = isDecimal
+                ? val.toFixed(1)
+                : Math.round(val).toLocaleString('vi-VN');
+            if (p < 1) requestAnimationFrame(step);
+        })(start);
+    }
+
+    function buildDoughnut(canvasId, chartData, filterKey) {
+        var ctx = document.getElementById(canvasId);
+        if (!ctx || typeof Chart === 'undefined') return;
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    data: chartData.values,
+                    backgroundColor: chartData.colors,
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '48%',
+                animation: { duration: 800, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#334155',
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 8,
+                            padding: 8,
+                            font: { size: 11 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: TOOLTIP_BG,
+                        padding: 12,
+                        cornerRadius: 8,
+                        bodyFont: { size: 11 },
+                        titleFont: { size: 12, weight: 'bold' },
+                        callbacks: {
+                            title: function (items) {
+                                if (!items.length) return '';
+                                var item = items[0];
+                                var total = item.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+                                var pct = total > 0 ? Math.round(item.parsed / total * 100) : 0;
+                                return item.label + ': ' + item.parsed + ' (' + pct + '%)';
+                            },
+                            label: function () { return ''; },
+                            afterBody: function (items) {
+                                if (!items.length || !filterKey) return [];
+                                var sectorLabel = items[0].label;
+                                var matched = _connections.filter(function (c) {
+                                    return c[filterKey] === sectorLabel;
+                                });
+                                if (matched.length === 0) return ['  (không có biên bản)'];
+                                var lines = ['───────────────'];
+                                matched.forEach(function (c, i) {
+                                    lines.push('📋 ' + c.maKetNoi + ' — ' + c.tenDuAn);
+                                    lines.push('   ' + c.benMua + ' ↔ ' + c.benBan);
+                                    lines.push('   Giá: ' + (c.giaChot || 0) + ' tr | ' + c.trangThai);
+                                    if (i < matched.length - 1) lines.push('');
+                                });
+                                return lines;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function buildBarChart(canvasId, chartData) {
+        var ctx = document.getElementById(canvasId);
+        if (!ctx || typeof Chart === 'undefined') return;
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    data: chartData.values,
+                    backgroundColor: chartData.colors,
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                animation: { duration: 800, easing: 'easeOutQuart' },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { display: false },
+                        ticks: { font: { size: 11 }, color: '#64748b' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, weight: '600' }, color: '#334155' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: TOOLTIP_BG,
+                        padding: 10,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+    }
+
+    function statusBadge(status) {
+        var map = {
+            'Nháp': 'cn-badge--draft',
+            'Đã thỏa giá': 'cn-badge--agreed',
+            'Chờ ký': 'cn-badge--waiting',
+            'Đã ký 1 bên': 'cn-badge--partial',
+            'Hoàn tất': 'cn-badge--done'
+        };
+        var cls = map[status] || 'cn-badge--draft';
+        return '<span class="cn-badge ' + cls + '">' + status + '</span>';
+    }
+
+    function renderTable(connections) {
+        var tbody = document.getElementById('cnTableBody');
+        if (!tbody || !connections || connections.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">Chưa có dữ liệu kết nối</td></tr>';
+            return;
+        }
+        var html = '';
+        connections.forEach(function (c) {
+            html += '<tr>';
+            html += '<td><strong>' + c.maKetNoi + '</strong></td>';
+            html += '<td>' + c.tenDuAn + '</td>';
+            html += '<td>' + c.linhVuc + '</td>';
+            html += '<td>' + c.benMua + '</td>';
+            html += '<td>' + c.benBan + '</td>';
+            html += '<td>' + (c.giaChot || 0).toLocaleString('vi-VN') + '</td>';
+            html += '<td>' + statusBadge(c.trangThai) + '</td>';
+            html += '<td>' + c.ngayTao + '</td>';
+            html += '</tr>';
+        });
+        tbody.innerHTML = html;
+    }
+
+    function init() {
+        fetch('/js/connection-dashboard-data.json?v=' + Date.now())
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                _connections = data.connections || [];
+
+                // Summary
+                countUp(document.getElementById('cnRequests'), data.summary.totalRequests);
+                countUp(document.getElementById('cnConnections'), data.summary.totalConnections);
+                countUp(document.getElementById('cnCompleted'), data.summary.completedNegotiations);
+                countUp(document.getElementById('cnRate'), data.summary.conversionRate, true);
+
+                // Charts — with detail tooltips
+                buildDoughnut('cnChartByField', data.byField, 'linhVuc');
+                buildBarChart('cnChartFunnel', data.conversionFunnel);
+                buildDoughnut('cnChartByStatus', data.byStatus, 'trangThai');
+
+                // Table
+                renderTable(_connections);
+
+                // Updated
+                var upd = document.getElementById('cnUpdated');
+                if (upd && data.lastUpdated) {
+                    upd.textContent = 'Cập nhật: ' + data.lastUpdated;
+                }
+            })
+            .catch(function (err) {
+                console.warn('[connection-dashboard] Lỗi tải data:', err);
+            });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+}
