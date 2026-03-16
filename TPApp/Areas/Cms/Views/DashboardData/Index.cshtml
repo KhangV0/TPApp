@@ -127,11 +127,10 @@
       <h6 class="mt-2 mb-2"><i class="fas fa-chart-line text-info"></i> Dữ liệu lượt truy cập website</h6>
       <div class="dm-table-wrap">
         <table class="dm-table">
-          <thead>
+          <thead id="dmTrafficHead">
             <tr>
               <th>Dataset</th>
               <th>Màu</th>
-              <th id="dmTrafficYearHeaders"></th>
               <th class="col-act"></th>
             </tr>
           </thead>
@@ -542,17 +541,44 @@
     // ===================== TRAFFIC TABLE =====================
     var _trafficLabels = [];
     var trafficBody = document.getElementById('dmTrafficBody');
-    var trafficYearHeaders = document.getElementById('dmTrafficYearHeaders');
+    var trafficHead = document.getElementById('dmTrafficHead');
+
+    function renderTrafficYearHeaders() {
+        var html = '<tr><th>Dataset</th><th>Màu</th>';
+        _trafficLabels.forEach(function (yr, i) {
+            html += '<th class="col-val" style="position:relative;">' + yr + ' <button class="btn btn-sm p-0 text-danger dm-del-year" data-year-idx="' + i + '" title="Xóa cột ' + yr + '" style="font-size:.7rem;line-height:1;vertical-align:top;">✕</button></th>';
+        });
+        html += '<th class="col-act"></th></tr>';
+        trafficHead.innerHTML = html;
+        // Bind delete year buttons
+        trafficHead.querySelectorAll('.dm-del-year').forEach(function (btn) {
+            btn.onclick = function () {
+                var idx = parseInt(btn.getAttribute('data-year-idx'));
+                deleteTrafficYear(idx);
+            };
+        });
+    }
+
+    function deleteTrafficYear(idx) {
+        if (!confirm('Xóa cột năm "' + _trafficLabels[idx] + '"?')) return;
+        _trafficLabels.splice(idx, 1);
+        // Remove corresponding td from each data row
+        trafficBody.querySelectorAll('tr').forEach(function (tr) {
+            var vals = tr.querySelectorAll('.dm-traffic-val');
+            if (vals[idx]) vals[idx].closest('td').remove();
+            // Re-index data-idx
+            tr.querySelectorAll('.dm-traffic-val').forEach(function (inp, i) {
+                inp.setAttribute('data-idx', i);
+            });
+        });
+        renderTrafficYearHeaders();
+    }
 
     function renderTrafficTable(data) {
         _trafficLabels = data.labels || [];
         var datasets = data.datasets || [];
-        // Render year header columns
-        var thHtml = '';
-        _trafficLabels.forEach(function (yr) {
-            thHtml += '<th class="col-val">' + yr + '</th>';
-        });
-        trafficYearHeaders.innerHTML = thHtml;
+        // Render year headers with delete buttons
+        renderTrafficYearHeaders();
         // Render dataset rows
         var html = '';
         datasets.forEach(function (ds) {
@@ -609,8 +635,8 @@
         var lastYear = _trafficLabels.length > 0 ? parseInt(_trafficLabels[_trafficLabels.length - 1]) : currentYear - 1;
         var newYear = (lastYear + 1).toString();
         _trafficLabels.push(newYear);
-        // Add header
-        trafficYearHeaders.innerHTML += '<th class="col-val">' + newYear + '</th>';
+        // Re-render headers with delete buttons
+        renderTrafficYearHeaders();
         // Add input to each row
         trafficBody.querySelectorAll('tr').forEach(function (tr) {
             var delBtn = tr.querySelector('.col-act');
