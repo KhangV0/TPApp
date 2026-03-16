@@ -424,6 +424,10 @@
     .hp-header-logo {
         height: 40px !important;
     }
+
+    .hp-header-search-icon {
+        top: 42% !important;
+    }
 }
 
 /* Footer Redesign */

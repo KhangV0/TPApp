@@ -42,6 +42,7 @@
             .then(function (data) {
                 applyKpiData(data);
                 applyStatBoxes(data);
+                buildLineChart(data);
                 buildDoughnutChart(data);
                 setupTabCountUp();
             })
@@ -109,6 +110,93 @@
                 // Update link từ JSON
                 if (item.link) {
                     boxes[i].setAttribute('href', item.link);
+                }
+            }
+        });
+    }
+
+    // ── Build line chart from JSON ─────────────────────────────────
+    function buildLineChart(data) {
+        if (typeof Chart === 'undefined') return;
+        var lineCtx = document.getElementById('tpLineChart');
+        if (!lineCtx || lineCtx._chartBuilt) return;
+        if (!data.lineChart || !data.lineChart.labels || !data.lineChart.datasets) return;
+
+        lineCtx._chartBuilt = true;
+
+        var datasets = data.lineChart.datasets.map(function (ds, idx) {
+            return {
+                label: ds.label,
+                data: ds.data,
+                borderColor: ds.color,
+                backgroundColor: ds.color + '18',
+                borderWidth: 2.5,
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: ds.color,
+                pointBorderWidth: 2,
+                pointHoverBorderWidth: 3,
+                tension: 0.35,
+                fill: true
+            };
+        });
+
+        new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: data.lineChart.labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                animation: { duration: 1000, easing: 'easeOutQuart' },
+                layout: { padding: { top: 4, right: 8 } },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748b', font: { size: 11, weight: '600' } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+                        ticks: {
+                            color: '#64748b',
+                            font: { size: 10 },
+                            callback: function (val) {
+                                if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
+                                return val;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: LEGEND_COLOR,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            boxWidth: 8,
+                            padding: 12,
+                            font: { size: 11 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: TOOLTIP_BG,
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function (ctx) {
+                                return '  ' + ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString('vi-VN');
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -203,7 +291,7 @@
 
     // ── Init ──────────────────────────────────────────────────────
     function tryInit() {
-        if (document.getElementById('tpTypeChart')) {
+        if (document.getElementById('tpTypeChart') || document.getElementById('tpLineChart')) {
             loadDataAndBuild();
         }
     }

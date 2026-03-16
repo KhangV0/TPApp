@@ -279,11 +279,18 @@
 
         <div class="tp-analytics__row">
 
+          <!-- Line Chart — Lượt truy cập & Người dùng -->
+          <div class="tp-panel tp-panel--chart-only">
+            <div class="tp-panel__title">Lượt truy cập & Người dùng</div>
+            <div class="tp-panel__hint">Thống kê theo năm (2018 – 2025)</div>
+            <canvas id="tpLineChart" height="220"></canvas>
+          </div>
+
           <!-- Doughnut Chart — Lĩnh vực (clickable) -->
           <div class="tp-panel tp-panel--chart-only">
             <div class="tp-panel__title">Cơ cấu theo lĩnh vực</div>
             <div class="tp-panel__hint">Click vào biểu đồ để xem chi tiết lĩnh vực</div>
-            <canvas id="tpTypeChart" height="180"></canvas>
+            <canvas id="tpTypeChart" height="220"></canvas>
           </div>
 
         </div><!-- /tp-analytics__row -->
@@ -467,7 +474,7 @@
 /* ─── Chart panels ──────────────────────────────────────── */
 .tp-analytics__row {
   display: grid; gap: 14px;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   flex: 1;   /* Để chart chiếm hết chiều cao còn lại */
 }
 .tp-panel {
@@ -532,9 +539,12 @@
 /* ─── Responsive ─────────────────────────────────────────── */
 @@media (max-width: 1100px) {
   .tp-metrics__grid    { grid-template-columns: 1fr; }
-  .tp-analytics__row   { grid-template-columns: 1fr; }
+  .tp-analytics__row   { grid-template-columns: 1fr 1fr; }
   .tp-stat-boxes,
   .tp-stat-boxes--5    { grid-template-columns: repeat(3, 1fr); }
+}
+@@media (max-width: 700px) {
+  .tp-analytics__row   { grid-template-columns: 1fr; }
 }
 @@media (max-width: 600px) {
   .tp-kpi__cards  { grid-template-columns: 1fr 1fr; }
