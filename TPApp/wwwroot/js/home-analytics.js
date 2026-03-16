@@ -236,7 +236,7 @@
                 layout: { padding: 4 },
                 plugins: {
                     legend: {
-                        position: 'right',
+                        position: 'bottom',
                         align: 'center',
                         labels: {
                             color: LEGEND_COLOR,
