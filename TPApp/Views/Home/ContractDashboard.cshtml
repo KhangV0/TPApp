@@ -92,52 +92,95 @@
   max-height: 260px;
 }
 
-/* Contracts table */
-.cd-table-wrap {
+/* Detail cards section */
+.cd-detail-section {
   max-width: 1200px;
-  margin: 0 auto 40px;
+  margin: 0 auto 32px;
   padding: 0 16px;
 }
-.cd-table-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(37,99,235,.08);
-  border: 1.5px solid #e2e8f0;
-}
-.cd-table-card__title {
-  font-size: 1.1rem; font-weight: 700; color: #0f172a;
+.cd-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
 }
-.cd-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: .82rem;
+.cd-detail-header__title {
+  font-size: 1.1rem; font-weight: 700; color: #0f172a;
 }
-.cd-table th {
+.cd-detail-header__badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #fff;
+  margin-left: 10px;
+}
+.cd-detail-header__btn {
   background: #f1f5f9;
-  padding: 10px 12px;
-  text-align: left;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: .82rem;
   font-weight: 600;
   color: #475569;
-  border-bottom: 2px solid #e2e8f0;
+  cursor: pointer;
+  transition: all .2s;
 }
-.cd-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #334155;
+.cd-detail-header__btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
-.cd-table tr:hover td { background: #f8fafc; }
-.cd-badge {
+.cd-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+.cd-detail-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(37,99,235,.06);
+  border-left: 4px solid #3b82f6;
+  transition: transform .2s, box-shadow .2s;
+}
+.cd-detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37,99,235,.12);
+}
+.cd-detail-card__field {
+  font-size: .72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: 6px; color: #64748b;
+}
+.cd-detail-card__content {
+  font-size: .85rem; font-weight: 600; color: #0f172a;
+  margin-bottom: 10px; line-height: 1.4;
+}
+.cd-detail-card__row {
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: .78rem; color: #475569; margin-bottom: 4px;
+}
+.cd-detail-card__row-icon {
+  flex-shrink: 0; width: 16px; text-align: center;
+}
+.cd-detail-card__row-text {
+  flex: 1; line-height: 1.4;
+}
+.cd-detail-card__value {
   display: inline-block;
-  padding: 3px 10px;
+  margin-top: 8px;
+  padding: 3px 12px;
   border-radius: 20px;
-  font-size: .72rem;
-  font-weight: 600;
+  font-size: .75rem;
+  font-weight: 700;
+  background: #dbeafe;
+  color: #1e40af;
 }
-.cd-badge--pending { background: #fef3c7; color: #92400e; }
-.cd-badge--signed  { background: #d1fae5; color: #065f46; }
-.cd-badge--partial { background: #dbeafe; color: #1e40af; }
+.cd-detail-empty {
+  text-align: center; color: #94a3b8; font-size: .88rem;
+  padding: 40px 0;
+}
 
 /* Updated date */
 .cd-updated {
@@ -151,6 +194,7 @@
 @@media (max-width: 900px) {
   .cd-summary { grid-template-columns: repeat(2, 1fr); }
   .cd-charts__grid { grid-template-columns: 1fr; }
+  .cd-detail-grid { grid-template-columns: 1fr; }
 }
 @@media (max-width: 600px) {
   .cd-summary { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -190,50 +234,35 @@
 
     <div class="cd-chart-card">
       <div class="cd-chart-card__title">Phân loại theo lĩnh vực</div>
-      <div class="cd-chart-card__hint">Hover để xem chi tiết</div>
+      <div class="cd-chart-card__hint">Click vào biểu đồ để xem chi tiết</div>
       <canvas id="chartByField"></canvas>
     </div>
 
     <div class="cd-chart-card">
       <div class="cd-chart-card__title">Theo công nghệ chiến lược</div>
-      <div class="cd-chart-card__hint">Hover để xem chi tiết</div>
+      <div class="cd-chart-card__hint">Click vào biểu đồ để xem chi tiết</div>
       <canvas id="chartByStrategy"></canvas>
     </div>
 
     <div class="cd-chart-card">
       <div class="cd-chart-card__title">Theo loại hợp đồng</div>
-      <div class="cd-chart-card__hint">Hover để xem chi tiết</div>
+      <div class="cd-chart-card__hint">Click vào biểu đồ để xem chi tiết</div>
       <canvas id="chartByType"></canvas>
     </div>
 
   </div>
 </div>
 
-
-
-
-<!-- CONTRACTS TABLE -->
-<div class="cd-table-wrap">
-  <div class="cd-table-card">
-    <div class="cd-table-card__title">📋 Danh sách hợp đồng ký kết</div>
-    <div style="overflow-x:auto;">
-      <table class="cd-table">
-        <thead>
-          <tr>
-            <th style="width:40px">STT</th>
-            <th>Lĩnh vực</th>
-            <th>CN chiến lược</th>
-            <th>Bên cung</th>
-            <th>Bên cầu</th>
-            <th>Nội dung HĐ</th>
-            <th>Giá trị (tr)</th>
-            <th>Loại HĐ</th>
-          </tr>
-        </thead>
-        <tbody id="cdTableBody"></tbody>
-      </table>
+<!-- DETAIL CARDS (shows all on load, filters on chart click) -->
+<div class="cd-detail-section" id="cdDetailSection">
+  <div class="cd-detail-header">
+    <div>
+      <span class="cd-detail-header__title" id="cdDetailTitle">📋 Tất cả hợp đồng</span>
+      <span class="cd-detail-header__badge" id="cdDetailBadge"></span>
     </div>
+    <button class="cd-detail-header__btn" id="cdDetailShowAll" style="display:none;" onclick="window._cdShowAll && window._cdShowAll()">← Xem tất cả</button>
   </div>
+  <div class="cd-detail-grid" id="cdDetailGrid"></div>
 </div>
 
 <div class="cd-updated" id="cdUpdated"></div>
@@ -311,51 +340,103 @@
                                 var pct = total > 0 ? Math.round(item.parsed / total * 100) : 0;
                                 return item.label + ': ' + item.parsed + ' HĐ (' + pct + '%)';
                             },
-                            label: function () { return ''; }, // hide default
-                            afterBody: function (items) {
-                                if (!items.length || !filterKey) return [];
-                                var sectorLabel = items[0].label;
-                                var matched = _contracts.filter(function (c) {
-                                    return c[filterKey] === sectorLabel;
-                                });
-                                if (matched.length === 0) return ['  (không có HĐ)'];
-                                var lines = ['───────────────'];
-                                matched.forEach(function (c, i) {
-                                    lines.push('📄 ' + (c.benCung || '') + ' → ' + (c.benCau || ''));
-                                    lines.push('   ' + (c.noiDung || '') + ' | ' + (c.giaTriTrieu || 0) + ' tr');
-                                    if (i < matched.length - 1) lines.push('');
-                                });
-                                return lines;
+                            label: function () { return ''; },
+                            afterBody: function () {
+                                return ['👆 Click để xem chi tiết'];
                             }
                         }
                     }
+                },
+                onHover: function (event, elements) {
+                    event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+                },
+                onClick: function (event, elements) {
+                    if (!elements.length) return;
+                    var index = elements[0].index;
+                    var label = chartData.labels[index];
+                    var color = chartData.colors[index];
+                    showDetailCards(label, color, filterKey);
                 }
             }
         });
     }
 
-    function renderTable(contracts) {
-        var tbody = document.getElementById('cdTableBody');
-        if (!tbody) return;
-        if (!contracts || contracts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">Chưa có dữ liệu hợp đồng</td></tr>';
+    // ── Show detail cards (filtered) ──────────────────────────
+    function showDetailCards(label, color, filterKey) {
+        var grid   = document.getElementById('cdDetailGrid');
+        var title  = document.getElementById('cdDetailTitle');
+        var badge  = document.getElementById('cdDetailBadge');
+        var btnAll = document.getElementById('cdDetailShowAll');
+        if (!grid) return;
+
+        var matched = _contracts.filter(function (c) {
+            return c[filterKey] === label;
+        });
+
+        title.textContent = 'Chi tiết hợp đồng — ';
+        badge.textContent = label + ' (' + matched.length + ')';
+        badge.style.background = color;
+        badge.style.display = 'inline-block';
+        if (btnAll) btnAll.style.display = 'inline-block';
+
+        renderCards(grid, matched, color);
+        document.getElementById('cdDetailSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ── Render all cards (initial load) ────────────────────────
+    function renderAllCards() {
+        var grid   = document.getElementById('cdDetailGrid');
+        var title  = document.getElementById('cdDetailTitle');
+        var badge  = document.getElementById('cdDetailBadge');
+        var btnAll = document.getElementById('cdDetailShowAll');
+        if (!grid) return;
+
+        title.textContent = '📋 Tất cả hợp đồng';
+        badge.textContent = _contracts.length + ' hợp đồng';
+        badge.style.background = '#3b82f6';
+        badge.style.display = 'inline-block';
+        if (btnAll) btnAll.style.display = 'none';
+
+        renderCards(grid, _contracts, null);
+    }
+
+    // ── Render card HTML ───────────────────────────────────────
+    var _fieldColors = {};
+    function renderCards(grid, list, forcedColor) {
+        if (list.length === 0) {
+            grid.innerHTML = '<div class="cd-detail-empty">Không có hợp đồng</div>';
             return;
         }
         var html = '';
-        contracts.forEach(function (c, i) {
-            html += '<tr>';
-            html += '<td><strong>' + (i + 1) + '</strong></td>';
-            html += '<td>' + (c.linhVuc || '') + '</td>';
-            html += '<td>' + (c.congNghe === 'Không' ? '' : (c.congNghe || '')) + '</td>';
-            html += '<td>' + (c.benCung || '') + '</td>';
-            html += '<td>' + (c.benCau || '') + '</td>';
-            html += '<td>' + (c.noiDung || '') + '</td>';
-            html += '<td>' + (c.giaTriTrieu || 0).toLocaleString('vi-VN') + '</td>';
-            html += '<td>' + (c.loaiHD || '') + '</td>';
-            html += '</tr>';
+        list.forEach(function (c) {
+            var color = forcedColor || _fieldColors[c.linhVuc] || '#3b82f6';
+            html += '<div class="cd-detail-card" style="border-left-color:' + color + '">';
+            html += '  <div class="cd-detail-card__field">' + (c.linhVuc || '') + (c.congNghe && c.congNghe !== 'Không' ? ' • ' + c.congNghe : '') + '</div>';
+            html += '  <div class="cd-detail-card__content">' + (c.noiDung || '') + '</div>';
+            html += '  <div class="cd-detail-card__row">';
+            html += '    <div class="cd-detail-card__row-icon">🔧</div>';
+            html += '    <div class="cd-detail-card__row-text"><strong>Bên cung:</strong> ' + (c.benCung || '') + '</div>';
+            html += '  </div>';
+            html += '  <div class="cd-detail-card__row">';
+            html += '    <div class="cd-detail-card__row-icon">🏢</div>';
+            html += '    <div class="cd-detail-card__row-text"><strong>Bên cầu:</strong> ' + (c.benCau || '') + '</div>';
+            html += '  </div>';
+            html += '  <div class="cd-detail-card__row">';
+            html += '    <div class="cd-detail-card__row-icon">📝</div>';
+            html += '    <div class="cd-detail-card__row-text"><strong>Loại:</strong> ' + (c.loaiHD || '') + '</div>';
+            html += '  </div>';
+            if (c.giaTriTrieu > 0) {
+                html += '  <div class="cd-detail-card__value">💰 ' + c.giaTriTrieu.toLocaleString('vi-VN') + ' triệu</div>';
+            }
+            html += '</div>';
         });
-        tbody.innerHTML = html;
+        grid.innerHTML = html;
     }
+
+    // ── Show all / reset ────────────────────────────────────────
+    window._cdShowAll = function () {
+        renderAllCards();
+    };
 
     function init() {
         fetch('/js/contract-dashboard-data.json?v=' + Date.now())
@@ -369,13 +450,20 @@
                 countUp(document.getElementById('cdPending'), data.summary.pendingContracts);
                 countUp(document.getElementById('cdValue'), data.summary.totalValue);
 
+                // Build field color map for cards
+                if (data.byField) {
+                    data.byField.labels.forEach(function (lbl, i) {
+                        _fieldColors[lbl] = data.byField.colors[i];
+                    });
+                }
+
                 // 3 charts — mỗi chart filter theo field khác nhau
                 buildDoughnut('chartByField', data.byField, 'linhVuc');
                 buildDoughnut('chartByStrategy', data.byStrategy, 'congNghe');
                 buildDoughnut('chartByType', data.byType, 'loaiHD');
 
-                // Table
-                renderTable(_contracts);
+                // Render ALL cards on load
+                renderAllCards();
 
                 // Updated date
                 var upd = document.getElementById('cdUpdated');
