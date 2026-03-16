@@ -425,8 +425,6 @@
             html += '    <div class="cd-detail-card__row-icon">📝</div>';
             html += '    <div class="cd-detail-card__row-text"><strong>Loại:</strong> ' + (c.loaiHD || '') + '</div>';
             html += '  </div>';
-            var gtVal = c.giaTriTrieu || 0;
-            html += '  <div class="cd-detail-card__value">💰 ' + (gtVal > 0 ? gtVal.toLocaleString('vi-VN') : '0') + ' triệu</div>';
             html += '</div>';
         });
         grid.innerHTML = html;
