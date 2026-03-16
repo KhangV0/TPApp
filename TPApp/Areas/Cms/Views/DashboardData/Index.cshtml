@@ -1,5 +1,10 @@
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject UserManager<ApplicationUser> UserManager
 @{
     ViewData["Title"] = "Quản trị số liệu Dashboard";
+    var currentUser = await UserManager.GetUserAsync(User);
+    var isAdmin = currentUser?.IsAdmin == true;
 }
 
 <style>
@@ -81,7 +86,10 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h5 class="mb-0" id="dmEditorTitle">Số liệu trang chủ</h5>
       <div>
+        @if (isAdmin)
+        {
         <button class="btn btn-outline-danger btn-sm" id="dmRestoreDefault"><i class="fas fa-undo"></i> Khôi phục mặc định</button>
+        }
         <button class="btn btn-warning btn-sm d-none" id="dmFetchDb"><i class="fas fa-database"></i> Lấy từ Database</button>
         <button class="btn btn-default btn-sm" id="dmReload"><i class="fas fa-sync-alt"></i> Tải lại</button>
         <button class="btn btn-success btn-sm" id="dmPreview"><i class="fas fa-eye"></i> Xem trang</button>
@@ -510,7 +518,8 @@
     document.getElementById('dmPreview').addEventListener('click', function () { window.open(previewUrls[currentKey] || '/', '_blank'); });
     fetchDbBtn.addEventListener('click', fetchFromDb);
 
-    document.getElementById('dmRestoreDefault').addEventListener('click', function () {
+    var restoreBtn = document.getElementById('dmRestoreDefault');
+    if (restoreBtn) restoreBtn.addEventListener('click', function () {
         var keyName = titles[currentKey] || currentKey;
         if (!confirm('Bạn có chắc muốn khôi phục dữ liệu mặc định cho "' + keyName + '"?\n\nDữ liệu hiện tại sẽ được backup trước khi khôi phục.')) return;
         var btn = document.getElementById('dmRestoreDefault');
