@@ -1,6 +1,6 @@
-﻿@{
-    // Có thể lấy từ appsettings, tạm hard-code giống hệ cũ
-    var MainDomain = "https://localhost:7232/";
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@{
+    var MainDomain = Configuration["AppSettings:MainDomain"] ?? "https://localhost:7232/";
 }
 
 <div class="sidebar-floating">

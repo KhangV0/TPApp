@@ -1,4 +1,4 @@
-﻿/* Homepage Redesign - Trusted Innovation Portal Style */
+/* Homepage Redesign - Trusted Innovation Portal Style */
 
 :root {
     --hp-primary-blue: #0056b3;
@@ -419,6 +419,10 @@
     .hp-category-name {
         margin-top: 110px !important;
         font-size: 30px;
+    }
+
+    .hp-header-logo {
+        height: 40px !important;
     }
 }
 
