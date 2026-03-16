@@ -20,7 +20,8 @@ namespace TPApp.Areas.Cms.Controllers
         {
             ["home"]       = "js/home-analytics-data.json",
             ["contract"]   = "js/contract-dashboard-data.json",
-            ["connection"] = "js/connection-dashboard-data.json"
+            ["connection"] = "js/connection-dashboard-data.json",
+            ["traffic"]    = "js/website-traffic-data.json"
         };
 
         public DashboardDataController(IWebHostEnvironment env, AppDbContext context)

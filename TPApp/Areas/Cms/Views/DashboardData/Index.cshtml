@@ -71,6 +71,7 @@
   <div class="card-header">
     <div class="dm-tabs">
       <button class="dm-tab dm-tab--active" data-key="home">📊 Trang chủ</button>
+      <button class="dm-tab" data-key="traffic">📈 Lượt truy cập</button>
       <button class="dm-tab" data-key="contract">📄 Hợp đồng</button>
       <button class="dm-tab" data-key="connection">🔗 Kết nối cung cầu</button>
     </div>
@@ -118,6 +119,31 @@
 
       <div class="callout callout-warning mt-2">
         <p class="mb-0"><i class="fas fa-info-circle"></i> Biểu đồ tròn (doughnutChart) sẽ được giữ nguyên, chỉ KPI + Stat Boxes thay đổi.</p>
+      </div>
+    </div>
+
+    <!-- Table editor (for traffic) -->
+    <div id="dmTrafficPanel" class="d-none">
+      <h6 class="mt-2 mb-2"><i class="fas fa-chart-line text-info"></i> Dữ liệu lượt truy cập website</h6>
+      <div class="dm-table-wrap">
+        <table class="dm-table">
+          <thead>
+            <tr>
+              <th>Dataset</th>
+              <th>Màu</th>
+              <th id="dmTrafficYearHeaders"></th>
+              <th class="col-act"></th>
+            </tr>
+          </thead>
+          <tbody id="dmTrafficBody"></tbody>
+        </table>
+      </div>
+      <div class="mt-2 d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" id="dmAddTrafficDataset"><i class="fas fa-plus"></i> Thêm dataset</button>
+        <button class="btn btn-outline-secondary btn-sm" id="dmAddTrafficYear"><i class="fas fa-plus"></i> Thêm năm</button>
+      </div>
+      <div class="callout callout-info mt-3">
+        <p class="mb-0"><i class="fas fa-info-circle"></i> Dữ liệu này sẽ hiển thị trên biểu đồ đường ở trang chủ. File: <code>website-traffic-data.json</code></p>
       </div>
     </div>
 
@@ -193,8 +219,8 @@
     'use strict';
 
     var currentKey = 'home';
-    var titles = { home: 'Số liệu trang chủ', contract: 'Số liệu hợp đồng ký kết', connection: 'Số liệu kết nối cung cầu' };
-    var previewUrls = { home: '/', contract: '/hop-dong-ky-ket.html', connection: '/ket-noi-cung-cau.html' };
+    var titles = { home: 'Số liệu trang chủ', traffic: 'Dữ liệu lượt truy cập', contract: 'Số liệu hợp đồng ký kết', connection: 'Số liệu kết nối cung cầu' };
+    var previewUrls = { home: '/', traffic: '/', contract: '/hop-dong-ky-ket.html', connection: '/ket-noi-cung-cau.html' };
 
     // Dropdown options
     var LINH_VUC_OPTS = ['Công nghệ Sinh học', 'CNTP', 'Cơ khí, chế tạo máy', 'Điện, điện tử, CNTT', 'Môi trường', 'Thuỷ sản', 'Y tế', 'Trồng trọt', 'Khác'];
@@ -207,6 +233,7 @@
     var status = document.getElementById('dmStatus');
     var editorTitle = document.getElementById('dmEditorTitle');
     var homePanel = document.getElementById('dmHomePanel');
+    var trafficPanel = document.getElementById('dmTrafficPanel');
     var contractPanel = document.getElementById('dmContractPanel');
     var connectionPanel = document.getElementById('dmConnectionPanel');
     var fetchDbBtn = document.getElementById('dmFetchDb');
@@ -378,11 +405,13 @@
     // ===================== PANEL SWITCH =====================
     function switchPanel(key) {
         homePanel.classList.add('d-none');
+        trafficPanel.classList.add('d-none');
         contractPanel.classList.add('d-none');
         connectionPanel.classList.add('d-none');
         fetchDbBtn.classList.add('d-none');
 
         if (key === 'home') { homePanel.classList.remove('d-none'); }
+        else if (key === 'traffic') { trafficPanel.classList.remove('d-none'); }
         else if (key === 'contract') { contractPanel.classList.remove('d-none'); fetchDbBtn.classList.remove('d-none'); }
         else if (key === 'connection') { connectionPanel.classList.remove('d-none'); fetchDbBtn.classList.remove('d-none'); }
     }
@@ -403,6 +432,8 @@
                     renderKpiTable(kpi2026Body, obj.kpi2026 || []);
                     renderStatBoxTable(obj.statBoxes || []);
                     _homeDoughnut = obj.doughnutChart || null;
+                } else if (key === 'traffic' && obj) {
+                    renderTrafficTable(obj);
                 } else if (key === 'contract' && obj) {
                     renderContractTable(obj.contracts || []);
                 } else if (key === 'connection' && obj) {
@@ -418,6 +449,8 @@
         var body;
         if (currentKey === 'home') {
             body = JSON.stringify(buildHomeJson());
+        } else if (currentKey === 'traffic') {
+            body = JSON.stringify(buildTrafficJson());
         } else if (currentKey === 'contract') {
             body = JSON.stringify(buildContractJson(collectContracts()));
         } else if (currentKey === 'connection') {
@@ -505,6 +538,87 @@
     });
 
     loadData('home');
+
+    // ===================== TRAFFIC TABLE =====================
+    var _trafficLabels = [];
+    var trafficBody = document.getElementById('dmTrafficBody');
+    var trafficYearHeaders = document.getElementById('dmTrafficYearHeaders');
+
+    function renderTrafficTable(data) {
+        _trafficLabels = data.labels || [];
+        var datasets = data.datasets || [];
+        // Render year header columns
+        var thHtml = '';
+        _trafficLabels.forEach(function (yr) {
+            thHtml += '<th class="col-val">' + yr + '</th>';
+        });
+        trafficYearHeaders.innerHTML = thHtml;
+        // Render dataset rows
+        var html = '';
+        datasets.forEach(function (ds) {
+            html += '<tr>';
+            html += '<td><input type="text" class="form-control form-control-sm" data-field="label" value="' + esc(ds.label) + '"></td>';
+            html += '<td><input type="color" class="form-control form-control-sm" data-field="color" value="' + (ds.color || '#3b82f6') + '" style="width:50px;height:30px;padding:2px;"></td>';
+            (ds.data || []).forEach(function (val, i) {
+                html += '<td><input type="number" class="form-control form-control-sm dm-traffic-val" data-idx="' + i + '" value="' + (val || 0) + '"></td>';
+            });
+            html += '<td class="col-act"><button class="btn btn-sm btn-outline-danger dm-del-row"><i class="fas fa-trash"></i></button></td>';
+            html += '</tr>';
+        });
+        trafficBody.innerHTML = html;
+        bindDelBtns(trafficBody);
+    }
+
+    function buildTrafficJson() {
+        var datasets = [];
+        trafficBody.querySelectorAll('tr').forEach(function (tr) {
+            var label = tr.querySelector('[data-field="label"]');
+            var color = tr.querySelector('[data-field="color"]');
+            var vals = [];
+            tr.querySelectorAll('.dm-traffic-val').forEach(function (inp) {
+                vals.push(parseFloat(inp.value) || 0);
+            });
+            if (label) {
+                datasets.push({ label: label.value, data: vals, color: color ? color.value : '#3b82f6' });
+            }
+        });
+        return {
+            lastUpdated: new Date().toLocaleDateString('vi-VN'),
+            labels: _trafficLabels,
+            datasets: datasets
+        };
+    }
+
+    document.getElementById('dmAddTrafficDataset').addEventListener('click', function () {
+        var newData = _trafficLabels.map(function () { return 0; });
+        var ds = { label: 'Dataset mới', data: newData, color: '#10b981' };
+        var html = '<tr>';
+        html += '<td><input type="text" class="form-control form-control-sm" data-field="label" value="' + esc(ds.label) + '"></td>';
+        html += '<td><input type="color" class="form-control form-control-sm" data-field="color" value="' + ds.color + '" style="width:50px;height:30px;padding:2px;"></td>';
+        newData.forEach(function (val, i) {
+            html += '<td><input type="number" class="form-control form-control-sm dm-traffic-val" data-idx="' + i + '" value="0"></td>';
+        });
+        html += '<td class="col-act"><button class="btn btn-sm btn-outline-danger dm-del-row"><i class="fas fa-trash"></i></button></td>';
+        html += '</tr>';
+        trafficBody.insertAdjacentHTML('beforeend', html);
+        bindDelBtns(trafficBody);
+    });
+
+    document.getElementById('dmAddTrafficYear').addEventListener('click', function () {
+        var currentYear = new Date().getFullYear();
+        var lastYear = _trafficLabels.length > 0 ? parseInt(_trafficLabels[_trafficLabels.length - 1]) : currentYear - 1;
+        var newYear = (lastYear + 1).toString();
+        _trafficLabels.push(newYear);
+        // Add header
+        trafficYearHeaders.innerHTML += '<th class="col-val">' + newYear + '</th>';
+        // Add input to each row
+        trafficBody.querySelectorAll('tr').forEach(function (tr) {
+            var delBtn = tr.querySelector('.col-act');
+            var newTd = document.createElement('td');
+            newTd.innerHTML = '<input type="number" class="form-control form-control-sm dm-traffic-val" data-idx="' + (_trafficLabels.length - 1) + '" value="0">';
+            tr.insertBefore(newTd, delBtn);
+        });
+    });
 })();
 </script>
 }

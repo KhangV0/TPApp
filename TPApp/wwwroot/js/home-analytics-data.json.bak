@@ -87,25 +87,25 @@
   "statBoxes": [
     {
       "label": "Y\u00EAu c\u1EA7u t\u00ECm mua",
-      "value": 91,
-      "link": "sdfs",
+      "value": 60,
+      "link": "https://beta.techport.vn/yeu-cau-cong-nghe-67.html",
       "color": "blue"
     },
     {
       "label": "K\u1EBFt n\u1ED1i cung c\u1EA7u",
-      "value": 5,
+      "value": 28,
       "link": "ket-noi-cung-cau.html",
       "color": "amber"
     },
     {
       "label": "H\u1EE3p \u0111\u1ED3ng k\u00FD k\u1EBFt",
-      "value": 1,
+      "value": 11,
       "link": "hop-dong-ky-ket.html",
       "color": "green"
     },
     {
       "label": "T\u1ED5ng gi\u00E1 tr\u1ECB H\u0110 (tri\u1EC7u)",
-      "value": 100,
+      "value": 13560,
       "link": "hop-dong-ky-ket.html",
       "color": "purple"
     },
@@ -116,6 +116,21 @@
       "color": "teal"
     }
   ],
+  "lineChart": {
+    "labels": ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"],
+    "datasets": [
+      {
+        "label": "L\u01B0\u1EE3t truy c\u1EADp",
+        "data": [147172, 265170, 386338, 487564, 356703, 372461, 373920, 170000],
+        "color": "#3b82f6"
+      },
+      {
+        "label": "L\u01B0\u1EE3t ng\u01B0\u1EDDi d\u00F9ng",
+        "data": [44375, 98763, 185162, 283455, 174981, 182559, 96310, 35000],
+        "color": "#f59e0b"
+      }
+    ]
+  },
   "doughnutChart": {
     "sectors": [
       {

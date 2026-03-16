@@ -37,21 +37,26 @@
 
     // ── Load JSON data then build everything ──────────────────────
     function loadDataAndBuild() {
-        fetch('/js/home-analytics-data.json?v=' + Date.now())
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                applyKpiData(data);
-                applyStatBoxes(data);
-                buildLineChart(data);
-                buildDoughnutChart(data);
-                setupTabCountUp();
-            })
-            .catch(function (err) {
-                console.warn('[home-analytics] Không tải được data JSON, dùng giá trị mặc định trong HTML.', err);
-                // Fallback: vẫn chạy count-up trên giá trị có sẵn trong HTML
-                document.querySelectorAll('.js-cu[data-target]').forEach(countUp);
-                setupTabCountUp();
-            });
+        var v = '?v=' + Date.now();
+        Promise.all([
+            fetch('/js/home-analytics-data.json' + v).then(function (r) { return r.json(); }),
+            fetch('/js/website-traffic-data.json' + v).then(function (r) { return r.json(); }).catch(function () { return null; })
+        ])
+        .then(function (results) {
+            var data = results[0];
+            var trafficData = results[1];
+            applyKpiData(data);
+            applyStatBoxes(data);
+            buildLineChart(trafficData);
+            buildDoughnutChart(data);
+            setupTabCountUp();
+        })
+        .catch(function (err) {
+            console.warn('[home-analytics] Không tải được data JSON, dùng giá trị mặc định trong HTML.', err);
+            // Fallback: vẫn chạy count-up trên giá trị có sẵn trong HTML
+            document.querySelectorAll('.js-cu[data-target]').forEach(countUp);
+            setupTabCountUp();
+        });
     }
 
     // ── Apply KPI cards data from JSON ────────────────────────────
@@ -115,16 +120,16 @@
         });
     }
 
-    // ── Build line chart from JSON ─────────────────────────────────
-    function buildLineChart(data) {
+    // ── Build line chart from separate JSON ─────────────────────────
+    function buildLineChart(trafficData) {
         if (typeof Chart === 'undefined') return;
         var lineCtx = document.getElementById('tpLineChart');
         if (!lineCtx || lineCtx._chartBuilt) return;
-        if (!data.lineChart || !data.lineChart.labels || !data.lineChart.datasets) return;
+        if (!trafficData || !trafficData.labels || !trafficData.datasets) return;
 
         lineCtx._chartBuilt = true;
 
-        var datasets = data.lineChart.datasets.map(function (ds, idx) {
+        var datasets = trafficData.datasets.map(function (ds, idx) {
             return {
                 label: ds.label,
                 data: ds.data,
@@ -145,7 +150,7 @@
         new Chart(lineCtx, {
             type: 'line',
             data: {
-                labels: data.lineChart.labels,
+                labels: trafficData.labels,
                 datasets: datasets
             },
             options: {

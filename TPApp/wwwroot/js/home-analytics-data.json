@@ -3,7 +3,7 @@
   "kpiTotal": [
     {
       "label": "C\u00F4ng ngh\u1EC7",
-      "value": 1376,
+      "value": 1374,
       "link": "cong-nghe.html"
     },
     {
@@ -45,50 +45,50 @@
   "kpi2026": [
     {
       "label": "C\u00F4ng ngh\u1EC7 m\u1EDBi",
-      "value": 12,
+      "value": 23,
       "link": "cong-nghe.html"
     },
     {
       "label": "Thi\u1EBFt b\u1ECB m\u1EDBi",
-      "value": 45,
+      "value": 6,
       "link": "thiet-bi.html"
     },
     {
       "label": "Nh\u00E0 cung \u1EE9ng m\u1EDBi",
-      "value": 8,
+      "value": 20,
       "link": "nha-cung-ung.html"
     },
     {
       "label": "Chuy\u00EAn gia m\u1EDBi",
-      "value": 3,
+      "value": 2,
       "link": "chuyen-gia.html"
     },
     {
       "label": "T\u00E0i s\u1EA3n tr\u00ED tu\u1EC7 m\u1EDBi",
-      "value": 2,
+      "value": 3,
       "link": "tai-san-tri-tue.html"
     },
     {
       "label": "Tin KHCN m\u1EDBi",
-      "value": 35,
+      "value": 45,
       "link": "tin-su-kien-44.html"
     },
     {
       "label": "Video m\u1EDBi",
-      "value": 5,
+      "value": 0,
       "link": "video.html"
     },
     {
       "label": "D\u1EF1 \u00E1n m\u1EDBi",
-      "value": 15,
+      "value": 0,
       "link": "tim-kiem-doi-tac-11.html"
     }
   ],
   "statBoxes": [
     {
       "label": "Y\u00EAu c\u1EA7u t\u00ECm mua",
-      "value": 60,
-      "link": "https://beta.techport.vn/yeu-cau-cong-nghe-67.html",
+      "value": 91,
+      "link": "yeu-cau-cong-nghe-67.html",
       "color": "blue"
     },
     {
@@ -111,26 +111,11 @@
     },
     {
       "label": "M\u1EA1ng l\u01B0\u1EDBi \u0111\u1ED1i t\u00E1c",
-      "value": 25,
+      "value": 22,
       "link": "#partner-section",
       "color": "teal"
     }
   ],
-  "lineChart": {
-    "labels": ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"],
-    "datasets": [
-      {
-        "label": "L\u01B0\u1EE3t truy c\u1EADp",
-        "data": [147172, 265170, 386338, 487564, 356703, 372461, 373920, 170000],
-        "color": "#3b82f6"
-      },
-      {
-        "label": "L\u01B0\u1EE3t ng\u01B0\u1EDDi d\u00F9ng",
-        "data": [44375, 98763, 185162, 283455, 174981, 182559, 96310, 35000],
-        "color": "#f59e0b"
-      }
-    ]
-  },
   "doughnutChart": {
     "sectors": [
       {
