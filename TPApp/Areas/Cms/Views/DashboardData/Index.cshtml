@@ -568,7 +568,7 @@
     var trafficHead = document.getElementById('dmTrafficHead');
 
     function renderTrafficYearHeaders() {
-        var html = '<tr><th>Dataset</th><th>Màu</th>';
+        var html = '<tr><th style="min-width:200px;">Dataset</th><th>Màu</th>';
         _trafficLabels.forEach(function (yr, i) {
             html += '<th class="col-val" style="position:relative;">' + yr + ' <button class="btn btn-sm p-0 text-danger dm-del-year" data-year-idx="' + i + '" title="Xóa cột ' + yr + '" style="font-size:.7rem;line-height:1;vertical-align:top;">✕</button></th>';
         });
