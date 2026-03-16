@@ -42,6 +42,10 @@ namespace TPApp.Entities
         [StringLength(100)]
         public string? LinhVuc { get; set; }
 
+        /// <summary>Maps to Category.CatId — lĩnh vực công nghệ (not in DB table)</summary>
+        [NotMapped]
+        public int? LinhVucId { get; set; }
+
         public decimal? NganSachDuKien { get; set; }
 
         public int? ProjectId { get; set; }

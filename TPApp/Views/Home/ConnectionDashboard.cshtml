@@ -215,6 +215,27 @@
 
 
 
+<!-- CONNECTIONS TABLE -->
+<div class="cn-table-wrap">
+  <div class="cn-table-card">
+    <div class="cn-table-card__title">📋 Danh sách biên bản kết nối</div>
+    <div style="overflow-x:auto;">
+      <table class="cn-table">
+        <thead>
+          <tr>
+            <th style="width:40px">STT</th>
+            <th>Lĩnh vực</th>
+            <th>Bên cầu</th>
+            <th>Bên cung</th>
+            <th>Nội dung yêu cầu</th>
+          </tr>
+        </thead>
+        <tbody id="cnTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div class="cn-updated" id="cnUpdated"></div>
 
 @section Scripts {
@@ -295,9 +316,8 @@
                                 if (matched.length === 0) return ['  (không có biên bản)'];
                                 var lines = ['───────────────'];
                                 matched.forEach(function (c, i) {
-                                    lines.push('📋 ' + c.maKetNoi + ' — ' + c.tenDuAn);
-                                    lines.push('   ' + c.benMua + ' ↔ ' + c.benBan);
-                                    lines.push('   Giá: ' + (c.giaChot || 0) + ' tr | ' + c.trangThai);
+                                    lines.push('📋 ' + (c.benCau || '') + ' → ' + (c.benCung || ''));
+                                    lines.push('   ' + (c.noiDung || ''));
                                     if (i < matched.length - 1) lines.push('');
                                 });
                                 return lines;
@@ -351,35 +371,21 @@
         });
     }
 
-    function statusBadge(status) {
-        var map = {
-            'Nháp': 'cn-badge--draft',
-            'Đã thỏa giá': 'cn-badge--agreed',
-            'Chờ ký': 'cn-badge--waiting',
-            'Đã ký 1 bên': 'cn-badge--partial',
-            'Hoàn tất': 'cn-badge--done'
-        };
-        var cls = map[status] || 'cn-badge--draft';
-        return '<span class="cn-badge ' + cls + '">' + status + '</span>';
-    }
-
     function renderTable(connections) {
         var tbody = document.getElementById('cnTableBody');
-        if (!tbody || !connections || connections.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">Chưa có dữ liệu kết nối</td></tr>';
+        if (!tbody) return;
+        if (!connections || connections.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">Chưa có dữ liệu kết nối</td></tr>';
             return;
         }
         var html = '';
-        connections.forEach(function (c) {
+        connections.forEach(function (c, i) {
             html += '<tr>';
-            html += '<td><strong>' + c.maKetNoi + '</strong></td>';
-            html += '<td>' + c.tenDuAn + '</td>';
-            html += '<td>' + c.linhVuc + '</td>';
-            html += '<td>' + c.benMua + '</td>';
-            html += '<td>' + c.benBan + '</td>';
-            html += '<td>' + (c.giaChot || 0).toLocaleString('vi-VN') + '</td>';
-            html += '<td>' + statusBadge(c.trangThai) + '</td>';
-            html += '<td>' + c.ngayTao + '</td>';
+            html += '<td><strong>' + (i + 1) + '</strong></td>';
+            html += '<td>' + (c.linhVuc || '') + '</td>';
+            html += '<td>' + (c.benCau || '') + '</td>';
+            html += '<td>' + (c.benCung || '') + '</td>';
+            html += '<td>' + (c.noiDung || '') + '</td>';
             html += '</tr>';
         });
         tbody.innerHTML = html;

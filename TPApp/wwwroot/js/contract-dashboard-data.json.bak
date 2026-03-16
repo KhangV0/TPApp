@@ -1,0 +1,90 @@
+{
+  "lastUpdated": "16/3/2026",
+  "summary": {
+    "totalContracts": 1,
+    "totalValue": 100,
+    "signedContracts": 1,
+    "pendingContracts": 0
+  },
+  "byField": {
+    "labels": [
+      "\u0110i\u1EC7n, \u0111i\u1EC7n t\u1EED, CNTT",
+      "Th\u1EF1c ph\u1EA9m",
+      "M\u00F4i tr\u01B0\u1EDDng",
+      "Y t\u1EBF",
+      "CN sinh h\u1ECDc",
+      "Tr\u1ED3ng tr\u1ECDt",
+      "Kh\u00E1c"
+    ],
+    "values": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "colors": [
+      "#3b82f6",
+      "#f59e0b",
+      "#10b981",
+      "#ef4444",
+      "#8b5cf6",
+      "#06b6d4",
+      "#94a3b8"
+    ]
+  },
+  "byStrategy": {
+    "labels": [
+      "C\u00F4ng ngh\u1EC7 cao",
+      "C\u00F4ng ngh\u1EC7 chi\u1EBFn l\u01B0\u1EE3c",
+      "C\u00F4ng ngh\u1EC7 th\u00F4ng th\u01B0\u1EDDng"
+    ],
+    "values": [
+      0,
+      1,
+      0
+    ],
+    "colors": [
+      "#6366f1",
+      "#f43f5e",
+      "#64748b"
+    ]
+  },
+  "byType": {
+    "labels": [
+      "Chuy\u1EC3n giao CN",
+      "Mua b\u00E1n thi\u1EBFt b\u1ECB",
+      "T\u01B0 v\u1EA5n k\u1EF9 thu\u1EADt",
+      "H\u1EE3p t\u00E1c R\u0026D",
+      "Kh\u00E1c"
+    ],
+    "values": [
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "colors": [
+      "#0ea5e9",
+      "#f59e0b",
+      "#10b981",
+      "#8b5cf6",
+      "#94a3b8"
+    ]
+  },
+  "contracts": [
+    {
+      "soHopDong": "HD-002",
+      "tenDuAn": "D\u1EF1 \u00E1n chuy\u1EC3n giao CN sinh h\u1ECDc",
+      "linhVuc": "\u0110i\u1EC7n, \u0111i\u1EC7n t\u1EED, CNTT",
+      "loaiHD": "Chuy\u1EC3n giao CN",
+      "congNghe": "C\u00F4ng ngh\u1EC7 chi\u1EBFn l\u01B0\u1EE3c",
+      "trangThai": "\u0110\u00E3 ho\u00E0n t\u1EA5t",
+      "giaTriTrieu": 100,
+      "ngayTao": "15/03/2026"
+    }
+  ]
+}

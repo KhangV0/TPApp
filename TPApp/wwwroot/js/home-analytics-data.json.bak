@@ -87,25 +87,25 @@
   "statBoxes": [
     {
       "label": "Y\u00EAu c\u1EA7u t\u00ECm mua",
-      "value": 60,
-      "link": "https://beta.techport.vn/yeu-cau-cong-nghe-67.html",
+      "value": 91,
+      "link": "sdfs",
       "color": "blue"
     },
     {
       "label": "K\u1EBFt n\u1ED1i cung c\u1EA7u",
-      "value": 28,
+      "value": 5,
       "link": "ket-noi-cung-cau.html",
       "color": "amber"
     },
     {
       "label": "H\u1EE3p \u0111\u1ED3ng k\u00FD k\u1EBFt",
-      "value": 11,
+      "value": 1,
       "link": "hop-dong-ky-ket.html",
       "color": "green"
     },
     {
       "label": "T\u1ED5ng gi\u00E1 tr\u1ECB H\u0110 (tri\u1EC7u)",
-      "value": 13560,
+      "value": 100,
       "link": "hop-dong-ky-ket.html",
       "color": "purple"
     },

@@ -52,7 +52,7 @@ namespace TPApp.Areas.Cms.Controllers
 
         // POST: /cms/DashboardData/Save?key=home
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Save(string key, [FromBody] JsonElement body)
         {
             if (!DataFiles.TryGetValue(key ?? "", out var relativePath))
@@ -62,6 +62,11 @@ namespace TPApp.Areas.Cms.Controllers
 
             try
             {
+                // Ensure directory exists
+                var dir = Path.GetDirectoryName(filePath)!;
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
                 var backupPath = filePath + ".bak";
                 if (System.IO.File.Exists(filePath))
                     System.IO.File.Copy(filePath, backupPath, overwrite: true);
@@ -78,9 +83,13 @@ namespace TPApp.Areas.Cms.Controllers
 
                 return Json(new { success = true, message = $"Đã cập nhật {key}", lastUpdated = DateTime.Now.ToString("dd/MM/yyyy HH:mm") });
             }
+            catch (UnauthorizedAccessException)
+            {
+                return Json(new { success = false, error = $"Không có quyền ghi file '{relativePath}'. Kiểm tra quyền Write cho IIS AppPool trên thư mục wwwroot/js." });
+            }
             catch (Exception ex)
             {
-                return Json(new { success = false, error = ex.Message });
+                return Json(new { success = false, error = $"Lỗi lưu file: {ex.GetType().Name} - {ex.Message}" });
             }
         }
 
@@ -107,7 +116,7 @@ namespace TPApp.Areas.Cms.Controllers
                 using var cDoc = JsonDocument.Parse(cJson);
                 if (cDoc.RootElement.TryGetProperty("summary", out var cSummary))
                 {
-                    totalContracts = cSummary.TryGetProperty("signedContracts", out var sc) ? sc.GetInt32() : 0;
+                    totalContracts = cSummary.TryGetProperty("totalContracts", out var sc) ? sc.GetInt32() : 0;
                     totalValue = cSummary.TryGetProperty("totalValue", out var tv) ? tv.GetInt32() : 0;
                 }
             }

@@ -1,0 +1,133 @@
+{
+  "lastUpdated": "16/3/2026",
+  "summary": {
+    "totalRequests": 91,
+    "totalConnections": 5,
+    "completedNegotiations": 2,
+    "conversionRate": 5.5
+  },
+  "byField": {
+    "labels": [
+      "\u0110i\u1EC7n, \u0111i\u1EC7n t\u1EED, CNTT",
+      "Th\u1EF1c ph\u1EA9m",
+      "M\u00F4i tr\u01B0\u1EDDng",
+      "Y t\u1EBF",
+      "CN sinh h\u1ECDc",
+      "Tr\u1ED3ng tr\u1ECDt",
+      "Kh\u00E1c"
+    ],
+    "values": [
+      2,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "colors": [
+      "#3b82f6",
+      "#f59e0b",
+      "#10b981",
+      "#ef4444",
+      "#8b5cf6",
+      "#06b6d4",
+      "#94a3b8"
+    ]
+  },
+  "conversionFunnel": {
+    "labels": [
+      "Y\u00EAu c\u1EA7u t\u00ECm mua",
+      "\u0110\u00E3 k\u1EBFt n\u1ED1i",
+      "\u0110ang th\u01B0\u01A1ng l\u01B0\u1EE3ng",
+      "\u0110\u00E3 k\u00FD bi\u00EAn b\u1EA3n"
+    ],
+    "values": [
+      91,
+      5,
+      2,
+      2
+    ],
+    "colors": [
+      "#3b82f6",
+      "#f59e0b",
+      "#8b5cf6",
+      "#10b981"
+    ]
+  },
+  "byStatus": {
+    "labels": [
+      "Nh\u00E1p",
+      "\u0110\u00E3 th\u1ECFa gi\u00E1",
+      "Ch\u1EDD k\u00FD",
+      "\u0110\u00E3 k\u00FD 1 b\u00EAn",
+      "Ho\u00E0n t\u1EA5t"
+    ],
+    "values": [
+      1,
+      1,
+      1,
+      0,
+      2
+    ],
+    "colors": [
+      "#94a3b8",
+      "#f59e0b",
+      "#3b82f6",
+      "#8b5cf6",
+      "#10b981"
+    ]
+  },
+  "connections": [
+    {
+      "maKetNoi": "KN-001",
+      "tenDuAn": "D\u1EF1 \u00E1n chuy\u1EC3n giao CN sinh h\u1ECDc",
+      "linhVuc": "CN sinh h\u1ECDc",
+      "benMua": "C\u00F4ng ty Minh",
+      "benBan": "Vi\u1EC7n nghi\u00EAn c\u1EE9u B",
+      "giaChot": 500,
+      "trangThai": "Ho\u00E0n t\u1EA5t",
+      "ngayTao": "10/02/2026"
+    },
+    {
+      "maKetNoi": "KN-002",
+      "tenDuAn": "T\u00ECm ki\u1EBFm gi\u1EA3i ph\u00E1p IoT",
+      "linhVuc": "\u0110i\u1EC7n, \u0111i\u1EC7n t\u1EED, CNTT",
+      "benMua": "Nh\u00E0 m\u00E1y C",
+      "benBan": "Startup D",
+      "giaChot": 350,
+      "trangThai": "Ho\u00E0n t\u1EA5t",
+      "ngayTao": "18/02/2026"
+    },
+    {
+      "maKetNoi": "KN-003",
+      "tenDuAn": "C\u00F4ng ngh\u1EC7 x\u1EED l\u00FD th\u1EF1c ph\u1EA9m",
+      "linhVuc": "Th\u1EF1c ph\u1EA9m",
+      "benMua": "C\u00F4ng ty E",
+      "benBan": "\u0110\u1EA1i h\u1ECDc F",
+      "giaChot": 0,
+      "trangThai": "Ch\u1EDD k\u00FD",
+      "ngayTao": "01/03/2026"
+    },
+    {
+      "maKetNoi": "KN-004",
+      "tenDuAn": "H\u1EC7 th\u1ED1ng gi\u00E1m s\u00E1t th\u00F4ng minh",
+      "linhVuc": "\u0110i\u1EC7n, \u0111i\u1EC7n t\u1EED, CNTT",
+      "benMua": "T\u1EADp \u0111o\u00E0n G",
+      "benBan": "Lab H",
+      "giaChot": 200,
+      "trangThai": "\u0110\u00E3 th\u1ECFa gi\u00E1",
+      "ngayTao": "05/03/2026"
+    },
+    {
+      "maKetNoi": "KN-005",
+      "tenDuAn": "\u1EE8ng d\u1EE5ng blockchain n\u00F4ng nghi\u1EC7p",
+      "linhVuc": "Kh\u00E1c",
+      "benMua": "HTX I",
+      "benBan": "C\u00F4ng ty K",
+      "giaChot": 0,
+      "trangThai": "Nh\u00E1p",
+      "ngayTao": "12/03/2026"
+    }
+  ]
+}

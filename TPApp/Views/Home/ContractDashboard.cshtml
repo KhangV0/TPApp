@@ -212,6 +212,30 @@
 
 
 
+<!-- CONTRACTS TABLE -->
+<div class="cd-table-wrap">
+  <div class="cd-table-card">
+    <div class="cd-table-card__title">📋 Danh sách hợp đồng ký kết</div>
+    <div style="overflow-x:auto;">
+      <table class="cd-table">
+        <thead>
+          <tr>
+            <th style="width:40px">STT</th>
+            <th>Lĩnh vực</th>
+            <th>CN chiến lược</th>
+            <th>Bên cung</th>
+            <th>Bên cầu</th>
+            <th>Nội dung HĐ</th>
+            <th>Giá trị (tr)</th>
+            <th>Loại HĐ</th>
+          </tr>
+        </thead>
+        <tbody id="cdTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div class="cd-updated" id="cdUpdated"></div>
 
 @section Scripts {
@@ -297,8 +321,8 @@
                                 if (matched.length === 0) return ['  (không có HĐ)'];
                                 var lines = ['───────────────'];
                                 matched.forEach(function (c, i) {
-                                    lines.push('📄 ' + c.soHopDong + ' — ' + c.tenDuAn);
-                                    lines.push('   Trạng thái: ' + c.trangThai + ' | Giá trị: ' + (c.giaTriTrieu || 0) + ' tr');
+                                    lines.push('📄 ' + (c.benCung || '') + ' → ' + (c.benCau || ''));
+                                    lines.push('   ' + (c.noiDung || '') + ' | ' + (c.giaTriTrieu || 0) + ' tr');
                                     if (i < matched.length - 1) lines.push('');
                                 });
                                 return lines;
@@ -310,30 +334,24 @@
         });
     }
 
-    function statusBadge(status) {
-        var cls = 'cd-badge--pending';
-        if (status === 'Đã hoàn tất') cls = 'cd-badge--signed';
-        else if (status === 'Đã ký 1 bên') cls = 'cd-badge--partial';
-        return '<span class="cd-badge ' + cls + '">' + status + '</span>';
-    }
-
     function renderTable(contracts) {
         var tbody = document.getElementById('cdTableBody');
-        if (!tbody || !contracts || contracts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">Chưa có dữ liệu hợp đồng</td></tr>';
+        if (!tbody) return;
+        if (!contracts || contracts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">Chưa có dữ liệu hợp đồng</td></tr>';
             return;
         }
         var html = '';
-        contracts.forEach(function (c) {
+        contracts.forEach(function (c, i) {
             html += '<tr>';
-            html += '<td><strong>' + c.soHopDong + '</strong></td>';
-            html += '<td>' + c.tenDuAn + '</td>';
-            html += '<td>' + c.linhVuc + '</td>';
-            html += '<td>' + c.loaiHD + '</td>';
-            html += '<td>' + c.congNghe + '</td>';
-            html += '<td>' + statusBadge(c.trangThai) + '</td>';
+            html += '<td><strong>' + (i + 1) + '</strong></td>';
+            html += '<td>' + (c.linhVuc || '') + '</td>';
+            html += '<td>' + (c.congNghe === 'Không' ? '' : (c.congNghe || '')) + '</td>';
+            html += '<td>' + (c.benCung || '') + '</td>';
+            html += '<td>' + (c.benCau || '') + '</td>';
+            html += '<td>' + (c.noiDung || '') + '</td>';
             html += '<td>' + (c.giaTriTrieu || 0).toLocaleString('vi-VN') + '</td>';
-            html += '<td>' + c.ngayTao + '</td>';
+            html += '<td>' + (c.loaiHD || '') + '</td>';
             html += '</tr>';
         });
         tbody.innerHTML = html;

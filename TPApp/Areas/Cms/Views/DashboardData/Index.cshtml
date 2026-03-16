@@ -127,14 +127,14 @@
         <table class="dm-table">
           <thead>
             <tr>
-              <th>Số HĐ</th>
-              <th>Tên dự án</th>
+              <th style="width:40px">STT</th>
               <th>Lĩnh vực</th>
-              <th>Loại HĐ</th>
-              <th>Công nghệ</th>
-              <th>Trạng thái</th>
+              <th>CN chiến lược</th>
+              <th>Bên cung</th>
+              <th>Bên cầu</th>
+              <th>Nội dung HĐ</th>
               <th class="col-val">Giá trị (tr)</th>
-              <th class="col-date">Ngày tạo</th>
+              <th>Loại HĐ</th>
               <th class="col-act"></th>
             </tr>
           </thead>
@@ -153,14 +153,11 @@
         <table class="dm-table">
           <thead>
             <tr>
-              <th>Mã</th>
-              <th>Tên dự án</th>
+              <th style="width:40px">STT</th>
               <th>Lĩnh vực</th>
-              <th>Bên mua</th>
-              <th>Bên bán</th>
-              <th class="col-val">Giá chốt (tr)</th>
-              <th>Trạng thái</th>
-              <th class="col-date">Ngày tạo</th>
+              <th>Bên cầu</th>
+              <th>Bên cung</th>
+              <th>Nội dung yêu cầu</th>
               <th class="col-act"></th>
             </tr>
           </thead>
@@ -200,9 +197,9 @@
     var previewUrls = { home: '/', contract: '/hop-dong-ky-ket.html', connection: '/ket-noi-cung-cau.html' };
 
     // Dropdown options
-    var LINH_VUC_OPTS = ['Điện, điện tử, CNTT', 'Thực phẩm', 'Môi trường', 'Y tế', 'CN sinh học', 'Trồng trọt', 'Khác'];
-    var LOAI_HD_OPTS  = ['Chuyển giao CN', 'Mua bán thiết bị', 'Tư vấn kỹ thuật', 'Hợp tác R&D', 'Khác'];
-    var CONG_NGHE_OPTS = ['Công nghệ cao', 'Công nghệ chiến lược', 'Công nghệ thông thường'];
+    var LINH_VUC_OPTS = ['Công nghệ Sinh học', 'CNTP', 'Cơ khí, chế tạo máy', 'Điện, điện tử, CNTT', 'Môi trường', 'Thuỷ sản', 'Y tế', 'Trồng trọt', 'Khác'];
+    var LOAI_HD_OPTS  = ['HĐ Chuyển giao Công nghệ', 'HĐ Mua bán thiết bị', 'HĐ dịch vụ SX thử nghiệm', 'MOU', 'Tư vấn kỹ thuật', 'Hợp tác R&D', 'Khác'];
+    var CONG_NGHE_OPTS = ['Công nghệ robot và tự động hóa', 'Trí tuệ nhân tạo, bản sao số, thực tế ảo', 'Không', 'Khác'];
     var TRANG_THAI_HD_OPTS = ['Chưa ký', 'Đã ký 1 bên', 'Đã hoàn tất'];
     var TRANG_THAI_KN_OPTS = ['Nháp', 'Đã thỏa giá', 'Chờ ký', 'Đã ký 1 bên', 'Hoàn tất'];
 
@@ -280,90 +277,82 @@
     }
 
     // ===================== CONTRACT TABLE =====================
-    function renderContractRow(c) {
+    function renderContractRow(c, idx) {
         return '<tr>' +
-            '<td><input type="text" class="form-control form-control-sm" data-field="soHopDong" value="' + esc(c.soHopDong) + '"></td>' +
-            '<td><input type="text" class="form-control form-control-sm" data-field="tenDuAn" value="' + esc(c.tenDuAn) + '"></td>' +
+            '<td><span class="dm-row-num">' + (idx || '') + '</span></td>' +
             '<td>' + makeSelect(LINH_VUC_OPTS, c.linhVuc).replace('<select', '<select data-field="linhVuc"') + '</td>' +
-            '<td>' + makeSelect(LOAI_HD_OPTS, c.loaiHD).replace('<select', '<select data-field="loaiHD"') + '</td>' +
             '<td>' + makeSelect(CONG_NGHE_OPTS, c.congNghe).replace('<select', '<select data-field="congNghe"') + '</td>' +
-            '<td>' + makeSelect(TRANG_THAI_HD_OPTS, c.trangThai).replace('<select', '<select data-field="trangThai"') + '</td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="benCung" value="' + esc(c.benCung) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="benCau" value="' + esc(c.benCau) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="noiDung" value="' + esc(c.noiDung) + '"></td>' +
             '<td><input type="number" class="form-control form-control-sm" data-field="giaTriTrieu" value="' + (c.giaTriTrieu || 0) + '"></td>' +
-            '<td><input type="text" class="form-control form-control-sm" data-field="ngayTao" value="' + esc(c.ngayTao) + '" placeholder="dd/MM/yyyy"></td>' +
+            '<td>' + makeSelect(LOAI_HD_OPTS, c.loaiHD).replace('<select', '<select data-field="loaiHD"') + '</td>' +
             '<td class="col-act"><button class="btn btn-sm btn-outline-danger dm-del-row"><i class="fas fa-trash"></i></button></td></tr>';
     }
 
     function renderContractTable(contracts) {
-        var html = ''; (contracts || []).forEach(function (c) { html += renderContractRow(c); });
+        var html = ''; (contracts || []).forEach(function (c, i) { html += renderContractRow(c, i + 1); });
         contractBody.innerHTML = html; bindDelBtns(contractBody);
     }
 
-    function collectContracts() { return collectRows(contractBody, ['giaTriTrieu'], 'soHopDong', 'tenDuAn'); }
+    function collectContracts() { return collectRows(contractBody, ['giaTriTrieu'], 'benCung', 'noiDung'); }
 
     function buildContractJson(contracts) {
-        var total = contracts.length, signed = 0, pending = 0, totalVal = 0;
+        var total = contracts.length, totalVal = 0;
         var fc = {}, sc = {}, tc = {};
         LINH_VUC_OPTS.forEach(function(l){fc[l]=0;}); CONG_NGHE_OPTS.forEach(function(s){sc[s]=0;}); LOAI_HD_OPTS.forEach(function(t){tc[t]=0;});
         contracts.forEach(function(c) {
-            if (c.trangThai==='Đã hoàn tất') signed++; else pending++;
             totalVal += (c.giaTriTrieu||0);
             if(fc[c.linhVuc]!==undefined)fc[c.linhVuc]++; if(sc[c.congNghe]!==undefined)sc[c.congNghe]++; if(tc[c.loaiHD]!==undefined)tc[c.loaiHD]++;
         });
         return {
             lastUpdated: new Date().toLocaleDateString('vi-VN'),
-            summary: { totalContracts: total, totalValue: totalVal, signedContracts: signed, pendingContracts: pending },
-            byField:    { labels: LINH_VUC_OPTS, values: LINH_VUC_OPTS.map(function(l){return fc[l];}), colors: ['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#94a3b8'] },
-            byStrategy: { labels: CONG_NGHE_OPTS, values: CONG_NGHE_OPTS.map(function(s){return sc[s];}), colors: ['#6366f1','#f43f5e','#64748b'] },
-            byType:     { labels: LOAI_HD_OPTS, values: LOAI_HD_OPTS.map(function(t){return tc[t];}), colors: ['#0ea5e9','#f59e0b','#10b981','#8b5cf6','#94a3b8'] },
+            summary: { totalContracts: total, totalValue: totalVal, signedContracts: total, pendingContracts: 0 },
+            byField:    { labels: LINH_VUC_OPTS, values: LINH_VUC_OPTS.map(function(l){return fc[l];}), colors: ['#10b981','#f59e0b','#3b82f6','#6366f1','#ef4444','#8b5cf6','#06b6d4','#94a3b8'] },
+            byStrategy: { labels: CONG_NGHE_OPTS, values: CONG_NGHE_OPTS.map(function(s){return sc[s];}), colors: ['#6366f1','#f43f5e','#64748b','#94a3b8'] },
+            byType:     { labels: LOAI_HD_OPTS, values: LOAI_HD_OPTS.map(function(t){return tc[t];}), colors: ['#0ea5e9','#f59e0b','#10b981','#8b5cf6','#ef4444','#06b6d4','#94a3b8'] },
             contracts: contracts
         };
     }
 
     // ===================== CONNECTION TABLE =====================
-    function renderConnectionRow(c) {
+    function renderConnectionRow(c, idx) {
         return '<tr>' +
-            '<td><input type="text" class="form-control form-control-sm" data-field="maKetNoi" value="' + esc(c.maKetNoi) + '"></td>' +
-            '<td><input type="text" class="form-control form-control-sm" data-field="tenDuAn" value="' + esc(c.tenDuAn) + '"></td>' +
+            '<td><span class="dm-row-num">' + (idx || '') + '</span></td>' +
             '<td>' + makeSelect(LINH_VUC_OPTS, c.linhVuc).replace('<select', '<select data-field="linhVuc"') + '</td>' +
-            '<td><input type="text" class="form-control form-control-sm" data-field="benMua" value="' + esc(c.benMua) + '"></td>' +
-            '<td><input type="text" class="form-control form-control-sm" data-field="benBan" value="' + esc(c.benBan) + '"></td>' +
-            '<td><input type="number" class="form-control form-control-sm" data-field="giaChot" value="' + (c.giaChot || 0) + '"></td>' +
-            '<td>' + makeSelect(TRANG_THAI_KN_OPTS, c.trangThai).replace('<select', '<select data-field="trangThai"') + '</td>' +
-            '<td><input type="text" class="form-control form-control-sm" data-field="ngayTao" value="' + esc(c.ngayTao) + '" placeholder="dd/MM/yyyy"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="benCau" value="' + esc(c.benCau) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="benCung" value="' + esc(c.benCung) + '"></td>' +
+            '<td><input type="text" class="form-control form-control-sm" data-field="noiDung" value="' + esc(c.noiDung) + '"></td>' +
             '<td class="col-act"><button class="btn btn-sm btn-outline-danger dm-del-row"><i class="fas fa-trash"></i></button></td></tr>';
     }
 
     function renderConnectionTable(connections) {
-        var html = ''; (connections || []).forEach(function (c) { html += renderConnectionRow(c); });
+        var html = ''; (connections || []).forEach(function (c, i) { html += renderConnectionRow(c, i + 1); });
         connectionBody.innerHTML = html; bindDelBtns(connectionBody);
     }
 
-    function collectConnections() { return collectRows(connectionBody, ['giaChot'], 'maKetNoi', 'tenDuAn'); }
+    function collectConnections() { return collectRows(connectionBody, [], 'benCau', 'noiDung'); }
 
     function buildConnectionJson(connections, totalRequests) {
-        var total = connections.length, completed = 0;
-        var fc = {}, sc = {};
+        var total = connections.length;
+        var fc = {};
         LINH_VUC_OPTS.forEach(function(l){fc[l]=0;});
-        TRANG_THAI_KN_OPTS.forEach(function(s){sc[s]=0;});
         connections.forEach(function(c) {
-            if(c.trangThai==='Hoàn tất') completed++;
             if(fc[c.linhVuc]!==undefined)fc[c.linhVuc]++;
-            if(sc[c.trangThai]!==undefined)sc[c.trangThai]++;
         });
-        var waiting = (sc['Chờ ký']||0) + (sc['Đã ký 1 bên']||0);
-        var negotiating = (sc['Đã thỏa giá']||0) + waiting;
         var rate = totalRequests > 0 ? Math.round(total / totalRequests * 1000) / 10 : 0;
         return {
             lastUpdated: new Date().toLocaleDateString('vi-VN'),
-            summary: { totalRequests: totalRequests, totalConnections: total, completedNegotiations: completed, conversionRate: rate },
-            byField: { labels: LINH_VUC_OPTS, values: LINH_VUC_OPTS.map(function(l){return fc[l];}), colors: ['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#94a3b8'] },
-            conversionFunnel: { labels: ['Yêu cầu tìm mua','Đã kết nối','Đang thương lượng','Đã ký biên bản'], values: [totalRequests, total, negotiating, completed], colors: ['#3b82f6','#f59e0b','#8b5cf6','#10b981'] },
-            byStatus: { labels: TRANG_THAI_KN_OPTS, values: TRANG_THAI_KN_OPTS.map(function(s){return sc[s];}), colors: ['#94a3b8','#f59e0b','#3b82f6','#8b5cf6','#10b981'] },
+            summary: { totalRequests: totalRequests, totalConnections: total, completedNegotiations: total, conversionRate: rate },
+            byField: { labels: LINH_VUC_OPTS, values: LINH_VUC_OPTS.map(function(l){return fc[l];}), colors: ['#10b981','#f59e0b','#3b82f6','#6366f1','#ef4444','#06b6d4','#8b5cf6','#f43f5e','#94a3b8'] },
+            conversionFunnel: { labels: ['Yêu cầu tư vấn tiếp nhận','Đã kết nối','Biên bản ký kết'], values: [totalRequests, total, total], colors: ['#3b82f6','#f59e0b','#10b981'] },
+            byStatus: { labels: ['Hoàn tất'], values: [total], colors: ['#10b981'] },
             connections: connections
         };
     }
 
-    var _totalRequests = 91;
+
+    var _totalRequests = 60;
 
     // ===================== SHARED UTILS =====================
     function bindDelBtns(tbody) {
@@ -437,7 +426,7 @@
 
         fetch('/cms/DashboardData/Save?key=' + currentKey, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+            headers: { 'Content-Type': 'application/json' },
             body: body
         })
         .then(function (r) { return r.json(); })
@@ -489,11 +478,13 @@
     fetchDbBtn.addEventListener('click', fetchFromDb);
 
     document.getElementById('dmAddContractRow').addEventListener('click', function () {
-        contractBody.insertAdjacentHTML('beforeend', renderContractRow({ soHopDong:'', tenDuAn:'', linhVuc:LINH_VUC_OPTS[0], loaiHD:LOAI_HD_OPTS[0], congNghe:CONG_NGHE_OPTS[0], trangThai:'Chưa ký', giaTriTrieu:0, ngayTao:new Date().toLocaleDateString('vi-VN') }));
+        var nextIdx = contractBody.querySelectorAll('tr').length + 1;
+        contractBody.insertAdjacentHTML('beforeend', renderContractRow({ linhVuc:LINH_VUC_OPTS[0], congNghe:CONG_NGHE_OPTS[2], benCung:'', benCau:'', noiDung:'', giaTriTrieu:0, loaiHD:LOAI_HD_OPTS[0] }, nextIdx));
         bindDelBtns(contractBody);
     });
     document.getElementById('dmAddConnectionRow').addEventListener('click', function () {
-        connectionBody.insertAdjacentHTML('beforeend', renderConnectionRow({ maKetNoi:'', tenDuAn:'', linhVuc:LINH_VUC_OPTS[0], benMua:'', benBan:'', giaChot:0, trangThai:'Nháp', ngayTao:new Date().toLocaleDateString('vi-VN') }));
+        var nextIdx = connectionBody.querySelectorAll('tr').length + 1;
+        connectionBody.insertAdjacentHTML('beforeend', renderConnectionRow({ linhVuc:LINH_VUC_OPTS[0], benCau:'', benCung:'', noiDung:'' }, nextIdx));
         bindDelBtns(connectionBody);
     });
     document.getElementById('dmAddKpiTotal').addEventListener('click', function () {

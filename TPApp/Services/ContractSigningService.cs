@@ -49,7 +49,8 @@ namespace TPApp.Services
             if (contract == null)
                 return (false, "Không tìm thấy hợp đồng.", 0);
 
-            if (contract.StatusId < (int)ContractStatus.ReadyToSign)
+            if (!_configuration.GetValue<bool>("Signing:TestMode") &&
+                contract.StatusId < (int)ContractStatus.ReadyToSign)
                 return (false, "Hợp đồng chưa ở trạng thái ReadyToSign.", 0);
 
             var user = await _context.Users.FindAsync(userId);
@@ -153,10 +154,13 @@ namespace TPApp.Services
 
             await _context.SaveChangesAsync();
 
-            // Check if both parties signed
-            var contract = await _context.ProjectContracts.FindAsync(req.ContractId);
-            if (contract != null)
-                await TryCompleteStep7Async(contract.ProjectId, req.ContractId);
+            // Check if both parties signed — skip khi TestMode
+            var contract2 = await _context.ProjectContracts.FindAsync(req.ContractId);
+            var testMode2 = _configuration.GetValue<bool>("Signing:TestMode");
+            if (contract2 != null && !testMode2)
+                await TryCompleteStep7Async(contract2.ProjectId, req.ContractId);
+            else if (testMode2)
+                _logger.LogWarning("[TestMode] BuyerOTP signed — TryCompleteStep7 skipped");
 
             await _audit.AppendAsync("ContractSignature", sig.Id.ToString(),
                 "BuyerSigned", new { userId, ipAddress }, userId, ipAddress);
@@ -172,7 +176,8 @@ namespace TPApp.Services
             if (contract == null)
                 return (false, "Không tìm thấy hợp đồng.", 0);
 
-            if (contract.StatusId < (int)ContractStatus.ReadyToSign)
+            if (!_configuration.GetValue<bool>("Signing:TestMode") &&
+                contract.StatusId < (int)ContractStatus.ReadyToSign)
                 return (false, "Hợp đồng chưa ở trạng thái ReadyToSign.", 0);
 
             var user = await _context.Users.FindAsync(userId);
@@ -270,9 +275,13 @@ namespace TPApp.Services
 
             await _context.SaveChangesAsync();
 
-            var contract = await _context.ProjectContracts.FindAsync(req.ContractId);
-            if (contract != null)
-                await TryCompleteStep7Async(contract.ProjectId, req.ContractId);
+            // Check if both parties signed — skip khi TestMode
+            var contract3 = await _context.ProjectContracts.FindAsync(req.ContractId);
+            var testMode3 = _configuration.GetValue<bool>("Signing:TestMode");
+            if (contract3 != null && !testMode3)
+                await TryCompleteStep7Async(contract3.ProjectId, req.ContractId);
+            else if (testMode3)
+                _logger.LogWarning("[TestMode] SellerOTP signed — TryCompleteStep7 skipped");
 
             await _audit.AppendAsync("ContractSignature", sig.Id.ToString(),
                 "SellerSigned", new { userId, ipAddress }, userId, ipAddress);

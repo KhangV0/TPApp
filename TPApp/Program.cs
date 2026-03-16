@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TPApp.Data;
 using TPApp.Entities;
@@ -395,6 +395,19 @@ app.MapControllerRoute(
     name: "video_clean",
     pattern: "video",
     defaults: new { controller = "Video", action = "Index" }
+);
+
+// 10. Dashboard Routes (public)
+app.MapControllerRoute(
+    name: "contract_dashboard",
+    pattern: "hop-dong-ky-ket.html",
+    defaults: new { controller = "Home", action = "ContractDashboard" }
+);
+
+app.MapControllerRoute(
+    name: "connection_dashboard",
+    pattern: "ket-noi-cung-cau.html",
+    defaults: new { controller = "Home", action = "ConnectionDashboard" }
 );
 
 // ROUTE MẶC ĐỊNH
