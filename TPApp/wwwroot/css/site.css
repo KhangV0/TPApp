@@ -774,6 +774,7 @@ body {
     text-decoration: none;
     text-transform: lowercase !important;
 }
+
 .brand-showcase-title a::first-letter {
     text-transform: uppercase;
 }
@@ -1319,9 +1320,9 @@ ul.product-list {
     border: 1px;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    height: 310px;
+    height: 350px;
     margin-bottom: 20px;
-    min-height: 300px;
+    min-height: 350px;
 }
 
 #ContentPlaceHolder1_ProductByCate1_uplProductByCatFront .left-module {
@@ -4236,7 +4237,8 @@ header {
 
 .product-name {
     font-size: 14px !important;
-    overflow: visible !important;
+    /* overflow: visible !important; */
+    min-height: 49px;
 }
 
 .product-container img {
@@ -4444,6 +4446,7 @@ header {
     background: linear-gradient(90deg, #0b77c8, #e82827);
     width: 0;
 }
+
 .step-desc {
     padding: 0px 0px 10px 0px;
     display: block;
@@ -4451,6 +4454,7 @@ header {
     color: #0c0c0c;
 
 }
+
 .page-heading.CongNgheThietBi {
     font-size: 32px;
     text-transform: uppercase;

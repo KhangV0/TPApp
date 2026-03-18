@@ -797,9 +797,14 @@
 }
 
 .CNTB {
-    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #cfe9ff, #9fd3ff);
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #d6f5ea, #a8e6cf);
     height: 130px;
     transition: height .3s ease;
+}
+
+/* Thiết bị (3rd item) - override back to blue */
+.hp-category-grid .hp-category-item.CNTB:nth-child(3) {
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #cfe9ff, #9fd3ff);
 }
 
 .hp-category-item:hover {
@@ -842,7 +847,7 @@
 }
 
 .DVTV {
-    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #d6f5ea, #a8e6cf);
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9) 0%, rgba(255, 255, 255, .4) 35%, rgba(255, 255, 255, 0) 70%), linear-gradient(135deg, #cfe9ff, #9fd3ff);
     height: 130px;
     transition: height .3s ease;
 }
