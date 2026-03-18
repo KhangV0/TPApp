@@ -376,12 +376,12 @@ app.MapControllerRoute(
 // 301 Redirect — old DichVuTuVan list pages
 app.MapGet("8-dich-vu-tu-van.html", ctx =>
 {
-    ctx.Response.Redirect("/chuyen-gia", permanent: true);
+    ctx.Response.Redirect("/chuyen-gia.html", permanent: true);
     return Task.CompletedTask;
 });
 app.MapGet("8-dich-vu-cung-ung.html", ctx =>
 {
-    ctx.Response.Redirect("/nha-cung-ung", permanent: true);
+    ctx.Response.Redirect("/nha-cung-ung.html", permanent: true);
     return Task.CompletedTask;
 });
 
