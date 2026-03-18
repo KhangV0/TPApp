@@ -96,7 +96,12 @@ namespace TPApp.Areas.Cms.Controllers
                     {
                         var ratio = (double)_maxImageWidth / image.Width;
                         var newH = (int)(image.Height * ratio);
-                        image.Mutate(x => x.Resize(_maxImageWidth, newH));
+                        image.Mutate(x => x.Resize(new ResizeOptions
+                        {
+                            Size = new Size(_maxImageWidth, newH),
+                            Mode = ResizeMode.Max,
+                            Sampler = KnownResamplers.Lanczos3
+                        }));
                     }
                     await image.SaveAsync(filePath, new JpegEncoder { Quality = 100 });
 
@@ -107,7 +112,8 @@ namespace TPApp.Areas.Cms.Controllers
                             ctx.Resize(new ResizeOptions
                             {
                                 Size = new Size(w, h),
-                                Mode = ResizeMode.Max
+                                Mode = ResizeMode.Crop,
+                                Sampler = KnownResamplers.Lanczos3
                             }));
                         var sizedPath = Path.Combine(fullPath, $"{w}-{h}-{fileName}");
                         await clone.SaveAsync(sizedPath, new JpegEncoder { Quality = 100 });
@@ -177,7 +183,12 @@ namespace TPApp.Areas.Cms.Controllers
                 {
                     var ratio = (double)_maxImageWidth / image.Width;
                     var newH = (int)(image.Height * ratio);
-                    image.Mutate(x => x.Resize(_maxImageWidth, newH));
+                    image.Mutate(x => x.Resize(new ResizeOptions
+                    {
+                        Size = new Size(_maxImageWidth, newH),
+                        Mode = ResizeMode.Max,
+                        Sampler = KnownResamplers.Lanczos3
+                    }));
                 }
                 await image.SaveAsync(filePath, new JpegEncoder { Quality = 100 });
 
@@ -188,7 +199,8 @@ namespace TPApp.Areas.Cms.Controllers
                         ctx.Resize(new ResizeOptions
                         {
                             Size = new Size(w, h),
-                            Mode = ResizeMode.Max
+                            Mode = ResizeMode.Crop,
+                            Sampler = KnownResamplers.Lanczos3
                         }));
                     var sizedPath = Path.Combine(fullPath, $"{w}-{h}-{fileName}");
                     await clone.SaveAsync(sizedPath, new JpegEncoder { Quality = 100 });
