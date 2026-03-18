@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 using System.Text.RegularExpressions;
 
@@ -97,7 +98,7 @@ namespace TPApp.Areas.Cms.Controllers
                         var newH = (int)(image.Height * ratio);
                         image.Mutate(x => x.Resize(_maxImageWidth, newH));
                     }
-                    await image.SaveAsync(filePath);
+                    await image.SaveAsync(filePath, new JpegEncoder { Quality = 100 });
 
                     // Generate cropped thumbnail variants
                     foreach (var (w, h) in _imageSizes)
@@ -106,10 +107,10 @@ namespace TPApp.Areas.Cms.Controllers
                             ctx.Resize(new ResizeOptions
                             {
                                 Size = new Size(w, h),
-                                Mode = ResizeMode.Crop
+                                Mode = ResizeMode.Max
                             }));
                         var sizedPath = Path.Combine(fullPath, $"{w}-{h}-{fileName}");
-                        await clone.SaveAsync(sizedPath);
+                        await clone.SaveAsync(sizedPath, new JpegEncoder { Quality = 100 });
                     }
                 }
                 else
@@ -178,7 +179,7 @@ namespace TPApp.Areas.Cms.Controllers
                     var newH = (int)(image.Height * ratio);
                     image.Mutate(x => x.Resize(_maxImageWidth, newH));
                 }
-                await image.SaveAsync(filePath);
+                await image.SaveAsync(filePath, new JpegEncoder { Quality = 100 });
 
                 // Generate cropped thumbnail variants
                 foreach (var (w, h) in _imageSizes)
@@ -187,10 +188,10 @@ namespace TPApp.Areas.Cms.Controllers
                         ctx.Resize(new ResizeOptions
                         {
                             Size = new Size(w, h),
-                            Mode = ResizeMode.Crop
+                            Mode = ResizeMode.Max
                         }));
                     var sizedPath = Path.Combine(fullPath, $"{w}-{h}-{fileName}");
-                    await clone.SaveAsync(sizedPath);
+                    await clone.SaveAsync(sizedPath, new JpegEncoder { Quality = 100 });
                 }
 
                 var datePart = $"{today.Year}/{today.Month:D2}/{today.Day:D2}";

@@ -340,10 +340,11 @@ namespace TPApp.Areas.Cms.Controllers
                 // Sync normalized tables
                 await CallSyncSP(entity.ID);
 
+                await WriteLog(1, $"Create SanPhamCNTB: {entity.Name} (ID={entity.ID})");
+
                 await transaction.CommitAsync();
 
                 TempData["Success"] = $"Đã thêm sản phẩm '{entity.Name}' thành công.";
-                await WriteLog(1, $"Create SanPhamCNTB: {entity.Name} (ID={entity.ID})");
                 return RedirectToListByType(model.ProductType);
             }
             catch
@@ -422,10 +423,11 @@ namespace TPApp.Areas.Cms.Controllers
 
                 await CallSyncSP(entity.ID);
 
+                await WriteLog(2, $"Update SanPhamCNTB: {entity.Name} (ID={entity.ID})");
+
                 await transaction.CommitAsync();
 
                 TempData["Success"] = $"Đã cập nhật sản phẩm '{entity.Name}' thành công.";
-                await WriteLog(2, $"Update SanPhamCNTB: {entity.Name} (ID={entity.ID})");
                 return RedirectToListByType(model.ProductType);
             }
             catch
