@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -61,7 +61,7 @@
     @* Đối tác *@
     @* Đơn vị tư vấn *@
     @* → Gộp vào _ManLuoiDoiTac *@
-    @await Html.PartialAsync("_ManLuoiDoiTac")
+    @await Component.InvokeAsync("ManLuoiDoiTac")
 </div>
 
 @section Scripts {

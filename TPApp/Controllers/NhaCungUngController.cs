@@ -26,8 +26,20 @@ namespace TPApp.Controllers
         }
 
         // =====================================================================
-        // GET /nha-cung-ung
-        // GET /nha-cung-ung?cateId=3&page=1
+        // GET /nha-cung-ung → redirect to /nha-cung-ung.html
+        // =====================================================================
+        [HttpGet("nha-cung-ung")]
+        public IActionResult IndexRedirect(int cateId = 0, int page = 1)
+        {
+            var qs = cateId > 0 || page > 1
+                ? $"?cateId={cateId}&page={page}"
+                : "";
+            return RedirectPermanent($"/nha-cung-ung.html{qs}");
+        }
+
+        // =====================================================================
+        // GET /nha-cung-ung.html
+        // GET /nha-cung-ung.html?cateId=3&page=1
         // =====================================================================
         [HttpGet("nha-cung-ung.html")]
         public IActionResult Index(int cateId = 0, int page = 1)
@@ -67,7 +79,7 @@ namespace TPApp.Controllers
                 {
                     Id       = x.CungUngId,
                     FullName = x.FullName ?? "",
-                    Slug     = x.QueryString ?? x.FullName ?? "",
+                    Slug     = x.QueryString ?? ProductController.MakeURLFriendly(x.FullName),
                     DiaChi   = x.DiaChi   ?? "",
                     Phone    = x.Phone    ?? "",
                     Email    = x.Email    ?? "",
@@ -149,7 +161,7 @@ namespace TPApp.Controllers
                 {
                     Id       = x.CungUngId,
                     FullName = x.FullName ?? "",
-                    Slug     = x.QueryString ?? x.FullName ?? "",
+                    Slug     = x.QueryString ?? ProductController.MakeURLFriendly(x.FullName),
                     DiaChi   = x.DiaChi  ?? "",
                     Phone    = x.Phone   ?? "",
                     Email    = x.Email   ?? "",
