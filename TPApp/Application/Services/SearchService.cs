@@ -64,17 +64,17 @@ namespace TPApp.Application.Services
                     _logger.LogDebug("Keyword normalized: '{Original}' → '{Normalized}'", originalKeyword, keyword);
                 }
 
-                // Check cache first - DISABLED FOR DEBUGGING
-                // var cacheKey = BuildCacheKey("normal", keyword, options);
-                // var cached = await _cache.GetStringAsync(cacheKey, cancellationToken);
+                // Check cache first
+                var cacheKey = BuildCacheKey("normal", keyword, options);
+                var cached = await _cache.GetStringAsync(cacheKey, cancellationToken);
 
-                // if (cached != null)
-                // {
-                //     _logger.LogDebug("Cache hit for normal search: {Keyword}", keyword);
-                //     return JsonSerializer.Deserialize<SearchResult>(cached)!;
-                // }
+                if (cached != null)
+                {
+                    _logger.LogDebug("Cache hit for normal search: {Keyword}", keyword);
+                    return JsonSerializer.Deserialize<SearchResult>(cached)!;
+                }
 
-                _logger.LogInformation("Executing normal search for: {Keyword} (CACHE DISABLED)", keyword);
+                _logger.LogInformation("Executing normal search for: {Keyword}", keyword);
 
                 // Execute stored procedure
                 var keywordParam = new SqlParameter("@Keyword", keyword);
@@ -109,15 +109,15 @@ namespace TPApp.Application.Services
                     PageSize = options.PageSize
                 };
 
-                // Cache for 2 minutes - DISABLED FOR DEBUGGING
-                // await _cache.SetStringAsync(
-                //     cacheKey,
-                //     JsonSerializer.Serialize(result),
-                //     new DistributedCacheEntryOptions
-                //     {
-                //         AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(NORMAL_SEARCH_CACHE_SECONDS)
-                //     },
-                //     cancellationToken);
+                // Cache for 2 minutes
+                await _cache.SetStringAsync(
+                    cacheKey,
+                    JsonSerializer.Serialize(result),
+                    new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(NORMAL_SEARCH_CACHE_SECONDS)
+                    },
+                    cancellationToken);
 
                 // Log search query
                 var executionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;

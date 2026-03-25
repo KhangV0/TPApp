@@ -1,0 +1,77 @@
+@model TPApp.ViewComponents.ManLuoiDoiTacVm
+
+<section class="partner-network" id="partner-section">
+    <div class="container">
+
+        <!-- ── MAIN TITLE ─────────────────────────────── -->
+        <div class="pn-header text-center">
+            <h2 class="pn-title">MẠNG LƯỚI ĐỐI TÁC</h2>
+            <p class="pn-subtitle">Hệ sinh thái hợp tác công nghệ và chuyển giao</p>
+            <div class="pn-underline"></div>
+        </div>
+
+        @if (Model.SanGiaoDich.Any())
+        {
+            <!-- ══════════════════════════════════════════════
+                 GROUP 1 — HỆ THỐNG SÀN GIAO DỊCH CÔNG NGHỆ
+            ══════════════════════════════════════════════════ -->
+            <div class="pn-group">
+                <h3 class="pn-group-title">Hệ thống Sàn giao dịch công nghệ</h3>
+                <div class="pn-logo-grid">
+                    @foreach (var item in Model.SanGiaoDich)
+                    {
+                        <div class="pn-logo-item">
+                            <a href="@(item.URL ?? "#")" target="_blank" rel="noopener" class="pn-logo-card">
+                                <img src="@Html.CookedImageURL("254-170", item.SRC)" alt="@item.Title">
+                                <div class="pn-logo-name">@item.Title</div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.DonViTuVan.Any())
+        {
+            <!-- ══════════════════════════════════════════════
+                 GROUP 2 — ĐƠN VỊ TƯ VẤN
+            ══════════════════════════════════════════════════ -->
+            <div class="pn-group">
+                <h3 class="pn-group-title">Đơn vị tư vấn</h3>
+                <div class="pn-logo-grid">
+                    @foreach (var item in Model.DonViTuVan)
+                    {
+                        <div class="pn-logo-item">
+                            <a href="@(item.URL ?? "#")" target="_blank" rel="noopener" class="pn-logo-card">
+                                <img src="@Html.CookedImageURL("254-170", item.SRC)" alt="@item.Title">
+                                <div class="pn-logo-name">@item.Title</div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.DoiTac.Any())
+        {
+            <!-- ══════════════════════════════════════════════
+                 GROUP 3 — ĐỐI TÁC
+            ══════════════════════════════════════════════════ -->
+            <div class="pn-group">
+                <h3 class="pn-group-title">Đối tác</h3>
+                <div class="pn-logo-grid">
+                    @foreach (var item in Model.DoiTac)
+                    {
+                        <div class="pn-logo-item">
+                            <a href="@(item.URL ?? "#")" target="_blank" rel="noopener" class="pn-logo-card">
+                                <img src="@Html.CookedImageURL("254-170", item.SRC)" alt="@item.Title">
+                                <div class="pn-logo-name">@item.Title</div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+    </div>
+</section>

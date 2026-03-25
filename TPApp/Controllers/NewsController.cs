@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using TPApp.Data;
@@ -203,7 +203,7 @@ namespace TPApp.Controllers
                     allMenuIds.Contains(q.MenuId ?? 0) &&
                     q.LanguageId == langId &&
                     q.StatusId == 3 &&
-                    q.IsReport == false &&
+                    q.IsReport != true &&
                     q.PublishedDate <= now &&
                     (q.eEffectiveDate == null || q.eEffectiveDate >= now)
                 );

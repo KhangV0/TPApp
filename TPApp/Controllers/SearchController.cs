@@ -55,16 +55,45 @@ namespace TPApp.Controllers
 
             try
             {
-                // Counts for tabs (always run on the full keyword, no type filter)
-                var rawCounts = await _searchService.GetCountsByTypeAsync(vm.Query);
-                vm.CountsByType = MapCounts(rawCounts);
+                // ── Kick off all queries in PARALLEL ──
+                var countsTask = _searchService.GetCountsByTypeAsync(vm.Query);
 
-                // Normal search results
+                Task<SearchResult>? normalTask = null;
                 if (vm.Mode != "ai")
+                {
+                    var normalOpts = new SearchOptions
+                    {
+                        PageNumber = vm.Page,
+                        PageSize = vm.PageSize,
+                        TypeName = SearchEntityTypeHelper.ToTypeName(vm.Type)
+                    };
+                    normalTask = _searchService.SearchByTypeAsync(vm.Query, normalOpts);
+                }
+
+                Task<List<ViewModel.AISearchResultGroup>>? aiTask = null;
+                if (_featureFlags.EnableAISearch == 1)
+                {
+                    var aiOpts = new SearchOptions { PageNumber = 1, PageSize = 100 };
+                    aiTask = _searchService.SearchAIGroupedAsync(vm.Query, aiOpts);
+                }
+
+                // ── Collect results individually (each has own error handling) ──
+                try
+                {
+                    vm.CountsByType = MapCounts(await countsTask);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "CountsByType error: {Message}", ex.Message);
+                }
+
+                if (normalTask != null)
                 {
                     try
                     {
-                        await FillNormalResultsAsync(vm);
+                        var result = await normalTask;
+                        vm.Items = result.Items.Select(item => MapItem(item, vm.Query)).ToList();
+                        vm.Total = result.TotalCount;
                     }
                     catch (Exception normalEx)
                     {
@@ -72,32 +101,20 @@ namespace TPApp.Controllers
                     }
                 }
 
-                // AI search (if enabled and selected)
-                if (_featureFlags.EnableAISearch == 1)
+                if (aiTask != null)
                 {
-                    if (vm.Mode == "ai")
+                    try
                     {
-                        try
+                        var aiGroups = await aiTask;
+                        if (vm.Mode == "ai")
                         {
-                            var aiOpts = new SearchOptions { PageNumber = 1, PageSize = 100 };
-                            vm.AISearchResults = await _searchService.SearchAIGroupedAsync(vm.Query, aiOpts);
-                            vm.AIResultCount = vm.AISearchResults.Sum(g => g.Products.Count);
+                            vm.AISearchResults = aiGroups;
                         }
-                        catch (Exception aiEx)
-                        {
-                            _logger.LogWarning(aiEx, "AI search failed, fallback to normal");
-                        }
+                        vm.AIResultCount = aiGroups.Sum(g => g.Products.Count);
                     }
-                    else
+                    catch (Exception aiEx)
                     {
-                        // Quick AI count for the tab badge (use same method as AI tab)
-                        try
-                        {
-                            var aiOpts = new SearchOptions { PageNumber = 1, PageSize = 100 };
-                            var aiGroups = await _searchService.SearchAIGroupedAsync(vm.Query, aiOpts);
-                            vm.AIResultCount = aiGroups.Sum(g => g.Products.Count);
-                        }
-                        catch { /* non-critical */ }
+                        _logger.LogWarning(aiEx, "AI search failed: {Message}", aiEx.Message);
                     }
                 }
             }
