@@ -55,45 +55,23 @@ namespace TPApp.Controllers
 
             try
             {
-                // ── Kick off all queries in PARALLEL ──
-                var countsTask = _searchService.GetCountsByTypeAsync(vm.Query);
-
-                Task<SearchResult>? normalTask = null;
-                if (vm.Mode != "ai")
-                {
-                    var normalOpts = new SearchOptions
-                    {
-                        PageNumber = vm.Page,
-                        PageSize = vm.PageSize,
-                        TypeName = SearchEntityTypeHelper.ToTypeName(vm.Type)
-                    };
-                    normalTask = _searchService.SearchByTypeAsync(vm.Query, normalOpts);
-                }
-
-                Task<List<ViewModel.AISearchResultGroup>>? aiTask = null;
-                if (_featureFlags.EnableAISearch == 1)
-                {
-                    var aiOpts = new SearchOptions { PageNumber = 1, PageSize = 100 };
-                    aiTask = _searchService.SearchAIGroupedAsync(vm.Query, aiOpts);
-                }
-
-                // ── Collect results individually (each has own error handling) ──
+                // ── Counts for tabs (always run on the full keyword, no type filter) ──
                 try
                 {
-                    vm.CountsByType = MapCounts(await countsTask);
+                    var rawCounts = await _searchService.GetCountsByTypeAsync(vm.Query);
+                    vm.CountsByType = MapCounts(rawCounts);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "CountsByType error: {Message}", ex.Message);
                 }
 
-                if (normalTask != null)
+                // ── Normal search results ──
+                if (vm.Mode != "ai")
                 {
                     try
                     {
-                        var result = await normalTask;
-                        vm.Items = result.Items.Select(item => MapItem(item, vm.Query)).ToList();
-                        vm.Total = result.TotalCount;
+                        await FillNormalResultsAsync(vm);
                     }
                     catch (Exception normalEx)
                     {
@@ -101,11 +79,13 @@ namespace TPApp.Controllers
                     }
                 }
 
-                if (aiTask != null)
+                // ── AI search (if enabled) ──
+                if (_featureFlags.EnableAISearch == 1)
                 {
                     try
                     {
-                        var aiGroups = await aiTask;
+                        var aiOpts = new SearchOptions { PageNumber = 1, PageSize = 100 };
+                        var aiGroups = await _searchService.SearchAIGroupedAsync(vm.Query, aiOpts);
                         if (vm.Mode == "ai")
                         {
                             vm.AISearchResults = aiGroups;

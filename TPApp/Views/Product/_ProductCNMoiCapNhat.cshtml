@@ -1,4 +1,4 @@
-﻿@using TPApp.Entities
+@using TPApp.Entities
 @using TPApp.Controllers
 @model List<SanPhamCNTB>
 
@@ -141,7 +141,7 @@
                                     imgUrl = TPApp.Controllers.ProductController.CookedImageURL("254-170", p.QuyTrinhHinhAnh, Html.MainDomain());
                                 }
 
-                                var detailUrl = $"{Html.MainDomain()}2-cong-nghe-thiet-bi/{p.TypeId}/{ProductController.MakeURLFriendly(p.Name)}-{p.ID}.html";
+                                var detailUrl = $"{Html.MainDomain()}2-cong-nghe-thiet-bi/{p.ProductType}/{ProductController.MakeURLFriendly(p.Name)}-{p.ID}.html";
 
                                 <div class="col-6">
                                     <div class="product-container" style="margin-bottom: 20px;">
