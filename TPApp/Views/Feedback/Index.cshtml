@@ -1,4 +1,4 @@
-﻿@model TPApp.ViewModel.FeedbackCreateViewModel
+@model TPApp.ViewModel.FeedbackCreateViewModel
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Liên hệ – Techport";
@@ -41,10 +41,11 @@
                 <div class="ct-card">
                     <p class="ct-info__brand">
                         <i class="bi bi-building me-2 text-primary"></i>
-                        Sàn giao dịch công nghệ<br>Thành phố Hồ Chí Minh
+                        Sàn giao dịch công nghệ thành phố Hồ Chí Minh
                     </p>
 
-                    @* Nội dung từ DB (Model.Description — do controller load menuId=74) *@
+                    @* Tạm thời hiện cứng — đã comment phần load từ DB *@
+                    @*
                     @if (!string.IsNullOrEmpty(Model.Description))
                     {
                         <div class="ct-description mb-4">
@@ -53,6 +54,7 @@
                     }
                     else
                     {
+                    *@
                         <ul class="ct-info__list">
                             <li>
                                 <span class="ct-icon"><i class="bi bi-geo-alt-fill"></i></span>
@@ -75,7 +77,7 @@
                                 </a>
                             </li>
                         </ul>
-                    }
+                    @* } *@
 
                     <div class="ct-info__meta">
                         <div><strong>🕐 Giờ làm việc:</strong> Thứ 2 – Thứ 6, 8:00 – 17:00</div>
@@ -249,9 +251,12 @@
 @section scripts {
     <script type="text/javascript">
         $(function () {
-            // Bắt sự kiện submit qua #btnSend
-            $("#btnSend").click(function () {
-                return checkValid();
+            // Bắt sự kiện submit của form (bao gồm cả nhấn Enter)
+            $("#contact-form").on("submit", function (e) {
+                if (!checkValid()) {
+                    e.preventDefault();
+                    return false;
+                }
             });
         });
 

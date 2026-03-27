@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using TPApp.Data;
 using TPApp.Entities;
@@ -12,6 +12,7 @@ namespace TPApp.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
         private readonly string _mainDomain;
+        private readonly ILogger<FeedbackController> _logger;
 
         private const string CaptchaSessionKey = "MathCaptchaAnswer";
 
@@ -19,11 +20,12 @@ namespace TPApp.Controllers
         private int SiteId => 1;
         private string DomainName => _mainDomain;
 
-        public FeedbackController(AppDbContext context, IConfiguration config, IOptions<AppSettings> appSettings)
+        public FeedbackController(AppDbContext context, IConfiguration config, IOptions<AppSettings> appSettings, ILogger<FeedbackController> logger)
         {
-            _context   = context;
-            _config    = config;
+            _context    = context;
+            _config     = config;
             _mainDomain = appSettings.Value.MainDomain;
+            _logger     = logger;
         }
 
         // ──────────────────────────────────────────────────────
@@ -129,8 +131,10 @@ namespace TPApp.Controllers
 
                 return Redirect("/lien-he-74.html");
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "[FeedbackController] Lỗi khi lưu feedback: {Message}", ex.Message);
+
                 TempData["Alert"] = languageId == 1
                     ? "Lưu thất bại. Vui lòng kiểm tra lại."
                     : "Save failed. Please try again.";
@@ -145,19 +149,31 @@ namespace TPApp.Controllers
         private string GenerateCaptcha()
         {
             var rng = new Random();
-            int a   = rng.Next(2, 12);
-            int b   = rng.Next(1, 10);
+            int a = rng.Next(2, 12);
+            int b = rng.Next(1, 10);
 
-            // Chỉ dùng + hoặc - (không âm)
-            bool add    = rng.Next(0, 2) == 0 || a < b;
-            int answer  = add ? a + b : a - b;
-            string op   = add ? "+" : "-";
-            if (!add) { int tmp = a; a = Math.Max(a, b); b = Math.Min(tmp, b); }
-            answer = add ? a + b : a - b;
+            // Quyết định phép tính: + hoặc - (đảm bảo kết quả không âm)
+            bool useAdd = rng.Next(0, 2) == 0;
 
-            string question = $"{a} {op} {b}";
+            int bigger  = Math.Max(a, b);
+            int smaller = Math.Min(a, b);
+
+            int answer;
+            string question;
+
+            if (useAdd)
+            {
+                answer   = a + b;
+                question = $"{a} + {b}";
+            }
+            else
+            {
+                // Dùng bigger - smaller để luôn >= 0
+                answer   = bigger - smaller;
+                question = $"{bigger} - {smaller}";
+            }
+
             HttpContext.Session.SetString(CaptchaSessionKey, answer.ToString());
-
             return question;
         }
 
