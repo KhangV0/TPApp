@@ -39,7 +39,8 @@ namespace TPApp.BackgroundServices
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    _logger.LogError(ex, "Unhandled error in NotificationWorker loop.");
+                    try { _logger.LogError(ex, "Unhandled error in NotificationWorker loop."); }
+                    catch { /* EventLog may be disposed */ }
                 }
 
                 // Read interval from SYS_PARAMETERS each cycle (allows runtime config change)

@@ -18,7 +18,7 @@ namespace TPApp.Controllers
 
         // ===== GIỮ NGUYÊN LOGIC WEBFORMS =====
         private int SiteId => 1;
-        private string DomainName => _mainDomain;
+        private string DomainName => string.IsNullOrWhiteSpace(_mainDomain) ? "techport.vn" : new Uri(_mainDomain).Host;
 
         public FeedbackController(AppDbContext context, IConfiguration config, IOptions<AppSettings> appSettings, ILogger<FeedbackController> logger)
         {

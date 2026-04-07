@@ -1,0 +1,90 @@
+================================================================================
+  TECHPORT - LỊCH SỬ CẬP NHẬT
+  Ngày: 07/04/2026
+  Người thực hiện: Dev Team
+================================================================================
+
+[1] ĐĂng Ký Thành Viên - Cải thiện Validation & Error Handling
+────────────────────────────────────────────────────────────────
+
+  File: TPApp\ViewModel\RegisterViewModel.cs
+  - Thêm [MinLength(6, ErrorMessage = "Mật khẩu tối thiểu 6 ký tự")]
+    cho property Password
+
+  File: TPApp\Controllers\AccountController.cs
+  - RegisterAjax: check trùng UserName/Email dùng .ToLower() (case-insensitive)
+  - RegisterAjax: wrap SaveChangesAsync trong try-catch, trả JSON lỗi cụ thể
+    thay vì để HTTP 500
+  - Register (form POST): tương tự đã có check trùng case-insensitive
+
+  File: TPApp\wwwroot\js\auth-modals.js
+  - Kiểm tra response.ok trước khi parse JSON
+  - Nếu server trả 500 → hiện "Hệ thống đang bận" thay vì lỗi chung chung
+  - Cải thiện xử lý network error
+
+[2] Domain Fallback - Thống nhất logic Domain trên toàn bộ controllers
+────────────────────────────────────────────────────────────────────────
+
+  Vấn đề: Nhiều controller dùng Request.Host.Host hoặc Request.Host.Value
+           để gán vào cột Domain trong DB. Trên localhost → lưu "localhost:7232"
+           hoặc "localhost", trên production nếu thiếu config → lỗi.
+
+  Giải pháp: Đọc từ AppSettings:MainDomain, parse hostname, fallback "techport.vn"
+
+  Logic:
+    AppSettings:MainDomain = "https://localhost:7232/"  → Domain = "localhost"
+    AppSettings:MainDomain = "https://techport.vn/"     → Domain = "techport.vn"
+    AppSettings:MainDomain = "" hoặc null               → Domain = "techport.vn"
+
+  Các file đã sửa:
+
+  File: TPApp\Controllers\AccountController.cs
+  - Inject IOptions<AppSettings> vào constructor
+  - Thêm field _domainName = new Uri(raw).Host với fallback "techport.vn"
+  - Register (dòng 66): Domain = Request.Host.Host  → Domain = _domainName
+  - RegisterAjax (dòng 223): Domain = Request.Host.Host → Domain = _domainName
+
+  File: TPApp\Controllers\FeedbackController.cs
+  - DomainName property: _mainDomain (full URL) → new Uri(_mainDomain).Host
+  - Thêm fallback "techport.vn" nếu _mainDomain rỗng
+  - Ảnh hưởng: POST /lien-he-74.html khi gửi yêu cầu liên hệ
+
+  File: TPApp\Controllers\NhucaucongngheController.cs (dòng 182)
+  - Domain = HttpContext.Request.Host.Value
+    → Domain = string.IsNullOrWhiteSpace(_mainDomain) ? "techport.vn" : new Uri(_mainDomain).Host
+
+  File: TPApp\Controllers\ProductController.cs (dòng 133)
+  - AddCart: Domain = HttpContext.Request.Host.Value
+    → Domain = string.IsNullOrWhiteSpace(_mainDomain) ? "techport.vn" : new Uri(_mainDomain).Host
+
+  Không sửa (có lý do):
+  - SigningController.cs (dòng 231, 252): OAuth callback URL cần host thực tế
+  - CMS Admin WriteLog (5 controllers): audit log, ghi host thực tế
+
+[3] Background Services - Fix crash host khi EventLog bị disposed
+──────────────────────────────────────────────────────────────────
+
+  Vấn đề: DashboardBackgroundService và NotificationWorker crash toàn bộ app
+           vì _logger.LogError() throw ObjectDisposedException khi Windows
+           EventLog đã bị disposed. Exception không được catch → host exit code 1.
+
+  File: TPApp\BackgroundServices\DashboardBackgroundService.cs
+  - Warm-up calls (ExecuteAsync): wrap trong try-catch
+  - RunSnapshotRebuildAsync: wrap _logger.LogError trong try-catch
+  - RunMonthlyRebuildAsync: wrap _logger.LogError trong try-catch
+
+  File: TPApp\BackgroundServices\NotificationWorker.cs
+  - Loop catch block: wrap _logger.LogError trong try-catch
+
+================================================================================
+  GHI CHÚ
+================================================================================
+
+  - Build: 0 Error(s), 208 Warning(s) (warnings là nullable reference types,
+    có từ trước, không liên quan)
+  - App vẫn crash do background service nếu EventLog tiếp tục bị disposed
+    trên máy dev. Trên production (Linux/Docker) không có EventLog nên OK.
+  - CMS Admin WriteLog vẫn dùng Request.Host.Value cho audit log.
+    Nếu cần thống nhất, sẽ fix trong lần sau.
+
+================================================================================

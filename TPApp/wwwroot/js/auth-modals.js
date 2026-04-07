@@ -150,18 +150,24 @@ async function handleRegisterSubmit(event) {
             body: formData
         });
         
+        if (!response.ok) {
+            // Server error (500, etc.)
+            displayErrors('registerErrors', ['Hệ thống đang bận. Vui lòng thử lại sau.']);
+            return;
+        }
+
         const result = await response.json();
         
         if (result.success) {
             // Success - redirect to dashboard
             window.location.href = result.redirectUrl || '/Dashboard';
         } else {
-            // Show errors
+            // Show specific errors from server
             displayErrors('registerErrors', result.errors);
         }
     } catch (error) {
         console.error('Register error:', error);
-        displayErrors('registerErrors', ['Đã xảy ra lỗi. Vui lòng thử lại.']);
+        displayErrors('registerErrors', ['Không thể kết nối máy chủ. Vui lòng kiểm tra mạng và thử lại.']);
     } finally {
         // Hide loading state
         submitBtn.classList.remove('loading');

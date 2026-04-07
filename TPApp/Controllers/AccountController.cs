@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using TPApp.Entities;
+using TPApp.Helpers;
 using TPApp.ViewModel;
 using TPApp.Interfaces;
 
@@ -13,17 +15,23 @@ namespace TPApp.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IAccountService _accountService;
         private readonly IVerificationService _verify;
+        private readonly string _domainName;
 
         public AccountController(
             UserManager<ApplicationUser> userManager, 
             SignInManager<ApplicationUser> signInManager,
             IAccountService accountService,
-            IVerificationService verify)
+            IVerificationService verify,
+            IOptions<AppSettings> appSettings)
         {
             _userManager    = userManager;
             _signInManager  = signInManager;
             _accountService = accountService;
             _verify         = verify;
+
+            // Lấy domain từ AppSettings, fallback về techport.vn
+            var raw = appSettings?.Value?.MainDomain ?? string.Empty;
+            _domainName = string.IsNullOrWhiteSpace(raw) ? "techport.vn" : new Uri(raw).Host;
         }
 
         // GET: /Account/Register
@@ -61,7 +69,7 @@ namespace TPApp.Controllers
                     FullName = model.FullName,
                     Created = DateTime.Now,
                     IsActivated = true,
-                    Domain = Request.Host.Host,
+                    Domain = _domainName,
                     // PhoneNumber maps to Mobile column automatically
                     PhoneNumber = model.PhoneNumber 
                 };
@@ -189,44 +197,54 @@ namespace TPApp.Controllers
                 return Json(new { success = false, errors });
             }
 
-            // Manual check because Normalized columns are ignored
-            if (context.Users.Any(u => u.UserName == model.UserName))
+            // Case-insensitive duplicate checks
+            var userNameLower = model.UserName.Trim().ToLower();
+            var emailLower = model.Email.Trim().ToLower();
+
+            if (context.Users.Any(u => u.UserName.ToLower() == userNameLower))
             {
                 return Json(new { success = false, errors = new[] { "Tên đăng nhập đã tồn tại." } });
             }
 
-            if (context.Users.Any(u => u.Email == model.Email))
+            if (context.Users.Any(u => u.Email.ToLower() == emailLower))
             {
-                return Json(new { success = false, errors = new[] { "Email đã tồn tại." } });
+                return Json(new { success = false, errors = new[] { "Email đã được sử dụng." } });
             }
 
-            var user = new ApplicationUser
+            try
             {
-                UserName = model.UserName, 
-                Email = model.Email,
-                FullName = model.FullName,
-                Created = DateTime.Now,
-                IsActivated = true,
-                Domain = Request.Host.Host,
-                PhoneNumber = model.PhoneNumber 
-            };
+                var user = new ApplicationUser
+                {
+                    UserName = model.UserName.Trim(),
+                    Email = model.Email.Trim(),
+                    FullName = model.FullName,
+                    Created = DateTime.Now,
+                    IsActivated = true,
+                    Domain = _domainName,
+                    PhoneNumber = model.PhoneNumber
+                };
 
-            // Manual Password Hashing
-            user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, model.Password);
+                // Manual Password Hashing
+                user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, model.Password);
 
-            // Add to Context directly
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-            
-            // Sign In
-            await _signInManager.SignInAsync(user, isPersistent: false);
-                
-            // Set Session for legacy support
-            HttpContext.Session.SetInt32("UserId", user.Id);
-            HttpContext.Session.SetString("Username", user.UserName);
+                // Add to Context directly
+                context.Users.Add(user);
+                await context.SaveChangesAsync();
 
-            var redirectUrl = Url.Action("Index", "Dashboard");
-            return Json(new { success = true, redirectUrl });
+                // Sign In
+                await _signInManager.SignInAsync(user, isPersistent: false);
+
+                // Set Session for legacy support
+                HttpContext.Session.SetInt32("UserId", user.Id);
+                HttpContext.Session.SetString("Username", user.UserName);
+
+                var redirectUrl = Url.Action("Index", "Dashboard");
+                return Json(new { success = true, redirectUrl });
+            }
+            catch (Exception)
+            {
+                return Json(new { success = false, errors = new[] { "Không thể tạo tài khoản. Vui lòng thử lại sau." } });
+            }
         }
 
 

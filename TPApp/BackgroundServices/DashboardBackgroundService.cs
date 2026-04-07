@@ -42,9 +42,18 @@ namespace TPApp.BackgroundServices
                 _options.MonthlyRebuildIntervalMinutes);
 
             // Warm-up rebuild on startup
-            await RunSnapshotRebuildAsync();
-            await RunMonthlyRebuildAsync();
-            _lastMonthlyRebuild = DateTime.UtcNow;
+            try
+            {
+                await RunSnapshotRebuildAsync();
+                await RunMonthlyRebuildAsync();
+                _lastMonthlyRebuild = DateTime.UtcNow;
+            }
+            catch (Exception)
+            {
+                // Logger may also fail (EventLog disposed) — silently continue
+                try { _logger.LogWarning("[DashboardBg] Warm-up failed, will retry on next tick."); }
+                catch { /* swallow */ }
+            }
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -79,7 +88,8 @@ namespace TPApp.BackgroundServices
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[DashboardBg] Snapshot rebuild failed.");
+                try { _logger.LogError(ex, "[DashboardBg] Snapshot rebuild failed."); }
+                catch { /* EventLog may be disposed */ }
             }
         }
 
@@ -93,7 +103,8 @@ namespace TPApp.BackgroundServices
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[DashboardBg] Monthly stats rebuild failed.");
+                try { _logger.LogError(ex, "[DashboardBg] Monthly stats rebuild failed."); }
+                catch { /* EventLog may be disposed */ }
             }
         }
     }

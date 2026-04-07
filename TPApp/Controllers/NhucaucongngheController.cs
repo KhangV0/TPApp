@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Options;
 using TPApp.Data;
@@ -179,7 +179,7 @@ namespace TPApp.Controllers.FrontEnd
                     Created = DateTime.Now,
                     CreatedBy = model.FullName,
                     IsActivated = true,
-                    Domain = HttpContext.Request.Host.Value,
+                    Domain = string.IsNullOrWhiteSpace(_mainDomain) ? "techport.vn" : new Uri(_mainDomain).Host,
                     StatusId = 1,
                     LanguageId = 1,
                     ParentId = 0,

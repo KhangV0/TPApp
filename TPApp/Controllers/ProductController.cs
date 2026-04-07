@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -130,7 +130,7 @@ namespace TPApp.Controllers
                     DateCreated = DateTime.Now,
                     Quantity = 1,
                     TypeId = 1,
-                    Domain = HttpContext.Request.Host.Value
+                    Domain = string.IsNullOrWhiteSpace(_mainDomain) ? "techport.vn" : new Uri(_mainDomain).Host
                 };
 
                 _context.ShoppingCarts.Add(cart);
