@@ -1,6 +1,7 @@
 @using TPApp.ViewModel
 @using TPApp.Entities
 @model ProductDetailViewModel
+@inject TPApp.Data.AppDbContext _context
 
 @{
     var p = Model.Product;
@@ -61,13 +62,13 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="tb-nhandienTab" data-bs-toggle="tab"
                     data-bs-target="#tb-nhandien" type="button" role="tab">
-                <i class="fa fa-id-card me-1"></i>Nhận diện thiết bị
+                <i class="fa fa-id-card me-1"></i>Thông tin
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tb-thongsoTab" data-bs-toggle="tab"
                     data-bs-target="#tb-thongso" type="button" role="tab">
-                <i class="fa fa-cogs me-1"></i>Thông tin
+                <i class="fa fa-cogs me-1"></i>Thông số kỹ thuật
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -87,10 +88,10 @@
     <div class="tab-content border border-top-0 rounded-bottom p-4" id="detailTabsThietBiContent">
 
         @* ══════════════════════════════════════
-           TAB 1 – NHẬN DIỆN THIẾT BỊ (active)
+           TAB 1 – THÔNG TIN (active)
            ══════════════════════════════════════ *@
         <div class="tab-pane fade show active" id="tb-nhandien" role="tabpanel">
-            <div class="hscn-section-title"><i class="fa fa-id-card me-2"></i>Thông tin nhận diện thiết bị</div>
+            <div class="hscn-section-title"><i class="fa fa-info-circle me-2"></i>Thông tin thiết bị</div>
 
             @* Tên thiết bị *@
             <div class="hscn-item">
@@ -102,18 +103,24 @@
 
             @* Xuất xứ *@
             @{
-                bool isDomesticN = string.IsNullOrEmpty(p.XuatXu) ||
-                    p.XuatXu.Contains("Việt", StringComparison.OrdinalIgnoreCase) ||
-                    p.XuatXu.Contains("VN", StringComparison.OrdinalIgnoreCase);
+                string xuatXuName = p.XuatXu;
+                if (string.IsNullOrEmpty(xuatXuName) && p.XuatXuId.HasValue)
+                {
+                    xuatXuName = _context.XuatXus.Where(x => x.Id == p.XuatXuId).Select(x => x.Title).FirstOrDefault();
+                }
+
+                bool isDomesticN = string.IsNullOrEmpty(xuatXuName) ||
+                    xuatXuName.Contains("Việt", StringComparison.OrdinalIgnoreCase) ||
+                    xuatXuName.Contains("VN", StringComparison.OrdinalIgnoreCase);
             }
-            @if (!string.IsNullOrEmpty(p.XuatXu))
+            @if (!string.IsNullOrEmpty(xuatXuName))
             {
                 <div class="hscn-item">
                     <div class="hscn-item-title">Xuất xứ</div>
                     <div class="ps-3">
                         <div class="hscn-check-row">@chk(isDomesticN) Trong nước (Việt Nam)</div>
                         <div class="hscn-check-row">@chk(!isDomesticN) Nước ngoài
-                            @if (!isDomesticN) { <span>(Quốc gia: <strong>@p.XuatXu</strong>)</span> }
+                            @if (!isDomesticN) { <span>(Quốc gia: <strong>@xuatXuName</strong>)</span> }
                         </div>
                     </div>
                 </div>
@@ -149,6 +156,18 @@
                         @if (p.Rating == 7) { <div class="hscn-check-row">☑ <i class="fa fa-flask me-1"></i> Đã ứng dụng thử nghiệm (Pilot)</div> }
                         @if (p.Rating == 8) { <div class="hscn-check-row">☑ <i class="fa fa-industry me-1"></i> Đã ứng dụng công nghiệp</div> }
                         @if (p.Rating == 9) { <div class="hscn-check-row">☑ <i class="fa fa-shopping-cart me-1"></i> Đã thương mại hóa</div> }
+                        @if (p.DaBan.HasValue && p.DaBan > 0)
+                        {
+                            <div class="mt-1 text-muted small ms-4">Đã bán: <strong>@p.DaBan</strong> đơn vị</div>
+                        }
+                        @if (p.TinhTrangHang.HasValue)
+                        {
+                            <div class="mt-1 ms-4">
+                                Tình trạng hàng:
+                                @if (p.TinhTrangHang == 1) { <span class="badge bg-success">Còn hàng</span> }
+                                else { <span class="badge bg-danger">Hết hàng</span> }
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -166,81 +185,14 @@
         </div>
 
         @* ══════════════════════════════════════
-           TAB 2 (active) – THÔNG TIN
+           TAB 2 – THÔNG SỐ KỸ THUẬT
            ══════════════════════════════════════ *@
         <div class="tab-pane fade" id="tb-thongso" role="tabpanel">
-            <div class="hscn-section-title"><i class="fa fa-cogs me-2"></i>Thông tin thiết bị</div>
+            <div class="hscn-section-title"><i class="fa fa-cogs me-2"></i>Thông số kỹ thuật &amp; Vận hành</div>
 
-            @* Xuất xứ *@
-            @{
-                bool isDomestic = string.IsNullOrEmpty(p.XuatXu) ||
-                    p.XuatXu.Contains("Việt", StringComparison.OrdinalIgnoreCase) ||
-                    p.XuatXu.Contains("VN", StringComparison.OrdinalIgnoreCase);
-            }
-            @if (!string.IsNullOrEmpty(p.XuatXu))
-            {
-                <div class="hscn-item">
-                    <div class="hscn-item-title">Xuất xứ</div>
-                    <div class="ps-3">
-                        <div class="hscn-check-row">@chk(isDomestic) Trong nước (Việt Nam)</div>
-                        <div class="hscn-check-row">@chk(!isDomestic) Nước ngoài
-                            @if (!isDomestic)
-                            {
-                                <span>(Quốc gia: <strong>@p.XuatXu</strong>)</span>
-                            }
-                        </div>
-                    </div>
-                </div>
-            }
 
-            @* Lĩnh vực áp dụng — chỉ hiển thị những lĩnh vực đã được check *@
-            @{
-                var checkedIndustries = Model.Industries?.Where(ind => catIds.Contains(ind.CatId)).ToList();
-            }
-            @if (checkedIndustries != null && checkedIndustries.Any())
-            {
-                <div class="hscn-item">
-                    <div class="hscn-item-title">Lĩnh vực áp dụng</div>
-                    <div class="ps-3">
-                        @foreach (var ind in checkedIndustries)
-                        {
-                            <div class="hscn-check-row">☑ @ind.Title</div>
-                        }
-                    </div>
-                </div>
-            }
-            else if (!string.IsNullOrEmpty(Model.CategoryTitle))
-            {
-                <div class="hscn-item">
-                    <div class="hscn-item-title">Lĩnh vực áp dụng</div>
-                    <div class="ps-3"><div class="hscn-check-row">☑ @Model.CategoryTitle</div></div>
-                </div>
-            }
 
-            @* Mức độ phát triển *@
-            @if (p.Rating.HasValue && p.Rating > 0)
-            {
-                <div class="hscn-item">
-                    <div class="hscn-item-title">Mức độ phát triển</div>
-                    <div class="ps-3">
-                        @if (p.Rating == 7) { <div class="hscn-check-row">☑ <i class="fa fa-flask me-1"></i> Đã ứng dụng thử nghiệm (Pilot)</div> }
-                        @if (p.Rating == 8) { <div class="hscn-check-row">☑ <i class="fa fa-industry me-1"></i> Đã ứng dụng công nghiệp</div> }
-                        @if (p.Rating == 9) { <div class="hscn-check-row">☑ <i class="fa fa-shopping-cart me-1"></i> Đã thương mại hóa</div> }
-                        @if (p.DaBan.HasValue && p.DaBan > 0)
-                        {
-                            <div class="mt-1 text-muted small">Đã bán: <strong>@p.DaBan</strong> đơn vị</div>
-                        }
-                        @if (p.TinhTrangHang.HasValue)
-                        {
-                            <div class="mt-1">
-                                Tình trạng hàng:
-                                @if (p.TinhTrangHang == 1) { <span class="badge bg-success">Còn hàng</span> }
-                                else { <span class="badge bg-danger">Hết hàng</span> }
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
+
 
             @* Thông số kỹ thuật chính *@
             @if (!string.IsNullOrEmpty(p.ThongSo))

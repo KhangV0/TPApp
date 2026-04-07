@@ -548,15 +548,114 @@ namespace TPApp.Areas.Cms.Controllers
             switch (model.ProductType)
             {
                 case TypeCongNghe:
+                    // 1. Tên đơn vị / Cá nhân chủ sở hữu
+                    if (!model.NCUId.HasValue)
+                        ModelState.AddModelError("NCUId", "Tên đơn vị là bắt buộc.");
+
+                    // 2. Loại hình
+                    if (!model.LoaiDeTai.HasValue)
+                        ModelState.AddModelError("LoaiDeTai", "Loại hình là bắt buộc.");
+
+                    // 5. Ảnh đại diện
+                    if (string.IsNullOrWhiteSpace(model.QuyTrinhHinhAnh))
+                        ModelState.AddModelError("QuyTrinhHinhAnh", "Ảnh đại diện (Thumbnail) là bắt buộc.");
+
+                    // 6. Xuất xứ
+                    if (!model.XuatXuId.HasValue)
+                        ModelState.AddModelError("XuatXuId", "Xuất xứ là bắt buộc.");
+
+                    // 8. Bối cảnh
+                    if (string.IsNullOrWhiteSpace(model.MoTaNgan))
+                        ModelState.AddModelError("MoTaNgan", "Bối cảnh & Vấn đề giải quyết là bắt buộc.");
+
+                    // 9. Nguyên lý
+                    if (string.IsNullOrWhiteSpace(model.MoTa))
+                        ModelState.AddModelError("MoTa", "Nguyên lý vận hành & Sơ đồ quy trình là bắt buộc.");
+
+                    // 10. Thông số
+                    if (string.IsNullOrWhiteSpace(model.ThongSo))
+                        ModelState.AddModelError("ThongSo", "Thông số kỹ thuật là bắt buộc.");
+
+                    // 12. TRL
                     if (!model.Rating.HasValue)
-                        ModelState.AddModelError("Rating", "TRL Level là bắt buộc cho Công nghệ.");
+                        ModelState.AddModelError("Rating", "TRL Level là bắt buộc.");
+
+                    // 13. Lĩnh vực ứng dụng
+                    if (string.IsNullOrWhiteSpace(model.CategoryId))
+                        ModelState.AddModelError("CategoryId", "Lĩnh vực ứng dụng là bắt buộc.");
+
+                    // 14. Đối tượng khách hàng mục tiêu
+                    if (string.IsNullOrWhiteSpace(model.TargetCustomer))
+                        ModelState.AddModelError("TargetCustomer", "Đối tượng khách hàng mục tiêu là bắt buộc.");
+
+                    // 16. Hình thức chuyển giao
+                    if (string.IsNullOrWhiteSpace(model.TransferMethod))
+                        ModelState.AddModelError("TransferMethod", "Hình thức chuyển giao là bắt buộc.");
+
+                    // 17. Giá bán dự kiến
+                    if (string.IsNullOrWhiteSpace(model.GiaBanDuKien))
+                        ModelState.AddModelError("GiaBanDuKien", "Giá bán dự kiến là bắt buộc.");
                     break;
                 case TypeThietBi:
+                    // 2. Ảnh đại diện
+                    if (string.IsNullOrWhiteSpace(model.QuyTrinhHinhAnh))
+                        ModelState.AddModelError("QuyTrinhHinhAnh", "Ảnh đại diện thiết bị là bắt buộc.");
+                    // 3. Xuất xứ
+                    if (!model.XuatXuId.HasValue)
+                        ModelState.AddModelError("XuatXuId", "Xuất xứ là bắt buộc.");
+                    // 4. Lĩnh vực áp dụng
+                    if (string.IsNullOrWhiteSpace(model.CategoryId))
+                        ModelState.AddModelError("CategoryId", "Lĩnh vực áp dụng là bắt buộc.");
+                    // 5. Mức độ phát triển (Rating)
                     if (!model.Rating.HasValue)
                         ModelState.AddModelError("Rating", "Mức độ phát triển là bắt buộc cho Thiết bị.");
+                    // 6. Thông số kỹ thuật
+                    if (string.IsNullOrWhiteSpace(model.ThongSo))
+                        ModelState.AddModelError("ThongSo", "Thông số kỹ thuật chính là bắt buộc.");
+                    // 7. Mô tả nguyên lý hoạt động
+                    if (string.IsNullOrWhiteSpace(model.MoTa))
+                        ModelState.AddModelError("MoTa", "Mô tả nguyên lý hoạt động là bắt buộc.");
+                    // 10. Giá bán dự kiến
+                    if (string.IsNullOrWhiteSpace(model.GiaBanDuKien))
+                        ModelState.AddModelError("GiaBanDuKien", "Giá tham khảo là bắt buộc.");
+                    // 12. Nhà cung ứng
+                    if (!model.NCUId.HasValue)
+                        ModelState.AddModelError("NCUId", "Tên đơn vị sở hữu / cung ứng là bắt buộc.");
                     break;
                 case TypeSanPhamTriTue:
-                    // SoBang is no longer required — removed from SanPhamTriTue form
+                    if (model.OwnerType == 1 && !model.NCUId.HasValue)
+                        ModelState.AddModelError("NCUId", "Tên đơn vị chủ sở hữu là bắt buộc.");
+                    if (model.OwnerType == 2)
+                    {
+                        if (string.IsNullOrWhiteSpace(model.HoTen)) ModelState.AddModelError("HoTen", "Họ và tên chủ sở hữu là bắt buộc.");
+                        if (string.IsNullOrWhiteSpace(model.DiaChi)) ModelState.AddModelError("DiaChi", "Địa chỉ là bắt buộc.");
+                        if (string.IsNullOrWhiteSpace(model.Phone)) ModelState.AddModelError("Phone", "Điện thoại là bắt buộc.");
+                        if (string.IsNullOrWhiteSpace(model.OwnerEmail)) ModelState.AddModelError("OwnerEmail", "Email là bắt buộc.");
+                    }
+                    if (!model.LoaiDeTai.HasValue)
+                        ModelState.AddModelError("LoaiDeTai", "Phân loại hồ sơ là bắt buộc.");
+                    if (string.IsNullOrWhiteSpace(model.SoBang))
+                        ModelState.AddModelError("SoBang", "Số bằng là bắt buộc.");
+                    if (!model.NgayCapBang.HasValue)
+                        ModelState.AddModelError("NgayCapBang", "Ngày cấp bằng là bắt buộc.");
+                    if (!model.ThoiHan.HasValue)
+                        ModelState.AddModelError("ThoiHan", "Thời hạn bảo hộ đến là bắt buộc.");
+                    if (string.IsNullOrWhiteSpace(model.ApplicationNumber))
+                        ModelState.AddModelError("ApplicationNumber", "Số đơn là bắt buộc.");
+                    if (!model.AcceptedDate.HasValue)
+                        ModelState.AddModelError("AcceptedDate", "Ngày chấp nhận đơn là bắt buộc.");
+                    if (string.IsNullOrWhiteSpace(model.CategoryId))
+                        ModelState.AddModelError("CategoryId", "Lĩnh vực áp dụng là bắt buộc.");
+                    if (string.IsNullOrWhiteSpace(model.MoTa))
+                        ModelState.AddModelError("MoTa", "Mô tả tài sản trí tuệ là bắt buộc.");
+                    if (string.IsNullOrWhiteSpace(model.QuyTrinhHinhAnh))
+                        ModelState.AddModelError("QuyTrinhHinhAnh", "Ảnh đại diện/Sơ đồ là bắt buộc.");
+                    if (string.IsNullOrWhiteSpace(model.InvestmentGoal))
+                        ModelState.AddModelError("InvestmentGoal", "Phân loại mục tiêu kêu gọi là bắt buộc.");
+                    if (string.IsNullOrWhiteSpace(model.TransferMethod))
+                        ModelState.AddModelError("TransferMethod", "Hình thức hợp tác mong muốn là bắt buộc.");
+                    if (!model.DevelopmentStageValue.HasValue)
+                        ModelState.AddModelError("DevelopmentStageValue", "Tình trạng phát triển là bắt buộc.");
                     break;
             }
         }

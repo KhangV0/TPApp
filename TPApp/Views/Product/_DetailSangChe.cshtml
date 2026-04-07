@@ -119,14 +119,7 @@
         <div class="tab-pane fade show active" id="sc-chusohuu" role="tabpanel">
             <div class="hscn-section-title"><i class="fa fa-user me-2"></i>Thông tin chủ sở hữu</div>
 
-            @* Loại chủ sở hữu *@
-            <div class="hscn-item">
-                <div class="hscn-item-title">Loại chủ sở hữu</div>
-                <div class="ps-3">
-                    <div class="hscn-check-row">@chk(isOrg) <i class="fa fa-building me-1"></i> Đơn vị / Tổ chức</div>
-                    <div class="hscn-check-row">@chk(!isOrg) <i class="fa fa-user me-1"></i> Cá nhân</div>
-                </div>
-            </div>
+
 
             @* Tên đơn vị / Cá nhân *@
             <div class="hscn-item">
@@ -252,30 +245,11 @@
                 <div class="hscn-item-title">Tình trạng pháp lý</div>
                 <table class="hscn-table-info ps-3 ms-3" style="font-size:13.5px;">
                     <tbody>
-                        @if (!string.IsNullOrEmpty(p.SoBang))
-                        {
-                            <tr><td>Số bằng / Số đơn:</td><td>@p.SoBang</td></tr>
-                        }
-                        @if (!string.IsNullOrEmpty(p.ApplicationNumber))
-                        {
-                            <tr><td>Số đơn đăng ký:</td><td>@p.ApplicationNumber</td></tr>
-                        }
-                        @if (p.AcceptedDate.HasValue)
-                        {
-                            <tr><td>Ngày chấp nhận đơn:</td><td>@p.AcceptedDate.Value.ToString("dd/MM/yyyy")</td></tr>
-                        }
-                        @if (p.NgayCapBang.HasValue)
-                        {
-                            <tr><td>Ngày cấp bằng:</td><td>@p.NgayCapBang.Value.ToString("dd/MM/yyyy")</td></tr>
-                        }
-                        @if (p.ThoiHan.HasValue)
-                        {
-                            <tr><td>Thời hạn bảo hộ đến:</td><td>@p.ThoiHan.Value.ToString("dd/MM/yyyy")</td></tr>
-                        }
-                        @if (p.ClaimsCount.HasValue)
-                        {
-                            <tr><td>Số yêu cầu bảo hộ:</td><td>@p.ClaimsCount</td></tr>
-                        }
+                        <tr><td>Số bằng:</td><td>@p.SoBang</td></tr>
+                        <tr><td>Ngày cấp bằng:</td><td>@(p.NgayCapBang?.ToString("dd/MM/yyyy") ?? "—")</td></tr>
+                        <tr><td>Thời hạn bảo hộ đến:</td><td>@(p.ThoiHan?.ToString("dd/MM/yyyy") ?? "—")</td></tr>
+                        <tr><td>Số đơn đăng ký:</td><td>@p.ApplicationNumber</td></tr>
+                        <tr><td>Ngày chấp nhận đơn:</td><td>@(p.AcceptedDate?.ToString("dd/MM/yyyy") ?? "—")</td></tr>
                     </tbody>
                 </table>
             </div>

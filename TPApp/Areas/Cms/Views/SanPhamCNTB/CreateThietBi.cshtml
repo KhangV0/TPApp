@@ -79,7 +79,8 @@
 
                     <!-- 2. Ảnh đại diện thiết bị -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">2. Ảnh đại diện thiết bị</label>
+                        <label class="form-label fw-semibold">2. Ảnh đại diện thiết bị <span class="text-danger">*</span></label>
+                        <span asp-validation-for="QuyTrinhHinhAnh" class="text-danger small d-block mb-1"></span>
                         <small class="text-muted d-block mb-2">(Đính kèm 01 ảnh chụp thực tế chất lượng cao, thể hiện rõ kiểu dáng và quy mô)</small>
                         <div class="row g-3 align-items-end">
                             <div class="col-md-8">
@@ -108,7 +109,8 @@
 
                     <!-- 3. Xuất xứ -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">3. Xuất xứ</label>
+                        <label class="form-label fw-semibold">3. Xuất xứ <span class="text-danger">*</span></label>
+                        <span asp-validation-for="XuatXuId" class="text-danger small d-block mb-2"></span>
                         <select asp-for="XuatXuId" class="form-select" id="selXuatXu" asp-items="@((List<SelectListItem>)ViewBag.XuatXuList)">
                             <option value="">-- Chọn --</option>
                         </select>
@@ -116,7 +118,8 @@
 
                     <!-- 4. Lĩnh vực áp dụng -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">4. Lĩnh vực áp dụng</label>
+                        <label class="form-label fw-semibold">4. Lĩnh vực áp dụng <span class="text-danger">*</span></label>
+                        <span asp-validation-for="CategoryId" class="text-danger small d-block mb-2"></span>
                         <input type="hidden" asp-for="CategoryId" id="hdnCategoryId" />
                         <div class="row g-2">
                             @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
@@ -172,13 +175,15 @@
 
                     <!-- 6. Thông số kỹ thuật chính -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">6. Thông số kỹ thuật chính</label>
+                        <label class="form-label fw-semibold">6. Thông số kỹ thuật chính <span class="text-danger">*</span></label>
+                        <span asp-validation-for="ThongSo" class="text-danger small d-block mb-2"></span>
                         <textarea asp-for="ThongSo" id="editorThongSo" class="form-control ck-editor-field-tab2" rows="20"></textarea>
                     </div>
 
                     <!-- 7. Mô tả nguyên lý hoạt động -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">7. Mô tả nguyên lý hoạt động</label>
+                        <label class="form-label fw-semibold">7. Mô tả nguyên lý hoạt động <span class="text-danger">*</span></label>
+                        <span asp-validation-for="MoTa" class="text-danger small d-block mb-2"></span>
                         <textarea asp-for="MoTa" id="editorNguyenLy" class="form-control ck-editor-field-tab2" rows="20"></textarea>
                     </div>
 
@@ -229,7 +234,8 @@
 
                     <!-- 10. Giá tham khảo -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">10. Giá tham khảo</label>
+                        <label class="form-label fw-semibold">10. Giá tham khảo <span class="text-danger">*</span></label>
+                        <span asp-validation-for="GiaBanDuKien" class="text-danger small d-block mb-2"></span>
                         <textarea asp-for="GiaBanDuKien" id="editorGiaBan" class="form-control ck-editor-field-tab3" rows="20"></textarea>
                     </div>
 
@@ -258,7 +264,8 @@
                     <!-- 12. Tên đơn vị sở hữu/cung ứng -->
                     <div class="row g-3 mb-3">
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold">12. Tên đơn vị sở hữu / cung ứng</label>
+                            <label class="form-label fw-semibold">12. Tên đơn vị sở hữu / cung ứng <span class="text-danger">*</span></label>
+                            <span asp-validation-for="NCUId" class="text-danger small d-block mb-2"></span>
                             <select asp-for="NCUId" class="form-select" asp-items="@((List<SelectListItem>)ViewBag.NhaCungUngList)">
                                 <option value="">-- Chọn nhà cung ứng --</option>
                             </select>

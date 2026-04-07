@@ -27,24 +27,20 @@
                     <input asp-for="FullName" class="form-control" placeholder="Nhập họ và tên..." />
                     <span asp-validation-for="FullName" class="text-danger small"></span>
                 </div>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label asp-for="HocHam" class="form-label fw-semibold">2. Học hàm / Học vị</label>
-                        <input asp-for="HocHam" class="form-control form-control-sm" placeholder="PGS.TS., ThS., ..." />
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="DateOfBirth" class="form-label fw-semibold">Ngày sinh</label>
-                        <input asp-for="DateOfBirth" class="form-control form-control-sm" placeholder="dd/MM/yyyy" />
-                    </div>
+                <div class="mb-3">
+                    <label asp-for="HocHam" class="form-label fw-semibold">2. Học hàm / Học vị <span class="text-danger">*</span></label>
+                    <input asp-for="HocHam" class="form-control form-control-sm" placeholder="PGS.TS., ThS., ..." />
+                    <span asp-validation-for="HocHam" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="HinhDaiDien" class="form-label fw-semibold">3. Ảnh đại diện</label>
+                    <label asp-for="HinhDaiDien" class="form-label fw-semibold">3. Ảnh đại diện <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input asp-for="HinhDaiDien" class="form-control form-control-sm" placeholder="/images/avatar.jpg" id="inputHinhDaiDien" />
                         <button type="button" class="btn btn-outline-primary btn-upload-field" data-target="inputHinhDaiDien">
                             <i class="fas fa-upload"></i> Upload
                         </button>
                     </div>
+                    <span asp-validation-for="HinhDaiDien" class="text-danger small d-block mt-1"></span>
                     <div id="previewHinhDaiDien" class="mt-2">
                         @if (!string.IsNullOrEmpty(Model.HinhDaiDien))
                         {
@@ -53,12 +49,14 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="CoQuan" class="form-label fw-semibold">4. Cơ quan công tác hiện tại</label>
+                    <label asp-for="CoQuan" class="form-label fw-semibold">4. Cơ quan công tác hiện tại <span class="text-danger">*</span></label>
                     <input asp-for="CoQuan" class="form-control form-control-sm" placeholder="Cơ quan..." />
+                    <span asp-validation-for="CoQuan" class="text-danger small"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="ChucVu" class="form-label fw-semibold">5. Chức vụ / Chức danh chuyên môn</label>
+                    <label asp-for="ChucVu" class="form-label fw-semibold">5. Chức vụ / Chức danh chuyên môn <span class="text-danger">*</span></label>
                     <input asp-for="ChucVu" class="form-control form-control-sm" placeholder="Chức vụ..." />
+                    <span asp-validation-for="ChucVu" class="text-danger small"></span>
                 </div>
                 <fieldset class="border rounded p-3 mb-3">
                     <legend class="float-none w-auto px-2 fs-6 fw-semibold">Thông tin liên hệ</legend>
@@ -97,7 +95,8 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">8. Lĩnh vực nghiên cứu trọng tâm</label>
+                    <label class="form-label fw-semibold">8. Lĩnh vực nghiên cứu trọng tâm <span class="text-danger">*</span></label>
+                    <span asp-validation-for="LinhVucId" class="text-danger small d-block mb-1"></span>
                     <input type="hidden" asp-for="LinhVucId" id="hdnLinhVucId" />
                     @if (linhVucItems != null && linhVucItems.Any())
                     {
@@ -122,12 +121,14 @@
             <!-- ══════════ TAB 3: ĐÀO TẠO & CÔNG TÁC ══════════ -->
             <div class="tab-pane fade" id="tab3">
                 <div class="mb-3">
-                    <label asp-for="QuaTrinhDaoTao" class="form-label fw-semibold">9. Quá trình đào tạo</label>
+                    <label asp-for="QuaTrinhDaoTao" class="form-label fw-semibold">9. Quá trình đào tạo <span class="text-danger">*</span></label>
+                    <span asp-validation-for="QuaTrinhDaoTao" class="text-danger small d-block mb-1"></span>
                     <textarea asp-for="QuaTrinhDaoTao" id="editorDaoTao" class="form-control" rows="6"></textarea>
                     <small class="text-muted">Dạng bảng: Năm tốt nghiệp | Bậc | Chuyên ngành | Cơ sở đào tạo</small>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="QuaTrinhCongTac" class="form-label fw-semibold">10. Quá trình công tác</label>
+                    <label asp-for="QuaTrinhCongTac" class="form-label fw-semibold">10. Quá trình công tác <span class="text-danger">*</span></label>
+                    <span asp-validation-for="QuaTrinhCongTac" class="text-danger small d-block mb-1"></span>
                     <textarea asp-for="QuaTrinhCongTac" id="editorCongTac" class="form-control" rows="6"></textarea>
                     <small class="text-muted">Dạng bảng: Thời gian | Đơn vị công tác | Vị trí chuyên môn</small>
                 </div>
@@ -136,16 +137,18 @@
             <!-- ══════════ TAB 4: CÔNG BỐ & SHTT ══════════ -->
             <div class="tab-pane fade" id="tab4">
                 <div class="mb-3">
-                    <label asp-for="CongBoKhoaHoc" class="form-label fw-semibold">11–12. Sách & Bài báo khoa học</label>
-                    <textarea asp-for="CongBoKhoaHoc" id="editorCongBo" class="form-control" rows="8"></textarea>
+                    <label asp-for="KetQuaNghienCuu" class="form-label fw-semibold">11. Sách & Chương sách đã xuất bản</label>
+                    <textarea asp-for="KetQuaNghienCuu" id="editorSachXuatBan" class="form-control" rows="5"></textarea>
+                    <small class="text-muted">Nhập liệu dạng bảng 3 cột: Tên sách/chương sách | Năm xuất bản | Nhà xuất bản</small>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="CongBoKhoaHoc" class="form-label fw-semibold">12. Bài báo khoa học / Báo cáo Hội nghị <span class="text-danger">*</span></label>
+                    <span asp-validation-for="CongBoKhoaHoc" class="text-danger small d-block mb-1"></span>
+                    <textarea asp-for="CongBoKhoaHoc" id="editorCongBo" class="form-control" rows="6"></textarea>
                 </div>
                 <div class="mb-3">
                     <label asp-for="SangChe" class="form-label fw-semibold">13. Bằng độc quyền Sáng chế / Tác quyền</label>
                     <textarea asp-for="SangChe" id="editorSangChe" class="form-control" rows="4"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="KetQuaNghienCuu" class="form-label fw-semibold">Kết quả nghiên cứu (legacy)</label>
-                    <textarea asp-for="KetQuaNghienCuu" id="editorKetQua" class="form-control" rows="5"></textarea>
                 </div>
             </div>
 
@@ -156,7 +159,8 @@
                     <textarea asp-for="DuAnNghienCuu" id="editorDuAn" class="form-control" rows="6"></textarea>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">15. Dịch vụ tư vấn chuyên sâu</label>
+                    <label class="form-label fw-semibold">15. Dịch vụ tư vấn chuyên sâu <span class="text-danger">*</span></label>
+                    <span asp-validation-for="DichVu" class="text-danger small d-block mb-1"></span>
                     <input type="hidden" asp-for="DichVu" id="hdnDichVu" />
                     @if (dichVuItems != null && dichVuItems.Any())
                     {

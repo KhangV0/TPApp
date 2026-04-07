@@ -38,12 +38,21 @@ $(function(){
             Heading, List, BlockQuote, Table, TableToolbar,
             SourceEditing, Alignment, Font, HtmlEmbed } = CKEDITOR;
 
+    var myPlugins = [
+        Essentials, Bold, Italic, Link, Paragraph, Heading,
+        List, BlockQuote, Table, TableToolbar,
+        SourceEditing, Alignment, Font, HtmlEmbed
+    ];
+    if (CKEDITOR.PasteFromOffice) myPlugins.push(CKEDITOR.PasteFromOffice);
+    if (CKEDITOR.GeneralHtmlSupport) myPlugins.push(CKEDITOR.GeneralHtmlSupport);
+    if (CKEDITOR.TableProperties) myPlugins.push(CKEDITOR.TableProperties);
+    if (CKEDITOR.TableCellProperties) myPlugins.push(CKEDITOR.TableCellProperties);
+
     var editorConfig = {
-        plugins: [
-            Essentials, Bold, Italic, Link, Paragraph, Heading,
-            List, BlockQuote, Table, TableToolbar,
-            SourceEditing, Alignment, Font, HtmlEmbed
-        ],
+        plugins: myPlugins,
+        htmlSupport: {
+            allow: [ { name: /.*/, attributes: true, classes: true, styles: true } ]
+        },
         toolbar: {
             items: [
                 'heading', '|',
@@ -62,7 +71,7 @@ $(function(){
     };
 
     var editors = {};
-    ['editorKetQuaNghienCuu'].forEach(function(id) {
+    ['editorDaoTao', 'editorCongTac', 'editorSachXuatBan', 'editorCongBo', 'editorSangChe', 'editorDuAn', 'editorKinhNghiem', 'editorHoSo'].forEach(function(id) {
         var el = document.querySelector('#' + id);
         if (el) {
             ClassicEditor.create(el, editorConfig).then(function(editor) {

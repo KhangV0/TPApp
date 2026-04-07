@@ -202,8 +202,7 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(NhaCungUngFormVm vm)
         {
-            if (string.IsNullOrWhiteSpace(vm.FullName))
-                ModelState.AddModelError("FullName", "Tên nhà cung ứng không được để trống.");
+            ValidateForm(vm);
 
             if (!ModelState.IsValid)
             {
@@ -239,8 +238,7 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(NhaCungUngFormVm vm)
         {
-            if (string.IsNullOrWhiteSpace(vm.FullName))
-                ModelState.AddModelError("FullName", "Tên nhà cung ứng không được để trống.");
+            ValidateForm(vm);
 
             if (!ModelState.IsValid)
             {
@@ -308,6 +306,20 @@ namespace TPApp.Areas.Cms.Controllers
         }
 
         // ── HELPERS ──
+        private void ValidateForm(NhaCungUngFormVm vm)
+        {
+            if (string.IsNullOrWhiteSpace(vm.FullName)) ModelState.AddModelError("FullName", "Tên đơn vị là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.LoaiHinhToChuc)) ModelState.AddModelError("LoaiHinhToChuc", "Loại hình tổ chức là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.DiaChi)) ModelState.AddModelError("DiaChi", "Địa chỉ là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.Phone)) ModelState.AddModelError("Phone", "Điện thoại là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.Email)) ModelState.AddModelError("Email", "Email chính là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.NguoiDaiDien)) ModelState.AddModelError("NguoiDaiDien", "Người đại diện pháp luật là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.ChucVu)) ModelState.AddModelError("ChucVu", "Chức vụ là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.LinhVucId)) ModelState.AddModelError("LinhVucId", "Lĩnh vực hoạt động chính là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.ChucNangChinh)) ModelState.AddModelError("ChucNangChinh", "Chức năng nhiệm vụ / Giá trị cốt lõi là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.DichVu)) ModelState.AddModelError("DichVu", "Dịch vụ khoa học và công nghệ là bắt buộc.");
+        }
+
         private async Task LoadFormSelectListsAsync()
         {
             var statuses = await _context.Statuses.AsNoTracking()

@@ -208,8 +208,7 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(NhaTuVanFormVm vm)
         {
-            if (string.IsNullOrWhiteSpace(vm.FullName))
-                ModelState.AddModelError("FullName", "Họ tên không được để trống.");
+            ValidateForm(vm);
 
             if (!ModelState.IsValid)
             {
@@ -245,8 +244,7 @@ namespace TPApp.Areas.Cms.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(NhaTuVanFormVm vm)
         {
-            if (string.IsNullOrWhiteSpace(vm.FullName))
-                ModelState.AddModelError("FullName", "Họ tên không được để trống.");
+            ValidateForm(vm);
 
             if (!ModelState.IsValid)
             {
@@ -318,6 +316,20 @@ namespace TPApp.Areas.Cms.Controllers
         }
 
         // ── HELPERS ──
+        private void ValidateForm(NhaTuVanFormVm vm)
+        {
+            if (string.IsNullOrWhiteSpace(vm.FullName)) ModelState.AddModelError("FullName", "Họ tên là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.HocHam)) ModelState.AddModelError("HocHam", "Học hàm / Học vị là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.HinhDaiDien)) ModelState.AddModelError("HinhDaiDien", "Ảnh đại diện là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.CoQuan)) ModelState.AddModelError("CoQuan", "Cơ quan công tác là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.ChucVu)) ModelState.AddModelError("ChucVu", "Chức vụ là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.LinhVucId)) ModelState.AddModelError("LinhVucId", "Lĩnh vực nghiên cứu là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.QuaTrinhDaoTao)) ModelState.AddModelError("QuaTrinhDaoTao", "Quá trình đào tạo là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.QuaTrinhCongTac)) ModelState.AddModelError("QuaTrinhCongTac", "Quá trình công tác là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.CongBoKhoaHoc)) ModelState.AddModelError("CongBoKhoaHoc", "Bài báo khoa học là bắt buộc.");
+            if (string.IsNullOrWhiteSpace(vm.DichVu)) ModelState.AddModelError("DichVu", "Dịch vụ tư vấn chuyên sâu là bắt buộc.");
+        }
+
         private async Task LoadFormSelectListsAsync()
         {
             var statuses = await _context.Statuses.AsNoTracking()

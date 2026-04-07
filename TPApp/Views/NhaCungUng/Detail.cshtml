@@ -69,14 +69,15 @@
                         <div class="row">
                             @* Logo / Image *@
                             <div class="col-xs-12 col-sm-3 text-center mb-3">
-                                <img src="@Model.ImageUrl"
+                                <img src="@Model.LogoUrl"
                                      alt="@Model.FullName"
                                      class="img-thumbnail"
-                                     style="max-width:160px;max-height:160px;object-fit:contain;padding:8px;" />
-                                @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                                     style="max-width:160px;max-height:160px;object-fit:contain;padding:8px;"
+                                     onerror="this.src='/images/no-logo.png';" />
+                                @if (!string.IsNullOrEmpty(Model.ImageUrl))
                                 {
                                     <div class="mt-2">
-                                        <img src="@Model.LogoUrl" alt="Logo" style="max-height:50px;" class="rounded" />
+                                        <img src="@Model.ImageUrl" alt="Hình ảnh trụ sở" style="max-height:100px; max-width:100%; object-fit:contain" class="rounded border" />
                                     </div>
                                 }
                             </div>
@@ -156,12 +157,7 @@
                 @* ── 4 TABS (tương ứng CMS form) ── *@
                 <ul class="nav nav-tabs mb-0" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" data-bs-toggle="tab" href="#tab1">
-                            <i class="fa fa-id-card me-1"></i>Thông tin định danh
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#tab2">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tab2">
                             <i class="fa fa-cogs me-1"></i>Năng lực & Lĩnh vực
                         </a>
                     </li>
@@ -179,56 +175,8 @@
 
                 <div class="tab-content border border-top-0 rounded-bottom p-3 mb-4">
 
-                    @* ══════ TAB 1: THÔNG TIN ĐỊNH DANH ══════ *@
-                    <div class="tab-pane fade show active" id="tab1">
-                        <table class="table table-sm table-bordered mb-0" style="font-size:14px;">
-                            <tbody>
-                                <tr><td class="fw-bold bg-light" style="width:180px;">Tên đơn vị</td><td>@Model.FullName</td></tr>
-                                @if (!string.IsNullOrEmpty(Model.TenVietTat))
-                                {
-                                    <tr><td class="fw-bold bg-light">Tên viết tắt / Tiếng Anh</td><td>@Model.TenVietTat</td></tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.LoaiHinhToChucText))
-                                {
-                                    <tr><td class="fw-bold bg-light">Loại hình tổ chức</td><td>@Model.LoaiHinhToChucText</td></tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.DiaChi))
-                                {
-                                    <tr><td class="fw-bold bg-light">Địa chỉ</td><td>@Model.DiaChi</td></tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Phone))
-                                {
-                                    <tr><td class="fw-bold bg-light">Điện thoại</td><td><a href="tel:@Model.Phone">@Model.Phone</a></td></tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Fax))
-                                {
-                                    <tr><td class="fw-bold bg-light">Fax</td><td>@Model.Fax</td></tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Email))
-                                {
-                                    <tr><td class="fw-bold bg-light">Email chính</td><td><a href="mailto:@Model.Email">@Model.Email</a></td></tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Website))
-                                {
-                                    <tr><td class="fw-bold bg-light">Website</td><td><a href="@Model.Website" target="_blank" rel="noopener">@Model.Website</a></td></tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.MaSoThue))
-                                {
-                                    <tr><td class="fw-bold bg-light">Mã số thuế</td><td>@Model.MaSoThue</td></tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.NguoiDaiDien))
-                                {
-                                    <tr>
-                                        <td class="fw-bold bg-light">Người đại diện pháp luật</td>
-                                        <td>@Model.NguoiDaiDien @(!string.IsNullOrEmpty(Model.ChucVu) ? $"— {Model.ChucVu}" : "")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-
                     @* ══════ TAB 2: NĂNG LỰC & LĨNH VỰC ══════ *@
-                    <div class="tab-pane fade" id="tab2">
+                    <div class="tab-pane fade show active" id="tab2">
                         @if (!string.IsNullOrEmpty(Model.LinhVucText))
                         {
                             <h6 class="fw-semibold mb-2"><i class="fa fa-layer-group me-1 text-primary"></i>Lĩnh vực hoạt động chính</h6>
@@ -253,9 +201,15 @@
                             <div class="mb-3 ps-3">@Html.Raw(Model.DichVuText)</div>
                         }
 
-                        @if (Model.Products.Any() || !string.IsNullOrEmpty(Model.SanPham))
+                        @if (!string.IsNullOrEmpty(Model.SanPham) || Model.Products.Any())
                         {
-                            <h6 class="fw-semibold mb-2"><i class="fa fa-flask me-1 text-primary"></i>Sản phẩm công nghệ / Kết quả nghiên cứu</h6>
+                            <h6 class="fw-semibold mb-2 mt-3"><i class="fa fa-flask me-1 text-primary"></i>Sản phẩm công nghệ / Kết quả nghiên cứu</h6>
+                            
+                            @if (!string.IsNullOrEmpty(Model.SanPham))
+                            {
+                                <div class="mb-3 ps-3">@Html.Raw(Model.SanPham)</div>
+                            }
+
                             @if (Model.Products.Any())
                             {
                                 <div class="row g-3">
@@ -295,10 +249,6 @@
                                         </div>
                                     }
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="ps-3">@Html.Raw(Model.SanPham)</div>
                             }
                         }
 

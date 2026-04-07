@@ -52,7 +52,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">3. Loại hình tổ chức</label>
+                    <label class="form-label fw-semibold">3. Loại hình tổ chức <span class="text-danger">*</span></label>
+                    <span asp-validation-for="LoaiHinhToChuc" class="text-danger small d-block mb-1"></span>
                     <input type="hidden" asp-for="LoaiHinhToChuc" id="hdnLoaiHinhToChuc" />
                     <div class="row g-2">
                         @foreach (var (val, text) in loaiHinhOptions)
@@ -72,13 +73,15 @@
                 <fieldset class="border rounded p-3 mb-3">
                     <legend class="float-none w-auto px-2 fs-6 fw-semibold">4. Thông tin liên hệ</legend>
                     <div class="mb-3">
-                        <label asp-for="DiaChi" class="form-label fw-semibold">Địa chỉ</label>
+                        <label asp-for="DiaChi" class="form-label fw-semibold">Địa chỉ <span class="text-danger">*</span></label>
                         <input asp-for="DiaChi" class="form-control form-control-sm" placeholder="Địa chỉ..." />
+                        <span asp-validation-for="DiaChi" class="text-danger small"></span>
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label asp-for="Phone" class="form-label fw-semibold">Điện thoại</label>
+                            <label asp-for="Phone" class="form-label fw-semibold">Điện thoại <span class="text-danger">*</span></label>
                             <input asp-for="Phone" class="form-control form-control-sm" placeholder="Số điện thoại..." />
+                            <span asp-validation-for="Phone" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
                             <label asp-for="Website" class="form-label fw-semibold">Website</label>
@@ -91,8 +94,9 @@
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label asp-for="Email" class="form-label fw-semibold">Email chính</label>
+                            <label asp-for="Email" class="form-label fw-semibold">Email chính <span class="text-danger">*</span></label>
                             <input asp-for="Email" type="email" class="form-control form-control-sm" placeholder="Email..." />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
                             <label asp-for="MaSoThue" class="form-label fw-semibold">Mã số thuế</label>
@@ -103,12 +107,14 @@
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label asp-for="NguoiDaiDien" class="form-label fw-semibold">5. Người đại diện pháp luật</label>
+                        <label asp-for="NguoiDaiDien" class="form-label fw-semibold">5. Người đại diện pháp luật <span class="text-danger">*</span></label>
                         <input asp-for="NguoiDaiDien" class="form-control form-control-sm" placeholder="Họ tên..." />
+                        <span asp-validation-for="NguoiDaiDien" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="ChucVu" class="form-label fw-semibold">Chức vụ</label>
+                        <label asp-for="ChucVu" class="form-label fw-semibold">Chức vụ <span class="text-danger">*</span></label>
                         <input asp-for="ChucVu" class="form-control form-control-sm" placeholder="Chức vụ..." />
+                        <span asp-validation-for="ChucVu" class="text-danger small"></span>
                     </div>
                 </div>
             </div>
@@ -116,7 +122,8 @@
             <!-- ══════════ TAB 2: NĂNG LỰC & LĨNH VỰC ══════════ -->
             <div class="tab-pane fade" id="tab2">
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">6. Lĩnh vực hoạt động chính <small class="text-muted">(Chọn tối đa 03 lĩnh vực)</small></label>
+                    <label class="form-label fw-semibold">6. Lĩnh vực hoạt động chính <span class="text-danger">*</span> <small class="text-muted">(Chọn tối đa 03 lĩnh vực)</small></label>
+                    <span asp-validation-for="LinhVucId" class="text-danger small d-block mb-1"></span>
                     <input type="hidden" asp-for="LinhVucId" id="hdnLinhVucId" />
                     @if (linhVucItems != null && linhVucItems.Any())
                     {
@@ -143,7 +150,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="ChucNangChinh" class="form-label fw-semibold">7. Chức năng nhiệm vụ / Giá trị cốt lõi <small class="text-muted">(Tối đa 300 chữ)</small></label>
+                    <label asp-for="ChucNangChinh" class="form-label fw-semibold">7. Chức năng nhiệm vụ / Giá trị cốt lõi <span class="text-danger">*</span> <small class="text-muted">(Tối đa 300 chữ)</small></label>
+                    <span asp-validation-for="ChucNangChinh" class="text-danger small d-block mb-1"></span>
                     <textarea asp-for="ChucNangChinh" id="editorChucNangChinh" class="form-control" rows="6"></textarea>
                 </div>
             </div>
@@ -151,7 +159,8 @@
             <!-- ══════════ TAB 3: DỊCH VỤ & SẢN PHẨM ══════════ -->
             <div class="tab-pane fade" id="tab3">
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">8. Dịch vụ khoa học và công nghệ</label>
+                    <label class="form-label fw-semibold">8. Dịch vụ khoa học và công nghệ <span class="text-danger">*</span></label>
+                    <span asp-validation-for="DichVu" class="text-danger small d-block mb-1"></span>
                     <input type="hidden" asp-for="DichVu" id="hdnDichVu" />
                     @if (dichVuItems != null && dichVuItems.Any())
                     {
@@ -228,7 +237,19 @@
                 <h6 class="fw-semibold mb-3">11. Chứng nhận năng lực</h6>
                 <div class="mb-3">
                     <label asp-for="ChungNhan" class="form-label fw-semibold">Giấy phép hoạt động KH&CN / Chứng chỉ chất lượng</label>
-                    <textarea asp-for="ChungNhan" id="editorChungNhan" class="form-control" rows="4" placeholder="Liệt kê các chứng nhận, giấy phép..."></textarea>
+                    <div class="input-group">
+                        <input asp-for="ChungNhan" class="form-control form-control-sm" placeholder="/files/certificate.pdf" id="inputChungNhan" />
+                        <button type="button" class="btn btn-outline-primary btn-upload-doc-field" data-target="inputChungNhan">
+                            <i class="fas fa-upload"></i> Upload File
+                        </button>
+                    </div>
+                    <small class="text-muted">Đính kèm file giấy phép / chứng nhận (PDF, Ảnh...)</small>
+                    <div id="previewChungNhan" class="mt-2">
+                        @if (!string.IsNullOrEmpty(Model.ChungNhan))
+                        {
+                            <a href="@Model.ChungNhan" target="_blank" class="fw-semibold text-primary"><i class="fas fa-paperclip"></i> Xem file / link đính kèm hiện tại</a>
+                        }
+                    </div>
                 </div>
 
                 <hr />
@@ -302,6 +323,54 @@
             }
             const vals = [...document.querySelectorAll('.chk-linhvuc:checked')].map(x => x.value);
             document.getElementById('hdnLinhVucId').value = vals.join(';');
+        });
+    });
+
+    // Handle generic document file upload for elements with class btn-upload-doc-field
+    document.querySelectorAll('.btn-upload-doc-field').forEach(btn => {
+        btn.addEventListener('click', function() {
+            var targetId = this.getAttribute('data-target');
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '*/*';
+            input.style.display = 'none';
+
+            input.addEventListener('change', function() {
+                var file = this.files[0];
+                if (!file) return;
+
+                var formData = new FormData();
+                formData.append('upload', file);
+
+                fetch('/cms/Upload/Upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(r => {
+                    if (r.url) {
+                        document.getElementById(targetId).value = r.url;
+                        var previewId = 'preview' + targetId.replace('input', '');
+                        var previewEl = document.getElementById(previewId);
+                        if (previewEl) {
+                            previewEl.innerHTML = '<a href="' + r.url + '" target="_blank" class="fw-semibold text-primary"><i class="fas fa-paperclip"></i> Xem file / link đính kèm hiện tại</a>';
+                        }
+                        if (typeof toastr !== 'undefined') toastr.success('Upload file thành công!');
+                    } else if (r.error) {
+                        if (typeof toastr !== 'undefined') toastr.error(r.error.message);
+                        else alert(r.error.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    if (typeof toastr !== 'undefined') toastr.error('Upload thất bại.');
+                    else alert('Upload thất bại.');
+                });
+            });
+
+            document.body.appendChild(input);
+            input.click();
+            document.body.removeChild(input);
         });
     });
 </script>
