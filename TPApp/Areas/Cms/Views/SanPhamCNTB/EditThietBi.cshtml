@@ -6,6 +6,10 @@
 
 <style>
     .ck-editor__editable { min-height: 300px !important; }
+    .ck.ck-editor__editable[data-placeholder]::before,
+    .ck-placeholder::before {
+        white-space: pre-wrap !important;
+    }
 </style>
 
 <div class="card card-outline card-primary shadow-sm">
@@ -237,7 +241,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">10. Giá tham khảo <span class="text-danger">*</span></label>
                         <span asp-validation-for="GiaBanDuKien" class="text-danger small d-block mb-2"></span>
-                        <textarea asp-for="GiaBanDuKien" id="editorGiaBan" class="form-control ck-editor-field-tab3" rows="20"></textarea>
+                        <textarea asp-for="GiaBanDuKien" id="editorGiaBan" class="form-control ck-editor-field-tab3" rows="20" placeholder="Loại/Quy mô/Hình thức sở hữu&#10;Mô tả chi tiết&#10;Giá bán dự kiến"></textarea>
                     </div>
 
                     <!-- 11. Bảo hành & Hỗ trợ -->
@@ -421,7 +425,9 @@ $(function(){
     $('button[data-bs-target="#tab2"]').on('shown.bs.tab', function(){
         document.querySelectorAll('.ck-editor-field-tab2').forEach(function(el){
             if (ckInstances[el.id]) return;
-            CKEDITOR.ClassicEditor.create(el, ckConfig).then(function(editor){
+            var conf = Object.assign({}, ckConfig);
+            if (el.getAttribute('placeholder')) conf.placeholder = el.getAttribute('placeholder');
+            CKEDITOR.ClassicEditor.create(el, conf).then(function(editor){
                 ckInstances[el.id] = editor;
             }).catch(function(err){ console.error(err); });
         });
@@ -431,7 +437,13 @@ $(function(){
     $('button[data-bs-target="#tab3"]').on('shown.bs.tab', function(){
         document.querySelectorAll('.ck-editor-field-tab3').forEach(function(el){
             if (ckInstances[el.id]) return;
-            CKEDITOR.ClassicEditor.create(el, ckConfig).then(function(editor){
+            var conf = Object.assign({}, ckConfig);
+            if (el.id === 'editorGiaBan') {
+                conf.placeholder = "- Loại/Quy mô/Hình thức sở hữu\n- Mô tả chi tiết\n- Giá bán dự kiến";
+            } else if (el.getAttribute('placeholder')) {
+                conf.placeholder = el.getAttribute('placeholder');
+            }
+            CKEDITOR.ClassicEditor.create(el, conf).then(function(editor){
                 ckInstances[el.id] = editor;
             }).catch(function(err){ console.error(err); });
         });

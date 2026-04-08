@@ -322,9 +322,6 @@
         </div>
 
         @* Ảnh đại diện — ẩn vì đã hiển thị bên trên trong _DetailHeader *@
-        <div class="hscn-item d-none">
-            <div class="hscn-item-title">Ảnh đại diện</div>
-        </div>
 
         @* Xuất xứ *@
         <div class="hscn-item">
@@ -368,6 +365,11 @@
                         <span>– Ngày chấp nhận: @p.AcceptedDate.Value.ToString("dd/MM/yyyy")</span>
                     }
                 </div>
+                <div class="hscn-check-row">
+                    @chk(!string.IsNullOrEmpty(p.CoQuanChuQuan))
+                    Giấy chứng nhận đăng ký thiết kế bố trí mạch tích hợp bán dẫn số:
+                    @if (!string.IsNullOrEmpty(p.CoQuanChuQuan)) { <strong>@p.CoQuanChuQuan</strong> }
+                </div>
                 @if (p.ClaimsCount.HasValue && p.ClaimsCount > 0)
                 {
                     <div class="hscn-check-row">☑ Số yêu cầu bảo hộ: <strong>@p.ClaimsCount</strong></div>
@@ -398,21 +400,23 @@
         <div class="hscn-section-title">Mô tả chi tiết giải pháp</div>
 
         @* Bối cảnh & vấn đề *@
-        @if (!string.IsNullOrEmpty(p.MoTaNgan))
+        @if (!string.IsNullOrEmpty(p.MoTa))
         {
         <div class="hscn-item">
             <div class="hscn-item-title">Bối cảnh &amp; Vấn đề giải quyết</div>
-            <div class="ps-3 content-body">@Html.Raw(p.MoTaNgan)</div>
+            <div class="ps-3 content-body">@Html.Raw(p.MoTa)</div>
         </div>
         }
 
         @* Nguyên lý vận hành & Sơ đồ quy trình *@
-        @if (!string.IsNullOrEmpty(p.MoTa))
+        @if (!string.IsNullOrEmpty(p.QuyTrinhHinhAnh))
         {
             <div class="hscn-item">
                 <div class="hscn-item-title">Nguyên lý vận hành &amp; Sơ đồ quy trình</div>
-                <div class="ps-3 content-body">
-                    @Html.Raw(p.MoTa)
+                <div class="ps-3">
+                    <img src="@Html.CookedImageURL("org", p.QuyTrinhHinhAnh)"
+                         alt="@p.Name"
+                         style="max-width:100%; border:1px solid #ddd; padding:4px;" />
                 </div>
             </div>
         }
@@ -430,7 +434,7 @@
         @if (!string.IsNullOrEmpty(p.UuDiem))
         {
             <div class="hscn-item">
-                <div class="hscn-item-title">Ưu điểm nổi bật</div>
+                <div class="hscn-item-title">Ưu điểm</div>
                 <div class="ps-3 content-body">@Html.Raw(p.UuDiem)</div>
             </div>
         }
@@ -536,12 +540,19 @@
         }
 
         @* Hiệu quả kinh tế - xã hội *@
-        @if (!string.IsNullOrEmpty(p.CooperationGoal))
+        @if (!string.IsNullOrEmpty(p.CooperationGoal) || !string.IsNullOrEmpty(p.MoTaNgan))
         {
         <div class="hscn-item">
             <div class="hscn-item-title">Hiệu quả kinh tế – xã hội</div>
             <div class="ps-3 content-body">
-                @Html.Raw(p.CooperationGoal)
+                @if (!string.IsNullOrEmpty(p.CooperationGoal))
+                {
+                    @Html.Raw(p.CooperationGoal)
+                }
+                else if (!string.IsNullOrEmpty(p.MoTaNgan))
+                {
+                    @Html.Raw(p.MoTaNgan)
+                }
             </div>
         </div>
         }

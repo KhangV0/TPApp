@@ -187,7 +187,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.MoTaNgan))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">8. Bối cảnh & Vấn đề giải quyết</label>
+                        <label class="form-label fw-semibold">7. Bối cảnh & Vấn đề giải quyết</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.MoTaNgan)</div>
                     </div>
                 }
@@ -195,7 +195,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.MoTa))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">9. Nguyên lý vận hành & Sơ đồ quy trình</label>
+                        <label class="form-label fw-semibold">8. Nguyên lý vận hành & Sơ đồ quy trình</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.MoTa)</div>
                     </div>
                 }
@@ -203,7 +203,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.ThongSo))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">10. Thông số kỹ thuật chủ yếu</label>
+                        <label class="form-label fw-semibold">9. Thông số kỹ thuật chủ yếu</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.ThongSo)</div>
                     </div>
                 }
@@ -211,7 +211,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.UuDiem))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">11. Ưu điểm nổi bật</label>
+                        <label class="form-label fw-semibold">10. Ưu điểm nổi bật</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.UuDiem)</div>
                     </div>
                 }
@@ -220,17 +220,17 @@
             <!-- ──── TAB 4: TRL ──── -->
             <div class="tab-pane fade" id="dtab4" role="tabpanel">
                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-layer-group me-1"></i> IV. Mức độ sẵn sàng công nghệ (TRL)</h6>
-                @if (Model.Rating.HasValue && Model.Rating > 0)
+                @if (Model.TRLLevel.HasValue && Model.TRLLevel > 0)
                 {
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <span class="badge bg-primary fs-5 px-3 py-2">TRL @Model.Rating</span>
-                        <span class="text-muted">@trlDesc(Model.Rating.Value)</span>
+                        <span class="badge bg-primary fs-5 px-3 py-2">TRL @Model.TRLLevel</span>
+                        <span class="text-muted">@trlDesc(Model.TRLLevel.Value)</span>
                     </div>
                     <!-- Progress bar -->
                     <div class="progress" style="height: 24px;">
                         <div class="progress-bar bg-primary" role="progressbar"
-                             style="width: @((Model.Rating.Value / 9.0 * 100).ToString("F0"))%">
-                            TRL @Model.Rating / 9
+                             style="width: @((Model.TRLLevel.Value / 9.0 * 100).ToString("F0"))%">
+                            TRL @Model.TRLLevel / 9
                         </div>
                     </div>
                 }
@@ -247,7 +247,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.TargetCustomer))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">14. Đối tượng khách hàng mục tiêu</label>
+                        <label class="form-label fw-semibold">12. Đối tượng khách hàng mục tiêu</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.TargetCustomer)</div>
                     </div>
                 }
@@ -255,7 +255,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.CooperationGoal))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">15. Hiệu quả kinh tế - xã hội</label>
+                        <label class="form-label fw-semibold">13. Hiệu quả kinh tế - xã hội</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.CooperationGoal)</div>
                     </div>
                 }
@@ -268,7 +268,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.TransferMethod))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">16. Hình thức chuyển giao</label>
+                        <label class="form-label fw-semibold">Hình thức chuyển giao</label>
                         <div>
                             @foreach (var m in Model.TransferMethod.Split(',', StringSplitOptions.RemoveEmptyEntries))
                             {
@@ -281,7 +281,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.GiaBanDuKien))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">17. Giá bán dự kiến</label>
+                        <label class="form-label fw-semibold">14. Giá bán dự kiến</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.GiaBanDuKien)</div>
                     </div>
                 }
@@ -289,7 +289,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.ChiPhiPhatSinh))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">18. Các chi phí phát sinh khác (Chi phí đào tạo, hướng dẫn kỹ thuật, bảo trì, bảo hành, vận chuyển, lắp đặt,…)</label>
+                        <label class="form-label fw-semibold">15. Các chi phí phát sinh khác (Chi phí đào tạo, hướng dẫn kỹ thuật, bảo trì, bảo hành, vận chuyển, lắp đặt,…)</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.ChiPhiPhatSinh)</div>
                     </div>
                 }
@@ -297,7 +297,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.BaoHanhHoTro))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">19. Chế độ bảo hành & Hỗ trợ kỹ thuật</label>
+                        <label class="form-label fw-semibold">16. Chế độ bảo hành & Hỗ trợ kỹ thuật</label>
                         <div class="border rounded p-3 bg-light">@Html.Raw(Model.BaoHanhHoTro)</div>
                     </div>
                 }
@@ -306,11 +306,11 @@
             <!-- ──── TAB 7: Chứng nhận & Tài liệu số ──── -->
             <div class="tab-pane fade" id="dtab7" role="tabpanel">
                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-certificate me-1"></i> VII. Chứng nhận & Tài liệu số</h6>
-                <!-- 20. Chứng nhận chất lượng -->
+                <!-- 17. Chứng nhận chất lượng -->
                 @if ((Model.ChungNhanISO == true) || (Model.ChungNhanQuatest == true) || (Model.ChungNhanKhac == true))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">20. Chứng nhận chất lượng</label>
+                        <label class="form-label fw-semibold">17. Chứng nhận chất lượng</label>
                         <div>
                             @if (Model.ChungNhanISO == true) { <span class="badge bg-success me-1">ISO / CE / HACCP</span> }
                             @if (Model.ChungNhanQuatest == true) { <span class="badge bg-info me-1">Phiếu kết quả kiểm nghiệm (Quatest)</span> }
@@ -323,7 +323,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.URL))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">21a. Video clip vận hành</label>
+                        <label class="form-label fw-semibold">18a. Video clip vận hành</label>
                         @if (Model.IsYoutube == true && Model.URL.Contains("youtube", StringComparison.OrdinalIgnoreCase))
                         {
                             var videoId = "";
@@ -356,7 +356,7 @@
                 @if (!string.IsNullOrWhiteSpace(Model.BrochureUrl))
                 {
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">21b. Brochure / Catalogue</label>
+                        <label class="form-label fw-semibold">18b. Brochure / Catalogue</label>
                         <div>
                             <a href="@Model.BrochureUrl" target="_blank" class="btn btn-outline-danger btn-sm">
                                 <i class="fas fa-file-pdf me-1"></i> Xem Brochure

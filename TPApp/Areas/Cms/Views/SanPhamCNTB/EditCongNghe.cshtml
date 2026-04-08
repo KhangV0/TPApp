@@ -91,8 +91,7 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold">1. Tên đơn vị / Cá nhân chủ sở hữu <span class="text-danger">*</span></label>
-                            <span asp-validation-for="NCUId" class="text-danger small d-block mb-2"></span>
+                            <label class="form-label fw-semibold">1. Tên đơn vị / Cá nhân chủ sở hữu</label>
                             <select asp-for="NCUId" class="form-select" asp-items="@((List<SelectListItem>)ViewBag.NhaCungUngList)">
                                 <option value="">-- Chọn nhà cung ứng --</option>
                             </select>
@@ -101,8 +100,7 @@
 
                     <!-- 2. Loại hình -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">2. Loại hình <span class="text-danger">*</span></label>
-                        <span asp-validation-for="LoaiDeTai" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">2. Loại hình</label>
                         <div class="row g-2">
                             <div class="col-auto">
                                 <input type="radio" class="btn-check" name="LoaiDeTai" id="loai1" value="1"
@@ -189,8 +187,7 @@
 
                     <!-- Row 2: Ảnh đại diện tiêu biểu -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">5. Ảnh đại diện tiêu biểu <span class="text-danger">*</span></label>
-                        <span asp-validation-for="QuyTrinhHinhAnh" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">5. Ảnh đại diện tiêu biểu</label>
                         <div class="row g-3 align-items-end">
                             <div class="col-md-8">
                                 <input asp-for="QuyTrinhHinhAnh" class="form-control" id="txtImageUrl" />
@@ -218,8 +215,7 @@
 
                     <!-- Xuất xứ (Select2) -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">6. Xuất xứ <span class="text-danger">*</span></label>
-                        <span asp-validation-for="XuatXuId" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">6. Xuất xứ</label>
                         <select asp-for="XuatXuId" class="form-select" id="selXuatXu" asp-items="@((List<SelectListItem>)ViewBag.XuatXuList)">
                             <option value="">-- Chọn --</option>
                         </select>
@@ -240,7 +236,11 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Giấy CN Đăng ký Quyền tác giả (phần mềm) số</label>
-                            <input asp-for="ApplicationNumber" class="form-control" />
+                            <input asp-for="ApplicationNumber" class="form-control" placeholder="Số giấy chứng nhận..." />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Giấy chứng nhận đăng ký thiết kế bố trí mạch tích hợp bán dẫn số</label>
+                            <input asp-for="CoQuanChuQuan" class="form-control" placeholder="Số giấy chứng nhận..." />
                         </div>
                         <div>
                             <label class="form-label">Bí mật công nghệ <small class="text-muted">(Sẵn sàng ký cam kết bảo mật NDA trong trường hợp chuyển giao độc quyền)</small></label>
@@ -265,22 +265,19 @@
                     <h6 class="fw-bold text-primary mb-3"><i class="fas fa-file-lines me-1"></i> III. Mô tả chi tiết giải pháp</h6>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">8. Bối cảnh & Vấn đề giải quyết <span class="text-danger">*</span></label>
-                        <span asp-validation-for="MoTaNgan" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">6. Bối cảnh & Vấn đề giải quyết</label>
                         <textarea asp-for="MoTaNgan" id="editorBoiCanh" class="form-control ck-editor-field" rows="20"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">9. Nguyên lý vận hành & Sơ đồ quy trình <span class="text-danger">*</span></label>
-                        <span asp-validation-for="MoTa" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">7. Nguyên lý vận hành & Sơ đồ quy trình</label>
                         <textarea asp-for="MoTa" id="editorNguyenLy" class="form-control ck-editor-field" rows="20"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">10. Thông số kỹ thuật chủ yếu <span class="text-danger">*</span></label>
-                        <span asp-validation-for="ThongSo" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">8. Thông số kỹ thuật chủ yếu</label>
                         <textarea asp-for="ThongSo" id="editorThongSo" class="form-control ck-editor-field" rows="20"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">11. Ưu điểm nổi bật</label>
+                        <label class="form-label fw-semibold">9. Ưu điểm nổi bật</label>
                         <textarea asp-for="UuDiem" id="editorUuDiem" class="form-control ck-editor-field" rows="20"></textarea>
                     </div>
 
@@ -303,7 +300,7 @@
 
                     <!-- TRL Table -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">12. Mức độ sẵn sàng công nghệ TRL <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold">10. Mức độ sẵn sàng công nghệ TRL <span class="text-danger">*</span></label>
                         <span asp-validation-for="Rating" class="text-danger small d-block mb-2"></span>
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover align-middle mb-0">
@@ -362,10 +359,9 @@
                 <div class="tab-pane fade" id="tab5" role="tabpanel">
                     <h6 class="fw-bold text-primary mb-3"><i class="fas fa-chart-line me-1"></i> V. Khả năng ứng dụng & Hiệu quả kinh tế</h6>
 
-                    <!-- 13. Lĩnh vực ứng dụng — checkboxes -->
+                    <!-- 11. Lĩnh vực ứng dụng — checkboxes -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">13. Lĩnh vực ứng dụng <span class="text-danger">*</span></label>
-                        <span asp-validation-for="CategoryId" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">11. Lĩnh vực ứng dụng</label>
                         <input type="hidden" asp-for="CategoryId" id="hdnCategoryId" />
                         <div class="row g-2">
                             @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
@@ -384,13 +380,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">14. Đối tượng khách hàng mục tiêu <span class="text-danger">*</span></label>
-                        <span asp-validation-for="TargetCustomer" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">12. Đối tượng khách hàng mục tiêu</label>
                         <textarea asp-for="TargetCustomer" id="editorKhachHang" class="form-control ck-editor-field-tab5" rows="20"></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">15. Hiệu quả kinh tế - xã hội</label>
+                        <label class="form-label fw-semibold">13. Hiệu quả kinh tế - xã hội</label>
                         <textarea asp-for="CooperationGoal" id="editorHieuQua" class="form-control ck-editor-field-tab5" rows="20"></textarea>
                     </div>
 
@@ -410,10 +405,9 @@
                 <div class="tab-pane fade" id="tab6" role="tabpanel">
                     <h6 class="fw-bold text-primary mb-3"><i class="fas fa-money-bill-wave me-1"></i> VI. Phương thức chuyển giao & Giá</h6>
 
-                    <!-- 16. Hình thức chuyển giao — checkboxes -->
+                    <!-- 13. Hình thức chuyển giao — checkboxes -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">16. Hình thức chuyển giao <span class="text-danger">*</span></label>
-                        <span asp-validation-for="TransferMethod" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">13. Hình thức chuyển giao</label>
                         <input type="hidden" asp-for="TransferMethod" id="hdnTransferMethod" />
                         @{
                             var transferOptions = new[] {
@@ -445,22 +439,21 @@
                         </div>
                     </div>
 
-                    <!-- 17. Giá bán dự kiến — CKEditor -->
+                    <!-- 14. Giá bán dự kiến — CKEditor -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">17. Giá bán dự kiến <span class="text-danger">*</span></label>
-                        <span asp-validation-for="GiaBanDuKien" class="text-danger small d-block mb-2"></span>
+                        <label class="form-label fw-semibold">14. Giá bán dự kiến</label>
                         <textarea asp-for="GiaBanDuKien" id="editorGiaBan" class="form-control ck-editor-field-tab6" rows="20"></textarea>
                     </div>
 
-                    <!-- 18. Các chi phí phát sinh khác -->
+                    <!-- 15. Các chi phí phát sinh khác -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">18. Các chi phí phát sinh khác (Chi phí đào tạo, hướng dẫn kỹ thuật, bảo trì, bảo hành, vận chuyển, lắp đặt,…)</label>
+                        <label class="form-label fw-semibold">15. Các chi phí phát sinh khác (Chi phí đào tạo, hướng dẫn kỹ thuật, bảo trì, bảo hành, vận chuyển, lắp đặt,…)</label>
                         <textarea asp-for="ChiPhiPhatSinh" id="editorChiPhi" class="form-control ck-editor-field-tab6" rows="20"></textarea>
                     </div>
 
-                    <!-- 19. Chế độ bảo hành & Hỗ trợ kỹ thuật -->
+                    <!-- 16. Chế độ bảo hành & Hỗ trợ kỹ thuật -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">19. Chế độ bảo hành & Hỗ trợ kỹ thuật</label>
+                        <label class="form-label fw-semibold">16. Chế độ bảo hành & Hỗ trợ kỹ thuật</label>
                         <small class="text-muted d-block mb-2">(Đào tạo nhân sự, cung cấp linh kiện thay thế, bảo trì định kỳ...)</small>
                         <textarea asp-for="BaoHanhHoTro" id="editorBaoHanh" class="form-control ck-editor-field-tab6" rows="20"></textarea>
                     </div>
@@ -481,9 +474,9 @@
                 <div class="tab-pane fade" id="tab7" role="tabpanel">
                     <h6 class="fw-bold text-primary mb-3"><i class="fas fa-certificate me-1"></i> VII. Chứng nhận & Tài liệu số</h6>
 
-                    <!-- 20. Chứng nhận chất lượng -->
+                    <!-- 17. Chứng nhận chất lượng -->
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">20. Chứng nhận chất lượng</label>
+                        <label class="form-label fw-semibold">17. Chứng nhận chất lượng</label>
                         <div class="row g-2">
                             <div class="col-md-4">
                                 <div class="form-check">
@@ -509,9 +502,9 @@
                         </div>
                     </div>
 
-                    <!-- 21. Dữ liệu đa phương tiện -->
+                    <!-- 18. Dữ liệu đa phương tiện -->
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">21. Dữ liệu đa phương tiện</label>
+                        <label class="form-label fw-semibold">18. Dữ liệu đa phương tiện</label>
 
                         <!-- 18a. Video clip vận hành -->
                         <div class="border rounded p-3 bg-light mb-3">
