@@ -69,15 +69,18 @@
                         <div class="row">
                             @* Logo / Image *@
                             <div class="col-xs-12 col-sm-3 text-center mb-3">
-                                <img src="@Model.LogoUrl"
-                                     alt="@Model.FullName"
-                                     class="img-thumbnail"
-                                     style="max-width:160px;max-height:160px;object-fit:contain;padding:8px;"
-                                     onerror="this.src='/images/no-logo.png';" />
+                                @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                                {
+                                    <img src="@Model.LogoUrl"
+                                         alt="@Model.FullName"
+                                         class="img-thumbnail mb-2"
+                                         style="max-width:160px;max-height:160px;object-fit:contain;padding:8px;"
+                                         onerror="this.style.display='none';" />
+                                }
                                 @if (!string.IsNullOrEmpty(Model.ImageUrl))
                                 {
                                     <div class="mt-2">
-                                        <img src="@Model.ImageUrl" alt="Hình ảnh trụ sở" style="max-height:100px; max-width:100%; object-fit:contain" class="rounded border" />
+                                        <img src="@Model.ImageUrl" alt="Hình ảnh trụ sở" style="max-height:100px; max-width:100%; object-fit:contain" class="rounded border" onerror="this.style.display='none';" />
                                     </div>
                                 }
                             </div>
