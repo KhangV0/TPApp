@@ -85,7 +85,7 @@ namespace TPApp.Controllers
                     Email    = x.Email    ?? "",
                     Website  = x.Website  ?? "",
                     Rating   = x.Rating   ?? 0,
-                    ImageUrl = ProductController.CookedImageURL("254-170", x.HinhDaiDien, _mainDomain)
+                    ImageUrl = ProductController.CookedImageURL("254-170", !string.IsNullOrEmpty(x.Logo) ? x.Logo : x.HinhDaiDien, _mainDomain)
                 })
                 .ToList();
 
@@ -167,7 +167,7 @@ namespace TPApp.Controllers
                     Email    = x.Email   ?? "",
                     Website  = x.Website ?? "",
                     Rating   = x.Rating  ?? 0,
-                    ImageUrl = ProductController.CookedImageURL("254-170", x.HinhDaiDien, _mainDomain)
+                    ImageUrl = ProductController.CookedImageURL("254-170", !string.IsNullOrEmpty(x.Logo) ? x.Logo : x.HinhDaiDien, _mainDomain)
                 })
                 .ToList();
 
@@ -205,9 +205,8 @@ namespace TPApp.Controllers
                 Rating        = entity.Rating ?? 0,
                 LuotXem       = entity.Viewed  ?? 0,
                 LuotDanhGia   = luotDanhGia,
-                ImageUrl      = ImageHtmlHelper.ResolveImageUrl(
-                    !string.IsNullOrEmpty(entity.Logo) ? entity.Logo : entity.HinhDaiDien,
-                    _mainDomain, "image/logoT.png"),
+                ImageUrl      = !string.IsNullOrEmpty(entity.HinhDaiDien)
+                    ? ImageHtmlHelper.ResolveImageUrl(entity.HinhDaiDien, _mainDomain, "image/logoT.png") : null,
                 NhaCungUngKhac = others,
                 Categories     = categories
             };

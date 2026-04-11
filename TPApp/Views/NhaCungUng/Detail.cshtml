@@ -77,12 +77,6 @@
                                          style="max-width:160px;max-height:160px;object-fit:contain;padding:8px;"
                                          onerror="this.style.display='none';" />
                                 }
-                                @if (!string.IsNullOrEmpty(Model.ImageUrl))
-                                {
-                                    <div class="mt-2">
-                                        <img src="@Model.ImageUrl" alt="Hình ảnh trụ sở" style="max-height:100px; max-width:100%; object-fit:contain" class="rounded border" onerror="this.style.display='none';" />
-                                    </div>
-                                }
                             </div>
 
                             @* Info *@
@@ -263,6 +257,16 @@
 
                     @* ══════ TAB 4: HỒ SƠ NĂNG LỰC SỐ ══════ *@
                     <div class="tab-pane fade" id="tab4">
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <h6 class="fw-semibold mb-2"><i class="fa fa-building text-success me-1"></i>Hình ảnh trụ sở / Hoạt động tiêu biểu</h6>
+                            <div class="ps-3 mb-4">
+                                <a href="@Model.ImageUrl" target="_blank">
+                                    <img src="@Model.ImageUrl" alt="Hình ảnh trụ sở" class="img-fluid rounded border shadow-sm" style="max-height: 400px; object-fit: contain;" onerror="this.style.display='none';" title="Nhấn để xem ảnh lớn" />
+                                </a>
+                            </div>
+                        }
+
                         @if (!string.IsNullOrEmpty(Model.VideoUrl))
                         {
                             var videoId = "";
@@ -282,15 +286,54 @@
                                     <iframe src="https://www.youtube.com/embed/@videoId" allowfullscreen></iframe>
                                 </div>
                             }
+                            else if (Model.VideoUrl.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <div class="ps-3 mb-3" style="max-width:560px;">
+                                    <video controls style="width:100%; border-radius:8px;" class="shadow-sm">
+                                        <source src="@Model.VideoUrl" type="video/mp4">
+                                        Trình duyệt của bạn không hỗ trợ hiển thị video.
+                                    </video>
+                                    <div class="mt-2">
+                                        <a href="@Model.VideoUrl" download target="_blank" class="btn btn-sm btn-outline-primary"><i class="fa fa-download me-1"></i>Tải video về máy</a>
+                                    </div>
+                                </div>
+                            }
                             else
                             {
-                                <p class="ps-3"><a href="@Model.VideoUrl" target="_blank" rel="noopener"><i class="fa fa-external-link-alt me-1"></i>@Model.VideoUrl</a></p>
+                                <p class="ps-3">
+                                    <a href="@Model.VideoUrl" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="fa fa-external-link-alt me-1"></i>Xem video / Tải video</a>
+                                </p>
                             }
                         }
                         @if (!string.IsNullOrEmpty(Model.ChungNhan))
                         {
-                            <h6 class="fw-semibold mb-2"><i class="fa fa-certificate text-warning me-1"></i>Chứng nhận năng lực</h6>
-                            <div class="ps-3">@Html.Raw(Model.ChungNhan)</div>
+                            <h6 class="fw-semibold mb-2 mt-4"><i class="fa fa-certificate text-warning me-1"></i>Chứng nhận năng lực / Giấy phép</h6>
+                            <div class="ps-3 mb-4">
+                                @{
+                                    var ext = string.Empty;
+                                    try { ext = System.IO.Path.GetExtension(Model.ChungNhan)?.ToLower() ?? ""; } catch { }
+
+                                    if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif" || ext == ".webp")
+                                    {
+                                        <div class="mb-2">
+                                            <a href="@Model.ChungNhan" target="_blank">
+                                                <img src="@Model.ChungNhan" alt="Chứng nhận năng lực" class="img-fluid rounded border shadow-sm" style="max-height: 500px;" title="Nhấn để xem ảnh lớn" />
+                                            </a>
+                                        </div>
+                                    }
+                                    else if (ext == ".pdf")
+                                    {
+                                        <div class="mb-2">
+                                            <iframe src="@Model.ChungNhan" style="width: 100%; height: 700px; border: none;" class="rounded border shadow-sm"></iframe>
+                                        </div>
+                                    }
+                                }
+                                <div class="mt-2">
+                                    <a href="@Model.ChungNhan" target="_blank" download class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-download me-1"></i>Tải file chứng nhận
+                                    </a>
+                                </div>
+                            </div>
                         }
                         @if (string.IsNullOrEmpty(Model.VideoUrl) && string.IsNullOrEmpty(Model.ChungNhan))
                         {
