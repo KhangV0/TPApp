@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TPApp.Areas.Cms.Models;
+using TPApp.Controllers;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Helpers;
+using TPApp.Services;
 
 namespace TPApp.Areas.Cms.Controllers
 {
@@ -16,11 +18,13 @@ namespace TPApp.Areas.Cms.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IExcelExportService _excelExport;
 
-        public PostsController(AppDbContext context, IConfiguration configuration)
+        public PostsController(AppDbContext context, IConfiguration configuration, IExcelExportService excelExport)
         {
             _context = context;
             _configuration = configuration;
+            _excelExport = excelExport;
         }
 
         private int GetSiteId() =>
@@ -36,7 +40,7 @@ namespace TPApp.Areas.Cms.Controllers
             string? keyword, int? menuId, int? statusId, int? typeId,
             bool? isHot, bool? isNew,
             DateTime? dateFrom, DateTime? dateTo,
-            int? siteId,
+            string? author, int? siteId,
             string? sortBy, string? sortDir,
             int page = 1, int pageSize = 20)
         {
@@ -65,6 +69,8 @@ namespace TPApp.Areas.Cms.Controllers
                 query = query.Where(c => c.PublishedDate >= dateFrom.Value);
             if (dateTo.HasValue)
                 query = query.Where(c => c.PublishedDate <= dateTo.Value.AddDays(1));
+            if (!string.IsNullOrWhiteSpace(author))
+                query = query.Where(c => c.Author != null && c.Author.Contains(author));
             if (siteId.HasValue)
                 query = query.Where(c => c.SiteId == siteId.Value);
 
@@ -124,6 +130,7 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.IsNew = isNew;
             ViewBag.DateFrom = dateFrom;
             ViewBag.DateTo = dateTo;
+            ViewBag.Author = author;
             ViewBag.SortBy = sortBy;
             ViewBag.SortDir = sortDir;
             ViewBag.Page = page;
@@ -150,6 +157,81 @@ namespace TPApp.Areas.Cms.Controllers
                 return PartialView("_ListPartial", items);
 
             return View(items);
+        }
+
+        // ─────────────────────────────────────────
+        // EXPORT EXCEL
+        // ─────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(
+            string? keyword, int? menuId, int? statusId, int? typeId,
+            bool? isHot, bool? isNew,
+            DateTime? dateFrom, DateTime? dateTo, string? author, int? siteId)
+        {
+            if (!siteId.HasValue)
+                siteId = GetSiteId();
+
+            var query = _context.Contents.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+                query = query.Where(c => (c.Title != null && c.Title.Contains(keyword))
+                    || (c.Keyword != null && c.Keyword.Contains(keyword)));
+            if (menuId.HasValue)
+                query = query.Where(c => c.MenuId == menuId.Value);
+            if (statusId.HasValue)
+                query = query.Where(c => c.StatusId == statusId.Value);
+            if (typeId.HasValue)
+                query = query.Where(c => c.TypeId == typeId.Value);
+            if (isHot == true)
+                query = query.Where(c => c.IsHot == true);
+            if (isNew == true)
+                query = query.Where(c => c.IsNew == true);
+            if (dateFrom.HasValue)
+                query = query.Where(c => c.PublishedDate >= dateFrom.Value);
+            if (dateTo.HasValue)
+                query = query.Where(c => c.PublishedDate <= dateTo.Value.AddDays(1));
+            if (!string.IsNullOrWhiteSpace(author))
+                query = query.Where(c => c.Author != null && c.Author.Contains(author));
+            if (siteId.HasValue)
+                query = query.Where(c => c.SiteId == siteId.Value);
+
+            query = query.OrderByDescending(c => c.PublishedDate ?? c.Created);
+
+            var items = await query
+                .Select(c => new ContentListItem
+                {
+                    Id = c.Id,
+                    Title = c.Title ?? "",
+                    MenuId = c.MenuId,
+                    MenuTitle = c.MenuId.HasValue
+                        ? _context.Menus.Where(m => m.MenuId == c.MenuId.Value)
+                            .Select(m => m.Title).FirstOrDefault()
+                        : null,
+                    StatusId = c.StatusId,
+                    StatusTitle = c.StatusId.HasValue
+                        ? _context.Statuses.Where(s => s.StatusId == c.StatusId.Value)
+                            .Select(s => s.Title).FirstOrDefault()
+                        : null,
+                    PublishedDate = c.PublishedDate,
+                    Created = c.Created,
+                    Modified = c.Modified,
+                    Viewed = c.Viewed ?? 0,
+                    IsHot = c.IsHot ?? false,
+                    IsNew = c.IsNew ?? false,
+                    Author = c.Author,
+                    Creator = c.Creator,
+                    SiteId = c.SiteId
+                })
+                .ToListAsync();
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            foreach (var item in items)
+            {
+                var slug = ProductController.MakeURLFriendly(item.Title);
+                item.PublicUrl = $"{baseUrl}/tin-tuc/{slug}-{item.Id}.html";
+            }
+
+            return _excelExport.Export(items, $"Posts_{DateTime.Now:yyyyMMdd}");
         }
 
         // ─────────────────────────────────────────

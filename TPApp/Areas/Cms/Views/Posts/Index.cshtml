@@ -21,6 +21,10 @@
                         <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control form-control-sm" placeholder="Tiêu đề / từ khóa..." />
                     </div>
                     <div class="mb-2">
+                        <label class="form-label fw-semibold small mb-1">Người đăng (Tác giả)</label>
+                        <input type="text" name="author" value="@ViewBag.Author" class="form-control form-control-sm" placeholder="Tên tác giả..." />
+                    </div>
+                    <div class="mb-2">
                         <label class="form-label fw-semibold small mb-1">Trạng thái</label>
                         <select name="statusId" class="form-select form-select-sm">
                             <option value="">-- Tất cả --</option>
@@ -113,8 +117,11 @@
         <button type="button" class="btn btn-primary btn-sm me-2" id="btnSearch">
             <i class="fas fa-search me-1"></i> Tìm kiếm
         </button>
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnReset">
+        <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="btnReset">
             <i class="fas fa-undo me-1"></i> Đặt lại
+        </button>
+        <button type="button" class="btn btn-outline-success btn-sm" id="btnExportExcel" title="Xuất danh sách ra Excel">
+            <i class="fas fa-file-excel me-1"></i> Export Excel
         </button>
     </div>
 </div>
@@ -171,6 +178,12 @@ $(function(){
     $('#filterSiteId').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn sàn --', allowClear: true, width: '100%' });
 
     toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
+
+    // Export Excel
+    $('#btnExportExcel').on('click', function () {
+        var params = $('#searchForm').serialize();
+        window.location = '@Url.Action("ExportExcel", "Posts", new { area = "Cms" })?' + params;
+    });
 
     var token = $('input[name="__RequestVerificationToken"]').val() || '';
     var baseUrl = '@Url.Action("Index", "Posts", new { area = "Cms" })';

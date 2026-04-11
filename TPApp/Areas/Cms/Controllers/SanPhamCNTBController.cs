@@ -6,9 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TPApp.Areas.Cms.Models;
+using TPApp.Controllers;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Interfaces;
+using TPApp.Services;
 
 namespace TPApp.Areas.Cms.Controllers
 {
@@ -19,12 +21,14 @@ namespace TPApp.Areas.Cms.Controllers
         private readonly AppDbContext _context;
         private readonly ICntbMasterService _masterService;
         private readonly IConfiguration _configuration;
+        private readonly IExcelExportService _excelExport;
 
-        public SanPhamCNTBController(AppDbContext context, ICntbMasterService masterService, IConfiguration configuration)
+        public SanPhamCNTBController(AppDbContext context, ICntbMasterService masterService, IConfiguration configuration, IExcelExportService excelExport)
         {
             _context = context;
             _masterService = masterService;
             _configuration = configuration;
+            _excelExport = excelExport;
         }
 
         private int GetSiteId() =>
@@ -59,39 +63,131 @@ namespace TPApp.Areas.Cms.Controllers
         // ─────────────────────────────────────────
         [HttpGet]
         public Task<IActionResult> CongNghe(string? keyword, int? statusId, int? ncuId, int? xuatXuId, int? siteId,
+            string? creator, string? linhVuc, int? trlLevel,
             DateTime? createdFrom, DateTime? createdTo,
             string? sortBy, string? sortDir,
             int page = 1, int pageSize = 15)
             => ListByType(TypeCongNghe, "CongNghe", "Quản lý Công nghệ",
-                keyword, statusId, ncuId, xuatXuId, siteId, createdFrom, createdTo, sortBy, sortDir, page, pageSize);
+                keyword, statusId, ncuId, xuatXuId, siteId, creator, linhVuc, trlLevel, null, createdFrom, createdTo, sortBy, sortDir, page, pageSize);
 
         // ─────────────────────────────────────────
         // LIST: Thiết bị
         // ─────────────────────────────────────────
         [HttpGet]
         public Task<IActionResult> ThietBi(string? keyword, int? statusId, int? ncuId, int? xuatXuId, int? siteId,
+            string? creator, string? linhVuc,
             DateTime? createdFrom, DateTime? createdTo,
             string? sortBy, string? sortDir,
             int page = 1, int pageSize = 15)
             => ListByType(TypeThietBi, "ThietBi", "Quản lý Thiết bị",
-                keyword, statusId, ncuId, xuatXuId, siteId, createdFrom, createdTo, sortBy, sortDir, page, pageSize);
+                keyword, statusId, ncuId, xuatXuId, siteId, creator, linhVuc, null, null, createdFrom, createdTo, sortBy, sortDir, page, pageSize);
 
         // ─────────────────────────────────────────
         // LIST: Sản phẩm trí tuệ
         // ─────────────────────────────────────────
         [HttpGet]
         public Task<IActionResult> SanPhamTriTue(string? keyword, int? statusId, int? ncuId, int? xuatXuId, int? siteId,
+            string? creator, string? linhVuc, string? categoryId,
             DateTime? createdFrom, DateTime? createdTo,
             string? sortBy, string? sortDir,
             int page = 1, int pageSize = 15)
             => ListByType(TypeSanPhamTriTue, "SanPhamTriTue", "Quản lý Sản phẩm trí tuệ",
-                keyword, statusId, ncuId, xuatXuId, siteId, createdFrom, createdTo, sortBy, sortDir, page, pageSize);
+                keyword, statusId, ncuId, xuatXuId, siteId, creator, linhVuc, null, categoryId, createdFrom, createdTo, sortBy, sortDir, page, pageSize);
+
+        // ─────────────────────────────────────────
+        // EXPORT EXCEL: Công nghệ
+        // ─────────────────────────────────────────
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(
+            string? keyword, int? statusId, int? ncuId, int? xuatXuId, int? siteId,
+            string? creator, string? linhVuc, int? trlLevel, string? categoryId,
+            DateTime? createdFrom, DateTime? createdTo,
+            int productType = TypeCongNghe)
+        {
+            if (!siteId.HasValue)
+                siteId = GetSiteId();
+
+            var query = _context.SanPhamCNTBs.AsNoTracking()
+                .Where(p => p.ProductType == productType);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+                query = query.Where(p => (p.Name != null && p.Name.Contains(keyword))
+                    || (p.Code != null && p.Code.Contains(keyword)));
+            if (statusId.HasValue)
+                query = query.Where(p => p.StatusId == statusId.Value);
+            if (ncuId.HasValue)
+                query = query.Where(p => p.NCUId == ncuId.Value);
+            if (xuatXuId.HasValue)
+                query = query.Where(p => p.XuatXuId == xuatXuId.Value);
+            if (!string.IsNullOrWhiteSpace(creator))
+                query = query.Where(p => p.Creator != null && p.Creator.Contains(creator));
+            if (!string.IsNullOrWhiteSpace(linhVuc))
+                query = query.Where(p => p.CategoryId != null && p.CategoryId.Contains(linhVuc));
+            if (trlLevel.HasValue)
+                query = query.Where(p => p.TRLLevel == trlLevel.Value);
+            if (!string.IsNullOrWhiteSpace(categoryId))
+                query = query.Where(p => p.CategoryId != null && p.CategoryId.Contains(categoryId));
+            if (createdFrom.HasValue)
+                query = query.Where(p => p.Created >= createdFrom.Value);
+            if (createdTo.HasValue)
+                query = query.Where(p => p.Created <= createdTo.Value.AddDays(1));
+            if (siteId.HasValue)
+                query = query.Where(p => p.SiteId == siteId.Value);
+
+            query = query.OrderByDescending(p => p.bEffectiveDate ?? p.Created);
+
+            var items = await query
+                .Select(p => new SanPhamCNTBListItem
+                {
+                    ID = p.ID,
+                    Code = p.Code ?? "",
+                    Name = p.Name ?? "",
+                    StatusId = p.StatusId,
+                    StatusTitle = _context.Statuses
+                        .Where(s => s.StatusId == p.StatusId)
+                        .Select(s => s.Title)
+                        .FirstOrDefault(),
+                    Creator = p.Creator,
+                    Created = p.bEffectiveDate,
+                    LastUpdate = p.Modified ?? p.Created,
+                    Viewed = p.Viewed ?? 0,
+                    ProductType = p.ProductType,
+                    SoBang = p.SoBang,
+                    NhaCungUngName = p.NCUId.HasValue
+                        ? _context.NhaCungUngs
+                            .Where(n => n.CungUngId == p.NCUId.Value)
+                            .Select(n => n.FullName)
+                            .FirstOrDefault()
+                        : null,
+                    SiteId = p.SiteId
+                })
+                .ToListAsync();
+
+            // Build public URL for each item
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            foreach (var item in items)
+            {
+                var slug = ProductController.MakeURLFriendly(item.Name);
+                item.PublicUrl = $"{baseUrl}/2-cong-nghe-thiet-bi/{item.ProductType}/{slug}-{item.ID}.html";
+            }
+
+            var typeName = productType switch
+            {
+                TypeCongNghe => "CongNghe",
+                TypeThietBi => "ThietBi",
+                TypeSanPhamTriTue => "SanPhamTriTue",
+                _ => "Export"
+            };
+
+            return _excelExport.Export(items, $"{typeName}_{DateTime.Now:yyyyMMdd}");
+        }
 
         // ─────────────────────────────────────────
         // Shared list logic (projection, no Include)
         // ─────────────────────────────────────────
         private async Task<IActionResult> ListByType(int productType, string viewName, string title,
             string? keyword, int? statusId, int? ncuId, int? xuatXuId, int? siteId,
+            string? creator, string? linhVuc, int? trlLevel, string? categoryId,
             DateTime? createdFrom, DateTime? createdTo,
             string? sortBy, string? sortDir,
             int page, int pageSize)
@@ -115,6 +211,14 @@ namespace TPApp.Areas.Cms.Controllers
                 query = query.Where(p => p.NCUId == ncuId.Value);
             if (xuatXuId.HasValue)
                 query = query.Where(p => p.XuatXuId == xuatXuId.Value);
+            if (!string.IsNullOrWhiteSpace(creator))
+                query = query.Where(p => p.Creator != null && p.Creator.Contains(creator));
+            if (!string.IsNullOrWhiteSpace(linhVuc))
+                query = query.Where(p => p.CategoryId != null && p.CategoryId.Contains(linhVuc));
+            if (trlLevel.HasValue)
+                query = query.Where(p => p.TRLLevel == trlLevel.Value);
+            if (!string.IsNullOrWhiteSpace(categoryId))
+                query = query.Where(p => p.CategoryId != null && p.CategoryId.Contains(categoryId));
             if (createdFrom.HasValue)
                 query = query.Where(p => p.Created >= createdFrom.Value);
             if (createdTo.HasValue)
@@ -174,6 +278,10 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.StatusId = statusId;
             ViewBag.NcuId = ncuId;
             ViewBag.XuatXuId = xuatXuId;
+            ViewBag.Creator = creator;
+            ViewBag.LinhVuc = linhVuc;
+            ViewBag.TrlLevel = trlLevel;
+            ViewBag.CategoryId = categoryId;
             ViewBag.CreatedFrom = createdFrom;
             ViewBag.CreatedTo = createdTo;
             ViewBag.SortBy = sortBy;
@@ -193,6 +301,8 @@ namespace TPApp.Areas.Cms.Controllers
                 .Select(n => new { n.CungUngId, n.FullName })
                 .ToListAsync();
             ViewBag.XuatXus = await _masterService.GetXuatXuAsync();
+            ViewBag.LinhVucs = await _masterService.GetLinhVucAsync();
+            ViewBag.MucDos = await _masterService.GetMucDoAsync();
             ViewBag.SiteId = siteId;
             ViewBag.CurrentSiteId = GetSiteId();
             ViewBag.Sites = await _context.RootSites.AsNoTracking()
@@ -860,6 +970,7 @@ InvestmentGoalKhac = p.InvestmentGoalKhac
         public string? NhaCungUngName { get; set; }
         public string? ImageUrl { get; set; }
         public int? SiteId { get; set; }
+        public string? PublicUrl { get; set; }
     }
 
     public class SanPhamCNTBFormVm

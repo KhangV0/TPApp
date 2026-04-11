@@ -19,6 +19,12 @@ $(function(){
     $('#filterXuatXu').select2({ theme: 'bootstrap-5', placeholder: '-- Tìm xuất xứ --', allowClear: true, width: '100%' });
     $('#filterSiteId').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn sàn --', allowClear: true, width: '100%' });
 
+    // Export Excel: send current filters, productType = 1 (CongNghe)
+    $('#btnExportExcel').on('click', function () {
+        var params = $('#searchForm').serialize() + '&productType=1';
+        window.location = '@Url.Action("ExportExcel", "SanPhamCNTB", new { area = "Cms" })?' + params;
+    });
+
     toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
 
     var token = $('input[name="__RequestVerificationToken"]').val() || '';

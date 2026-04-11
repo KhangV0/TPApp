@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using TPApp.Controllers;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Interfaces;
+using TPApp.Services;
 
 namespace TPApp.Areas.Cms.Controllers
 {
@@ -24,6 +26,7 @@ namespace TPApp.Areas.Cms.Controllers
         public string? StatusTitle { get; set; }
         public string? CreatedBy { get; set; }
         public DateTime? Created { get; set; }
+        public string? PublicUrl { get; set; }
     }
 
     public class NhaTuVanFormVm
@@ -75,12 +78,14 @@ namespace TPApp.Areas.Cms.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly ICntbMasterService _masterService;
+        private readonly IExcelExportService _excelExport;
 
-        public NhaTuVanAdminController(AppDbContext context, IConfiguration configuration, ICntbMasterService masterService)
+        public NhaTuVanAdminController(AppDbContext context, IConfiguration configuration, ICntbMasterService masterService, IExcelExportService excelExport)
         {
             _context = context;
             _configuration = configuration;
             _masterService = masterService;
+            _excelExport = excelExport;
         }
 
         private int GetSiteId() =>
@@ -112,13 +117,15 @@ namespace TPApp.Areas.Cms.Controllers
         // ── INDEX ──
         public async Task<IActionResult> Index(
             string? keyword, int? statusId, bool? isActivated,
+            string? linhVuc, string? createdBy, int? siteId, string? dichVu,
+            DateTime? createdFrom, DateTime? createdTo,
             string? sortBy, string? sortDir,
             int page = 1, int pageSize = 30)
         {
-            var siteId = GetSiteId();
+            var configSiteId = GetSiteId();
 
             var query = _context.NhaTuVans.AsNoTracking()
-                .Where(n => n.SiteId == null || n.SiteId == siteId);
+                .Where(n => n.SiteId == null || n.SiteId == configSiteId);
 
             // Filters
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -127,6 +134,18 @@ namespace TPApp.Areas.Cms.Controllers
                 query = query.Where(n => n.StatusId == statusId.Value);
             if (isActivated.HasValue)
                 query = query.Where(n => n.IsActivated == isActivated.Value);
+            if (!string.IsNullOrWhiteSpace(linhVuc))
+                query = query.Where(n => n.LinhVucId != null && n.LinhVucId.Contains(linhVuc));
+            if (!string.IsNullOrWhiteSpace(createdBy))
+                query = query.Where(n => n.CreatedBy != null && n.CreatedBy.Contains(createdBy));
+            if (siteId.HasValue)
+                query = query.Where(n => n.SiteId == siteId.Value);
+            if (!string.IsNullOrWhiteSpace(dichVu))
+                query = query.Where(n => n.DichVu != null && n.DichVu.Contains(dichVu));
+            if (createdFrom.HasValue)
+                query = query.Where(n => n.Created >= createdFrom.Value);
+            if (createdTo.HasValue)
+                query = query.Where(n => n.Created <= createdTo.Value.AddDays(1));
 
             // Sort
             query = sortBy?.ToLower() switch
@@ -181,12 +200,85 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.Keyword = keyword;
             ViewBag.StatusId = statusId;
             ViewBag.IsActivated = isActivated;
+            ViewBag.LinhVuc = linhVuc;
+            ViewBag.CreatedBy = createdBy;
+            ViewBag.SiteId = siteId;
+            ViewBag.DichVu = dichVu;
+            ViewBag.CreatedFrom = createdFrom?.ToString("yyyy-MM-dd");
+            ViewBag.CreatedTo = createdTo?.ToString("yyyy-MM-dd");
             ViewBag.Statuses = statuses;
+            ViewBag.LinhVucs = await _masterService.GetLinhVucAsync();
+            ViewBag.DichVuList = await _masterService.GetDichVuAsync();
+            ViewBag.CurrentSiteId = configSiteId;
+            ViewBag.Sites = await _context.RootSites.AsNoTracking().OrderBy(s => s.SiteId).ToListAsync();
 
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 return PartialView("_ListPartial", items);
 
             return View(items);
+        }
+
+        // ── EXPORT EXCEL ──
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(string? keyword, int? statusId, bool? isActivated,
+            string? linhVuc, string? createdBy, int? siteId, string? dichVu,
+            DateTime? createdFrom, DateTime? createdTo)
+        {
+            var configSiteId = GetSiteId();
+            var query = _context.NhaTuVans.AsNoTracking()
+                .Where(n => n.SiteId == null || n.SiteId == configSiteId);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+                query = query.Where(n => n.FullName != null && n.FullName.Contains(keyword));
+            if (statusId.HasValue)
+                query = query.Where(n => n.StatusId == statusId.Value);
+            if (isActivated.HasValue)
+                query = query.Where(n => n.IsActivated == isActivated.Value);
+            if (!string.IsNullOrWhiteSpace(linhVuc))
+                query = query.Where(n => n.LinhVucId != null && n.LinhVucId.Contains(linhVuc));
+            if (!string.IsNullOrWhiteSpace(createdBy))
+                query = query.Where(n => n.CreatedBy != null && n.CreatedBy.Contains(createdBy));
+            if (siteId.HasValue)
+                query = query.Where(n => n.SiteId == siteId.Value);
+            if (!string.IsNullOrWhiteSpace(dichVu))
+                query = query.Where(n => n.DichVu != null && n.DichVu.Contains(dichVu));
+            if (createdFrom.HasValue)
+                query = query.Where(n => n.Created >= createdFrom.Value);
+            if (createdTo.HasValue)
+                query = query.Where(n => n.Created <= createdTo.Value.AddDays(1));
+
+            query = query.OrderByDescending(n => n.Created);
+
+            var statuses = await _context.Statuses.AsNoTracking()
+                .ToDictionaryAsync(s => s.StatusId, s => s.Title);
+
+            var items = await query
+                .Select(n => new NhaTuVanListItem
+                {
+                    TuVanId = n.TuVanId,
+                    FullName = n.FullName,
+                    Phone = n.Phone,
+                    Email = n.Email,
+                    HocHam = n.HocHam,
+                    CoQuan = n.CoQuan,
+                    ChucVu = n.ChucVu,
+                    IsActivated = n.IsActivated,
+                    StatusId = n.StatusId,
+                    CreatedBy = n.CreatedBy,
+                    Created = n.Created
+                })
+                .ToListAsync();
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            foreach (var item in items)
+            {
+                if (item.StatusId.HasValue && statuses.TryGetValue(item.StatusId.Value, out var t))
+                    item.StatusTitle = t;
+                var slug = ProductController.MakeURLFriendly(item.FullName);
+                item.PublicUrl = $"{baseUrl}/nha-tu-van/{slug}-{item.TuVanId}.html";
+            }
+
+            return _excelExport.Export(items, $"NhaTuVan_{DateTime.Now:yyyyMMdd}");
         }
 
         // ── CREATE GET ──

@@ -21,5 +21,6 @@ namespace TPApp.Areas.Cms.Models
         public string? Image { get; set; }
         public string? Creator { get; set; }
         public int? SiteId { get; set; }
+        public string? PublicUrl { get; set; }
     }
 }

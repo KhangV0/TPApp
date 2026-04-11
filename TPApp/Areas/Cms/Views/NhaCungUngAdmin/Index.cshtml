@@ -15,11 +15,11 @@
         <form id="searchForm">
             @Html.AntiForgeryToken()
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold small mb-1">Từ khóa</label>
                     <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control form-control-sm" placeholder="Tên nhà cung ứng..." />
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold small mb-1">Trạng thái</label>
                     <select name="statusId" class="form-select form-select-sm">
                         <option value="">-- Tất cả --</option>
@@ -36,7 +36,7 @@
                         }
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold small mb-1">Kích hoạt</label>
                     @{
                         var actVal = ViewBag.IsActivated;
@@ -47,6 +47,60 @@
                         <option value="false" selected="@(actVal != null && (bool)actVal == false)">Chưa kích hoạt</option>
                     </select>
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Lĩnh vực</label>
+                    <select name="linhVuc" id="filterLinhVuc" class="form-select form-select-sm">
+                        <option value="">-- Tất cả --</option>
+                        @{
+                            var selLv = ViewBag.LinhVuc?.ToString() ?? "";
+                            var lvList = (IEnumerable<dynamic>?)ViewBag.LinhVucs;
+                        }
+                        @if (lvList != null)
+                        {
+                            foreach (var lv in lvList)
+                            {
+                                <option value="@lv.Id" selected="@(selLv == lv.Id.ToString())">@lv.Title</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Người tạo</label>
+                    <input type="text" name="createdBy" value="@ViewBag.CreatedBy" class="form-control form-control-sm" placeholder="Tên người tạo..." />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Sàn GDCN</label>
+                    @{
+                        var configSiteId = (int)(ViewBag.CurrentSiteId ?? 0);
+                    }
+                    <select name="siteId" id="filterSiteId" class="form-select form-select-sm"
+                            @(configSiteId > 1 ? "disabled" : "")>
+                        <option value="">-- Tất cả --</option>
+                        @{
+                            var selSite = ViewBag.SiteId?.ToString() ?? "";
+                            var sites = (IEnumerable<TPApp.Entities.RootSite>?)ViewBag.Sites;
+                        }
+                        @if (sites != null)
+                        {
+                            foreach (var s in sites)
+                            {
+                                <option value="@s.SiteId" selected="@(selSite == s.SiteId.ToString())">@s.SiteName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Dịch vụ KH&amp;CN</label>
+                    <input type="text" name="dichVu" value="@ViewBag.DichVu" class="form-control form-control-sm" placeholder="Tìm dịch vụ..." />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Ngày tạo từ</label>
+                    <input type="date" name="createdFrom" value="@ViewBag.CreatedFrom" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Ngày tạo đến</label>
+                    <input type="date" name="createdTo" value="@ViewBag.CreatedTo" class="form-control form-control-sm" />
+                </div>
             </div>
         </form>
     </div>
@@ -54,8 +108,11 @@
         <button type="button" class="btn btn-primary btn-sm me-2" id="btnSearch">
             <i class="fas fa-search me-1"></i> Tìm kiếm
         </button>
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnReset">
+        <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="btnReset">
             <i class="fas fa-undo me-1"></i> Đặt lại
+        </button>
+        <button type="button" class="btn btn-outline-success btn-sm" id="btnExportExcel" title="Xuất danh sách ra Excel">
+            <i class="fas fa-file-excel me-1"></i> Export Excel
         </button>
     </div>
 </div>
@@ -86,6 +143,16 @@
 <script>
 $(function(){
     toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
+
+    // Export Excel
+    $('#btnExportExcel').on('click', function () {
+        var params = $('#searchForm').serialize();
+        window.location = '@Url.Action("ExportExcel", "NhaCungUngAdmin", new { area = "Cms" })?' + params;
+    });
+
+    // Select2
+    $('#filterLinhVuc').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn lĩnh vực --', allowClear: true, width: '100%' });
+    $('#filterSiteId').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn sàn --', allowClear: true, width: '100%' });
 
     var token = $('input[name="__RequestVerificationToken"]').val() || '';
     var baseUrl = '@Url.Action("Index", "NhaCungUngAdmin", new { area = "Cms" })';

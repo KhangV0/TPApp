@@ -117,6 +117,7 @@ builder.Services.AddScoped<TPApp.Interfaces.ICmsAccessService, TPApp.Services.Cm
 builder.Services.AddScoped<TPApp.Interfaces.ICntbMasterService, TPApp.Services.CntbMasterService>();
 
 // --- Services ---
+builder.Services.AddScoped<TPApp.Services.IExcelExportService, TPApp.Services.ExcelExportService>();
 builder.Services.AddScoped<TPApp.Interfaces.IProductService, TPApp.Services.ProductService>();
 builder.Services.AddScoped<TPApp.Interfaces.IDashboardService, TPApp.Services.DashboardService>();
 builder.Services.AddScoped<TPApp.Interfaces.IAdminDashboardService, TPApp.Services.AdminDashboardService>();

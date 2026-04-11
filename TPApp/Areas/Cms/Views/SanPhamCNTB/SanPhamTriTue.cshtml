@@ -18,6 +18,13 @@ $(function(){
     $('#filterNcu').select2({ theme: 'bootstrap-5', placeholder: '-- Tìm nhà cung ứng --', allowClear: true, width: '100%' });
     $('#filterXuatXu').select2({ theme: 'bootstrap-5', placeholder: '-- Tìm xuất xứ --', allowClear: true, width: '100%' });
     $('#filterSiteId').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn sàn --', allowClear: true, width: '100%' });
+    $('#filterLinhVuc').select2({ theme: 'bootstrap-5', placeholder: '-- Chọn lĩnh vực --', allowClear: true, width: '100%' });
+
+    // Export Excel: send current filters, productType = 3 (SanPhamTriTue)
+    $('#btnExportExcel').on('click', function () {
+        var params = $('#searchForm').serialize() + '&productType=3';
+        window.location = '@Url.Action("ExportExcel", "SanPhamCNTB", new { area = "Cms" })?' + params;
+    });
 
     toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
 
