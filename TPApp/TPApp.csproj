@@ -7,6 +7,15 @@
     <CompressionEnabled>false</CompressionEnabled>
   </PropertyGroup>
 
+  <!-- Fix: normalize drive-letter casing (d:\ vs D:\) so StaticWebAssets doesn't flag duplicates -->
+  <Target Name="NormalizeStaticWebAssetPaths" BeforeTargets="CheckForDuplicateStaticWebAssets">
+    <ItemGroup>
+      <StaticWebAsset>
+        <ContentRoot>$([System.IO.Path]::GetFullPath('%(ContentRoot)').ToLowerInvariant())</ContentRoot>
+      </StaticWebAsset>
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="EPPlus" Version="7.6.1" />
     <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="3.0.1" />

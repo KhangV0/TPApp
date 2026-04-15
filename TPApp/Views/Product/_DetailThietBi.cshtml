@@ -108,23 +108,15 @@
                 {
                     xuatXuName = _context.XuatXus.Where(x => x.Id == p.XuatXuId).Select(x => x.Title).FirstOrDefault();
                 }
-
-                bool isDomesticN = string.IsNullOrEmpty(xuatXuName) ||
-                    xuatXuName.Contains("Việt", StringComparison.OrdinalIgnoreCase) ||
-                    xuatXuName.Contains("VN", StringComparison.OrdinalIgnoreCase);
             }
             @if (!string.IsNullOrEmpty(xuatXuName))
             {
                 <div class="hscn-item">
                     <div class="hscn-item-title">Xuất xứ</div>
-                    <div class="ps-3">
-                        <div class="hscn-check-row">@chk(isDomesticN) Trong nước (Việt Nam)</div>
-                        <div class="hscn-check-row">@chk(!isDomesticN) Nước ngoài
-                            @if (!isDomesticN) { <span>(Quốc gia: <strong>@xuatXuName</strong>)</span> }
-                        </div>
-                    </div>
+                    <div class="ps-3"><strong>@xuatXuName</strong></div>
                 </div>
             }
+
 
             @* Lĩnh vực áp dụng — chỉ hiện đã check *@
             @{

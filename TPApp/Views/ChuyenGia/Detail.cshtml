@@ -254,22 +254,19 @@
 
                     <!-- TAB 4: CÔNG BỐ & SHTT -->
                     <div class="tab-pane fade" id="tab4">
+                        @* Mục 12: Bài báo khoa học / Báo cáo Hội nghị *@
                         @if (!string.IsNullOrEmpty(Model.CongBoKhoaHoc))
                         {
-                            <h6 class="fw-semibold mb-2"><i class="fas fa-book me-1 text-primary"></i>Sách & Bài báo khoa học</h6>
+                            <h6 class="fw-semibold mb-2"><i class="fas fa-book me-1 text-primary"></i>Bài báo khoa học / Báo cáo Hội nghị</h6>
                             <div class="mb-3">@Html.Raw(Model.CongBoKhoaHoc)</div>
                         }
+                        @* Mục 13: Bằng độc quyền Sáng chế / Tác quyền *@
                         @if (!string.IsNullOrEmpty(Model.SangChe))
                         {
                             <h6 class="fw-semibold mb-2"><i class="fas fa-lightbulb me-1 text-warning"></i>Bằng độc quyền Sáng chế / Tác quyền</h6>
                             <div class="mb-3">@Html.Raw(Model.SangChe)</div>
                         }
-                        @if (!string.IsNullOrEmpty(Model.KetQuaNghienCuu))
-                        {
-                            <h6 class="fw-semibold mb-2"><i class="fas fa-flask me-1 text-primary"></i>Kết quả nghiên cứu</h6>
-                            <div>@Html.Raw(Model.KetQuaNghienCuu)</div>
-                        }
-                        @if (string.IsNullOrEmpty(Model.CongBoKhoaHoc) && string.IsNullOrEmpty(Model.SangChe) && string.IsNullOrEmpty(Model.KetQuaNghienCuu))
+                        @if (string.IsNullOrEmpty(Model.CongBoKhoaHoc) && string.IsNullOrEmpty(Model.SangChe))
                         {
                             <p class="text-muted">Chưa có thông tin.</p>
                         }
@@ -302,8 +299,25 @@
                     <div class="tab-pane fade" id="tab6">
                         @if (!string.IsNullOrEmpty(Model.HoSoDinhKem))
                         {
+                            var hosoFiles = Model.HoSoDinhKem
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                            if (hosoFiles.Length > 0)
+                            {
                             <h6 class="fw-semibold mb-2"><i class="fas fa-paperclip me-1 text-primary"></i>Hồ sơ đính kèm</h6>
-                            <div class="mb-3">@Html.Raw(Model.HoSoDinhKem)</div>
+                            <div class="list-group mb-3">
+                                @foreach (var hf in hosoFiles)
+                                {
+                                    var hfname = System.IO.Path.GetFileName(hf);
+                                    var hfIsPdf = hfname.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+                                    <a href="@hf" target="_blank" rel="noopener"
+                                       class="list-group-item list-group-item-action d-flex align-items-center gap-2 py-2">
+                                        <i class="fas @(hfIsPdf ? "fa-file-pdf text-danger" : "fa-file-image text-primary") fa-fw"></i>
+                                        <span class="flex-grow-1 small">@hfname</span>
+                                        <i class="fas fa-download text-muted small"></i>
+                                    </a>
+                                }
+                            </div>
+                            }
                         }
                         @if (!string.IsNullOrEmpty(Model.HiepHoiKhoaHoc))
                         {

@@ -189,8 +189,35 @@
             <!-- ══════════ TAB 6: MINH CHỨNG ══════════ -->
             <div class="tab-pane fade" id="tab6">
                 <div class="mb-3">
-                    <label asp-for="HoSoDinhKem" class="form-label fw-semibold">17. Hồ sơ đính kèm</label>
-                    <textarea asp-for="HoSoDinhKem" id="editorHoSo" class="form-control" rows="4" placeholder="Bản scan bằng cấp, giấy chứng nhận giải thưởng, CV..."></textarea>
+                    <label class="form-label fw-semibold">17. Hồ sơ đính kèm</label>
+                    <small class="text-muted d-block mb-2">PDF, JPG, PNG, WEBP — tối đa 5MB mỗi file</small>
+                    <input type="hidden" asp-for="HoSoDinhKem" id="hdnHoSoDinhKem" />
+
+                    <div id="hoSoRows">
+                        @{
+                            var existingFiles = Model.HoSoDinhKem?.Split(',',
+                                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                ?? Array.Empty<string>();
+                            if (!existingFiles.Any()) { existingFiles = new[] { "" }; }
+                        }
+                        @foreach (var f in existingFiles)
+                        {
+                            <div class="input-group mb-2 hoso-row">
+                                <input type="text" class="form-control hoso-url-input"
+                                       value="@f" placeholder="/uploads/..." readonly />
+                                <input type="file" class="d-none hoso-file-input"
+                                       accept=".pdf,.jpg,.jpeg,.png,.webp" />
+                                <button type="button" class="btn btn-outline-primary btn-upload-hoso">
+                                    <i class="fas fa-upload me-1"></i> Upload File
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-remove-hoso" title="Xóa hàng">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+
+
                 </div>
                 <div class="mb-3">
                     <label asp-for="HiepHoiKhoaHoc" class="form-label fw-semibold">18. Thành viên các hiệp hội khoa học</label>
@@ -248,4 +275,63 @@
     }
     syncCheckboxes('chk-linhvuc', 'hdnLinhVucId');
     syncCheckboxes('chk-dichvu', 'hdnDichVu');
+
+    // ── Mục 17: Upload hồ sơ đính kèm ──
+    function syncHoSoUrls() {
+        const urls = [...document.querySelectorAll('#hoSoRows .hoso-url-input')]
+            .map(el => el.value.trim()).filter(Boolean);
+        document.getElementById('hdnHoSoDinhKem').value = urls.join(',');
+    }
+
+    function makeHoSoRow(url) {
+        const row = document.createElement('div');
+        row.className = 'input-group mb-2 hoso-row';
+        row.innerHTML = `
+            <input type="text" class="form-control hoso-url-input" value="${url}" placeholder="/uploads/..." readonly />
+            <input type="file" class="d-none hoso-file-input" accept=".pdf,.jpg,.jpeg,.png,.webp" />
+            <button type="button" class="btn btn-outline-primary btn-upload-hoso">
+                <i class="fas fa-upload me-1"></i> Upload File
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-remove-hoso" title="Xóa hàng">
+                <i class="fas fa-times"></i>
+            </button>`;
+        return row;
+    }
+
+    async function uploadHoSoFile(file, inputEl) {
+        const fd = new FormData();
+        fd.append('upload', file);
+        const res = await fetch('/cms/Upload/Upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data && data.url) { inputEl.value = data.url; syncHoSoUrls(); }
+        else alert((data.error && data.error.message) || 'Upload thất bại');
+    }
+
+    document.getElementById('hoSoRows').addEventListener('click', function (e) {
+        // Upload File button
+        const uploadBtn = e.target.closest('.btn-upload-hoso');
+        if (uploadBtn) {
+            uploadBtn.closest('.hoso-row').querySelector('.hoso-file-input').click();
+            return;
+        }
+        // Xóa hàng
+        const removeBtn = e.target.closest('.btn-remove-hoso');
+        if (removeBtn) {
+            const rows = document.querySelectorAll('#hoSoRows .hoso-row');
+            if (rows.length > 1) { removeBtn.closest('.hoso-row').remove(); syncHoSoUrls(); }
+            else { removeBtn.closest('.hoso-row').querySelector('.hoso-url-input').value = ''; syncHoSoUrls(); }
+        }
+    });
+
+    document.getElementById('hoSoRows').addEventListener('change', async function (e) {
+        const fileInput = e.target.closest('.hoso-file-input');
+        if (!fileInput || !fileInput.files[0]) return;
+        const urlInput = fileInput.closest('.hoso-row').querySelector('.hoso-url-input');
+        urlInput.value = 'Đang upload...';
+        await uploadHoSoFile(fileInput.files[0], urlInput);
+        fileInput.value = '';
+    });
+
+
+    syncHoSoUrls();
 </script>
