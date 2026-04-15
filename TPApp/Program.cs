@@ -194,9 +194,15 @@ builder.Services.AddHostedService<TPApp.BackgroundServices.DashboardBackgroundSe
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+// ⚠️ TẠM THỜI BẬT DEBUG — nhớ revert lại sau khi tìm xong lỗi
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseDeveloperExceptionPage(); // 👈 DEBUG tạm thời
+    // app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
@@ -409,6 +415,64 @@ app.MapControllerRoute(
     name: "connection_dashboard",
     pattern: "ket-noi-cung-cau.html",
     defaults: new { controller = "Home", action = "ConnectionDashboard" }
+);
+
+app.MapControllerRoute(
+    name: "dang_ky_nha_cung_ung",
+    pattern: "dang-ky-nha-cung-ung.html",
+    defaults: new { controller = "DangKyNhaCungUng", action = "DangKy" }
+);
+
+app.MapControllerRoute(
+    name: "quan_ly_san_pham",
+    pattern: "quan-ly-san-pham.html",
+    defaults: new { controller = "QuanLySanPham", action = "Index" }
+);
+
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_cong_nghe_tao_moi",
+    pattern: "quan-ly-san-pham/cong-nghe/tao-moi",
+    defaults: new { controller = "QuanLySanPham", action = "TaoMoiCongNghe" }
+);
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_thiet_bi_tao_moi",
+    pattern: "quan-ly-san-pham/thiet-bi/tao-moi",
+    defaults: new { controller = "QuanLySanPham", action = "TaoMoiThietBi" }
+);
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_sohuu_tao_moi",
+    pattern: "quan-ly-san-pham/so-huu-tri-tue/tao-moi",
+    defaults: new { controller = "QuanLySanPham", action = "TaoMoiSoHuuTriTue" }
+);
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_tao_moi_post",
+    pattern: "quan-ly-san-pham/tao-moi",
+    defaults: new { controller = "QuanLySanPham", action = "TaoMoi" }
+);
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_cong_nghe_chinh_sua",
+    pattern: "quan-ly-san-pham/cong-nghe/chinh-sua/{id:int}",
+    defaults: new { controller = "QuanLySanPham", action = "ChinhSua" }
+);
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_thiet_bi_chinh_sua",
+    pattern: "quan-ly-san-pham/thiet-bi/chinh-sua/{id:int}",
+    defaults: new { controller = "QuanLySanPham", action = "ChinhSua" }
+);
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_sohuu_chinh_sua",
+    pattern: "quan-ly-san-pham/so-huu-tri-tue/chinh-sua/{id:int}",
+    defaults: new { controller = "QuanLySanPham", action = "ChinhSua" }
+);
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_chinh_sua_post",
+    pattern: "quan-ly-san-pham/chinh-sua/{id:int}",
+    defaults: new { controller = "QuanLySanPham", action = "ChinhSua" }
+);
+app.MapControllerRoute(
+    name: "quan_ly_san_pham_xoa",
+    pattern: "quan-ly-san-pham/xoa",
+    defaults: new { controller = "QuanLySanPham", action = "Xoa" }
 );
 
 // ROUTE MẶC ĐỊNH

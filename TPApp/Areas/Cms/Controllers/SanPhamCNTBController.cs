@@ -425,7 +425,7 @@ namespace TPApp.Areas.Cms.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var entity = MapToEntity(model);
+                var entity = BuildEntity(model);
                 entity.Created = DateTime.Now;
                 entity.SiteId = GetSiteId();
                 entity.StatusId = 1; // Nháp (Draft)
@@ -483,7 +483,7 @@ namespace TPApp.Areas.Cms.Controllers
                 return RedirectToListByType(p.ProductType);
             }
 
-            var vm = MapToFormVm(p);
+            var vm = BuildFormVm(p);
             ViewData["Title"] = $"Sửa: {p.Name}";
             await LoadFormSelectListsAsync();
             return View(GetEditViewName(p.ProductType), vm);
@@ -520,7 +520,7 @@ namespace TPApp.Areas.Cms.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                UpdateEntity(entity, model);
+                ApplyEdit(entity, model);
                 entity.Modified = DateTime.Now;
                 entity.Modifier = User.Identity?.Name;
                 entity.SiteId = GetSiteId();
@@ -766,7 +766,7 @@ namespace TPApp.Areas.Cms.Controllers
             _ => RedirectToAction(nameof(CongNghe))
         };
 
-        private static SanPhamCNTB MapToEntity(SanPhamCNTBFormVm m) => new()
+        internal static SanPhamCNTB BuildEntity(SanPhamCNTBFormVm m) => new()
     {
         Code = m.Code,
         Name = m.Name,
@@ -827,7 +827,7 @@ DevelopmentStageValue = m.DevelopmentStageValue,
 InvestmentGoal = m.InvestmentGoal,
 InvestmentGoalKhac = m.InvestmentGoalKhac
     };
-        private static void UpdateEntity(SanPhamCNTB e, SanPhamCNTBFormVm m)
+        internal static void ApplyEdit(SanPhamCNTB e, SanPhamCNTBFormVm m)
     {
         e.Code = m.Code;
         e.Name = m.Name;
@@ -887,7 +887,7 @@ e.DevelopmentStageValue = m.DevelopmentStageValue;
 e.InvestmentGoal = m.InvestmentGoal;
 e.InvestmentGoalKhac = m.InvestmentGoalKhac;
     }
-        private static SanPhamCNTBFormVm MapToFormVm(SanPhamCNTB p) => new()
+        internal static SanPhamCNTBFormVm BuildFormVm(SanPhamCNTB p) => new()
     {
         ID = p.ID,
         Code = p.Code,

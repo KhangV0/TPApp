@@ -1,0 +1,426 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model TPApp.Areas.Cms.Controllers.SanPhamCNTBFormVm
+@{
+    bool isEdit = Model.ID > 0;
+    ViewData["Title"] = ViewData["Title"] ?? (isEdit ? "Chỉnh sửa Công nghệ" : "Đăng ký Công nghệ mới");
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+    var linhVucItems = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.LinhVucList;
+
+    var trlDescriptions = new Dictionary<int,string> {
+        {1,"Nghiên cứu cơ bản và các nguyên tắc cơ bản của công nghệ được quan sát."},
+        {2,"Khái niệm công nghệ và/hoặc ứng dụng được hình thành."},
+        {3,"Thử nghiệm khái niệm và đánh giá phân tích ban đầu."},
+        {4,"Công nghệ được chứng minh trong phòng thí nghiệm."},
+        {5,"Công nghệ được chứng minh trong môi trường mô phỏng."},
+        {6,"Công nghệ được chứng minh trong môi trường thực tế."},
+        {7,"Nguyên mẫu hệ thống được trình diễn trong môi trường hoạt động."},
+        {8,"Hệ thống hoàn chỉnh và được thử nghiệm."},
+        {9,"Ứng dụng thực tế – thị trường."}
+    };
+    var transferOptions = new[]{"Chuyển nhượng quyền sở hữu","Chuyển giao quyền sử dụng (Li-xăng)","Góp vốn bằng công nghệ","Chìa khóa trao tay","Hợp tác sản xuất & đại lý phân phối","Khác"};
+    var selectedTransfer = Model.TransferMethod?.Split(',', System.StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+}
+
+@section Styles {
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>.ck-editor__editable{min-height:250px!important}</style>
+}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-md-3 col-lg-2">@await Html.PartialAsync("_AccountSidebar", sidebarData)</div>
+    <div class="col-md-9 col-lg-10">
+
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="fw-bold mb-0"><i class="fas fa-microchip text-primary me-2"></i>@ViewData["Title"]</h4>
+        <a href="/quan-ly-san-pham.html" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Quay lại</a>
+      </div>
+
+      @if (!ViewData.ModelState.IsValid)
+      {
+        <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-1"></i>Vui lòng kiểm tra lại thông tin.</div>
+      }
+
+      @{
+        var formAction = isEdit
+            ? Url.Action("ChinhSua", "QuanLySanPham", new { id = Model.ID })
+            : Url.Action("TaoMoi", "QuanLySanPham");
+      }
+
+      <form method="post" action="@formAction" id="frmCNTB">
+        @Html.AntiForgeryToken()
+        @if (isEdit) { <input type="hidden" asp-for="ID" /> }
+        <input type="hidden" asp-for="ProductType" />
+        <input type="hidden" asp-for="Code" />
+        <input type="hidden" asp-for="StatusId" />
+        <input type="hidden" asp-for="SiteId" />
+
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <ul class="nav nav-tabs px-3 pt-2 mb-0" id="cntbTabs" role="tablist">
+              <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab1" type="button"><i class="fas fa-building me-1"></i>I. Chủ sở hữu</button></li>
+              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab2" type="button"><i class="fas fa-id-card me-1"></i>II. Định danh</button></li>
+              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab3" type="button"><i class="fas fa-file-lines me-1"></i>III. Mô tả</button></li>
+              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab4" type="button"><i class="fas fa-star me-1"></i>IV. TRL</button></li>
+              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab5" type="button"><i class="fas fa-chart-line me-1"></i>V. Ứng dụng</button></li>
+              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab6" type="button"><i class="fas fa-money-bill-wave me-1"></i>VI. Chuyển giao</button></li>
+              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab7" type="button"><i class="fas fa-certificate me-1"></i>VII. Chứng nhận</button></li>
+            </ul>
+
+            <div class="tab-content border-top p-4" id="cntbTabContent">
+
+              <!-- TAB 1: Chủ sở hữu -->
+              <div class="tab-pane fade show active" id="tab1" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-building me-1"></i>I. Thông tin chủ sở hữu</h6>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">1. Tên nhà cung ứng / đơn vị chủ sở hữu <span class="text-danger">*</span></label>
+                  <span asp-validation-for="NCUId" class="text-danger small d-block mb-1"></span>
+                  <select asp-for="NCUId" class="form-select" asp-items="@((List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.NhaCungUngList)">
+                    <option value="">-- Chọn nhà cung ứng --</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">2. Loại hình <span class="text-danger">*</span></label>
+                  <span asp-validation-for="LoaiDeTai" class="text-danger small d-block mb-1"></span>
+                  <div class="d-flex flex-wrap gap-2">
+                    <div><input type="radio" class="btn-check" name="LoaiDeTai" id="loai1" value="1" @(Model.LoaiDeTai==1?"checked":"") /><label class="btn btn-outline-secondary btn-sm" for="loai1">Viện / Trường</label></div>
+                    <div><input type="radio" class="btn-check" name="LoaiDeTai" id="loai2" value="2" @(Model.LoaiDeTai==2?"checked":"") /><label class="btn btn-outline-secondary btn-sm" for="loai2">Doanh nghiệp KH&CN</label></div>
+                    <div><input type="radio" class="btn-check" name="LoaiDeTai" id="loai3" value="3" @(Model.LoaiDeTai==3?"checked":"") /><label class="btn btn-outline-secondary btn-sm" for="loai3">Cá nhân</label></div>
+                    <div><input type="radio" class="btn-check" name="LoaiDeTai" id="loai4" value="4" @(Model.LoaiDeTai==4?"checked":"") /><label class="btn btn-outline-secondary btn-sm" for="loai4">Khác</label></div>
+                  </div>
+                  <div id="loaiDeTaiKhacBox" class="mt-2" style="display:none">
+                    <input asp-for="LoaiDeTaiKhac" class="form-control form-control-sm" placeholder="Nhập loại hình khác..." />
+                  </div>
+                </div>
+
+                <div class="mb-3"><label class="form-label fw-semibold">3. Thông tin liên hệ <span class="badge bg-info text-dark ms-1">Tự động điền từ NCC</span></label></div>
+                <div class="row g-3 mb-3"><div class="col-12"><label class="form-label">Địa chỉ</label><input id="ncuDiaChi" class="form-control bg-light" readonly /></div></div>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4"><label class="form-label">Người đại diện</label><input id="ncuNguoiDaiDien" class="form-control bg-light" readonly /></div>
+                  <div class="col-md-4"><label class="form-label">Chức vụ</label><input id="ncuChucVu" class="form-control bg-light" readonly /></div>
+                  <div class="col-md-4"><label class="form-label">Điện thoại</label><input id="ncuPhone" class="form-control bg-light" readonly /></div>
+                </div>
+                <div class="row g-3 mb-3">
+                  <div class="col-md-6"><label class="form-label">Email</label><input id="ncuEmail" class="form-control bg-light" readonly /></div>
+                  <div class="col-md-6"><label class="form-label">Website</label><input id="ncuWebsite" class="form-control bg-light" readonly /></div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4"><button type="button" class="btn btn-primary btn-next-tab">Tiếp theo <i class="fas fa-arrow-right ms-1"></i></button></div>
+              </div>
+
+              <!-- TAB 2: Định danh -->
+              <div class="tab-pane fade" id="tab2" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-1"></i>II. Thông tin định danh</h6>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">4. Tên công nghệ / quy trình <span class="text-danger">*</span></label>
+                  <input asp-for="Name" class="form-control" placeholder="Nhập tên công nghệ..." />
+                  <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">5. Ảnh đại diện <span class="text-danger">*</span></label>
+                  <div class="row g-3 align-items-end">
+                    <div class="col-md-9"><input asp-for="QuyTrinhHinhAnh" class="form-control" id="txtImageUrl" placeholder="URL ảnh..." /></div>
+                    <div class="col-md-3"><label class="btn btn-outline-primary w-100" id="btnUploadImage"><i class="fas fa-upload me-1"></i>Upload<input type="file" accept="image/*" id="fileUploadImage" class="d-none" /></label></div>
+                  </div>
+                  <div id="imgPreview" class="mt-2">
+                    @if (!string.IsNullOrEmpty(Model.QuyTrinhHinhAnh)) { <img src="@Model.QuyTrinhHinhAnh" class="img-fluid rounded" style="max-height:80px" /> }
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">6. Xuất xứ <span class="text-danger">*</span></label>
+                  <select asp-for="XuatXuId" class="form-select" id="selXuatXu" asp-items="@((List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.XuatXuList)">
+                    <option value="">-- Chọn --</option>
+                  </select>
+                </div>
+
+                <div class="border rounded p-3 mb-3 bg-light">
+                  <h6 class="fw-bold text-info mb-3"><i class="fas fa-gavel me-1"></i>7. Tình trạng pháp lý &amp; SHTT</h6>
+                  <div class="row g-3 mb-2">
+                    <div class="col-md-6"><label class="form-label">Bằng sáng chế số</label><input asp-for="SoBang" class="form-control" placeholder="VD: VN1-0001234" /></div>
+                    <div class="col-md-6"><label class="form-label">Ngày cấp bằng</label><input asp-for="NgayCapBang" type="date" class="form-control" /></div>
+                  </div>
+                  <div class="mb-2"><label class="form-label">Giấy CN Đăng ký Quyền tác giả số</label><input asp-for="ApplicationNumber" class="form-control" placeholder="Số giấy chứng nhận..." /></div>
+                  <div class="mb-2"><label class="form-label">Giấy CN thiết kế bố trí mạch tích hợp bán dẫn số</label><input asp-for="CoQuanChuQuan" class="form-control" placeholder="Số giấy chứng nhận..." /></div>
+                  <div><label class="form-label">Bí mật công nghệ</label><input asp-for="CoQuanChuTri" class="form-control" placeholder="Mô tả bí mật công nghệ..." /></div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                  <button type="button" class="btn btn-outline-secondary btn-prev-tab"><i class="fas fa-arrow-left me-1"></i>Quay lại</button>
+                  <button type="button" class="btn btn-primary btn-next-tab">Tiếp theo <i class="fas fa-arrow-right ms-1"></i></button>
+                </div>
+              </div>
+
+              <!-- TAB 3: Mô tả (CKEditor) -->
+              <div class="tab-pane fade" id="tab3" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-file-lines me-1"></i>III. Mô tả chi tiết giải pháp</h6>
+                <div class="mb-3"><label class="form-label fw-semibold">8. Bối cảnh &amp; Vấn đề giải quyết <span class="text-danger">*</span></label><span asp-validation-for="MoTaNgan" class="text-danger small d-block mb-1"></span><textarea asp-for="MoTaNgan" id="editorBoiCanh" class="form-control ck-editor-field" rows="10"></textarea></div>
+                <div class="mb-3"><label class="form-label fw-semibold">9. Nguyên lý vận hành &amp; Sơ đồ quy trình <span class="text-danger">*</span></label><span asp-validation-for="MoTa" class="text-danger small d-block mb-1"></span><textarea asp-for="MoTa" id="editorNguyenLy" class="form-control ck-editor-field" rows="10"></textarea></div>
+                <div class="mb-3"><label class="form-label fw-semibold">10. Thông số kỹ thuật chủ yếu <span class="text-danger">*</span></label><span asp-validation-for="ThongSo" class="text-danger small d-block mb-1"></span><textarea asp-for="ThongSo" id="editorThongSo" class="form-control ck-editor-field" rows="10"></textarea></div>
+                <div class="mb-3"><label class="form-label fw-semibold">11. Ưu điểm nổi bật</label><textarea asp-for="UuDiem" id="editorUuDiem" class="form-control ck-editor-field" rows="10"></textarea></div>
+                <div class="d-flex justify-content-between mt-4">
+                  <button type="button" class="btn btn-outline-secondary btn-prev-tab"><i class="fas fa-arrow-left me-1"></i>Quay lại</button>
+                  <button type="button" class="btn btn-primary btn-next-tab">Tiếp theo <i class="fas fa-arrow-right ms-1"></i></button>
+                </div>
+              </div>
+
+              <!-- TAB 4: TRL -->
+              <div class="tab-pane fade" id="tab4" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-star me-1"></i>IV. Mức độ sẵn sàng công nghệ TRL</h6>
+                <span asp-validation-for="Rating" class="text-danger small d-block mb-2"></span>
+                <div class="table-responsive">
+                  <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-primary"><tr><th style="width:50px" class="text-center">Chọn</th><th style="width:80px">Cấp độ</th><th>Mô tả</th></tr></thead>
+                    <tbody>
+                      @for (int i = 1; i <= 9; i++) {
+                        var isChecked = (Model.Rating ?? 9) == i;
+                        <tr class="@(isChecked ? "table-success" : "")" style="cursor:pointer"
+                            onclick="document.getElementById('trl@(i)').checked=true;$(this).closest('tbody').find('tr').removeClass('table-success');$(this).addClass('table-success');">
+                          <td class="text-center"><input type="radio" class="form-check-input" name="Rating" id="trl@(i)" value="@i" @(isChecked?"checked":"") /></td>
+                          <td class="fw-bold text-primary">TRL @i</td>
+                          <td>@trlDescriptions[i]</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="d-flex justify-content-between mt-4">
+                  <button type="button" class="btn btn-outline-secondary btn-prev-tab"><i class="fas fa-arrow-left me-1"></i>Quay lại</button>
+                  <button type="button" class="btn btn-primary btn-next-tab">Tiếp theo <i class="fas fa-arrow-right ms-1"></i></button>
+                </div>
+              </div>
+
+              <!-- TAB 5: Ứng dụng -->
+              <div class="tab-pane fade" id="tab5" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-chart-line me-1"></i>V. Khả năng ứng dụng &amp; Hiệu quả</h6>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">13. Lĩnh vực ứng dụng <span class="text-danger">*</span></label>
+                  <span asp-validation-for="CategoryId" class="text-danger small d-block mb-1"></span>
+                  <input type="hidden" asp-for="CategoryId" id="hdnCategoryId" />
+                  <div class="row g-2">
+                    @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value))) {
+                      var cats = Model.CategoryId?.Split(new[]{',',';'}, System.StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                      <div class="col-md-4 col-lg-3"><div class="form-check">
+                        <input class="form-check-input chk-linhvuc" type="checkbox" value="@item.Value" id="cat_@item.Value" @(cats.Contains(item.Value)?"checked":"") />
+                        <label class="form-check-label" for="cat_@item.Value">@item.Text</label>
+                      </div></div>
+                    }
+                  </div>
+                </div>
+                <div class="mb-3"><label class="form-label fw-semibold">14. Đối tượng khách hàng mục tiêu <span class="text-danger">*</span></label><span asp-validation-for="TargetCustomer" class="text-danger small d-block mb-1"></span><textarea asp-for="TargetCustomer" id="editorKhachHang" class="form-control ck-editor-field-tab5" rows="8"></textarea></div>
+                <div class="mb-3"><label class="form-label fw-semibold">15. Hiệu quả kinh tế - xã hội</label><textarea asp-for="CooperationGoal" id="editorHieuQua" class="form-control ck-editor-field-tab5" rows="8"></textarea></div>
+                <div class="d-flex justify-content-between mt-4">
+                  <button type="button" class="btn btn-outline-secondary btn-prev-tab"><i class="fas fa-arrow-left me-1"></i>Quay lại</button>
+                  <button type="button" class="btn btn-primary btn-next-tab">Tiếp theo <i class="fas fa-arrow-right ms-1"></i></button>
+                </div>
+              </div>
+
+              <!-- TAB 6: Chuyển giao -->
+              <div class="tab-pane fade" id="tab6" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-money-bill-wave me-1"></i>VI. Phương thức chuyển giao &amp; Giá</h6>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">16. Hình thức chuyển giao <span class="text-danger">*</span></label>
+                  <span asp-validation-for="TransferMethod" class="text-danger small d-block mb-1"></span>
+                  <input type="hidden" asp-for="TransferMethod" id="hdnTransferMethod" />
+                  <div class="row g-2">
+                    @for (int i = 0; i < transferOptions.Length; i++) {
+                      var opt = transferOptions[i];
+                      <div class="col-md-6"><div class="form-check">
+                        <input class="form-check-input chk-transfer" type="checkbox" value="@opt" id="transfer_@i" @(selectedTransfer.Contains(opt)?"checked":"") />
+                        <label class="form-check-label" for="transfer_@i">@opt</label>
+                      </div></div>
+                    }
+                  </div>
+                  <div id="transferMethodKhacBox" class="mt-2" style="display:none"><input asp-for="TransferMethodKhac" class="form-control form-control-sm" placeholder="Nhập hình thức khác..." /></div>
+                </div>
+                <div class="mb-3"><label class="form-label fw-semibold">17. Giá bán dự kiến <span class="text-danger">*</span></label><span asp-validation-for="GiaBanDuKien" class="text-danger small d-block mb-1"></span><textarea asp-for="GiaBanDuKien" id="editorGiaBan" class="form-control ck-editor-field-tab6" rows="8"></textarea></div>
+                <div class="mb-3"><label class="form-label fw-semibold">18. Các chi phí phát sinh khác</label><textarea asp-for="ChiPhiPhatSinh" id="editorChiPhi" class="form-control ck-editor-field-tab6" rows="8"></textarea></div>
+                <div class="mb-3"><label class="form-label fw-semibold">19. Chế độ bảo hành &amp; Hỗ trợ kỹ thuật</label><textarea asp-for="BaoHanhHoTro" id="editorBaoHanh" class="form-control ck-editor-field-tab6" rows="8"></textarea></div>
+                <div class="d-flex justify-content-between mt-4">
+                  <button type="button" class="btn btn-outline-secondary btn-prev-tab"><i class="fas fa-arrow-left me-1"></i>Quay lại</button>
+                  <button type="button" class="btn btn-primary btn-next-tab">Tiếp theo <i class="fas fa-arrow-right ms-1"></i></button>
+                </div>
+              </div>
+
+              <!-- TAB 7: Chứng nhận -->
+              <div class="tab-pane fade" id="tab7" role="tabpanel">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-certificate me-1"></i>VII. Chứng nhận &amp; Tài liệu số</h6>
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">20. Chứng nhận chất lượng</label>
+                  <div class="row g-2">
+                    <div class="col-md-4"><div class="form-check"><input asp-for="ChungNhanISO" class="form-check-input" type="checkbox" id="chkISO" /><label class="form-check-label" for="chkISO">ISO / CE / HACCP</label></div></div>
+                    <div class="col-md-4"><div class="form-check"><input asp-for="ChungNhanQuatest" class="form-check-input" type="checkbox" id="chkQuatest" /><label class="form-check-label" for="chkQuatest">Phiếu kiểm nghiệm (Quatest)</label></div></div>
+                    <div class="col-md-4"><div class="form-check"><input asp-for="ChungNhanKhac" class="form-check-input" type="checkbox" id="chkCNKhac" /><label class="form-check-label" for="chkCNKhac">Khác</label></div></div>
+                  </div>
+                  <div id="cnKhacTextBox" class="mt-2" style="display:none"><input asp-for="ChungNhanKhacText" class="form-control" placeholder="Nhập chứng nhận khác..." /></div>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label fw-semibold">21. Dữ liệu đa phương tiện</label>
+                  <div class="border rounded p-3 bg-light mb-3">
+                    <h6 class="fw-semibold mb-2"><i class="fas fa-video me-1 text-primary"></i> Video vận hành</h6>
+                    <div class="mb-2">
+                      <div class="form-check form-check-inline"><input class="form-check-input media-toggle" type="radio" name="videoSource" id="videoYoutube" value="youtube" checked /><label class="form-check-label" for="videoYoutube">YouTube URL</label></div>
+                      <div class="form-check form-check-inline"><input class="form-check-input media-toggle" type="radio" name="videoSource" id="videoUpload" value="upload" /><label class="form-check-label" for="videoUpload">Upload file</label></div>
+                    </div>
+                    <div id="videoUrlBox"><input asp-for="URL" class="form-control" placeholder="https://www.youtube.com/watch?v=..." /></div>
+                    <div id="videoUploadBox" style="display:none"><input type="file" class="form-control" id="fileVideo" accept="video/*" /></div>
+                    <input type="hidden" asp-for="IsYoutube" />
+                  </div>
+                  <div class="border rounded p-3 bg-light">
+                    <h6 class="fw-semibold mb-2"><i class="fas fa-file-pdf me-1 text-danger"></i> Brochure / Catalogue</h6>
+                    <div class="mb-2">
+                      <div class="form-check form-check-inline"><input class="form-check-input media-toggle" type="radio" name="brochureSource" id="brochureUpload" value="upload" checked /><label class="form-check-label" for="brochureUpload">Upload file</label></div>
+                      <div class="form-check form-check-inline"><input class="form-check-input media-toggle" type="radio" name="brochureSource" id="brochureUrl" value="url" /><label class="form-check-label" for="brochureUrl">Nhập URL</label></div>
+                    </div>
+                    <div id="brochureUploadBox"><input type="file" class="form-control" id="fileBrochure" accept=".pdf,.doc,.docx,.ppt,.pptx" /></div>
+                    <div id="brochureUrlBox" style="display:none"><input asp-for="BrochureUrl" class="form-control" placeholder="https://..." /></div>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between mt-4">
+                  <button type="button" class="btn btn-outline-secondary btn-prev-tab"><i class="fas fa-arrow-left me-1"></i>Quay lại</button>
+                </div>
+              </div>
+
+            </div><!-- /tab-content -->
+          </div>
+
+          <div class="card-footer d-flex justify-content-between align-items-center">
+            <small class="text-muted"><span class="text-danger">*</span> Bắt buộc. Sau khi gửi, hồ sơ chờ xét duyệt.</small>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="fas fa-@(isEdit ? "save" : "paper-plane") me-1"></i>@(isEdit ? "Lưu thay đổi" : "Gửi đăng ký")
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js"></script>
+<script>
+$(function(){
+    // ── Select2 ──
+    $('#NCUId').select2({ theme:'bootstrap-5', placeholder:'-- Tìm nhà cung ứng --', allowClear:true, width:'100%' })
+        .on('change', function(){ loadNhaCungUng($(this).val()); });
+    $('#selXuatXu').select2({ theme:'bootstrap-5', placeholder:'-- Tìm xuất xứ --', allowClear:true, width:'100%' });
+
+    // ── Tab nav ──
+    var $tabs = $('#cntbTabs button[data-bs-toggle="tab"]');
+    function getIdx(){ return $tabs.index($tabs.filter('.active')); }
+    $(document).on('click','.btn-next-tab',function(){ var i=getIdx(); if(i<$tabs.length-1) new bootstrap.Tab($tabs[i+1]).show(); });
+    $(document).on('click','.btn-prev-tab',function(){ var i=getIdx(); if(i>0) new bootstrap.Tab($tabs[i-1]).show(); });
+
+    // ── CKEditor lazy init per tab ──
+    var ckInstances={};
+    var ckRemove=['ExportPdf','ExportWord','AIAssistant','CKBox','CKFinder','EasyImage',
+        'MultiLevelList','RealTimeCollaborativeComments','RealTimeCollaborativeTrackChanges',
+        'RealTimeCollaborativeRevisionHistory','PresenceList','Comments','TrackChanges',
+        'TrackChangesData','RevisionHistory','Pagination','WProofreader','MathType',
+        'SlashCommand','Template','DocumentOutline','FormatPainter','TableOfContents',
+        'PasteFromOfficeEnhanced','CaseChange'];
+    var ckCfg={
+        simpleUpload:{uploadUrl:'/cms/Upload/Upload',withCredentials:true},
+        toolbar:['heading','|','bold','italic','fontColor','fontBackgroundColor','|',
+                 'link','bulletedList','numberedList','|','imageUpload','blockQuote','insertTable','undo','redo'],
+        removePlugins:ckRemove
+    };
+    function initCk(sel){
+        document.querySelectorAll(sel).forEach(function(el){
+            if(ckInstances[el.id]) return;
+            CKEDITOR.ClassicEditor.create(el,ckCfg)
+                .then(function(e){ ckInstances[el.id]=e; })
+                .catch(function(err){ console.error(err); });
+        });
+    }
+    // Mục 8-11: Tab 3
+    $('button[data-bs-target="#tab3"]').on('shown.bs.tab', function(){ initCk('.ck-editor-field'); });
+    // Mục 14-15: Tab 5
+    $('button[data-bs-target="#tab5"]').on('shown.bs.tab', function(){ initCk('.ck-editor-field-tab5'); });
+    // Mục 17-18-19: Tab 6
+    $('button[data-bs-target="#tab6"]').on('shown.bs.tab', function(){ initCk('.ck-editor-field-tab6'); });
+
+    // Sync CKEditor → textarea before submit
+    $('#frmCNTB').on('submit', function(){
+        Object.keys(ckInstances).forEach(function(id){ document.getElementById(id).value=ckInstances[id].getData(); });
+    });
+
+    // ── Image upload ──
+    $('#fileUploadImage').on('change', function(){
+        var fd=new FormData(); fd.append('upload',this.files[0]);
+        $.ajax({ url:'/cms/Upload/UploadImage', type:'POST', data:fd, processData:false, contentType:false,
+            success:function(r){ if(r&&r.url){ $('#txtImageUrl').val(r.url); $('#imgPreview').html('<img src="'+r.url+'" class="img-fluid rounded" style="max-height:80px">'); } },
+            error:function(){ alert('Upload thất bại!'); }
+        });
+    });
+
+    // ── Video / Brochure toggle ──
+    $('input[name="videoSource"]').on('change', function(){
+        var up=$(this).val()==='upload';
+        $('#videoUploadBox').toggle(up); $('#videoUrlBox').toggle(!up); $('#IsYoutube').val(!up);
+    });
+    $('input[name="brochureSource"]').on('change', function(){
+        var up=$(this).val()==='upload';
+        $('#brochureUploadBox').toggle(up); $('#brochureUrlBox').toggle(!up);
+    });
+    function uploadMedia(input,field){
+        var fd=new FormData(); fd.append('upload',input.files[0]);
+        $.ajax({ url:'/cms/Upload/Upload', type:'POST', data:fd, processData:false, contentType:false,
+            success:function(r){ if(r&&r.url){ $(field).val(r.url); alert('Upload thành công!'); } },
+            error:function(){ alert('Upload thất bại!'); }
+        });
+    }
+    $('#fileVideo').on('change', function(){ uploadMedia(this,'#URL'); });
+    $('#fileBrochure').on('change', function(){ uploadMedia(this,'#BrochureUrl'); });
+
+    // ── Category checkboxes ──
+    function syncCats(){ var v=[]; $('.chk-linhvuc:checked').each(function(){ v.push($(this).val()); }); $('#hdnCategoryId').val(v.join(';')); }
+    $(document).on('change','.chk-linhvuc',syncCats); syncCats();
+
+    // ── Transfer method checkboxes ──
+    function syncTransfer(){ var v=[]; $('.chk-transfer:checked').each(function(){ v.push($(this).val()); }); $('#hdnTransferMethod').val(v.join(',')); }
+    $(document).on('change','.chk-transfer', function(){
+        syncTransfer();
+        var k=$('.chk-transfer:checked').filter(function(){ return $(this).val().indexOf('Kh')===0; }).length>0;
+        $('#transferMethodKhacBox').toggle(k); if(!k) $('#TransferMethodKhac').val('');
+    }); syncTransfer();
+    if($('.chk-transfer:checked').filter(function(){ return $(this).val().indexOf('Kh')===0; }).length) $('#transferMethodKhacBox').show();
+
+    // ── Chứng nhận Khác ──
+    $('#chkCNKhac').on('change', function(){ $('#cnKhacTextBox').toggle(this.checked); if(!this.checked) $('#ChungNhanKhacText').val(''); });
+    if($('#chkCNKhac').is(':checked')) $('#cnKhacTextBox').show();
+
+    // ── Loại đề tài ──
+    $('input[name="LoaiDeTai"]').on('change', function(){
+        if($(this).val()=='4') $('#loaiDeTaiKhacBox').slideDown(200);
+        else { $('#loaiDeTaiKhacBox').slideUp(200); $('#LoaiDeTaiKhac').val(''); }
+    });
+    if($('input[name="LoaiDeTai"]:checked').val()=='4') $('#loaiDeTaiKhacBox').show();
+
+    // ── NCC auto-fill ──
+    function loadNhaCungUng(id){
+        if(!id){ $('#ncuDiaChi,#ncuNguoiDaiDien,#ncuChucVu,#ncuPhone,#ncuEmail,#ncuWebsite').val(''); return; }
+        $.getJSON('/cms/SanPhamCNTB/GetNhaCungUng/'+id, function(d){
+            $('#ncuDiaChi').val(d.diaChi||''); $('#ncuNguoiDaiDien').val(d.nguoiDaiDien||'');
+            $('#ncuChucVu').val(d.chucVu||''); $('#ncuPhone').val(d.phone||'');
+            $('#ncuEmail').val(d.email||''); $('#ncuWebsite').val(d.website||'');
+        });
+    }
+    var initNcu=$('#NCUId').val(); if(initNcu) loadNhaCungUng(initNcu);
+});
+</script>
+}

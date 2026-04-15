@@ -1,0 +1,274 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model TPApp.Areas.Cms.Controllers.SanPhamCNTBFormVm
+@{
+    bool isEdit = Model.ID > 0;
+    ViewData["Title"] = isEdit ? "Chỉnh sửa Sản phẩm / Công nghệ" : "Thêm Sản phẩm / Công nghệ mới";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+
+    string StatusLabel(int? sid) => sid switch {
+        1 => "Chờ duyệt",
+        2 => "Đang duyệt",
+        3 => "Đã duyệt",
+        4 => "Từ chối",
+        _ => "—"
+    };
+    string BadgeClass(int? sid) => sid switch {
+        2 => "bg-info text-dark",
+        3 => "bg-success",
+        4 => "bg-danger",
+        _ => "bg-warning text-dark"
+    };
+}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    @* Sidebar *@
+    <div class="col-md-3 col-lg-2">
+      @await Html.PartialAsync("_AccountSidebar", sidebarData)
+    </div>
+
+    @* Main *@
+    <div class="col-md-9 col-lg-10">
+
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="fw-bold mb-0">
+          <i class="fas fa-box-open me-2 text-primary"></i>@ViewData["Title"]
+        </h4>
+        <div class="d-flex align-items-center gap-2">
+          @if (isEdit && Model.StatusId.HasValue)
+          {
+            <span class="badge @BadgeClass(Model.StatusId) fs-6 px-3 py-2">
+              <i class="fas fa-circle-dot me-1"></i>@StatusLabel(Model.StatusId)
+            </span>
+          }
+          <a href="/quan-ly-san-pham.html" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Quay lại
+          </a>
+        </div>
+      </div>
+
+      @if (TempData["Success"] != null)
+      {
+        <div class="alert alert-success alert-dismissible fade show">
+          @TempData["Success"]
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      }
+
+      @{
+          var formAction = isEdit
+              ? Url.Action("ChinhSua", "QuanLySanPham", new { id = Model.ID })
+              : Url.Action("TaoMoi", "QuanLySanPham");
+      }
+
+      <form method="post" action="@formAction" id="spForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ID" />
+        <input type="hidden" asp-for="StatusId" />
+
+        <div class="card shadow-sm">
+          <div class="card-header bg-white p-0 border-bottom">
+            <ul class="nav nav-tabs border-0 px-3 pt-2" id="spTabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#tab1">
+                  <i class="fas fa-info-circle me-1"></i>Thông tin cơ bản
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab2">
+                  <i class="fas fa-align-left me-1"></i>Mô tả chi tiết
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab3">
+                  <i class="fas fa-image me-1"></i>Hình ảnh & Từ khóa
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger d-none"></div>
+
+            <div class="tab-content">
+
+              @* Tab 1: Thông tin cơ bản *@
+              <div class="tab-pane fade show active" id="tab1">
+                <div class="row g-3">
+                  <div class="col-md-8">
+                    <label asp-for="Name" class="form-label fw-semibold">
+                      Tên sản phẩm / công nghệ <span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="Name" class="form-control" placeholder="Nhập tên sản phẩm..." />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                  </div>
+                  <div class="col-md-4">
+                    <label asp-for="Code" class="form-label fw-semibold">Mã sản phẩm</label>
+                    <input asp-for="Code" class="form-control" placeholder="VD: CN-2024-001" />
+                  </div>
+                  <div class="col-md-12">
+                    <label asp-for="ProductType" class="form-label fw-semibold">Loại sản phẩm</label>
+                    <div class="d-flex gap-4">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="ProductType" value="1" id="pt1">
+                        <label class="form-check-label" for="pt1">
+                          <i class="fas fa-microchip text-primary me-1"></i>Công nghệ
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="ProductType" value="2" id="pt2">
+                        <label class="form-check-label" for="pt2">
+                          <i class="fas fa-tools text-info me-1"></i>Thiết bị
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="ProductType" value="3" id="pt3">
+                        <label class="form-check-label" for="pt3">
+                          <i class="fas fa-lightbulb text-warning me-1"></i>Sở hữu trí tuệ
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <label asp-for="MoTaNgan" class="form-label fw-semibold">Mô tả ngắn</label>
+                    <textarea asp-for="MoTaNgan" class="form-control" rows="3"
+                              placeholder="Tóm tắt ngắn gọn về sản phẩm (hiển thị trong danh sách)..."></textarea>
+                  </div>
+                </div>
+              </div>
+
+              @* Tab 2: Mô tả chi tiết *@
+              <div class="tab-pane fade" id="tab2">
+                <div class="mb-3">
+                  <label asp-for="MoTa" class="form-label fw-semibold">Mô tả đầy đủ</label>
+                  <textarea asp-for="MoTa" id="editorMoTa" class="form-control" rows="8"
+                            placeholder="Mô tả chi tiết về sản phẩm / công nghệ..."></textarea>
+                </div>
+                <div class="mb-3">
+                  <label asp-for="ThongSo" class="form-label fw-semibold">Thông số kỹ thuật</label>
+                  <textarea asp-for="ThongSo" id="editorThongSo" class="form-control" rows="6"
+                            placeholder="Các thông số kỹ thuật chính..."></textarea>
+                </div>
+                <div class="mb-3">
+                  <label asp-for="UuDiem" class="form-label fw-semibold">Ưu điểm nổi bật</label>
+                  <textarea asp-for="UuDiem" id="editorUuDiem" class="form-control" rows="6"
+                            placeholder="Điểm mạnh và lợi thế cạnh tranh..."></textarea>
+                </div>
+              </div>
+
+              @* Tab 3: Hình ảnh & Từ khóa *@
+              <div class="tab-pane fade" id="tab3">
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Hình ảnh đại diện</label>
+                  <div class="input-group">
+                    <input type="file" class="form-control" id="fileInputHinh" accept="image/*" />
+                  </div>
+                  <input type="hidden" asp-for="QuyTrinhHinhAnh" id="inputHinhUrl" />
+                  <div id="previewHinh" class="mt-2">
+                    @if (!string.IsNullOrEmpty(Model.QuyTrinhHinhAnh))
+                    {
+                      <img src="@Model.QuyTrinhHinhAnh" class="rounded" style="max-height:160px" />
+                    }
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label asp-for="Keywords" class="form-label fw-semibold">Từ khóa tìm kiếm</label>
+                  <input asp-for="Keywords" class="form-control" placeholder="công nghệ sinh học, chuyển giao, ..." />
+                  <small class="text-muted">Phân cách bằng dấu phẩy.</small>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <small class="text-muted"><span class="text-danger">*</span> Trường bắt buộc. Sau khi gửi, hồ sơ sẽ chờ Ban quản trị xét duyệt.</small>
+            <div class="d-flex gap-2">
+              <a href="/quan-ly-san-pham.html" class="btn btn-outline-secondary">Hủy</a>
+              <button type="submit" class="btn btn-primary px-4">
+                @if (isEdit)
+                {
+                  <i class="fas fa-save me-1"></i><text>Lưu thay đổi</text>
+                }
+                else
+                {
+                  <i class="fas fa-paper-plane me-1"></i><text>Gửi đăng ký</text>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+@section Styles {
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.css" />
+<style>.ck-editor__editable { min-height: 180px; }</style>
+}
+
+@section Scripts {
+<script src="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.umd.js"></script>
+<script>
+(function () {
+    // ── CKEditor ──
+    const { ClassicEditor, Essentials, Bold, Italic, Link, Paragraph,
+            Heading, List, BlockQuote, Table, TableToolbar,
+            SourceEditing, Alignment, Font } = CKEDITOR;
+    const cfg = {
+        plugins: [Essentials, Bold, Italic, Link, Paragraph, Heading,
+                  List, BlockQuote, Table, TableToolbar, SourceEditing, Alignment, Font],
+        toolbar: { items: ['heading','|','bold','italic','link','|',
+                           'alignment','|','fontSize','fontColor','|',
+                           'bulletedList','numberedList','|','blockQuote','insertTable','|',
+                           'sourceEditing','|','undo','redo'] },
+        table: { contentToolbar: ['tableColumn','tableRow','mergeTableCells'] }
+    };
+    var editors = {};
+    ['editorMoTa','editorThongSo','editorUuDiem'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) ClassicEditor.create(el, cfg)
+            .then(function(e){ editors[id] = e; })
+            .catch(function(err){ console.error(err); });
+    });
+    document.getElementById('spForm').addEventListener('submit', function(){
+        for (var id in editors){
+            var el = document.getElementById(id);
+            if (el) el.value = editors[id].getData();
+        }
+    });
+
+    // ── File upload ──
+    document.getElementById('fileInputHinh')?.addEventListener('change', async function(e){
+        const file = e.target.files[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.append('upload', file);
+        const res = await fetch('/cms/Upload/Upload', { method: 'POST', body: fd });
+        const r = await res.json();
+        if (r.url) {
+            document.getElementById('inputHinhUrl').value = r.url;
+            document.getElementById('previewHinh').innerHTML =
+                `<img src="${r.url}" class="rounded" style="max-height:160px" />`;
+        } else {
+            alert('Upload thất bại: ' + (r.error?.message ?? 'Lỗi không xác định'));
+        }
+    });
+
+    // ── Tab scroll ──
+    document.querySelectorAll('#spTabs .nav-link').forEach(function(t){
+        t.addEventListener('click', function(){ window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    });
+})();
+</script>
+}

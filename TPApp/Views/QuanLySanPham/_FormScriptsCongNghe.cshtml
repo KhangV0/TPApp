@@ -1,0 +1,107 @@
+@* Partial: common script block for CongNghe public forms (Create & Edit) *@
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/super-build/ckeditor.js"></script>
+<script>
+$(function(){
+    // ── Select2 ──
+    $('#NCUId').select2({ theme:'bootstrap-5', placeholder:'-- Tìm nhà cung ứng --', allowClear:true, width:'100%' })
+        .on('change', function(){ loadNhaCungUng($(this).val()); });
+    $('#selXuatXu').select2({ theme:'bootstrap-5', placeholder:'-- Tìm xuất xứ --', allowClear:true, width:'100%' });
+
+    // ── Tab nav ──
+    var $tabs = $('#cntbTabs button[data-bs-toggle="tab"]');
+    function getIdx(){ return $tabs.index($tabs.filter('.active')); }
+    $(document).on('click','.btn-next-tab',function(){ var i=getIdx(); if(i<$tabs.length-1) new bootstrap.Tab($tabs[i+1]).show(); });
+    $(document).on('click','.btn-prev-tab',function(){ var i=getIdx(); if(i>0) new bootstrap.Tab($tabs[i-1]).show(); });
+
+    // ── CKEditor lazy init ──
+    var ckInstances={};
+    var ckRemove=['ExportPdf','ExportWord','AIAssistant','CKBox','CKFinder','EasyImage',
+        'MultiLevelList','RealTimeCollaborativeComments','RealTimeCollaborativeTrackChanges',
+        'RealTimeCollaborativeRevisionHistory','PresenceList','Comments','TrackChanges',
+        'TrackChangesData','RevisionHistory','Pagination','WProofreader','MathType',
+        'SlashCommand','Template','DocumentOutline','FormatPainter','TableOfContents',
+        'PasteFromOfficeEnhanced','CaseChange'];
+    var ckCfg={ simpleUpload:{uploadUrl:'/cms/Upload/Upload',withCredentials:true},
+        toolbar:['heading','|','bold','italic','fontColor','fontBackgroundColor','|',
+                 'link','bulletedList','numberedList','|','imageUpload','blockQuote','insertTable','undo','redo'],
+        removePlugins:ckRemove };
+    function initCk(sel){
+        document.querySelectorAll(sel).forEach(function(el){
+            if(ckInstances[el.id]) return;
+            CKEDITOR.ClassicEditor.create(el,ckCfg).then(function(e){ckInstances[el.id]=e;}).catch(console.error);
+        });
+    }
+    $('button[data-bs-target="#tab3"]').on('shown.bs.tab',function(){ initCk('.ck-editor-field'); });
+    $('button[data-bs-target="#tab5"]').on('shown.bs.tab',function(){ initCk('.ck-editor-field-tab5'); });
+    $('button[data-bs-target="#tab6"]').on('shown.bs.tab',function(){ initCk('.ck-editor-field-tab6'); });
+    $('#frmCNTB').on('submit',function(){
+        Object.keys(ckInstances).forEach(function(id){ document.getElementById(id).value=ckInstances[id].getData(); });
+    });
+
+    // ── Image upload ──
+    $('#fileUploadImage').on('change',function(){
+        var fd=new FormData(); fd.append('upload',this.files[0]);
+        $.ajax({ url:'/cms/Upload/UploadImage', type:'POST', data:fd, processData:false, contentType:false,
+            success:function(r){ if(r&&r.url){ $('#txtImageUrl').val(r.url); $('#imgPreview').html('<img src="'+r.url+'" class="img-fluid rounded" style="max-height:80px">'); } },
+            error:function(){ alert('Upload thất bại!'); }
+        });
+    });
+
+    // ── Video / Brochure toggle ──
+    $('input[name="videoSource"]').on('change',function(){
+        var up=$(this).val()==='upload';
+        $('#videoUploadBox').toggle(up); $('#videoUrlBox').toggle(!up); $('#IsYoutube').val(!up);
+    });
+    $('input[name="brochureSource"]').on('change',function(){
+        var up=$(this).val()==='upload';
+        $('#brochureUploadBox').toggle(up); $('#brochureUrlBox').toggle(!up);
+    });
+    function uploadMedia(input,field){
+        var fd=new FormData(); fd.append('upload',input.files[0]);
+        $.ajax({ url:'/cms/Upload/Upload', type:'POST', data:fd, processData:false, contentType:false,
+            success:function(r){ if(r&&r.url){ $(field).val(r.url); alert('Upload thành công!'); } },
+            error:function(){ alert('Upload thất bại!'); }
+        });
+    }
+    $('#fileVideo').on('change',function(){ uploadMedia(this,'#URL'); });
+    $('#fileBrochure').on('change',function(){ uploadMedia(this,'#BrochureUrl'); });
+
+    // ── Category checkboxes ──
+    function syncCats(){ var v=[]; $('.chk-linhvuc:checked').each(function(){ v.push($(this).val()); }); $('#hdnCategoryId').val(v.join(';')); }
+    $(document).on('change','.chk-linhvuc',syncCats); syncCats();
+
+    // ── Transfer method checkboxes ──
+    function syncTransfer(){ var v=[]; $('.chk-transfer:checked').each(function(){ v.push($(this).val()); }); $('#hdnTransferMethod').val(v.join(',')); }
+    $(document).on('change','.chk-transfer',syncTransfer); syncTransfer();
+    $(document).on('change','.chk-transfer',function(){
+        var k=$('.chk-transfer:checked').filter(function(){ return $(this).val().indexOf('Kh')===0; }).length>0;
+        $('#transferMethodKhacBox').toggle(k); if(!k) $('#TransferMethodKhac').val('');
+    });
+    if($('.chk-transfer:checked').filter(function(){ return $(this).val().indexOf('Kh')===0; }).length) $('#transferMethodKhacBox').show();
+
+    // ── Chứng nhận Khác ──
+    $('#chkCNKhac').on('change',function(){ $('#cnKhacTextBox').toggle(this.checked); if(!this.checked) $('#ChungNhanKhacText').val(''); });
+    if($('#chkCNKhac').is(':checked')) $('#cnKhacTextBox').show();
+
+    // ── Loại đề tài ──
+    $('input[name="LoaiDeTai"]').on('change',function(){
+        if($(this).val()=='4') $('#loaiDeTaiKhacBox').slideDown(200);
+        else { $('#loaiDeTaiKhacBox').slideUp(200); $('#LoaiDeTaiKhac').val(''); }
+    });
+    if($('input[name="LoaiDeTai"]:checked').val()=='4') $('#loaiDeTaiKhacBox').show();
+
+    // ── NCC auto-fill ──
+    function loadNhaCungUng(id){
+        if(!id){ $('#ncuDiaChi,#ncuNguoiDaiDien,#ncuChucVu,#ncuPhone,#ncuEmail,#ncuWebsite').val(''); return; }
+        $.getJSON('/cms/SanPhamCNTB/GetNhaCungUng/'+id, function(d){
+            $('#ncuDiaChi').val(d.diaChi||''); $('#ncuNguoiDaiDien').val(d.nguoiDaiDien||'');
+            $('#ncuChucVu').val(d.chucVu||''); $('#ncuPhone').val(d.phone||'');
+            $('#ncuEmail').val(d.email||''); $('#ncuWebsite').val(d.website||'');
+        });
+    }
+    var initNcu=$('#NCUId').val(); if(initNcu) loadNhaCungUng(initNcu);
+});
+</script>
+}

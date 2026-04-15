@@ -1,0 +1,264 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model List<TPApp.Areas.Cms.Controllers.SanPhamCNTBListItem>
+@{
+    ViewData["Title"] = "Quản lý Sản phẩm / Công nghệ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+
+    int page       = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+
+    string BadgeClass(int? sid) => sid switch {
+        2 => "bg-info text-dark",
+        3 => "bg-success",
+        4 => "bg-danger",
+        _ => "bg-warning text-dark"
+    };
+    string StatusLabel(int? sid) => sid switch {
+        1 => "Chờ duyệt",
+        2 => "Đang duyệt",
+        3 => "Đã duyệt",
+        4 => "Từ chối",
+        _ => "—"
+    };
+    string ProductTypeLabel(int t) => t switch {
+        2 => "Thiết bị",
+        3 => "Sở hữu trí tuệ",
+        _ => "Công nghệ"
+    };
+    string ProductTypeIcon(int t) => t switch {
+        2 => "fas fa-tools",
+        3 => "fas fa-lightbulb",
+        _ => "fas fa-microchip"
+    };
+}
+
+<div class="container-fluid py-4">
+  <div class="row">
+
+    @* Sidebar *@
+    <div class="col-md-3 col-lg-2">
+      @await Html.PartialAsync("_AccountSidebar", sidebarData)
+    </div>
+
+    @* Main *@
+    <div class="col-md-9 col-lg-10">
+
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h4 class="fw-bold mb-0">
+          <i class="fas fa-box-open me-2 text-primary"></i>@ViewData["Title"]
+        </h4>
+        <div class="d-flex gap-2">
+          <div class="dropdown">
+            <button class="btn btn-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              <i class="fas fa-plus me-1"></i>Thêm mới
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <a class="dropdown-item" href="/quan-ly-san-pham/cong-nghe/tao-moi">
+                  <i class="fas fa-microchip text-primary me-2"></i>Công nghệ
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="/quan-ly-san-pham/thiet-bi/tao-moi">
+                  <i class="fas fa-tools text-info me-2"></i>Thiết bị
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="/quan-ly-san-pham/so-huu-tri-tue/tao-moi">
+                  <i class="fas fa-lightbulb text-warning me-2"></i>Sở hữu trí tuệ
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      @* Filter *@
+      <div class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+          <form method="get" action="/quan-ly-san-pham.html" class="row g-2 align-items-end" id="filterForm">
+            @{
+                var sid = ViewBag.StatusId?.ToString() ?? "";
+                var pt  = ViewBag.ProductType?.ToString() ?? "";
+            }
+            <div class="col-md-4">
+              <input type="text" name="keyword" class="form-control form-control-sm"
+                     placeholder="Tên sản phẩm..." value="@ViewBag.Keyword" />
+            </div>
+            <div class="col-md-2">
+              <select name="statusId" class="form-select form-select-sm">
+                <option value="">-- Trạng thái --</option>
+                <option value="1" selected="@(sid == "1")">Chờ duyệt</option>
+                <option value="2" selected="@(sid == "2")">Đang duyệt</option>
+                <option value="3" selected="@(sid == "3")">Đã duyệt</option>
+                <option value="4" selected="@(sid == "4")">Từ chối</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select name="productType" class="form-select form-select-sm">
+                <option value="">-- Loại --</option>
+                <option value="1" selected="@(pt == "1")">Công nghệ</option>
+                <option value="2" selected="@(pt == "2")">Thiết bị</option>
+                <option value="3" selected="@(pt == "3")">Sở hữu trí tuệ</option>
+              </select>
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search me-1"></i>Tìm</button>
+              <a href="/quan-ly-san-pham.html" class="btn btn-outline-secondary btn-sm ms-1"><i class="fas fa-times me-1"></i>Xóa lọc</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      @* Table *@
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex align-items-center justify-content-between">
+          <span class="fw-semibold small">Tổng: <strong>@totalCount</strong> sản phẩm</span>
+        </div>
+        <div class="card-body p-0">
+          @if (!Model.Any())
+          {
+            <div class="text-center py-5 text-muted">
+              <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+              Chưa có sản phẩm nào. Hãy thêm mới bằng nút <strong>Thêm mới</strong> bên trên.
+            </div>
+          }
+          else
+          {
+            <div class="table-responsive">
+              <table class="table table-hover table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:40px">#</th>
+                    <th>Tên sản phẩm</th>
+                    <th style="width:130px">Loại</th>
+                    <th style="width:120px">Trạng thái</th>
+                    <th style="width:100px">Ngày tạo</th>
+                    <th style="width:100px" class="text-center">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @{ int stt = (page - 1) * (int)(ViewBag.PageSize ?? 15) + 1; }
+                  @foreach (var item in Model)
+                  {
+                    var editUrl = item.ProductType switch {
+                        2 => $"/quan-ly-san-pham/thiet-bi/chinh-sua/{item.ID}",
+                        3 => $"/quan-ly-san-pham/so-huu-tri-tue/chinh-sua/{item.ID}",
+                        _ => $"/quan-ly-san-pham/cong-nghe/chinh-sua/{item.ID}"
+                    };
+                    <tr>
+                      <td class="text-muted small">@stt</td>
+                      <td>
+                        <div class="fw-semibold">@item.Name</div>
+                        @if (!string.IsNullOrEmpty(item.Code))
+                        {
+                          <small class="text-muted">Mã: @item.Code</small>
+                        }
+                      </td>
+                      <td>
+                        <span class="badge bg-secondary">
+                          <i class="@ProductTypeIcon(item.ProductType) me-1"></i>@ProductTypeLabel(item.ProductType)
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge @BadgeClass(item.StatusId)">@StatusLabel(item.StatusId)</span>
+                      </td>
+                      <td class="small text-muted">@item.Created?.ToString("dd/MM/yyyy")</td>
+                      <td class="text-center">
+                        <a href="@editUrl" class="btn btn-outline-primary btn-sm" title="Chỉnh sửa">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        <button type="button"
+                                class="btn btn-outline-danger btn-sm ms-1 btn-del"
+                                data-id="@item.ID"
+                                data-name="@item.Name"
+                                title="Xóa">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                    stt++;
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @* Pagination *@
+            @if (totalPages > 1)
+            {
+              <div class="card-footer bg-white d-flex justify-content-center py-2">
+                <nav>
+                  <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(page <= 1 ? "disabled" : "")">
+                      <a class="page-link" href="/quan-ly-san-pham.html?keyword=@ViewBag.Keyword&statusId=@ViewBag.StatusId&productType=@ViewBag.ProductType&page=@(page-1)">
+                        <i class="fas fa-chevron-left"></i>
+                      </a>
+                    </li>
+                    @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
+                    {
+                      <li class="page-item @(i == page ? "active" : "")">
+                        <a class="page-link" href="/quan-ly-san-pham.html?keyword=@ViewBag.Keyword&statusId=@ViewBag.StatusId&productType=@ViewBag.ProductType&page=@i">@i</a>
+                      </li>
+                    }
+                    <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                      <a class="page-link" href="/quan-ly-san-pham.html?keyword=@ViewBag.Keyword&statusId=@ViewBag.StatusId&productType=@ViewBag.ProductType&page=@(page+1)">
+                        <i class="fas fa-chevron-right"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value
+              || document.querySelector('meta[name="__RequestVerificationToken"]')?.content
+              || '';
+
+    document.querySelectorAll('.btn-del').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id   = this.dataset.id;
+            var name = this.dataset.name;
+            if (!confirm('Xác nhận xóa sản phẩm:\n"' + name + '"?')) return;
+
+            fetch('/quan-ly-san-pham/xoa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'id=' + id + '&__RequestVerificationToken=' + encodeURIComponent(token)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.success) {
+                    // Xóa hàng khỏi bảng
+                    btn.closest('tr').remove();
+                    // Cập nhật tổng đếm
+                    var cnt = document.querySelector('strong');
+                    if (cnt) cnt.textContent = Math.max(0, parseInt(cnt.textContent) - 1);
+                } else {
+                    alert('Xóa thất bại: ' + (res.message || 'Lỗi không xác định'));
+                }
+            })
+            .catch(function () { alert('Lỗi kết nối khi xóa.'); });
+        });
+    });
+})();
+</script>
+}
