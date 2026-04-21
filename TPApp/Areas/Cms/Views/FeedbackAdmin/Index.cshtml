@@ -1,0 +1,251 @@
+@model List<TPApp.Areas.Cms.Controllers.FeedbackListItem>
+@{
+    ViewData["Title"] = "Quản lý Phản hồi (Feedback)";
+}
+
+<!-- ─── Search Card ─── -->
+<div class="card card-outline card-primary shadow-sm mb-3">
+    <div class="card-header" id="searchCardHeader" style="cursor:pointer" title="Nhấn đúp để thu gọn/mở rộng">
+        <h3 class="card-title"><i class="fas fa-search me-1"></i> Tìm kiếm Phản hồi</h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-lte-toggle="card-collapse"><i class="fas fa-minus"></i></button>
+        </div>
+    </div>
+    <div class="card-body">
+        <form id="searchForm">
+            @Html.AntiForgeryToken()
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small mb-1">Từ khóa</label>
+                    <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control form-control-sm"
+                           placeholder="Tên, email, SĐT, tiêu đề, nội dung..." />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small mb-1">Trạng thái</label>
+                    <select name="statusId" class="form-select form-select-sm">
+                        <option value="">-- Tất cả --</option>
+                        @{
+                            var sts = ViewBag.StatusId?.ToString() ?? "";
+                            var statuses = (IEnumerable<dynamic>?)ViewBag.Statuses;
+                        }
+                        @if (statuses != null)
+                        {
+                            foreach (var s in statuses)
+                            {
+                                <option value="@s.StatusId" selected="@(sts == s.StatusId.ToString())">@s.Title</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small mb-1">Sàn GDCN</label>
+                    @{
+                        var configSiteId = (int)(ViewBag.CurrentSiteId ?? 0);
+                    }
+                    <select name="siteId" id="filterSiteId" class="form-select form-select-sm"
+                            @(configSiteId > 1 ? "disabled" : "")>
+                        <option value="">-- Tất cả --</option>
+                        @{
+                            var selSite = ViewBag.SiteId?.ToString() ?? "";
+                            var sites = (IEnumerable<TPApp.Entities.RootSite>?)ViewBag.Sites;
+                        }
+                        @if (sites != null)
+                        {
+                            foreach (var s in sites)
+                            {
+                                <option value="@s.SiteId" selected="@(selSite == s.SiteId.ToString())">@s.SiteName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small mb-1">Ngày tạo từ</label>
+                    <input type="date" name="createdFrom" value="@ViewBag.CreatedFrom" class="form-control form-control-sm" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small mb-1">Ngày tạo đến</label>
+                    <input type="date" name="createdTo" value="@ViewBag.CreatedTo" class="form-control form-control-sm" />
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="card-footer bg-transparent">
+        <button type="button" class="btn btn-primary btn-sm me-2" id="btnSearch">
+            <i class="fas fa-search me-1"></i> Tìm kiếm
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnReset">
+            <i class="fas fa-undo me-1"></i> Đặt lại
+        </button>
+    </div>
+</div>
+
+<!-- ─── Result Card ─── -->
+<div class="card card-outline card-info shadow-sm">
+    <div class="card-header d-flex align-items-center flex-wrap gap-2">
+        <h3 class="card-title mb-0">
+            <i class="fas fa-comments me-1"></i> Danh sách Phản hồi
+            <span class="badge bg-info ms-1" id="badgeTotal">@ViewBag.TotalCount</span>
+        </h3>
+        <div class="ms-auto d-flex gap-2">
+            <button type="button" class="btn btn-outline-danger btn-sm" id="btnBulkDelete" disabled>
+                <i class="fas fa-trash-alt me-1"></i> Xóa chọn
+            </button>
+        </div>
+    </div>
+
+    <div id="listContainer">
+        @await Html.PartialAsync("_ListPartial", Model)
+    </div>
+</div>
+
+<!-- ─── Detail Modal ─── -->
+<div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-eye me-1"></i> Chi tiết phản hồi</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalDetailBody">
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$(function(){
+    toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
+
+    var token = $('input[name="__RequestVerificationToken"]').val() || '';
+    var baseUrl = '@Url.Action("Index", "FeedbackAdmin", new { area = "Cms" })';
+    var currentPage = 1, currentSortBy = '', currentSortDir = '';
+
+    $('#searchCardHeader').on('dblclick', function() {
+        $(this).find('[data-lte-toggle="card-collapse"]').trigger('click');
+    });
+
+    function loadList(page) {
+        currentPage = page || 1;
+        var params = $('#searchForm').serialize()
+            + '&page=' + currentPage
+            + '&sortBy=' + encodeURIComponent(currentSortBy)
+            + '&sortDir=' + encodeURIComponent(currentSortDir);
+        $('#listContainer').css('opacity', '0.5');
+        $.ajax({
+            url: baseUrl, data: params,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(html) {
+                $('#listContainer').html(html).css('opacity', '1');
+                $('#chkAll').prop('checked', false);
+                $('#btnBulkDelete').prop('disabled', true);
+                var cnt = $('#partialTotalCount').text();
+                $('#badgeTotal').text(cnt);
+            },
+            error: function() {
+                toastr.error('Lỗi tải dữ liệu.');
+                $('#listContainer').css('opacity', '1');
+            }
+        });
+    }
+
+    $(document).on('click', '.sortable', function() {
+        var col = $(this).data('sort');
+        if (currentSortBy === col) currentSortDir = (currentSortDir === 'asc') ? 'desc' : 'asc';
+        else { currentSortBy = col; currentSortDir = 'asc'; }
+        loadList(1);
+    });
+
+    $('#searchForm').on('submit', function(e) { e.preventDefault(); loadList(1); });
+    $('#btnSearch').on('click', function() { loadList(1); });
+    $('#btnReset').on('click', function() {
+        $('#searchForm')[0].reset();
+        currentSortBy = ''; currentSortDir = '';
+        loadList(1);
+    });
+
+    $(document).on('click', '.ajax-page', function(e) {
+        e.preventDefault();
+        if ($(this).closest('.page-item').hasClass('disabled') || $(this).closest('.page-item').hasClass('active')) return;
+        loadList($(this).data('page'));
+    });
+
+    $(document).on('change', '#chkAll', function() { $('.chkRow:not(:disabled)').prop('checked', this.checked); toggleBulk(); });
+    $(document).on('change', '.chkRow', toggleBulk);
+    function toggleBulk() { $('#btnBulkDelete').prop('disabled', !$('.chkRow:checked').length); }
+
+    // ── VIEW DETAIL ──
+    $(document).on('click', '.btn-view', function(e) {
+        e.preventDefault();
+        var $row = $(this).closest('tr');
+        var html = '<table class="table table-bordered mb-0">'
+            + '<tr><th style="width:130px">Họ tên</th><td>' + $row.data('fullname') + '</td></tr>'
+            + '<tr><th>Email</th><td>' + $row.data('email') + '</td></tr>'
+            + '<tr><th>Điện thoại</th><td>' + $row.data('phone') + '</td></tr>'
+            + '<tr><th>Địa chỉ</th><td>' + $row.data('address') + '</td></tr>'
+            + '<tr><th>Tiêu đề</th><td><strong>' + $row.data('title') + '</strong></td></tr>'
+            + '<tr><th>Nội dung</th><td>' + $row.data('content') + '</td></tr>'
+            + '<tr><th>Ngày gửi</th><td>' + $row.data('created') + '</td></tr>'
+            + '</table>';
+        $('#modalDetailBody').html(html);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetail')).show();
+    });
+
+    // ── UPDATE STATUS ──
+    $(document).on('change', '.sel-status', function() {
+        var id = $(this).data('id');
+        var statusId = $(this).val();
+        $.post('@Url.Action("UpdateStatus", "FeedbackAdmin", new { area = "Cms" })',
+            { id: id, statusId: statusId, __RequestVerificationToken: token },
+            function(r) {
+                if (r.success) { toastr.success(r.message); loadList(currentPage); }
+                else { toastr.error(r.message); }
+            });
+    });
+
+    // ── DELETE ──
+    $(document).on('click', '.btn-del', function(e) {
+        e.preventDefault();
+        var id = $(this).data('id');
+        Swal.fire({
+            title: 'Xác nhận xóa?', text: 'Bạn chắc chắn muốn xóa phản hồi #' + id + '?',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#d33', cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Xóa', cancelButtonText: 'Hủy'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.post('@Url.Action("Delete", "FeedbackAdmin", new { area = "Cms" })',
+                    { id: id, __RequestVerificationToken: token },
+                    function(r) {
+                        if (r.success) { toastr.success(r.message); loadList(currentPage); }
+                        else { toastr.error(r.message); }
+                    });
+            }
+        });
+    });
+
+    // ── BULK DELETE ──
+    $('#btnBulkDelete').on('click', function() {
+        var ids = $('.chkRow:checked').map(function() { return $(this).val(); }).get();
+        if (!ids.length) return;
+        Swal.fire({
+            title: 'Xóa nhiều phản hồi?', text: 'Bạn chắc chắn xóa ' + ids.length + ' phản hồi đã chọn?',
+            icon: 'warning', showCancelButton: true,
+            confirmButtonColor: '#d33', cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-trash"></i> Xóa tất cả', cancelButtonText: 'Hủy'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                var promises = ids.map(function(id) {
+                    return $.post('@Url.Action("Delete", "FeedbackAdmin", new { area = "Cms" })',
+                        { id: id, __RequestVerificationToken: token });
+                });
+                $.when.apply($, promises).then(function() {
+                    toastr.success('Đã xóa ' + ids.length + ' phản hồi.');
+                    loadList(currentPage);
+                });
+            }
+        });
+    });
+});
+</script>
+}

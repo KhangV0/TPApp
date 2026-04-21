@@ -1,0 +1,173 @@
+@model List<TPApp.Areas.Cms.Controllers.FeedbackListItem>
+@{
+    var totalCount = ViewBag.TotalCount ?? 0;
+    var totalPages = ViewBag.TotalPages ?? 1;
+    var page = ViewBag.Page ?? 1;
+    var pageSize = ViewBag.PageSize ?? 30;
+    var sortBy = (string?)ViewBag.SortBy ?? "";
+    var sortDir = (string?)ViewBag.SortDir ?? "";
+    var statuses = (IEnumerable<dynamic>?)ViewBag.Statuses;
+}
+
+@functions {
+    string SortIcon(string col, string currentSort, string currentDir)
+    {
+        if (!string.Equals(col, currentSort, StringComparison.OrdinalIgnoreCase))
+            return "<i class='fas fa-sort text-muted' style='opacity:.25'></i>";
+        return currentDir == "asc"
+            ? "<i class='fas fa-sort-up text-primary'></i>"
+            : "<i class='fas fa-sort-down text-primary'></i>";
+    }
+}
+
+<span id="partialTotalCount" class="d-none">@totalCount</span>
+
+<div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:35px"><input type="checkbox" id="chkAll" class="form-check-input" /></th>
+                    <th style="width:50px" class="text-center">STT</th>
+                    <th style="width:100px">Thao tác</th>
+                    <th class="sortable" data-sort="fullname" style="cursor:pointer;width:150px">
+                        Họ tên @Html.Raw(SortIcon("fullname", sortBy, sortDir))
+                    </th>
+                    <th class="sortable" data-sort="email" style="cursor:pointer;width:180px">
+                        Email @Html.Raw(SortIcon("email", sortBy, sortDir))
+                    </th>
+                    <th style="width:120px">Điện thoại</th>
+                    <th class="sortable" data-sort="title" style="cursor:pointer;min-width:160px">
+                        Tiêu đề @Html.Raw(SortIcon("title", sortBy, sortDir))
+                    </th>
+                    <th style="min-width:200px">Nội dung</th>
+                    <th style="width:140px">Trạng thái</th>
+                    <th class="sortable" data-sort="created" style="cursor:pointer;width:120px">
+                        Ngày gửi @Html.Raw(SortIcon("created", sortBy, sortDir))
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3 d-block opacity-25"></i>
+                            Chưa có phản hồi nào.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    int stt = ((int)page - 1) * (int)pageSize;
+                    foreach (var item in Model)
+                    {
+                        stt++;
+                        <tr data-fullname="@(item.FullName ?? "—")"
+                            data-email="@(item.Email ?? "—")"
+                            data-phone="@(item.Phone ?? "—")"
+                            data-address="@(item.Address ?? "—")"
+                            data-title="@(item.Title ?? "—")"
+                            data-content="@(item.Content ?? "—")"
+                            data-created="@(item.Created?.ToString("dd/MM/yyyy HH:mm") ?? "—")">
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input chkRow" value="@item.Id" />
+                            </td>
+                            <td class="text-center text-muted small">@stt</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-info btn-view"
+                                            data-id="@item.Id" title="Xem chi tiết">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-del"
+                                            data-id="@item.Id" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="small fw-semibold">@(item.FullName ?? "—")</td>
+                            <td class="small">@(item.Email ?? "—")</td>
+                            <td class="small">@(item.Phone ?? "—")</td>
+                            <td class="small">
+                                @if (!string.IsNullOrEmpty(item.Title))
+                                {
+                                    @(item.Title.Length > 40 ? item.Title.Substring(0, 40) + "…" : item.Title)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="small">
+                                @if (!string.IsNullOrEmpty(item.Content))
+                                {
+                                    var plain = System.Text.RegularExpressions.Regex.Replace(item.Content, "<.*?>", "");
+                                    @(plain.Length > 60 ? plain.Substring(0, 60) + "…" : plain)
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm sel-status" data-id="@item.Id" style="width:120px">
+                                    @if (statuses != null)
+                                    {
+                                        foreach (var s in statuses)
+                                        {
+                                            <option value="@s.StatusId" selected="@(item.StatusId?.ToString() == s.StatusId.ToString())">@s.Title</option>
+                                        }
+                                    }
+                                </select>
+                            </td>
+                            <td class="small text-muted">@(item.Created?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (totalPages > 1)
+{
+    <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <small class="text-muted">
+            Hiển thị <strong>@(((int)page - 1) * (int)pageSize + 1)</strong>–<strong>@Math.Min((int)page * (int)pageSize, (int)totalCount)</strong> / <strong>@totalCount</strong> bản ghi
+        </small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                @{
+                    int startP = Math.Max(1, (int)page - 4);
+                    int endP = Math.Min((int)totalPages, (int)page + 4);
+                }
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="1" title="Trang đầu"><i class="fas fa-angles-left"></i></a>
+                </li>
+                <li class="page-item @(page == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@(page - 1)" title="Trang trước"><i class="fas fa-angle-left"></i></a>
+                </li>
+                @for (int i = startP; i <= endP; i++)
+                {
+                    <li class="page-item @(i == (int)page ? "active" : "")">
+                        <a class="page-link ajax-page" data-page="@i" href="#">@i</a>
+                    </li>
+                }
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@(page + 1)" title="Trang sau"><i class="fas fa-angle-right"></i></a>
+                </li>
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="#" data-page="@totalPages" title="Trang cuối"><i class="fas fa-angles-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+else if (totalCount > 0)
+{
+    <div class="card-footer">
+        <small class="text-muted">Tổng: <strong>@totalCount</strong> bản ghi</small>
+    </div>
+}

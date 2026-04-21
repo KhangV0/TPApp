@@ -1,0 +1,463 @@
+@using TPApp.Interfaces
+@using Microsoft.AspNetCore.Identity
+@using TPApp.Entities
+@inject IAccountService AccountService
+@inject UserManager<ApplicationUser> UserManager
+
+@model TPApp.Areas.Cms.Controllers.NhaTuVanFormVm
+@{
+    ViewData["Title"] = "Đăng ký Nhà tư vấn / Chuyên gia";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var userId = int.Parse(UserManager.GetUserId(User)!);
+    var sidebarData = await AccountService.GetSidebarDataAsync(userId);
+
+    var linhVucItems = (List<SelectListItem>?)ViewBag.LinhVucList;
+    var dichVuItems  = (List<SelectListItem>?)ViewBag.DichVuList;
+
+    var hocHamOptions = new[] {
+        ("GS",    "Giáo sư"),
+        ("PGS",   "Phó Giáo sư"),
+        ("TSKH",  "Tiến sĩ Khoa học"),
+        ("TS",    "Tiến sĩ"),
+        ("ThS",   "Thạc sĩ"),
+        ("KS",    "Kỹ sư / Cử nhân"),
+        ("Khac",  "Khác")
+    };
+}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-md-3 col-lg-2">
+      @await Html.PartialAsync("_AccountSidebar", sidebarData)
+    </div>
+    <div class="col-md-9 col-lg-10">
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h4 class="fw-bold mb-0">
+                    <i class="fas fa-user-tie me-2 text-primary"></i>
+                    @(ViewBag.IsUpdate == true ? "Cập nhật hồ sơ Nhà tư vấn" : "Đăng ký Nhà tư vấn / Chuyên gia")
+                </h4>
+                @if (ViewBag.IsUpdate == true && ViewBag.StatusTitle != null)
+                {
+                    var sid = (int?)ViewBag.StatusId;
+                    var badgeClass = sid switch {
+                        2 => "bg-info text-dark",
+                        3 => "bg-success",
+                        4 => "bg-danger",
+                        _ => "bg-warning text-dark"
+                    };
+                    <span class="badge @badgeClass fs-6 px-3 py-2">
+                        <i class="fas fa-circle-dot me-1"></i>@ViewBag.StatusTitle
+                    </span>
+                }
+            </div>
+
+                @* ── Thông báo thành công ── *@
+                @if (TempData["DangKySuccess"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>@TempData["DangKySuccess"]</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @* ── Lỗi validation ── *@
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Vui lòng kiểm tra lại các trường bắt buộc:</strong>
+                        <div asp-validation-summary="All" class="mt-1 small"></div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @* ── Form ── *@
+                <form asp-action="DangKy" asp-controller="DangKyTuVan" method="post" id="dangKyForm">
+                    @Html.AntiForgeryToken()
+
+                    @* ─── Tab nav ─── *@
+                    <ul class="nav nav-tabs mb-0" id="regTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#tab1">
+                                <i class="fas fa-id-card me-1"></i>I. Thông tin cá nhân
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#tab2">
+                                <i class="fas fa-graduation-cap me-1"></i>II. Đào tạo &amp; Công tác
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#tab3">
+                                <i class="fas fa-flask me-1"></i>III. Nghiên cứu &amp; Công bố
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#tab4">
+                                <i class="fas fa-cogs me-1"></i>IV. Dịch vụ &amp; Hồ sơ
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="card shadow-sm border-top-0 rounded-0 rounded-bottom mb-4">
+                        <div class="card-body p-4">
+                            <div class="tab-content">
+
+                                @* ══ TAB 1: THÔNG TIN CÁ NHÂN ══ *@
+                                <div class="tab-pane fade show active" id="tab1">
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-8">
+                                            <label asp-for="FullName" class="form-label fw-semibold">1. Họ và tên <span class="text-danger">*</span></label>
+                                            <input asp-for="FullName" class="form-control" placeholder="Nhập họ tên đầy đủ..." />
+                                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label asp-for="DateOfBirth" class="form-label fw-semibold">Ngày sinh</label>
+                                            <input asp-for="DateOfBirth" class="form-control" placeholder="dd/MM/yyyy" />
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="HocHam" class="form-label fw-semibold">2. Học hàm / Học vị <span class="text-danger">*</span></label>
+                                        <span asp-validation-for="HocHam" class="text-danger small d-block mb-1"></span>
+                                        <select asp-for="HocHam" class="form-select">
+                                            <option value="">-- Chọn --</option>
+                                            @foreach (var (val, text) in hocHamOptions)
+                                            {
+                                                <option value="@val" selected="@(Model.HocHam == val)">@text</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <fieldset class="border rounded p-3 mb-3">
+                                        <legend class="float-none w-auto px-2 fs-6 fw-semibold">3. Thông tin liên hệ</legend>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <label asp-for="DiaChi" class="form-label fw-semibold">Địa chỉ <span class="text-danger">*</span></label>
+                                                <input asp-for="DiaChi" class="form-control" placeholder="Địa chỉ liên hệ..." />
+                                                <span asp-validation-for="DiaChi" class="text-danger small"></span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label asp-for="Phone" class="form-label fw-semibold">Điện thoại <span class="text-danger">*</span></label>
+                                                <input asp-for="Phone" class="form-control" placeholder="Số điện thoại..." />
+                                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                                                <input asp-for="Email" type="email" class="form-control" placeholder="email@example.com" />
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label asp-for="CoQuan" class="form-label fw-semibold">4. Cơ quan công tác <span class="text-danger">*</span></label>
+                                            <input asp-for="CoQuan" class="form-control" placeholder="Tên cơ quan / đơn vị..." />
+                                            <span asp-validation-for="CoQuan" class="text-danger small"></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label asp-for="ChucVu" class="form-label fw-semibold">Chức vụ <span class="text-danger">*</span></label>
+                                            <input asp-for="ChucVu" class="form-control" placeholder="Chức vụ hiện tại..." />
+                                            <span asp-validation-for="ChucVu" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <label class="form-label fw-semibold">Ảnh đại diện</label>
+                                        <input type="file" class="form-control" id="fileInputHinh" accept="image/*" />
+                                        <input type="hidden" asp-for="HinhDaiDien" id="inputHinhDaiDien" />
+                                        <div id="previewHinhDaiDien" class="mt-2">
+                                            @if (!string.IsNullOrEmpty(Model.HinhDaiDien))
+                                            {
+                                                <img src="@Model.HinhDaiDien" class="rounded" style="max-height:120px" />
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @* ══ TAB 2: ĐÀO TẠO & CÔNG TÁC ══ *@
+                                <div class="tab-pane fade" id="tab2">
+                                    <div class="mb-3">
+                                        <label asp-for="QuaTrinhDaoTao" class="form-label fw-semibold">5. Quá trình đào tạo <span class="text-danger">*</span></label>
+                                        <span asp-validation-for="QuaTrinhDaoTao" class="text-danger small d-block mb-1"></span>
+                                        <textarea asp-for="QuaTrinhDaoTao" id="editorDaoTao" class="form-control" rows="6"></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="QuaTrinhCongTac" class="form-label fw-semibold">6. Quá trình công tác <span class="text-danger">*</span></label>
+                                        <span asp-validation-for="QuaTrinhCongTac" class="text-danger small d-block mb-1"></span>
+                                        <textarea asp-for="QuaTrinhCongTac" id="editorCongTac" class="form-control" rows="6"></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="HiepHoiKhoaHoc" class="form-label fw-semibold">7. Hiệp hội khoa học</label>
+                                        <input asp-for="HiepHoiKhoaHoc" class="form-control" placeholder="Hiệp hội khoa học tham gia..." />
+                                    </div>
+                                </div>
+
+                                @* ══ TAB 3: NGHIÊN CỨU & CÔNG BỐ ══ *@
+                                <div class="tab-pane fade" id="tab3">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">8. Lĩnh vực nghiên cứu <span class="text-danger">*</span> <small class="text-muted">(Chọn tối đa 03)</small></label>
+                                        <span asp-validation-for="LinhVucId" class="text-danger small d-block mb-1"></span>
+                                        <input type="hidden" asp-for="LinhVucId" id="hdnLinhVucId" />
+                                        @if (linhVucItems != null && linhVucItems.Any())
+                                        {
+                                            var currentLV = Model.LinhVucId?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                                            <div class="row g-2">
+                                                @foreach (var item in linhVucItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+                                                {
+                                                    var chk = currentLV.Contains(item.Value) ? "checked" : "";
+                                                    <div class="col-md-4 col-lg-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input chk-linhvuc" type="checkbox"
+                                                                   value="@item.Value" id="lv_@item.Value" @chk />
+                                                            <label class="form-check-label" for="lv_@item.Value">@item.Text</label>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <small id="lvWarning" class="text-danger" style="display:none;">Chỉ được chọn tối đa 3 lĩnh vực.</small>
+                                        }
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="CongBoKhoaHoc" class="form-label fw-semibold">9. Công bố khoa học <span class="text-danger">*</span></label>
+                                        <span asp-validation-for="CongBoKhoaHoc" class="text-danger small d-block mb-1"></span>
+                                        <textarea asp-for="CongBoKhoaHoc" id="editorCongBo" class="form-control" rows="6"></textarea>
+                                    </div>
+
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-4">
+                                            <label asp-for="MaDinhDanh" class="form-label fw-semibold">Mã định danh (ORCID...)</label>
+                                            <input asp-for="MaDinhDanh" class="form-control" placeholder="https://orcid.org/..." />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label asp-for="TongTrichDan" class="form-label fw-semibold">Tổng trích dẫn</label>
+                                            <input asp-for="TongTrichDan" type="number" class="form-control" placeholder="0" />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label asp-for="HIndex" class="form-label fw-semibold">H-Index</label>
+                                            <input asp-for="HIndex" type="number" class="form-control" placeholder="0" />
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="SangChe" class="form-label fw-semibold">10. Sáng chế / Giải pháp hữu ích</label>
+                                        <textarea asp-for="SangChe" id="editorSangChe" class="form-control" rows="4"></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="DuAnNghienCuu" class="form-label fw-semibold">11. Đề tài / Dự án nghiên cứu</label>
+                                        <textarea asp-for="DuAnNghienCuu" id="editorDuAn" class="form-control" rows="4"></textarea>
+                                    </div>
+                                </div>
+
+                                @* ══ TAB 4: DỊCH VỤ & HỒ SƠ ══ *@
+                                <div class="tab-pane fade" id="tab4">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">12. Dịch vụ tư vấn chuyên sâu <span class="text-danger">*</span></label>
+                                        <span asp-validation-for="DichVu" class="text-danger small d-block mb-1"></span>
+                                        <input type="hidden" asp-for="DichVu" id="hdnDichVu" />
+                                        @if (dichVuItems != null && dichVuItems.Any())
+                                        {
+                                            var currentDV = Model.DichVu?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                                            <div class="row g-2">
+                                                @foreach (var item in dichVuItems.Where(x => !string.IsNullOrEmpty(x.Value)))
+                                                {
+                                                    var chk = currentDV.Contains(item.Value) ? "checked" : "";
+                                                    <div class="col-md-6">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input chk-dichvu" type="checkbox"
+                                                                   value="@item.Value" id="dv_@item.Value" @chk />
+                                                            <label class="form-check-label" for="dv_@item.Value">@item.Text</label>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="KinhNghiem" class="form-label fw-semibold">13. Kinh nghiệm tư vấn</label>
+                                        <textarea asp-for="KinhNghiem" id="editorKinhNghiem" class="form-control" rows="4"></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="KetQuaNghienCuu" class="form-label fw-semibold">14. Kết quả nghiên cứu chuyển giao</label>
+                                        <textarea asp-for="KetQuaNghienCuu" id="editorKetQua" class="form-control" rows="4"></textarea>
+                                    </div>
+
+                                    <hr />
+                                    <h6 class="fw-semibold mb-3">15. Hồ sơ đính kèm</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">CV / Lý lịch khoa học</label>
+                                        <input type="file" class="form-control" id="fileInputHoSo" accept=".pdf,image/*" />
+                                        <input type="hidden" asp-for="HoSoDinhKem" id="inputHoSoDinhKem" />
+                                        <small class="text-muted">PDF hoặc ảnh scan</small>
+                                        <div id="previewHoSo" class="mt-2">
+                                            @if (!string.IsNullOrEmpty(Model.HoSoDinhKem))
+                                            {
+                                                <a href="@Model.HoSoDinhKem" target="_blank" class="text-primary small">
+                                                    <i class="fas fa-paperclip me-1"></i>Xem hồ sơ đã đính kèm
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label asp-for="Keywords" class="form-label fw-semibold">Từ khóa tìm kiếm</label>
+                                        <input asp-for="Keywords" class="form-control" placeholder="polymer, nano, vi sinh, ..." />
+                                        <small class="text-muted">Phân cách bằng dấu phẩy.</small>
+                                    </div>
+                                </div>
+
+                        </div><!-- end tab-content -->
+                        </div><!-- end card-body -->
+
+                        <div class="card-footer d-flex justify-content-between align-items-center bg-white">
+                            <small class="text-muted"><span class="text-danger">*</span> Trường bắt buộc</small>
+                            <button type="submit" class="btn btn-primary px-5" id="btnDangKy">
+                                @if (ViewBag.IsUpdate == true)
+                                {
+                                    <i class="fas fa-save me-2"></i><text>Cập nhật hồ sơ</text>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-paper-plane me-2"></i><text>Gửi đăng ký</text>
+                                }
+                            </button>
+                        </div>
+                    </div><!-- end card -->
+
+                    <input type="hidden" asp-for="TuVanId" />
+                    <input type="hidden" asp-for="LanguageId" />
+                    <input type="hidden" asp-for="Domain" />
+                    <input type="hidden" asp-for="SiteId" />
+                </form>
+
+    </div><!-- /col main -->
+  </div><!-- /row -->
+</div><!-- /container-fluid -->
+
+
+@section Styles {
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.css" />
+<style>.ck-editor__editable { min-height: 200px; }</style>
+}
+
+@section Scripts {
+<script>
+(function () {
+    // ── Sync checkbox groups → hidden input ──
+    function syncCheckboxes(cls, hiddenId) {
+        document.querySelectorAll('.' + cls).forEach(c => {
+            c.addEventListener('change', () => {
+                const vals = [...document.querySelectorAll('.' + cls + ':checked')].map(x => x.value);
+                document.getElementById(hiddenId).value = vals.join(';');
+            });
+        });
+    }
+    syncCheckboxes('chk-dichvu', 'hdnDichVu');
+
+    // Lĩnh vực: max 3
+    document.querySelectorAll('.chk-linhvuc').forEach(c => {
+        c.addEventListener('change', () => {
+            const checked = document.querySelectorAll('.chk-linhvuc:checked');
+            const warn = document.getElementById('lvWarning');
+            if (checked.length > 3) {
+                c.checked = false;
+                if (warn) warn.style.display = '';
+            } else {
+                if (warn) warn.style.display = 'none';
+            }
+            const vals = [...document.querySelectorAll('.chk-linhvuc:checked')].map(x => x.value);
+            document.getElementById('hdnLinhVucId').value = vals.join(';');
+        });
+    });
+
+    // ── File upload helper ──
+    async function uploadFile(file, hiddenId, previewId, isDoc) {
+        const fd = new FormData();
+        fd.append('upload', file);
+        try {
+            const res = await fetch('/cms/Upload/Upload', { method: 'POST', body: fd });
+            const r   = await res.json();
+            if (r.url) {
+                document.getElementById(hiddenId).value = r.url;
+                const prev = document.getElementById(previewId);
+                if (prev) {
+                    prev.innerHTML = isDoc
+                        ? `<a href="${r.url}" target="_blank" class="text-primary small"><i class="fas fa-paperclip me-1"></i>Xem file đã upload</a>`
+                        : `<img src="${r.url}" class="rounded mt-1" style="max-height:120px" />`;
+                }
+            } else {
+                alert('Upload thất bại: ' + (r.error?.message ?? 'Unknown error'));
+            }
+        } catch (e) {
+            alert('Upload thất bại.');
+        }
+    }
+
+    document.getElementById('fileInputHinh')?.addEventListener('change', e => uploadFile(e.target.files[0], 'inputHinhDaiDien', 'previewHinhDaiDien', false));
+    document.getElementById('fileInputHoSo')?.addEventListener('change', e => uploadFile(e.target.files[0], 'inputHoSoDinhKem', 'previewHoSo', true));
+
+    // ── Tab navigation ──
+    document.querySelectorAll('#regTabs .nav-link').forEach(tab => {
+        tab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    });
+})();
+</script>
+
+<script src="https://cdn.ckeditor.com/ckeditor5/43.0.0/ckeditor5.umd.js"></script>
+<script>
+(function() {
+    const { ClassicEditor, Essentials, Bold, Italic, Link, Paragraph,
+            Heading, List, BlockQuote, Table, TableToolbar,
+            SourceEditing, Alignment, Font, HtmlEmbed } = CKEDITOR;
+
+    var editorConfig = {
+        plugins: [
+            Essentials, Bold, Italic, Link, Paragraph, Heading,
+            List, BlockQuote, Table, TableToolbar,
+            SourceEditing, Alignment, Font, HtmlEmbed
+        ],
+        toolbar: {
+            items: [
+                'heading', '|',
+                'bold', 'italic', 'link', '|',
+                'alignment', '|',
+                'fontSize', 'fontColor', '|',
+                'bulletedList', 'numberedList', '|',
+                'blockQuote', 'insertTable', 'htmlEmbed', '|',
+                'sourceEditing', '|',
+                'undo', 'redo'
+            ]
+        },
+        table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] }
+    };
+
+    var editors = {};
+    ['editorDaoTao', 'editorCongTac', 'editorCongBo', 'editorSangChe', 'editorDuAn', 'editorKinhNghiem', 'editorKetQua'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            ClassicEditor.create(el, editorConfig)
+                .then(function(editor) { editors[id] = editor; })
+                .catch(function(err) { console.error('CKEditor init error:', err); });
+        }
+    });
+
+    document.getElementById('dangKyForm').addEventListener('submit', function() {
+        try {
+            for (var id in editors) {
+                var el = document.getElementById(id);
+                if (el) el.value = editors[id].getData();
+            }
+        } catch(e) { console.error('CKEditor sync error:', e); }
+    });
+})();
+</script>
+}

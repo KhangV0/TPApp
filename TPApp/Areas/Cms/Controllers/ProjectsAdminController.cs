@@ -230,11 +230,20 @@ namespace TPApp.Areas.Cms.Controllers
                 .Select(pm => pm.UserId)
                 .ToListAsync();
 
-            // Get available NhaTuVan that have a UserId and are not already assigned
-            var available = await _context.NhaTuVans.AsNoTracking()
-                .Where(n => n.UserId != null && n.IsActivated == true
-                    && !assignedUserIds.Contains(n.UserId!.Value))
-                .Select(n => new { n.TuVanId, n.FullName, n.UserId })
+            // Get UserId of all active NhaTuVan
+            var nhaTuVanUserIds = await _context.NhaTuVans.AsNoTracking()
+                .Where(n => n.UserId != null && n.IsActivated == true)
+                .Select(n => n.UserId!.Value)
+                .ToListAsync();
+
+            // Get Users: IsAdmin=true OR is NhaTuVan, exclude already assigned, same SiteId
+            var siteId = GetSiteId();
+            var available = await _context.Users.AsNoTracking()
+                .Where(u => u.SiteId == siteId
+                    && (u.IsAdmin == true || nhaTuVanUserIds.Contains(u.Id))
+                    && !assignedUserIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.FullName })
+                .OrderBy(u => u.FullName)
                 .ToListAsync();
 
             ViewBag.ProjectId = projectId;
@@ -242,7 +251,7 @@ namespace TPApp.Areas.Cms.Controllers
             ViewBag.AvailableConsultants = available
                 .Select(a => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem
                 {
-                    Value = a.UserId.ToString(),
+                    Value = a.Id.ToString(),
                     Text = a.FullName
                 }).ToList();
 

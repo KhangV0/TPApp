@@ -198,6 +198,22 @@
                     </li>
 
                     <li class="nav-item">
+                        <a asp-area="Cms" asp-controller="PhieuYeuCauCNTBAdmin" asp-action="Index"
+                           class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PhieuYeuCauCNTBAdmin" ? "active" : "")">
+                            <i class="nav-icon fas fa-file-alt"></i>
+                            <p>Phiếu yêu cầu CNTB</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a asp-area="Cms" asp-controller="FeedbackAdmin" asp-action="Index"
+                           class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "FeedbackAdmin" ? "active" : "")">
+                            <i class="nav-icon fas fa-comments"></i>
+                            <p>Phản hồi (Feedback)</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a asp-area="Cms" asp-controller="DashboardData" asp-action="Index"
                            class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardData" ? "active" : "")">
                             <i class="nav-icon fas fa-chart-bar"></i>

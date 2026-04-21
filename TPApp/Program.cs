@@ -424,6 +424,12 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "dang_ky_tu_van",
+    pattern: "dang-ky-tu-van.html",
+    defaults: new { controller = "DangKyTuVan", action = "DangKy" }
+);
+
+app.MapControllerRoute(
     name: "quan_ly_san_pham",
     pattern: "quan-ly-san-pham.html",
     defaults: new { controller = "QuanLySanPham", action = "Index" }

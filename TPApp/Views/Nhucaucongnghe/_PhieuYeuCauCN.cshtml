@@ -1,4 +1,4 @@
-﻿@model TPApp.ViewModel.PhieuYeuCauCNViewModel
+@model TPApp.ViewModel.PhieuYeuCauCNViewModel
 
 
 
@@ -81,7 +81,14 @@
         <form asp-action="GuiPhieuYeuCau"
               asp-controller="Nhucaucongnghe"
               method="post">
-
+            @Html.AntiForgeryToken()
+            @* Anti-spam: honeypot (hidden via CSS, bots will fill it) *@
+            <div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true">
+                <input type="text" name="website_url" tabindex="-1" autocomplete="off" />
+            </div>
+            @* Anti-spam: timestamp *@
+            <input type="hidden" name="_ts" id="_formTs" value="" />
+            <script>document.getElementById('_formTs').value = Math.floor(Date.now()/1000);</script>
             <div class="DivLeft">
                 <input id="txtName"
                        name="FullName"

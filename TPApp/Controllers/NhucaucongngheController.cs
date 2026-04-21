@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
 using TPApp.Data;
 using TPApp.Entities;
 using TPApp.Enums;
 using TPApp.Helpers;
+using TPApp.Interfaces;
 using TPApp.ViewModel;
 
 namespace TPApp.Controllers.FrontEnd
@@ -13,12 +15,26 @@ namespace TPApp.Controllers.FrontEnd
     {
         private readonly AppDbContext _context;
         private readonly string _mainDomain;
+        private readonly IEmailSender _emailSender;
+        private readonly ILogger<NhucaucongngheController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public NhucaucongngheController(AppDbContext context, IOptions<AppSettings> appSettings)
+        public NhucaucongngheController(
+            AppDbContext context,
+            IOptions<AppSettings> appSettings,
+            IEmailSender emailSender,
+            ILogger<NhucaucongngheController> logger,
+            IConfiguration configuration)
         {
             _context = context;
             _mainDomain = appSettings.Value.MainDomain;
+            _emailSender = emailSender;
+            _logger = logger;
+            _configuration = configuration;
         }
+
+        private int GetSiteId() =>
+            int.TryParse(_configuration["AppSettings:SiteId"], out var id) ? id : 1;
 
 
         public IActionResult CateTechNeeds(
@@ -164,39 +180,105 @@ namespace TPApp.Controllers.FrontEnd
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult GuiPhieuYeuCau(PhieuYeuCauCNViewModel model)
+        public async Task<IActionResult> GuiPhieuYeuCau(PhieuYeuCauCNViewModel model)
         {
             try
             {
+                // ── Anti-spam: honeypot field ──
+                var honeypot = Request.Form["website_url"].ToString();
+                if (!string.IsNullOrEmpty(honeypot))
+                {
+                    _logger.LogWarning("[AntiSpam] Honeypot triggered. IP={IP}", HttpContext.Connection.RemoteIpAddress);
+                    return Redirect(_mainDomain + "page/thanks");
+                }
+
+                // ── Anti-spam: time-based (form must take >= 3 seconds) ──
+                var formTimestamp = Request.Form["_ts"].ToString();
+                if (long.TryParse(formTimestamp, out var ts))
+                {
+                    var elapsed = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - ts;
+                    if (elapsed < 3)
+                    {
+                        _logger.LogWarning("[AntiSpam] Too fast submission ({Sec}s). IP={IP}", elapsed, HttpContext.Connection.RemoteIpAddress);
+                        return Redirect(_mainDomain + "page/thanks");
+                    }
+                }
+
+                // ── Anti-spam: basic content checks ──
+                var noiDung = model.NoiDung?.Trim() ?? "";
+                var email = model.Email?.Trim() ?? "";
+                var phone = model.Phone?.Trim() ?? "";
+                bool isSpam = string.IsNullOrEmpty(noiDung)
+                    || phone == "555-666-0606"
+                    || email.EndsWith("@example.com", StringComparison.OrdinalIgnoreCase)
+                    || email.EndsWith("@email.tst", StringComparison.OrdinalIgnoreCase)
+                    || email.EndsWith("@test.com", StringComparison.OrdinalIgnoreCase)
+                    || noiDung.Contains("http://") || noiDung.Contains("https://")
+                    || System.Text.RegularExpressions.Regex.IsMatch(noiDung, @"\[url[=\]]");
+
+                // ── Assign UserId if logged in ──
+                int? userId = null;
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+                    if (claim != null && int.TryParse(claim.Value, out var uid))
+                        userId = uid;
+                }
+
                 var p = new PhieuYeuCauCNTB
                 {
-                    NoiDung = model.NoiDung?.Trim(),
+                    NoiDung = noiDung,
                     FullName = model.FullName?.Trim(),
                     HinhDaiDien = "",
                     DiaChi = "",
-                    Phone = model.Phone?.Trim(),
-                    Email = model.Email?.Trim(),
+                    Phone = phone,
+                    Email = email,
                     Created = DateTime.Now,
                     CreatedBy = model.FullName,
+                    UserId = userId,
+                    IPAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
                     IsActivated = true,
                     Domain = string.IsNullOrWhiteSpace(_mainDomain) ? "techport.vn" : new Uri(_mainDomain).Host,
                     StatusId = 1,
                     LanguageId = 1,
                     ParentId = 0,
                     Ngayyeucau = DateTime.Now,
-                    SiteId = 1
+                    SiteId = GetSiteId()
                 };
 
                 _context.PhieuYeuCauCNTBs.Add(p);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
-                // ===== GIỮ NGUYÊN LOGIC ANTI EMAIL ATTACK =====
-                if (!(string.IsNullOrEmpty(p.NoiDung)
-                    || p.Phone == "555-666-0606"
-                    || p.Email!.Contains("@example.com")
-                    || p.Email.Contains("@email.tst")))
+                // ── Send email notification to admin ──
+                if (!isSpam)
                 {
-                    // Send mail ở đây (nếu bạn đã có helper)
+                    try
+                    {
+                        var adminEmail = _configuration["AppSettings:AdminEmail"] ?? "admin@techport.vn";
+                        var subject = $"[TechPort] Phiếu yêu cầu công nghệ mới #{p.PhieuYeuCauId}";
+                        var body = $@"
+<h3>Phiếu yêu cầu công nghệ mới</h3>
+<table style='border-collapse:collapse;width:100%;max-width:600px;'>
+  <tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;width:140px;'>Họ và tên</td><td style='padding:8px;border:1px solid #ddd;'>{p.FullName}</td></tr>
+  <tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Email</td><td style='padding:8px;border:1px solid #ddd;'>{p.Email}</td></tr>
+  <tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Điện thoại</td><td style='padding:8px;border:1px solid #ddd;'>{p.Phone}</td></tr>
+  <tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Nội dung</td><td style='padding:8px;border:1px solid #ddd;'>{p.NoiDung}</td></tr>
+  <tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>Ngày gửi</td><td style='padding:8px;border:1px solid #ddd;'>{p.Created:dd/MM/yyyy HH:mm}</td></tr>
+  <tr><td style='padding:8px;border:1px solid #ddd;font-weight:bold;'>IP</td><td style='padding:8px;border:1px solid #ddd;'>{p.IPAddress}</td></tr>
+</table>
+<p style='margin-top:16px;color:#888;font-size:12px;'>Email này được gửi tự động từ hệ thống TechPort.</p>";
+
+                        await _emailSender.SendAsync(adminEmail, subject, body, isHtml: true);
+                        _logger.LogInformation("[PhieuYeuCau] Email sent to {Admin} for PhieuYeuCauId={Id}", adminEmail, p.PhieuYeuCauId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "[PhieuYeuCau] Failed to send email for PhieuYeuCauId={Id}", p.PhieuYeuCauId);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("[AntiSpam] Spam detected, email skipped. PhieuYeuCauId={Id}, IP={IP}", p.PhieuYeuCauId, p.IPAddress);
                 }
 
                 return Redirect(_mainDomain + "page/thanks");
