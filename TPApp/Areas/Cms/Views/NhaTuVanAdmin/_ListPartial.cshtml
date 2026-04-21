@@ -27,7 +27,7 @@
                     <th class="sortable" data-sort="email" style="cursor:pointer;width:180px">
                         Email <i class="fas fa-sort text-muted ms-1"></i>
                     </th>
-                    <th style="width:110px">Kích hoạt</th>
+                    <th style="width:150px">Chủ sở hữu</th>
                     <th style="width:120px">Trạng thái</th>
                     <th class="sortable d-none d-md-table-cell" data-sort="created" style="cursor:pointer;width:130px">
                         Ngày tạo <i class="fas fa-sort text-muted ms-1"></i>
@@ -60,6 +60,13 @@
                                        class="btn btn-outline-primary" title="Sửa">
                                         <i class="fas fa-pen"></i>
                                     </a>
+                                    <button type="button" class="btn btn-outline-info btn-change-owner"
+                                            data-id="@item.TuVanId"
+                                            data-name="@item.FullName"
+                                            data-owner="@(item.OwnerUserName ?? "")"
+                                            title="Đổi chủ sở hữu">
+                                        <i class="fas fa-user-edit"></i>
+                                    </button>
                                     @if (canDelete)
                                     {
                                         <button type="button" class="btn btn-outline-danger btn-del"
@@ -100,14 +107,14 @@
                             <td class="small">@(item.CoQuan ?? "—")</td>
                             <td class="small">@(item.Phone ?? "—")</td>
                             <td class="small">@(item.Email ?? "—")</td>
-                            <td class="text-center">
-                                @if (isActive)
+                            <td class="small">
+                                @if (!string.IsNullOrEmpty(item.OwnerUserName))
                                 {
-                                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Hoạt động</span>
+                                    <span class="badge bg-primary"><i class="fas fa-user me-1"></i>@item.OwnerUserName</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">Chưa kích hoạt</span>
+                                    <span class="text-muted">—</span>
                                 }
                             </td>
                             <td>

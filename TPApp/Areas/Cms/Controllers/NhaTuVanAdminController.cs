@@ -22,6 +22,8 @@ namespace TPApp.Areas.Cms.Controllers
         public string? CoQuan { get; set; }
         public string? ChucVu { get; set; }
         public bool? IsActivated { get; set; }
+        public int? UserId { get; set; }
+        public string? OwnerUserName { get; set; }
         public int? StatusId { get; set; }
         public string? StatusTitle { get; set; }
         public string? CreatedBy { get; set; }
@@ -169,21 +171,28 @@ namespace TPApp.Areas.Cms.Controllers
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(n => new NhaTuVanListItem
-                {
-                    TuVanId = n.TuVanId,
-                    FullName = n.FullName,
-                    HinhDaiDien = n.HinhDaiDien,
-                    Phone = n.Phone,
-                    Email = n.Email,
-                    HocHam = n.HocHam,
-                    CoQuan = n.CoQuan,
-                    ChucVu = n.ChucVu,
-                    IsActivated = n.IsActivated,
-                    StatusId = n.StatusId,
-                    CreatedBy = n.CreatedBy,
-                    Created = n.Created
-                })
+                .GroupJoin(_context.Users.AsNoTracking(),
+                    n => n.UserId,
+                    u => u.Id,
+                    (n, users) => new { n, users })
+                .SelectMany(x => x.users.DefaultIfEmpty(),
+                    (x, u) => new NhaTuVanListItem
+                    {
+                        TuVanId = x.n.TuVanId,
+                        FullName = x.n.FullName,
+                        HinhDaiDien = x.n.HinhDaiDien,
+                        Phone = x.n.Phone,
+                        Email = x.n.Email,
+                        HocHam = x.n.HocHam,
+                        CoQuan = x.n.CoQuan,
+                        ChucVu = x.n.ChucVu,
+                        IsActivated = x.n.IsActivated,
+                        UserId = x.n.UserId,
+                        OwnerUserName = u != null ? u.UserName : null,
+                        StatusId = x.n.StatusId,
+                        CreatedBy = x.n.CreatedBy,
+                        Created = x.n.Created
+                    })
                 .ToListAsync();
 
             // Map status titles
@@ -253,20 +262,27 @@ namespace TPApp.Areas.Cms.Controllers
                 .ToDictionaryAsync(s => s.StatusId, s => s.Title);
 
             var items = await query
-                .Select(n => new NhaTuVanListItem
-                {
-                    TuVanId = n.TuVanId,
-                    FullName = n.FullName,
-                    Phone = n.Phone,
-                    Email = n.Email,
-                    HocHam = n.HocHam,
-                    CoQuan = n.CoQuan,
-                    ChucVu = n.ChucVu,
-                    IsActivated = n.IsActivated,
-                    StatusId = n.StatusId,
-                    CreatedBy = n.CreatedBy,
-                    Created = n.Created
-                })
+                .GroupJoin(_context.Users.AsNoTracking(),
+                    n => n.UserId,
+                    u => u.Id,
+                    (n, users) => new { n, users })
+                .SelectMany(x => x.users.DefaultIfEmpty(),
+                    (x, u) => new NhaTuVanListItem
+                    {
+                        TuVanId = x.n.TuVanId,
+                        FullName = x.n.FullName,
+                        Phone = x.n.Phone,
+                        Email = x.n.Email,
+                        HocHam = x.n.HocHam,
+                        CoQuan = x.n.CoQuan,
+                        ChucVu = x.n.ChucVu,
+                        IsActivated = x.n.IsActivated,
+                        UserId = x.n.UserId,
+                        OwnerUserName = u != null ? u.UserName : null,
+                        StatusId = x.n.StatusId,
+                        CreatedBy = x.n.CreatedBy,
+                        Created = x.n.Created
+                    })
                 .ToListAsync();
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
@@ -405,6 +421,69 @@ namespace TPApp.Areas.Cms.Controllers
             await WriteLog(3, $"Delete NhaTuVan: {entity.FullName} (ID={id})");
 
             return Json(new { success = true, message = "Đã xóa nhà tư vấn #" + id });
+        }
+
+        // ── SEARCH USERS (for Change Owner modal) ──
+        [HttpGet]
+        public async Task<IActionResult> SearchUsers(string? keyword, int page = 1, int pageSize = 20)
+        {
+            var query = _context.Users.AsNoTracking()
+                .Where(u => u.IsActivated == true);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                var kw = keyword.Trim();
+                query = query.Where(u =>
+                    (u.UserName != null && u.UserName.Contains(kw)) ||
+                    (u.FullName != null && u.FullName.Contains(kw)) ||
+                    (u.Email != null && u.Email.Contains(kw)));
+            }
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderBy(u => u.UserName)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.UserName,
+                    u.FullName,
+                    u.Email
+                })
+                .ToListAsync();
+
+            return Json(new { totalCount, items });
+        }
+
+        // ── CHANGE OWNER ──
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeOwner(int id, int? userId)
+        {
+            var entity = await _context.NhaTuVans.FindAsync(id);
+            if (entity == null)
+                return Json(new { success = false, message = "Không tìm thấy nhà tư vấn." });
+
+            var oldUserId = entity.UserId;
+            entity.UserId = userId;
+            entity.Modified = DateTime.Now;
+            entity.Modifier = User.Identity?.Name;
+
+            await _context.SaveChangesAsync();
+
+            var newUserName = "(trống)";
+            if (userId.HasValue)
+            {
+                var user = await _context.Users.AsNoTracking()
+                    .Where(u => u.Id == userId.Value)
+                    .Select(u => u.UserName)
+                    .FirstOrDefaultAsync();
+                newUserName = user ?? userId.Value.ToString();
+            }
+
+            await WriteLog(2, $"ChangeOwner NhaTuVan #{id}: UserId {oldUserId} → {userId} ({newUserName})");
+
+            return Json(new { success = true, message = $"Đã đổi chủ sở hữu thành: {newUserName}" });
         }
 
         // ── HELPERS ──
